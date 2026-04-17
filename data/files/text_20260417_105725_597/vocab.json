@@ -1,0 +1,74 @@
+{
+  "vocab": [
+    {
+      "word": "world",
+      "ipa": "wɜːrld",
+      "context_meaning": "世界",
+      "morphology": "n",
+      "translation": "世界"
+    },
+    {
+      "word": "test",
+      "ipa": "tɛst",
+      "context_meaning": "测试",
+      "morphology": "adj",
+      "translation": "测试"
+    },
+    {
+      "word": "Hello",
+      "ipa": "həˈloʊ",
+      "context_meaning": "你好",
+      "morphology": "interj",
+      "translation": "你好"
+    },
+    {
+      "word": "this",
+      "ipa": "ðɪs",
+      "context_meaning": "这",
+      "morphology": "pron",
+      "translation": "这"
+    },
+    {
+      "word": "sentence",
+      "ipa": "ˈsɛntəns",
+      "context_meaning": "句子",
+      "morphology": "n",
+      "translation": "句子"
+    },
+    {
+      "word": "a",
+      "ipa": "ə",
+      "context_meaning": "一个",
+      "morphology": "det",
+      "translation": "一个"
+    },
+    {
+      "word": "is",
+      "ipa": "ɪz",
+      "context_meaning": "是",
+      "morphology": "v",
+      "translation": "是"
+    },
+    {
+      "word": "words",
+      "ipa": "wɜːrdz",
+      "context_meaning": "单词",
+      "morphology": "n",
+      "translation": "单词"
+    },
+    {
+      "word": "multiple",
+      "ipa": "ˈmʌltɪpəl",
+      "context_meaning": "多个",
+      "morphology": "adj",
+      "translation": "多个"
+    },
+    {
+      "word": "with",
+      "ipa": "wɪð",
+      "context_meaning": "带有",
+      "morphology": "prep",
+      "translation": "带有"
+    }
+  ]
+}

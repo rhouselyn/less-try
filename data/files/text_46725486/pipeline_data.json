@@ -1,0 +1,21 @@
+{
+  "data": {
+    "original": "AI models",
+    "translation": [
+      {
+        "text": "AI",
+        "translation": "人工智能",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "morphology": "n"
+      },
+      {
+        "text": "models",
+        "translation": "模型",
+        "phonetic": "/ˈmɒd.əlz/",
+        "morphology": "n"
+      }
+    ],
+    "tokenized_translation": "人工智能 模型",
+    "grammar_explanation": "该短语由两个名词组成，构成\"名词 + 名词\"的复合名词结构。\"AI\"（人工智能）作为修饰语，限定并描述中心名词\"models\"（模型），整体表达\"人工智能模型\"的概念。在英语中，这种名词叠加结构非常常见，前一个名词起形容词性修饰作用，后一个名词为核心词。"
+  }
+}

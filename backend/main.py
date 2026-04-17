@@ -98,7 +98,9 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
         
-        file_id = f"text_{int(os.urandom(4).hex(), 16)}"
+        import datetime
+        now = datetime.datetime.now()
+        file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
         
         # 立即返回文件ID，后台处理
         background_tasks.add_task(process_text_background, file_id, text, source_lang, target_lang)
