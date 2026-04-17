@@ -119,23 +119,12 @@ For each word, provide:
             "type": "function",
             "function": {
                 "name": "split_and_translate",
-                "description": "Split text into sentences, tokenize, translate, and provide grammar explanation",
+                "description": "Split text into tokens, translate each token, and provide grammar explanation",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "original": {"type": "string"},
                         "translation": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "text": {"type": "string"},
-                                    "translation": {"type": "string"}
-                                },
-                                "required": ["text", "translation"]
-                            }
-                        },
-                        "tokens": {
                             "type": "array",
                             "items": {
                                 "type": "object",
@@ -150,21 +139,20 @@ For each word, provide:
                         },
                         "grammar_explanation": {"type": "string"}
                     },
-                    "required": ["original", "translation", "tokens", "grammar_explanation"]
+                    "required": ["original", "translation", "grammar_explanation"]
                 }
             }
         }
 
-        prompt = f"""Process the following {source_lang} text:
+        prompt = f"""Process the following {source_lang} text and translate it to {target_lang}:
 
 1. original: The original text in {source_lang}
-2. translation: Split the translation into tokens, each with "text" (original token) and "translation" (translated token)
-3. tokens: Split into individual words/tokens, each with:
+2. translation: Split the text into individual words/tokens, each with:
    - text: The original token (no punctuation)
-   - translation: Translation of the token
+   - translation: Translation of the token to {target_lang}
    - phonetic: Phonetic transcription
    - morphology: Morphological information (e.g., part of speech, tense, number)
-4. grammar_explanation: Grammar explanation for the text
+3. grammar_explanation: Grammar explanation for the text in {target_lang}
 
 Text:
 {text}

@@ -1,200 +1,142 @@
-# 少邻国 (Lesslingo) - 交互逻辑重构计划
+# 少邻国 (Lesslingo) 交互逻辑重构计划
 
-## 1. 需求分析
+## 1. 项目现状分析
 
-### 用户要求
-1. **split_and_translate 工具功能**：
-   - 分词以及形态以及每个词对应的中文意思，方便字典显示
-   - 分词后的译文（例如：你好，我是人类。分成：你好 我 是 人类）
-   - 句子语法讲解
+### 1.1 现有代码结构
+- **后端**：
+  - `text_processor.py`：包含文本处理逻辑，如分句、提取单词等
+  - `nvidia_api.py`：包含API调用逻辑，实现了`split_and_translate`和`generate_dictionary`功能
+  - `main.py`：FastAPI主应用，处理API请求
 
-2. **字典显示逻辑**：
-   - 只需要 split_and_translate 中的分词以及形态以及每个词对应的中文意思
+- **前端**：
+  - `App.jsx`：React应用，包含输入界面和词典界面
+  - `index.css`：样式文件
 
-3. **语言规定**：
-   - 根据所选择的目标语言规定翻译后的语言
-   - 用目标语言来进行语法讲解
+### 1.2 现有功能实现
+- **split_and_translate**：将文本分割成句子，对每个句子进行分词、翻译和语法讲解
+- **generate_dictionary**：为单词生成词典条目，包含发音、释义、变体、例句等
+- **前端词典**：显示单词详情，包括发音、释义、变体、例句、选项和语法讲解
 
-### 现有代码分析
-1. **nvidia_api.py**：
-   - 现有的 split_and_translate 工具已经实现了分词、翻译、音标和形态信息的提取
-   - 但翻译输出格式可能需要调整，以符合用户要求的分词后译文格式
+### 1.3 存在的问题
+- `split_and_translate`的输出格式与用户要求的JSON结构不一致
+- 词典显示逻辑使用的是`generate_dictionary`的输出，而非`split_and_translate`的分词结果
+- 语法讲解语言未按目标语言设置
 
-2. **main.py**：
-   - 现有的 process-text API 已经从 split_and_translate 结果中提取词汇并去重
-   - 但需要确保只使用 split_and_translate 的数据来构建字典
+## 2. 重构目标
 
-3. **text_processor.py**：
-   - 现有的 split_and_translate 方法已经调用了 nvidia_api 的 split_and_translate 方法
-   - 但可能需要调整处理逻辑，以符合用户的要求
+### 2.1 功能目标
+1. **修改split_and_translate输出格式**：符合用户要求的JSON结构
+2. **调整词典显示逻辑**：使用split_and_translate的分词结果作为词典数据
+3. **统一语言设置**：确保翻译和语法讲解使用目标语言
+4. **保留原有UI设计**：确保界面美观性
 
-## 2. 实施计划
+### 2.2 技术目标
+1. **保持代码结构清晰**：模块化设计，易于维护
+2. **确保API兼容性**：不破坏现有API接口
+3. **提高系统稳定性**：增强错误处理
 
-### 2.1 修改文件列表
+## 3. 重构计划
 
-| 文件路径 | 模块 | 主要修改内容 |
-|---------|------|------------|
-| `/workspace/backend/nvidia_api.py` | NvidiaAPI.split_and_translate | 调整 Tool Schema 和 prompt，确保翻译输出符合分词后格式，语法讲解使用目标语言 |
-| `/workspace/backend/text_processor.py` | TextProcessor.split_and_translate | 确保正确处理和返回 split_and_translate 的结果 |
-| `/workspace/backend/main.py` | process_text | 确保只使用 split_and_translate 的数据构建字典，不依赖其他数据源 |
-| `/workspace/frontend/src/App.jsx` | 前端界面 | 调整前端显示逻辑，确保只显示 split_and_translate 中的分词、形态和翻译信息 |
+### 3.1 后端修改
 
-### 2.2 详细修改步骤
+#### 3.1.1 修改 `nvidia_api.py`
+- 更新`split_and_translate`工具的输出格式，使其符合用户要求：
+  ```json
+  {
+    "original": "Hello world.",
+    "translation": [
+      { "text": "Hello", "translation": "你好", "phonetic": "/həˈloʊ/", "morphology": "Interjection" },
+      { "text": "world", "translation": "世界", "phonetic": "/wɜːrld/", "morphology": "Noun" }
+    ],
+    "grammar_explanation": "这是一个简单的问候语，由感叹词和名词组成。"
+  }
+  ```
+- 确保语法讲解使用目标语言
+- 优化API调用逻辑，提高稳定性
 
-#### 步骤 1：修改 nvidia_api.py 中的 split_and_translate 方法
+#### 3.1.2 修改 `text_processor.py`
+- 更新`split_and_translate`方法，确保返回格式正确
+- 调整分词逻辑，确保标点符号处理正确
+- 增强错误处理机制
 
-1. **更新 Tool Schema**：
-   - 确保 tokens 字段包含 text、translation、phonetic 和 morphology
-   - 确保 translation 字段是分词后的译文格式
-   - 确保 grammar_explanation 字段使用目标语言
+#### 3.1.3 修改 `main.py`
+- 更新API接口，确保返回数据格式正确
+- 调整数据处理逻辑，使用split_and_translate的结果生成词典数据
+- 确保语言设置正确传递
 
-2. **更新 prompt**：
-   - 明确要求翻译输出为分词后的格式
-   - 明确要求语法讲解使用目标语言
-   - 确保分词不包含标点符号
+### 3.2 前端修改
 
-#### 步骤 2：修改 text_processor.py 中的 split_and_translate 方法
+#### 3.2.1 修改 `App.jsx`
+- 更新词典数据结构，使用split_and_translate的分词结果
+- 调整词典显示逻辑，确保显示内容符合要求
+- 保留原有UI设计，确保界面美观
 
-1. **调整处理逻辑**：
-   - 确保正确处理 nvidia_api 返回的结果
-   - 确保过滤掉标点符号
-   - 确保返回格式符合前端需求
+#### 3.2.2 修改 `index.css`
+- 确保样式文件与原有设计一致
+- 优化响应式布局
 
-#### 步骤 3：修改 main.py 中的 process_text 方法
+## 4. 实现步骤
 
-1. **调整字典构建逻辑**：
-   - 确保只使用 split_and_translate 的数据构建字典
-   - 确保正确处理分词、形态和翻译信息
-   - 确保根据目标语言设置翻译和讲解语言
+### 4.1 后端实现
+1. 修改 `nvidia_api.py` 中的 `split_and_translate` 方法，更新输出格式
+2. 修改 `text_processor.py` 中的 `split_and_translate` 方法，调整返回格式
+3. 修改 `main.py` 中的API接口，更新数据处理逻辑
+4. 测试后端API，确保输出格式正确
 
-#### 步骤 4：修改前端 App.jsx
+### 4.2 前端实现
+1. 修改 `App.jsx` 中的词典数据处理逻辑
+2. 调整词典显示组件，确保显示内容符合要求
+3. 测试前端界面，确保功能正常
 
-1. **调整显示逻辑**：
-   - 确保只显示 split_and_translate 中的分词、形态和翻译信息
-   - 确保翻译显示为分词后的格式
-   - 确保语法讲解显示正确
+### 4.3 系统测试
+1. 测试完整流程：输入文本 → 处理 → 显示词典
+2. 测试不同语言对的处理
+3. 测试错误处理机制
+4. 测试界面响应式布局
 
-### 2.3 数据结构设计
+## 5. 风险评估
 
-#### split_and_translate 输出结构
+### 5.1 潜在风险
+- API调用失败：增强错误处理，添加重试机制
+- 数据格式不一致：严格验证输出格式
+- 性能问题：优化API调用，减少网络请求
 
-```json
-{
-  "original": "Hello world.",
-  "translation": [
-    { "text": "Hello", "translation": "你好" },
-    { "text": "world", "translation": "世界" }
-  ],
-  "tokens": [
-    {
-      "text": "Hello",
-      "translation": "你好",
-      "phonetic": "/həˈloʊ/",
-      "morphology": "Interjection"
-    },
-    {
-      "text": "world",
-      "translation": "世界",
-      "phonetic": "/wɜːrld/",
-      "morphology": "Noun"
-    }
-  ],
-  "grammar_explanation": "这是一个简单的问候语，由感叹词和名词组成。"
-}
-```
-
-#### 字典条目结构
-
-```json
-{
-  "word": "hello",
-  "ipa": "/həˈloʊ/",
-  "context_meaning": "你好",
-  "morphology": "Interjection",
-  "translation": "你好"
-}
-```
-
-## 3. 潜在依赖和考虑事项
-
-1. **API 响应格式**：
-   - 需要确保 LLM API 能够返回符合要求的结构化数据
-   - 需要处理 API 响应可能的变化
-
-2. **语言支持**：
-   - 需要确保支持用户选择的目标语言
-   - 需要确保语法讲解能够使用目标语言
-
-3. **前端显示**：
-   - 需要确保前端能够正确显示分词后的译文
-   - 需要确保前端能够正确显示形态和翻译信息
-
-4. **性能考虑**：
-   - 处理长文本时的性能问题
-   - API 调用的响应时间
-
-## 4. 风险处理
-
-1. **API 调用失败**：
-   - 实现错误处理和重试机制
-   - 提供友好的错误提示
-
-2. **数据格式不一致**：
-   - 实现数据验证和规范化
-   - 确保前端能够处理不同格式的数据
-
-3. **语言支持限制**：
-   - 明确支持的语言范围
-   - 对不支持的语言提供合理的错误提示
-
-## 5. 测试计划
-
-1. **单元测试**：
-   - 测试 split_and_translate 工具的输出格式
-   - 测试字典构建逻辑
-
-2. **集成测试**：
-   - 测试 API 端到端流程
-   - 测试前端与后端的交互
-
-3. **用户测试**：
-   - 测试不同语言的翻译和讲解
-   - 测试长文本的处理
+### 5.2 应对措施
+- 实现完善的错误处理机制
+- 添加数据格式验证
+- 优化API调用逻辑，减少不必要的请求
+- 确保代码模块化，易于维护
 
 ## 6. 预期结果
 
-1. **功能实现**：
-   - split_and_translate 工具能够正确分词并提供形态和翻译信息
-   - 翻译输出为分词后的格式
+### 6.1 功能结果
+- `split_and_translate`输出符合用户要求的JSON结构
+- 词典显示使用split_and_translate的分词结果
+- 翻译和语法讲解使用目标语言
+- 界面保持原有设计风格
+
+### 6.2 技术结果
+- 代码结构清晰，易于维护
+- API接口稳定，兼容性良好
+- 系统性能稳定，响应及时
+
+## 7. 验证标准
+
+1. **功能验证**：
+   - 输入文本能正确处理并显示词典
+   - 词典显示内容符合要求
    - 语法讲解使用目标语言
 
-2. **用户体验**：
-   - 前端能够清晰显示分词、形态和翻译信息
-   - 字典显示符合用户要求
-   - 交互流程流畅
+2. **技术验证**：
+   - API接口返回格式正确
+   - 系统运行稳定，无错误
+   - 界面响应式布局正常
 
-3. **性能表现**：
-   - API 响应时间合理
-   - 处理长文本时性能稳定
+3. **用户体验验证**：
+   - 界面美观，操作流畅
+   - 功能符合用户预期
+   - 响应速度快
 
-## 7. 实施时间线
+## 8. 总结
 
-1. **阶段 1**：修改后端 API 实现（1-2 天）
-   - 修改 nvidia_api.py
-   - 修改 text_processor.py
-   - 修改 main.py
-
-2. **阶段 2**：修改前端实现（1 天）
-   - 修改 App.jsx
-
-3. **阶段 3**：测试和优化（1 天）
-   - 进行单元测试和集成测试
-   - 优化性能和用户体验
-
-4. **阶段 4**：部署和验证（1 天）
-   - 部署修改后的系统
-   - 验证功能是否符合要求
-
-## 8. 结论
-
-本计划旨在通过修改现有的代码结构，实现用户要求的交互逻辑。通过调整 split_and_translate 工具的功能和字典显示逻辑，确保系统能够提供符合用户期望的分词、翻译和语法讲解功能。同时，通过合理的测试和优化，确保系统的性能和用户体验。
+本计划旨在重构少邻国 (Lesslingo) 的交互逻辑，使其符合用户的具体要求。通过修改后端API输出格式和前端显示逻辑，确保系统功能完整、界面美观、用户体验良好。重构过程将注重代码质量和系统稳定性，确保系统能够长期稳定运行。

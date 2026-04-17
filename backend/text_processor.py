@@ -96,32 +96,21 @@ class TextProcessor:
         return sorted_phonetics[0][0]
 
     async def split_and_translate(self, text: str, source_lang: str, target_lang: str, nvidia_api):
-        # 先使用新的分句功能切分文本
-        sentences = self.split_sentences(text)
-        
-        # 对每个句子进行翻译
-        all_results = []
-        for sentence in sentences:
-            if sentence.strip():
-                result = await nvidia_api.split_and_translate(sentence, source_lang, target_lang)
-                if result:
-                    all_results.append(result)
+        # 对整个文本进行翻译
+        result = await nvidia_api.split_and_translate(text, source_lang, target_lang)
         
         # 处理结果，确保格式正确
-        processed_results = []
-        for result in all_results:
-            if isinstance(result, dict):
-                # 确保tokens格式正确，不包含标点符号
-                if 'tokens' in result:
-                    # 过滤掉标点符号token
-                    filtered_tokens = []
-                    for token in result['tokens']:
-                        if isinstance(token, dict) and 'text' in token:
-                            # 检查token是否为标点符号
-                            if token['text'].strip() and not re.match(r'^[\W_]+$', token['text']):
-                                filtered_tokens.append(token)
-                    result['tokens'] = filtered_tokens
-                processed_results.append(result)
+        if isinstance(result, dict):
+            # 确保translation格式正确，不包含标点符号
+            if 'translation' in result:
+                # 过滤掉标点符号token
+                filtered_translation = []
+                for token in result['translation']:
+                    if isinstance(token, dict) and 'text' in token:
+                        # 检查token是否为标点符号
+                        if token['text'].strip() and not re.match(r'^[\W_]+$', token['text']):
+                            filtered_translation.append(token)
+                result['translation'] = filtered_translation
         
         # 返回处理后的结果
-        return processed_results
+        return result
