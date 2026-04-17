@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 import os
 import json
@@ -29,39 +28,40 @@ text_processor = TextProcessor()
 storage = Storage()
 
 
-class TextInput(BaseModel):
-    text: str
-    source_language: str = "en"
-    target_language: str = "zh"
-
-
 @app.get("/")
 async def root():
     return {"message": "少邻国 - Lesslingo API"}
 
 
 @app.post("/api/process-text")
-async def process_text(input: TextInput):
+async def process_text(request: dict):
     try:
+        text = request.get("text", "")
+        source_lang = request.get("source_language", "en")
+        target_lang = request.get("target_language", "zh")
+        
+        if not text:
+            raise HTTPException(status_code=400, detail="Text is required")
+        
         file_id = f"text_{int(os.urandom(4).hex(), 16)}"
         
         sentences = await text_processor.split_and_translate(
-            input.text,
-            input.source_language,
-            input.target_language,
+            text,
+            source_lang,
+            target_lang,
             nvidia_api
         )
         
-        words = text_processor.extract_words(input.text, input.source_language)
+        words = text_processor.extract_words(text, source_lang)
         word_chunks = text_processor.chunk_words(words, chunk_size=10)
         
         vocab = []
         for chunk in word_chunks:
             chunk_vocab = await nvidia_api.generate_dictionary(
                 chunk,
-                input.text,
-                input.source_language,
-                input.target_language
+                text,
+                source_lang,
+                target_lang
             )
             vocab.extend(chunk_vocab)
         

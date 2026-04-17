@@ -2,17 +2,14 @@ import re
 from typing import List, Set
 import nltk
 from nltk.tokenize import word_tokenize
-from nltk.corpus import stopwords
 
 
 class TextProcessor:
     def __init__(self):
         try:
             nltk.data.find('tokenizers/punkt')
-            nltk.data.find('corpora/stopwords')
         except LookupError:
             nltk.download('punkt')
-            nltk.download('stopwords')
 
     def extract_words(self, text: str, language: str) -> List[str]:
         words = word_tokenize(text)
