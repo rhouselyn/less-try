@@ -45,6 +45,10 @@ async def process_text(request: dict):
         
         file_id = f"text_{int(os.urandom(4).hex(), 16)}"
         
+        # 先使用新的分句功能切分文本
+        original_sentences = text_processor.split_sentences(text)
+        
+        # 翻译句子
         sentences = await text_processor.split_and_translate(
             text,
             source_lang,
@@ -52,7 +56,8 @@ async def process_text(request: dict):
             nvidia_api
         )
         
-        words = text_processor.extract_words(text, source_lang)
+        # 使用新的从句子提取词汇的功能
+        words = text_processor.extract_words_from_sentences(original_sentences, source_lang)
         word_chunks = text_processor.chunk_words(words, chunk_size=10)
         
         vocab = []

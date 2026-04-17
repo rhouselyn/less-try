@@ -56,9 +56,18 @@ class NvidiaAPI:
                                         "items": {"type": "string"},
                                         "minItems": 2,
                                         "maxItems": 2
-                                    }
+                                    },
+                                    "options": {
+                                        "type": "array",
+                                        "items": {"type": "string"},
+                                        "minItems": 4,
+                                        "maxItems": 4
+                                    },
+                                    "grammar": {"type": "string"},
+                                    "translation": {"type": "string"},
+                                    "tokens": {"type": "array", "items": {"type": "string"}}
                                 },
-                                "required": ["word", "ipa", "context_meaning", "variants", "examples"]
+                                "required": ["word", "ipa", "context_meaning", "variants", "examples", "options", "grammar", "translation", "tokens"]
                             }
                         }
                     },
@@ -77,10 +86,15 @@ Context:
 {context}
 
 For each word, provide:
-1. ipa: International Phonetic Alphabet pronunciation
-2. context_meaning: Meaning in {target_lang} based on the context
-3. variants: Other forms of the word (e.g., past tense, plural) if applicable
-4. examples: 2 example sentences in {source_lang} that match the context meaning
+1. word: The word itself
+2. ipa: International Phonetic Alphabet pronunciation
+3. context_meaning: Meaning in {target_lang} based on the context
+4. variants: Other forms of the word (e.g., past tense, plural) if applicable
+5. examples: 2 example sentences in {source_lang} that match the context meaning
+6. options: 4 options for the meaning (1 correct, 3 incorrect)
+7. grammar: Grammar explanation for the word
+8. translation: Translation of the word to {target_lang}
+9. tokens: Split the word into tokens if applicable
 """
 
         messages = [{"role": "user", "content": prompt}]

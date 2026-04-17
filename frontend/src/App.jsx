@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Loader2, ArrowLeft, Languages } from 'lucide-react'
+import { BookOpen, Loader2, ArrowLeft, Languages, Shuffle, Volume2, ChevronRight, Brain, CheckCircle2, XCircle } from 'lucide-react'
 import axios from 'axios'
 
 function App() {
@@ -11,8 +11,20 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
+  const [shuffledVocab, setShuffledVocab] = useState([])
   const [sentences, setSentences] = useState([])
   const [selectedWord, setSelectedWord] = useState(null)
+
+  useEffect(() => {
+    if (vocab.length > 0) {
+      shuffleVocab()
+    }
+  }, [vocab])
+
+  const shuffleVocab = () => {
+    const shuffled = [...vocab].sort(() => Math.random() - 0.5)
+    setShuffledVocab(shuffled)
+  }
 
   const handleProcess = async () => {
     if (!text.trim()) return
@@ -38,12 +50,12 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
               <div>
@@ -58,7 +70,7 @@ function App() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   onClick={() => setStep('input')}
-                  className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors"
+                  className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   返回
@@ -69,7 +81,7 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-12">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
           {step === 'input' && (
             <InputStep
@@ -88,10 +100,11 @@ function App() {
           {step === 'dictionary' && (
             <DictionaryStep
               key="dictionary"
-              vocab={vocab}
+              vocab={shuffledVocab}
               sentences={sentences}
               selectedWord={selectedWord}
               setSelectedWord={setSelectedWord}
+              onShuffle={shuffleVocab}
             />
           )}
         </AnimatePresence>
@@ -132,7 +145,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             <select
               value={sourceLang}
               onChange={(e) => setSourceLang(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
             >
               <option value="en">英语</option>
               <option value="es">西班牙语</option>
@@ -148,7 +161,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             <select
               value={targetLang}
               onChange={(e) => setTargetLang(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition-all"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
             >
               <option value="zh">中文</option>
               <option value="en">英语</option>
@@ -165,7 +178,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="粘贴或输入你想学习的文本..."
-            className="w-full h-64 px-4 py-4 border border-slate-200 rounded-lg bg-slate-50 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent focus:bg-white transition-all resize-none"
+            className="w-full h-64 px-4 py-4 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none"
           />
         </div>
 
@@ -174,7 +187,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           whileTap={{ scale: 0.99 }}
           onClick={onProcess}
           disabled={loading || !text.trim()}
-          className="w-full py-4 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -193,20 +206,30 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, sentences, selectedWord, setSelectedWord }) {
+function DictionaryStep({ vocab, sentences, selectedWord, setSelectedWord, onShuffle }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+      className="grid grid-cols-1 lg:grid-cols-3 gap-6"
     >
       <div className="lg:col-span-1">
-        <div className="sticky top-8">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">
-            单词表 ({vocab.length})
-          </h2>
-          <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+        <div className="sticky top-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-slate-900">
+              单词表 ({vocab.length})
+            </h2>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onShuffle}
+              className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+            >
+              <Shuffle className="w-5 h-5" />
+            </motion.button>
+          </div>
+          <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
             {vocab.map((word, index) => (
               <motion.button
                 key={word.word || index}
@@ -216,11 +239,16 @@ function DictionaryStep({ vocab, sentences, selectedWord, setSelectedWord }) {
                 onClick={() => setSelectedWord(word)}
                 className={`w-full text-left px-4 py-3 rounded-lg border transition-all ${
                   selectedWord?.word === word.word
-                    ? 'border-slate-900 bg-slate-900 text-white'
-                    : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    ? 'border-black bg-black text-white'
+                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                 }`}
               >
-                <span className="font-medium">{word.word}</span>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{word.word}</span>
+                  {selectedWord?.word === word.word && (
+                    <ChevronRight className="w-4 h-4" />
+                  )}
+                </div>
               </motion.button>
             ))}
           </div>
@@ -236,7 +264,7 @@ function DictionaryStep({ vocab, sentences, selectedWord, setSelectedWord }) {
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center h-96 text-slate-400"
+              className="flex flex-col items-center justify-center h-96 text-slate-400 bg-white rounded-2xl border border-slate-200"
             >
               <BookOpen className="w-16 h-16 mb-4 opacity-50" />
               <p>选择一个单词查看详情</p>
@@ -249,29 +277,58 @@ function DictionaryStep({ vocab, sentences, selectedWord, setSelectedWord }) {
 }
 
 function WordDetail({ word }) {
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const handlePlayAudio = () => {
+    setIsPlaying(true)
+    setTimeout(() => setIsPlaying(false), 1000)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-slate-200 rounded-2xl p-8"
+      className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
     >
-      <div className="mb-8">
-        <motion.h2 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-4xl font-semibold text-slate-900 mb-2"
-        >
-          {word.word}
-        </motion.h2>
-        {word.ipa && (
-          <motion.p 
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <motion.h2 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-xl text-slate-500 font-mono"
+            className="text-4xl font-semibold text-slate-900 mb-2"
           >
-            /{word.ipa}/
-          </motion.p>
+            {word.word}
+          </motion.h2>
+          <div className="flex items-center gap-3">
+            {word.ipa && (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-xl text-slate-500 font-mono"
+              >
+                /{word.ipa}/
+              </motion.p>
+            )}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handlePlayAudio}
+              className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
+            >
+              <Volume2 className={`w-5 h-5 ${isPlaying ? 'animate-pulse' : ''}`} />
+            </motion.button>
+          </div>
+        </div>
+        {word.part_of_speech && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium"
+          >
+            {word.part_of_speech}
+          </motion.span>
         )}
       </div>
 
@@ -281,7 +338,8 @@ function WordDetail({ word }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
         >
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Brain className="w-4 h-4" />
             释义
           </h3>
           <p className="text-lg text-slate-700 leading-relaxed">
@@ -322,10 +380,49 @@ function WordDetail({ word }) {
             </h3>
             <div className="space-y-4">
               {word.examples.map((example, i) => (
-                <div key={i} className="p-4 bg-slate-50 rounded-lg">
+                <div key={i} className="p-4 bg-slate-50 rounded-lg border border-slate-100">
                   <p className="text-slate-700">{example}</p>
                 </div>
               ))}
+            </div>
+          </motion.div>
+        )}
+
+        {word.options && word.options.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              选项
+            </h3>
+            <div className="space-y-2">
+              {word.options.map((option, i) => (
+                <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                  {word.correct_answer === i ? (
+                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                  )}
+                  <span className="text-slate-700">{option}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {word.grammar_notes && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              语法讲解
+            </h3>
+            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+              <p className="text-slate-700 leading-relaxed">{word.grammar_notes}</p>
             </div>
           </motion.div>
         )}
