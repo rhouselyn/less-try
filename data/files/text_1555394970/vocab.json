@@ -1,0 +1,17 @@
+{
+  "vocab": [
+    {
+      "word": "hi",
+      "ipa": "/haɪ/",
+      "context_meaning": "hello / salut",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "\"Hi\" is an **interjection** in English, used as an informal and friendly greeting. It is equivalent to \"hello\" but more casual in tone. It does not change form based on tense, number, or gender, making it invariable. It is typically used at the beginning of a conversation or when meeting someone. Its origin is believed to be a variant of \"hey,\" which itself derives from Middle English.",
+      "translation": "hello / salut",
+      "tokens": [
+        "hi"
+      ]
+    }
+  ]
+}
