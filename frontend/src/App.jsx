@@ -36,7 +36,7 @@ function App() {
         source_language: sourceLang,
         target_language: targetLang
       }, {
-        timeout: 120000 // 2分钟超时
+        timeout: 600000 // 10分钟超时
       })
       
       if (response.data && response.data.vocab) {
@@ -113,9 +113,6 @@ function App() {
             <DictionaryStep
               key="dictionary"
               vocab={shuffledVocab}
-              translationResult={translationResult}
-              selectedWord={selectedWord}
-              setSelectedWord={setSelectedWord}
               onShuffle={shuffleVocab}
             />
           )}
@@ -218,7 +215,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWord, onShuffle }) {
+function DictionaryStep({ vocab, onShuffle }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -226,41 +223,6 @@ function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWor
       exit={{ opacity: 0, y: -20 }}
       className="flex flex-col gap-6"
     >
-      {/* 原文和翻译 */}
-      {translationResult && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm"
-        >
-          <div className="space-y-4">
-            <div>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                原文
-              </h3>
-              <p className="text-lg text-slate-900">{translationResult.original}</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                分词译文
-              </h3>
-              <p className="text-lg text-slate-700 font-medium">{translationResult.tokenized_translation}</p>
-            </div>
-            {translationResult.grammar_explanation && (
-              <div>
-                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  语法讲解
-                </h3>
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                  <p className="text-slate-700 leading-relaxed">{translationResult.grammar_explanation}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
-      )}
-
       {/* 单词表 - 高中课本附录格式 */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -277,8 +239,9 @@ function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWor
           </motion.button>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="grid grid-cols-2 gap-1 p-4 bg-slate-50 border-b border-slate-200">
+          <div className="grid grid-cols-3 gap-1 p-4 bg-slate-50 border-b border-slate-200">
             <div className="font-semibold text-slate-700">单词</div>
+            <div className="font-semibold text-slate-700">意思</div>
             <div className="font-semibold text-slate-700">词性</div>
           </div>
           <div className="divide-y divide-slate-200">
@@ -288,34 +251,15 @@ function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWor
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.02 }}
-                className="grid grid-cols-2 gap-1 p-4 hover:bg-slate-50 cursor-pointer"
-                onClick={() => setSelectedWord(word)}
+                className="grid grid-cols-3 gap-1 p-4 hover:bg-slate-50"
               >
                 <div className="font-medium text-slate-900">{word.word}</div>
+                <div className="text-slate-700">{word.context_meaning || word.translation}</div>
                 <div className="text-slate-600 font-mono">{word.morphology}</div>
               </motion.div>
             ))}
           </div>
         </div>
-      </div>
-
-      {/* 词典详情 */}
-      <div>
-        <AnimatePresence mode="wait">
-          {selectedWord ? (
-            <WordDetail key={selectedWord.word} word={selectedWord} />
-          ) : (
-            <motion.div
-              key="empty"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center h-32 text-slate-400 bg-white rounded-2xl border border-slate-200"
-            >
-              <BookOpen className="w-8 h-8 mb-2 opacity-50" />
-              <p>选择一个单词查看详情</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
       </div>
     </motion.div>
   )

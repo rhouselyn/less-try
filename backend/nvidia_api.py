@@ -30,7 +30,7 @@ class NvidiaAPI:
                 f"{self.base_url}/chat/completions",
                 headers=self.headers,
                 json=payload,
-                timeout=60  # Increase timeout to 60 seconds
+                timeout=600  # 10分钟超时
             )
             response.raise_for_status()
             return response.json()
@@ -41,7 +41,7 @@ class NvidiaAPI:
                 f"{self.base_url}/chat/completions",
                 headers=self.headers,
                 json=payload,
-                timeout=60
+                timeout=600  # 10分钟超时
             )
             response.raise_for_status()
             return response.json()

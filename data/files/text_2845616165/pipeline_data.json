@@ -1,0 +1,165 @@
+{
+  "data": {
+    "original": "AI models generate responses and outputs based on complex algorithms and machine learning techniques, and those responses or outputs may be inaccurate, harmful, biased or indecent.",
+    "translation": [
+      {
+        "text": "AI",
+        "translation": "人工智能",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "morphology": "n"
+      },
+      {
+        "text": "models",
+        "translation": "模型",
+        "phonetic": "/ˈmɒd.əlz/",
+        "morphology": "n"
+      },
+      {
+        "text": "generate",
+        "translation": "生成",
+        "phonetic": "/ˈdʒen.ər.eɪt/",
+        "morphology": "v"
+      },
+      {
+        "text": "responses",
+        "translation": "回应",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "morphology": "n"
+      },
+      {
+        "text": "and",
+        "translation": "和",
+        "phonetic": "/ænd/",
+        "morphology": "conj"
+      },
+      {
+        "text": "outputs",
+        "translation": "输出内容",
+        "phonetic": "/ˈaʊt.pʊts/",
+        "morphology": "n"
+      },
+      {
+        "text": "based",
+        "translation": "基于",
+        "phonetic": "/beɪst/",
+        "morphology": "v"
+      },
+      {
+        "text": "on",
+        "translation": "在……基础上",
+        "phonetic": "/ɒn/",
+        "morphology": "prep"
+      },
+      {
+        "text": "complex",
+        "translation": "复杂的",
+        "phonetic": "/ˈkɒm.pleks/",
+        "morphology": "adj"
+      },
+      {
+        "text": "algorithms",
+        "translation": "算法",
+        "phonetic": "/ˈæl.ɡə.rɪð.əmz/",
+        "morphology": "n"
+      },
+      {
+        "text": "and",
+        "translation": "和",
+        "phonetic": "/ænd/",
+        "morphology": "conj"
+      },
+      {
+        "text": "machine",
+        "translation": "机器",
+        "phonetic": "/məˈʃiːn/",
+        "morphology": "n"
+      },
+      {
+        "text": "learning",
+        "translation": "学习",
+        "phonetic": "/ˈlɜː.nɪŋ/",
+        "morphology": "n"
+      },
+      {
+        "text": "techniques",
+        "translation": "技术",
+        "phonetic": "/tekˈniːks/",
+        "morphology": "n"
+      },
+      {
+        "text": "and",
+        "translation": "而且",
+        "phonetic": "/ænd/",
+        "morphology": "conj"
+      },
+      {
+        "text": "those",
+        "translation": "这些",
+        "phonetic": "/ðəʊz/",
+        "morphology": "det"
+      },
+      {
+        "text": "responses",
+        "translation": "回应",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "morphology": "n"
+      },
+      {
+        "text": "or",
+        "translation": "或",
+        "phonetic": "/ɔːr/",
+        "morphology": "conj"
+      },
+      {
+        "text": "outputs",
+        "translation": "输出内容",
+        "phonetic": "/ˈaʊt.pʊts/",
+        "morphology": "n"
+      },
+      {
+        "text": "may",
+        "translation": "可能",
+        "phonetic": "/meɪ/",
+        "morphology": "v"
+      },
+      {
+        "text": "be",
+        "translation": "是",
+        "phonetic": "/biː/",
+        "morphology": "v"
+      },
+      {
+        "text": "inaccurate",
+        "translation": "不准确的",
+        "phonetic": "/ɪnˈæk.jʊ.rət/",
+        "morphology": "adj"
+      },
+      {
+        "text": "harmful",
+        "translation": "有害的",
+        "phonetic": "/ˈhɑːm.fəl/",
+        "morphology": "adj"
+      },
+      {
+        "text": "biased",
+        "translation": "有偏见的",
+        "phonetic": "/ˈbaɪ.əst/",
+        "morphology": "adj"
+      },
+      {
+        "text": "or",
+        "translation": "或",
+        "phonetic": "/ɔːr/",
+        "morphology": "conj"
+      },
+      {
+        "text": "indecent",
+        "translation": "不雅的",
+        "phonetic": "/ɪnˈdiː.sənt/",
+        "morphology": "adj"
+      }
+    ],
+    "tokenized_translation": "AI 模型 基于 复杂的 算法 和 机器 学习 技术 生成 回应 和 输出内容，这些 回应 或 输出内容 可能 是 不准确的、有害的、有偏见的 或 不雅的。",
+    "grammar_explanation": "本句为并列复合句，由连词\"and\"连接两个主要分句。第一分句\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"以\"AI models\"作主语，\"generate\"作谓语动词，\"responses and outputs\"作并列宾语，过去分词短语\"based on...\"作后置定语修饰宾语，说明生成的依据。第二分句\"those responses or outputs may be inaccurate, harmful, biased or indecent\"以\"those responses or outputs\"作主语，情态动词\"may\"加系动词\"be\"构成谓语，后接四个并列形容词作表语，表示可能存在的问题。整句采用\"may be + 形容词\"结构表达不确定性与警示意味。"
+  }
+}
