@@ -48,36 +48,65 @@ async def process_text(request: dict):
         # 先使用新的分句功能切分文本
         original_sentences = text_processor.split_sentences(text)
         
-        # 翻译句子
-        sentences = await text_processor.split_and_translate(
+        # 翻译句子并获取分词结果
+        translation_results = await text_processor.split_and_translate(
             text,
             source_lang,
             target_lang,
             nvidia_api
         )
         
-        # 使用新的从句子提取词汇的功能
-        words = text_processor.extract_words_from_sentences(original_sentences, source_lang)
-        word_chunks = text_processor.chunk_words(words, chunk_size=10)
+        # 从翻译结果中提取词汇并去重
+        word_map = {}
+        for result in translation_results:
+            if isinstance(result, dict) and "tokens" in result:
+                for token in result["tokens"]:
+                    if isinstance(token, dict) and "text" in token:
+                        word = token["text"].lower()
+                        if word not in word_map:
+                            word_map[word] = {
+                                "word": word,
+                                "translations": set(),
+                                "phonetics": [],
+                                "morphology": token.get("morphology", ""),
+                                "grammar_explanation": result.get("grammar_explanation", "")
+                            }
+                        # 添加翻译到集合（自动去重）
+                        if "translation" in token:
+                            word_map[word]["translations"].add(token["translation"])
+                        # 收集音标
+                        if "phonetic" in token and token["phonetic"]:
+                            word_map[word]["phonetics"].append(token["phonetic"])
         
+        # 处理词汇数据，解决音标冲突，构建最终词汇表
         vocab = []
-        for chunk in word_chunks:
-            chunk_vocab = await nvidia_api.generate_dictionary(
-                chunk,
-                text,
-                source_lang,
-                target_lang
-            )
-            vocab.extend(chunk_vocab)
+        for word_data in word_map.values():
+            # 解决音标冲突
+            phonetic = text_processor.resolve_phonetic_conflicts(word_data["phonetics"])
+            
+            # 构建词汇条目
+            vocab_entry = {
+                "word": word_data["word"],
+                "ipa": phonetic,
+                "context_meaning": "; ".join(word_data["translations"]),
+                "variants": [],  # 暂时为空，后续可以通过generate_dictionary生成
+                "examples": [],  # 暂时为空，后续可以通过generate_dictionary生成
+                "options": [],  # 暂时为空，后续可以通过generate_dictionary生成
+                "grammar": word_data["grammar_explanation"],
+                "translation": "; ".join(word_data["translations"]),
+                "tokens": [word_data["word"]]
+            }
+            vocab.append(vocab_entry)
         
+        # 随机排序词汇表
         random.shuffle(vocab)
         
-        storage.save_pipeline_data(file_id, sentences)
+        storage.save_pipeline_data(file_id, translation_results)
         storage.save_vocab(file_id, vocab)
         
         return {
             "file_id": file_id,
-            "sentences": sentences,
+            "sentences": translation_results,
             "vocab": vocab
         }
     except Exception as e:

@@ -1,0 +1,121 @@
+{
+  "vocab": [
+    {
+      "word": "hello",
+      "ipa": "/həˈloʊ/",
+      "context_meaning": "مرحباً",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "The phrase \"Hello world\" is a simple two-word exclamatory sentence. \"Hello\" is an interjection used as a greeting. \"World\" is a singular common noun functioning as the object of address (vocative). The sentence lacks a main verb, making it a verbless or nominal construction typically used as an exclamation or salutation. It is one of the most iconic phrases in programming, traditionally used as the first output of a beginner's program.",
+      "translation": "مرحباً",
+      "tokens": [
+        "hello"
+      ]
+    },
+    {
+      "word": "programming",
+      "ipa": "/ˈproʊɡræmɪŋ/",
+      "context_meaning": "программирование",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This is a simple declarative sentence in the **Present Simple** tense, structured as **Subject + Verb + Object (S+V+O)**:\n\n1. **\"I\"** – First-person singular subject pronoun.\n2. **\"love\"** – Main verb in the **present simple** form. With the subject \"I\", no \"-s\" suffix is needed (contrast: \"she love**s**\"). It expresses a general truth, habit, or permanent state.\n3. **\"programming\"** – A **gerund** (verb \"program\" + \"-ing\") functioning as a **noun** and serving as the **direct object** of the verb \"love\". Gerunds are commonly used after verbs of emotion/preference (e.g., love, like, enjoy, hate).\n\n**Key Grammar Points:**\n- **Present Simple** is used here to express a general feeling or ongoing state of preference.\n- **Gerund as Object**: Verbs like *love*, *enjoy*, *hate*, and *prefer* are typically followed by a gerund (*-ing* form), not an infinitive (e.g., ✅ \"I love programming\" vs. ⚠️ \"I love to program\" — both are acceptable here, but the gerund is more natural for general preferences).\n- The sentence ends with a **period (.)**, confirming it is a standard declarative statement.",
+      "translation": "программирование",
+      "tokens": [
+        "programming"
+      ]
+    },
+    {
+      "word": "i",
+      "ipa": "/aɪ/",
+      "context_meaning": "Я",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This is a simple declarative sentence in the **Present Simple** tense, structured as **Subject + Verb + Object (S+V+O)**:\n\n1. **\"I\"** – First-person singular subject pronoun.\n2. **\"love\"** – Main verb in the **present simple** form. With the subject \"I\", no \"-s\" suffix is needed (contrast: \"she love**s**\"). It expresses a general truth, habit, or permanent state.\n3. **\"programming\"** – A **gerund** (verb \"program\" + \"-ing\") functioning as a **noun** and serving as the **direct object** of the verb \"love\". Gerunds are commonly used after verbs of emotion/preference (e.g., love, like, enjoy, hate).\n\n**Key Grammar Points:**\n- **Present Simple** is used here to express a general feeling or ongoing state of preference.\n- **Gerund as Object**: Verbs like *love*, *enjoy*, *hate*, and *prefer* are typically followed by a gerund (*-ing* form), not an infinitive (e.g., ✅ \"I love programming\" vs. ⚠️ \"I love to program\" — both are acceptable here, but the gerund is more natural for general preferences).\n- The sentence ends with a **period (.)**, confirming it is a standard declarative statement.",
+      "translation": "Я",
+      "tokens": [
+        "i"
+      ]
+    },
+    {
+      "word": "is",
+      "ipa": "/ɪz/",
+      "context_meaning": "ist",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a simple declarative sentence in the present tense, following the Subject-Verb-Object (SVO) structure common in English. \n\n1. **Subject**: \"This\" — a demonstrative pronoun used to refer to something nearby or just mentioned.\n2. **Linking Verb**: \"is\" — the third-person singular present form of the verb \"to be,\" used here as a linking verb to connect the subject to the predicate noun (subject complement).\n3. **Indefinite Article**: \"a\" — used before a singular, countable noun starting with a consonant sound to indicate a non-specific instance.\n4. **Predicate Noun (Subject Complement)**: \"test\" — a common noun in its singular form, serving as the complement that describes or identifies the subject \"This.\"\n\nThe sentence ends with a period (.), marking it as a declarative statement. Overall, this is one of the most basic English sentence constructions: **Subject + Linking Verb + Article + Noun**.",
+      "translation": "ist",
+      "tokens": [
+        "is"
+      ]
+    },
+    {
+      "word": "this",
+      "ipa": "/ðɪs/",
+      "context_meaning": "Dies",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a simple declarative sentence in the present tense, following the Subject-Verb-Object (SVO) structure common in English. \n\n1. **Subject**: \"This\" — a demonstrative pronoun used to refer to something nearby or just mentioned.\n2. **Linking Verb**: \"is\" — the third-person singular present form of the verb \"to be,\" used here as a linking verb to connect the subject to the predicate noun (subject complement).\n3. **Indefinite Article**: \"a\" — used before a singular, countable noun starting with a consonant sound to indicate a non-specific instance.\n4. **Predicate Noun (Subject Complement)**: \"test\" — a common noun in its singular form, serving as the complement that describes or identifies the subject \"This.\"\n\nThe sentence ends with a period (.), marking it as a declarative statement. Overall, this is one of the most basic English sentence constructions: **Subject + Linking Verb + Article + Noun**.",
+      "translation": "Dies",
+      "tokens": [
+        "this"
+      ]
+    },
+    {
+      "word": "world",
+      "ipa": "/wɜːrld/",
+      "context_meaning": "العالم",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "The phrase \"Hello world\" is a simple two-word exclamatory sentence. \"Hello\" is an interjection used as a greeting. \"World\" is a singular common noun functioning as the object of address (vocative). The sentence lacks a main verb, making it a verbless or nominal construction typically used as an exclamation or salutation. It is one of the most iconic phrases in programming, traditionally used as the first output of a beginner's program.",
+      "translation": "العالم",
+      "tokens": [
+        "world"
+      ]
+    },
+    {
+      "word": "test",
+      "ipa": "/tɛst/",
+      "context_meaning": "Test",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a simple declarative sentence in the present tense, following the Subject-Verb-Object (SVO) structure common in English. \n\n1. **Subject**: \"This\" — a demonstrative pronoun used to refer to something nearby or just mentioned.\n2. **Linking Verb**: \"is\" — the third-person singular present form of the verb \"to be,\" used here as a linking verb to connect the subject to the predicate noun (subject complement).\n3. **Indefinite Article**: \"a\" — used before a singular, countable noun starting with a consonant sound to indicate a non-specific instance.\n4. **Predicate Noun (Subject Complement)**: \"test\" — a common noun in its singular form, serving as the complement that describes or identifies the subject \"This.\"\n\nThe sentence ends with a period (.), marking it as a declarative statement. Overall, this is one of the most basic English sentence constructions: **Subject + Linking Verb + Article + Noun**.",
+      "translation": "Test",
+      "tokens": [
+        "test"
+      ]
+    },
+    {
+      "word": "a",
+      "ipa": "/ə/",
+      "context_meaning": "ein",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a simple declarative sentence in the present tense, following the Subject-Verb-Object (SVO) structure common in English. \n\n1. **Subject**: \"This\" — a demonstrative pronoun used to refer to something nearby or just mentioned.\n2. **Linking Verb**: \"is\" — the third-person singular present form of the verb \"to be,\" used here as a linking verb to connect the subject to the predicate noun (subject complement).\n3. **Indefinite Article**: \"a\" — used before a singular, countable noun starting with a consonant sound to indicate a non-specific instance.\n4. **Predicate Noun (Subject Complement)**: \"test\" — a common noun in its singular form, serving as the complement that describes or identifies the subject \"This.\"\n\nThe sentence ends with a period (.), marking it as a declarative statement. Overall, this is one of the most basic English sentence constructions: **Subject + Linking Verb + Article + Noun**.",
+      "translation": "ein",
+      "tokens": [
+        "a"
+      ]
+    },
+    {
+      "word": "love",
+      "ipa": "/lʌv/",
+      "context_meaning": "люблю",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This is a simple declarative sentence in the **Present Simple** tense, structured as **Subject + Verb + Object (S+V+O)**:\n\n1. **\"I\"** – First-person singular subject pronoun.\n2. **\"love\"** – Main verb in the **present simple** form. With the subject \"I\", no \"-s\" suffix is needed (contrast: \"she love**s**\"). It expresses a general truth, habit, or permanent state.\n3. **\"programming\"** – A **gerund** (verb \"program\" + \"-ing\") functioning as a **noun** and serving as the **direct object** of the verb \"love\". Gerunds are commonly used after verbs of emotion/preference (e.g., love, like, enjoy, hate).\n\n**Key Grammar Points:**\n- **Present Simple** is used here to express a general feeling or ongoing state of preference.\n- **Gerund as Object**: Verbs like *love*, *enjoy*, *hate*, and *prefer* are typically followed by a gerund (*-ing* form), not an infinitive (e.g., ✅ \"I love programming\" vs. ⚠️ \"I love to program\" — both are acceptable here, but the gerund is more natural for general preferences).\n- The sentence ends with a **period (.)**, confirming it is a standard declarative statement.",
+      "translation": "люблю",
+      "tokens": [
+        "love"
+      ]
+    }
+  ]
+}

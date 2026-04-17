@@ -50,7 +50,7 @@ class NvidiaAPI:
                                     "word": {"type": "string"},
                                     "ipa": {"type": "string"},
                                     "context_meaning": {"type": "string"},
-                                    "variants": {"type": "array", "items": {"type": "string"}},
+                                    "variants": {"type": "array", "items": {"type": "object", "properties": {"type": {"type": "string"}, "form": {"type": "string"}}, "required": ["type", "form"]}},
                                     "examples": {
                                         "type": "array",
                                         "items": {"type": "string"},
@@ -89,7 +89,7 @@ For each word, provide:
 1. word: The word itself
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in {target_lang} based on the context
-4. variants: Other forms of the word (e.g., past tense, plural) if applicable
+4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
 5. examples: 2 example sentences in {source_lang} that match the context meaning
 6. options: 4 options for the meaning (1 correct, 3 incorrect)
 7. grammar: Grammar explanation for the word
@@ -119,33 +119,52 @@ For each word, provide:
             "type": "function",
             "function": {
                 "name": "split_and_translate",
-                "description": "Split text into sentences and translate each",
+                "description": "Split text into sentences, tokenize, translate, and provide grammar explanation",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "sentences": {
+                        "original": {"type": "string"},
+                        "translation": {
                             "type": "array",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "original": {"type": "string"},
-                                    "translation": {"type": "string"},
-                                    "tokens": {"type": "array", "items": {"type": "string"}}
+                                    "text": {"type": "string"},
+                                    "translation": {"type": "string"}
                                 },
-                                "required": ["original", "translation", "tokens"]
+                                "required": ["text", "translation"]
                             }
-                        }
+                        },
+                        "tokens": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "text": {"type": "string"},
+                                    "translation": {"type": "string"},
+                                    "phonetic": {"type": "string"},
+                                    "morphology": {"type": "string"}
+                                },
+                                "required": ["text", "translation", "phonetic", "morphology"]
+                            }
+                        },
+                        "grammar_explanation": {"type": "string"}
                     },
-                    "required": ["sentences"]
+                    "required": ["original", "translation", "tokens", "grammar_explanation"]
                 }
             }
         }
 
-        prompt = f"""Split the following {source_lang} text into sentences.
-For each sentence:
-1. original: The original sentence in {source_lang}
-2. translation: Translation to {target_lang}
-3. tokens: Split into individual words/tokens
+        prompt = f"""Process the following {source_lang} text:
+
+1. original: The original text in {source_lang}
+2. translation: Split the translation into tokens, each with "text" (original token) and "translation" (translated token)
+3. tokens: Split into individual words/tokens, each with:
+   - text: The original token (no punctuation)
+   - translation: Translation of the token
+   - phonetic: Phonetic transcription
+   - morphology: Morphological information (e.g., part of speech, tense, number)
+4. grammar_explanation: Grammar explanation for the text
 
 Text:
 {text}
@@ -161,9 +180,9 @@ Text:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    return args["sentences"]
-            return []
+                    return args
+            return {}
         except Exception as e:
             print(f"Tool call failed: {e}")
             print(f"Response: {response}")
-            return []
+            return {}

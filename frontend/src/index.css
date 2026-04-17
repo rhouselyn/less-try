@@ -8,15 +8,65 @@
   box-sizing: border-box;
 }
 
+:root {
+  /* Anthropic brand colors */
+  --anthropic-blue: #0070f3;
+  --anthropic-light-blue: #e6f7ff;
+  --anthropic-gray-50: #f9fafb;
+  --anthropic-gray-100: #f3f4f6;
+  --anthropic-gray-200: #e5e7eb;
+  --anthropic-gray-300: #d1d5db;
+  --anthropic-gray-400: #9ca3af;
+  --anthropic-gray-500: #6b7280;
+  --anthropic-gray-600: #4b5563;
+  --anthropic-gray-700: #374151;
+  --anthropic-gray-800: #1f2937;
+  --anthropic-gray-900: #111827;
+  --anthropic-white: #ffffff;
+  --anthropic-black: #000000;
+}
+
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #ffffff;
-  color: #1e293b;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--anthropic-gray-50);
+  color: var(--anthropic-gray-900);
   line-height: 1.6;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+  
+  .anthropic-blue {
+    color: var(--anthropic-blue);
+  }
+  
+  .bg-anthropic-blue {
+    background-color: var(--anthropic-blue);
+  }
+  
+  .bg-anthropic-gray-50 {
+    background-color: var(--anthropic-gray-50);
+  }
+  
+  .bg-anthropic-gray-100 {
+    background-color: var(--anthropic-gray-100);
+  }
+  
+  .border-anthropic-gray-200 {
+    border-color: var(--anthropic-gray-200);
+  }
+  
+  .text-anthropic-gray-600 {
+    color: var(--anthropic-gray-600);
+  }
+  
+  .text-anthropic-gray-700 {
+    color: var(--anthropic-gray-700);
+  }
+  
+  .text-anthropic-gray-900 {
+    color: var(--anthropic-gray-900);
   }
 }

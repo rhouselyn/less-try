@@ -1,5 +1,5 @@
 import re
-from typing import List, Set
+from typing import List, Set, Dict, Any
 
 
 class TextProcessor:
@@ -7,7 +7,7 @@ class TextProcessor:
         pass
 
     def extract_words(self, text: str, language: str) -> List[str]:
-        """从文本中提取单词并去重"""
+        """从文本中提取单词并去重，排除标点符号"""
         words = re.findall(r'\b[a-zA-Z]{2,}\b', text)
         
         clean_words = []
@@ -68,17 +68,60 @@ class TextProcessor:
         
         return result
 
+    def process_word_variants(self, word_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """处理单词变体，确保变体前面有类型标注"""
+        processed_variants = []
+        for variant in word_data:
+            if 'type' not in variant and 'word' in variant:
+                # 简单的类型推断（实际应用中可能需要更复杂的逻辑）
+                variant['type'] = '未知'
+            processed_variants.append(variant)
+        return processed_variants
+
+    def resolve_phonetic_conflicts(self, phonetics: List[str]) -> str:
+        """解决音标冲突，选择出现最多的音标"""
+        if not phonetics:
+            return ""
+        
+        # 统计每个音标的出现次数
+        phonetic_counts = {}
+        for phonetic in phonetics:
+            if phonetic:
+                phonetic_counts[phonetic] = phonetic_counts.get(phonetic, 0) + 1
+        
+        # 按出现次数排序
+        sorted_phonetics = sorted(phonetic_counts.items(), key=lambda x: x[1], reverse=True)
+        
+        # 返回出现次数最多的音标，如果次数相同则返回第一个
+        return sorted_phonetics[0][0]
+
     async def split_and_translate(self, text: str, source_lang: str, target_lang: str, nvidia_api):
         # 先使用新的分句功能切分文本
         sentences = self.split_sentences(text)
         
         # 对每个句子进行翻译
-        all_translated_sentences = []
+        all_results = []
         for sentence in sentences:
             if sentence.strip():
-                translated = await nvidia_api.split_and_translate(sentence, source_lang, target_lang)
-                if isinstance(translated, list):
-                    all_translated_sentences.extend(translated)
+                result = await nvidia_api.split_and_translate(sentence, source_lang, target_lang)
+                if result:
+                    all_results.append(result)
         
-        # 返回翻译后的句子列表
-        return all_translated_sentences
+        # 处理结果，确保格式正确
+        processed_results = []
+        for result in all_results:
+            if isinstance(result, dict):
+                # 确保tokens格式正确，不包含标点符号
+                if 'tokens' in result:
+                    # 过滤掉标点符号token
+                    filtered_tokens = []
+                    for token in result['tokens']:
+                        if isinstance(token, dict) and 'text' in token:
+                            # 检查token是否为标点符号
+                            if token['text'].strip() and not re.match(r'^[\W_]+$', token['text']):
+                                filtered_tokens.append(token)
+                    result['tokens'] = filtered_tokens
+                processed_results.append(result)
+        
+        # 返回处理后的结果
+        return processed_results
