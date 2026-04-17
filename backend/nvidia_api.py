@@ -154,9 +154,13 @@ For each word, provide:
                             "type": "string",
                             "description": "The complete translation split into words/tokens separated by spaces"
                         },
+                        "tokenized_translation_quoted": {
+                            "type": "string",
+                            "description": "The complete translation split into words/tokens separated by spaces and wrapped in quotes, without punctuation"
+                        },
                         "grammar_explanation": {"type": "string"}
                     },
-                    "required": ["original", "translation", "tokenized_translation", "grammar_explanation"]
+                    "required": ["original", "translation", "tokenized_translation", "tokenized_translation_quoted", "grammar_explanation"]
                 }
             }
         }
@@ -187,6 +191,7 @@ Process the text with the following structure:
   - phonetic: Phonetic transcription (IPA)
   - morphology: ONLY the part of speech abbreviation (e.g., n, v, adj)
 - tokenized_translation: Complete translation to {}, split into words separated by spaces
+- tokenized_translation_quoted: Complete translation to {}, split into words separated by spaces, each word wrapped in double quotes, without any punctuation, for example: "你好" "世界"
 - grammar_explanation: ONE comprehensive grammar explanation for the entire text in {}
 
 Text to process:
