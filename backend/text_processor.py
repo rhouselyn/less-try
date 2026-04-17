@@ -6,6 +6,14 @@ class TextProcessor:
     def __init__(self):
         pass
 
+    def split_sentences(self, text: str) -> List[str]:
+        """Split text into sentences based on punctuation"""
+        # 支持中英文标点符号
+        sentences = re.split(r'[.!?。！？]+', text)
+        # 过滤空句子
+        sentences = [s.strip() for s in sentences if s.strip()]
+        return sentences
+
     def extract_words(self, text: str, language: str) -> List[str]:
         words = re.findall(r'\b[a-zA-Z]{2,}\b', text)
         
@@ -18,6 +26,23 @@ class TextProcessor:
         seen = set()
         unique_words = []
         for word in clean_words:
+            if word not in seen:
+                seen.add(word)
+                unique_words.append(word)
+        
+        return unique_words
+
+    def extract_words_from_sentences(self, sentences: List[str]) -> List[str]:
+        """Extract words from multiple sentences and deduplicate"""
+        all_words = []
+        for sentence in sentences:
+            words = self.extract_words(sentence, "en")
+            all_words.extend(words)
+        
+        # 去重
+        seen = set()
+        unique_words = []
+        for word in all_words:
             if word not in seen:
                 seen.add(word)
                 unique_words.append(word)
