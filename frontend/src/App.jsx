@@ -35,15 +35,27 @@ function App() {
         text: text.trim(),
         source_language: sourceLang,
         target_language: targetLang
+      }, {
+        timeout: 120000 // 2分钟超时
       })
       
-      setFileId(response.data.file_id)
-      setVocab(response.data.vocab)
-      setTranslationResult(response.data.translation_result)
-      setStep('dictionary')
+      if (response.data && response.data.vocab) {
+        setFileId(response.data.file_id)
+        setVocab(response.data.vocab)
+        setTranslationResult(response.data.translation_result)
+        setStep('dictionary')
+      } else {
+        throw new Error('无效的API响应')
+      }
     } catch (error) {
       console.error('Error processing text:', error)
-      alert('处理失败，请重试')
+      if (error.code === 'ECONNABORTED') {
+        alert('处理超时，请重试')
+      } else if (error.response && error.response.status === 504) {
+        alert('服务器响应超时，请稍后重试')
+      } else {
+        alert('处理失败，请重试')
+      }
     } finally {
       setLoading(false)
     }
@@ -249,7 +261,7 @@ function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWor
         </motion.div>
       )}
 
-      {/* 单词表 - 横向排列 */}
+      {/* 单词表 - 高中课本附录格式 */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-slate-900">
@@ -264,23 +276,26 @@ function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWor
             <Shuffle className="w-5 h-5" />
           </motion.button>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-4">
-          {vocab.map((word, index) => (
-            <motion.button
-              key={word.word || index}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.02 }}
-              onClick={() => setSelectedWord(word)}
-              className={`px-4 py-3 rounded-lg border transition-all whitespace-nowrap ${
-                selectedWord?.word === word.word
-                  ? 'border-black bg-black text-white'
-                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-              }`}
-            >
-              <span className="font-medium">{word.word}</span>
-            </motion.button>
-          ))}
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="grid grid-cols-2 gap-1 p-4 bg-slate-50 border-b border-slate-200">
+            <div className="font-semibold text-slate-700">单词</div>
+            <div className="font-semibold text-slate-700">词性</div>
+          </div>
+          <div className="divide-y divide-slate-200">
+            {vocab.map((word, index) => (
+              <motion.div
+                key={word.word || index}
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.02 }}
+                className="grid grid-cols-2 gap-1 p-4 hover:bg-slate-50 cursor-pointer"
+                onClick={() => setSelectedWord(word)}
+              >
+                <div className="font-medium text-slate-900">{word.word}</div>
+                <div className="text-slate-600 font-mono">{word.morphology}</div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -294,9 +309,9 @@ function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWor
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center h-48 text-slate-400 bg-white rounded-2xl border border-slate-200"
+              className="flex flex-col items-center justify-center h-32 text-slate-400 bg-white rounded-2xl border border-slate-200"
             >
-              <BookOpen className="w-12 h-12 mb-3 opacity-50" />
+              <BookOpen className="w-8 h-8 mb-2 opacity-50" />
               <p>选择一个单词查看详情</p>
             </motion.div>
           )}

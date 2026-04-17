@@ -62,11 +62,14 @@ async def process_text(request: dict):
                     word = token["text"].lower()
                     if word not in seen_words:
                         seen_words.add(word)
+                        # 直接使用API返回的形态学缩写
+                        morphology = token.get("morphology", "")
+                        
                         vocab_entry = {
                             "word": token["text"],
                             "ipa": token.get("phonetic", ""),
                             "context_meaning": token.get("translation", ""),
-                            "morphology": token.get("morphology", ""),
+                            "morphology": morphology,
                             "translation": token.get("translation", "")
                         }
                         vocab.append(vocab_entry)

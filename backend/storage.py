@@ -18,18 +18,18 @@ class Storage:
         file_dir.mkdir(parents=True, exist_ok=True)
         return file_dir
 
-    def save_pipeline_data(self, file_id: str, sentences: List[Dict]):
+    def save_pipeline_data(self, file_id: str, data: Any):
         file_dir = self.get_file_dir(file_id)
         pipeline_path = file_dir / "pipeline_data.json"
         with open(pipeline_path, 'w', encoding='utf-8') as f:
-            json.dump({"sentences": sentences}, f, ensure_ascii=False, indent=2)
+            json.dump({"data": data}, f, ensure_ascii=False, indent=2)
 
-    def load_pipeline_data(self, file_id: str) -> List[Dict]:
+    def load_pipeline_data(self, file_id: str) -> Any:
         file_dir = self.get_file_dir(file_id)
         pipeline_path = file_dir / "pipeline_data.json"
         with open(pipeline_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-            return data.get("sentences", [])
+            return data.get("data", {})
 
     def save_vocab(self, file_id: str, vocab: List[Dict]):
         file_dir = self.get_file_dir(file_id)

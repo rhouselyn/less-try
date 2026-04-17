@@ -25,14 +25,26 @@ class NvidiaAPI:
             payload["tools"] = tools
             payload["tool_choice"] = "auto"
 
-        response = requests.post(
-            f"{self.base_url}/chat/completions",
-            headers=self.headers,
-            json=payload,
-            timeout=30  # Add 30-second timeout
-        )
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers=self.headers,
+                json=payload,
+                timeout=60  # Increase timeout to 60 seconds
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.Timeout:
+            print("API request timed out. Retrying...")
+            # Retry once
+            response = requests.post(
+                f"{self.base_url}/chat/completions",
+                headers=self.headers,
+                json=payload,
+                timeout=60
+            )
+            response.raise_for_status()
+            return response.json()
 
     async def generate_dictionary(self, words: List[str], context: str, source_lang: str, target_lang: str):
         tool_def = {
@@ -149,25 +161,37 @@ For each word, provide:
             }
         }
 
-        prompt = f"""Process the following {source_lang} text and translate it to {target_lang}.
+        prompt = """Process the following {} text and translate it to {}.
 
 IMPORTANT INSTRUCTIONS:
-1. Use {target_lang} for ALL translations and explanations.
+1. Use {} for ALL translations and explanations.
 2. DO NOT give grammar explanations for individual words - only give ONE comprehensive grammar explanation for the entire sentence/text.
+3. FOR MORPHOLOGY: USE ONLY THESE ABBREVIATIONS - NO OTHER TEXT:
+   - n (noun)
+   - v (verb)
+   - adj (adjective)
+   - adv (adverb)
+   - pron (pronoun)
+   - prep (preposition)
+   - conj (conjunction)
+   - interj (interjection)
+   - det (determiner)
+4. MORPHOLOGY FIELD MUST ONLY CONTAIN THE ABBREVIATION, NOTHING ELSE
+5. DO NOT include any additional explanation in the morphology field
 
 Process the text with the following structure:
-- original: The original {source_lang} text
+- original: The original {} text
 - translation: Array of objects, each with:
   - text: Original word/token (without punctuation)
-  - translation: Translation of this word to {target_lang}
+  - translation: Translation of this word to {}
   - phonetic: Phonetic transcription (IPA)
-  - morphology: Morphological information (part of speech, tense, number, etc.)
-- tokenized_translation: Complete translation to {target_lang}, split into words separated by spaces
-- grammar_explanation: ONE comprehensive grammar explanation for the entire text in {target_lang}
+  - morphology: ONLY the part of speech abbreviation (e.g., n, v, adj)
+- tokenized_translation: Complete translation to {}, split into words separated by spaces
+- grammar_explanation: ONE comprehensive grammar explanation for the entire text in {}
 
 Text to process:
-{text}
-"""
+{}
+""".format(source_lang, target_lang, target_lang, source_lang, target_lang, target_lang, target_lang, text)
 
         messages = [{"role": "user", "content": prompt}]
         

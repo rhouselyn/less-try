@@ -1,0 +1,21 @@
+{
+  "sentences": {
+    "original": "hello world",
+    "translation": [
+      {
+        "text": "hello",
+        "translation": "你好",
+        "phonetic": "həˈloʊ",
+        "morphology": "感叹词（interjection），用于打招呼，无词形变化"
+      },
+      {
+        "text": "world",
+        "translation": "世界",
+        "phonetic": "wɜːrld",
+        "morphology": "名词（noun），单数形式，普通名词，复数形式为 worlds"
+      }
+    ],
+    "tokenized_translation": "你好 世界",
+    "grammar_explanation": "\"hello world\" 是一个由感叹词（interjection）\"hello\" 和名词（noun）\"world\" 构成的简短短语，没有动词或完整的主谓结构，因此严格来说它不是一个完整的句子，而是一个呼语短语（vocative phrase）。其中 \"hello\" 作为问候语，\"world\" 作为被呼唤的对象，整体表达\"向世界打招呼\"的含义。这一短语因被广泛用于编程教学中的第一个示例程序（如 print(\"Hello, World!\")）而举世闻名，已成为一种文化符号。"
+  }
+}

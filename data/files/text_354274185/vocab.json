@@ -1,0 +1,32 @@
+{
+  "vocab": [
+    {
+      "word": "am",
+      "ipa": "/æm/",
+      "context_meaning": "是",
+      "morphology": "动词，be动词的第一人称单数现在时形式",
+      "translation": "是"
+    },
+    {
+      "word": "I",
+      "ipa": "/aɪ/",
+      "context_meaning": "我",
+      "morphology": "人称代词，第一人称单数，主格",
+      "translation": "我"
+    },
+    {
+      "word": "a",
+      "ipa": "/ə/",
+      "context_meaning": "一个",
+      "morphology": "不定冠词，用于辅音音素开头的单数可数名词前",
+      "translation": "一个"
+    },
+    {
+      "word": "student",
+      "ipa": "/ˈstjuːdənt/",
+      "context_meaning": "学生",
+      "morphology": "名词，普通名词，单数形式",
+      "translation": "学生"
+    }
+  ]
+}

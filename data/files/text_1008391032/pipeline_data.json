@@ -1,0 +1,21 @@
+{
+  "sentences": {
+    "grammar_explanation": "该句 \"Hello world.\" 是一个简单的感叹句，由感叹词 \"Hello\"（你好）和名词 \"world\"（世界）构成，不含动词。\"Hello\" 作为打招呼用语，\"world\" 作为呼语（直接称呼的对象），整句表达对\"世界\"的问候。句末使用句号表示陈述语气，结构简洁，是英语中最经典的入门短句之一。",
+    "original": "Hello world.",
+    "tokenized_translation": "你好 世界",
+    "translation": [
+      {
+        "morphology": "感叹词，用于打招呼",
+        "phonetic": "həˈloʊ",
+        "text": "Hello",
+        "translation": "你好"
+      },
+      {
+        "morphology": "名词，单数，普通名词",
+        "phonetic": "wɜːrld",
+        "text": "world",
+        "translation": "世界"
+      }
+    ]
+  }
+}

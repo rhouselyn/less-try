@@ -1,0 +1,15 @@
+{
+  "sentences": {
+    "grammar_explanation": "\"hello\" 是一个英语感叹词（叹词），常用于问候、打招呼或引起他人注意。它没有词形变化，不受时态、数、格等语法规则的影响，可以单独作为一个完整的话语使用。在句子中，它通常出现在句首，后面可跟逗号或感叹号。其对应的中文表达为\"你好\"，在正式或书面场合也可使用\"您好\"。",
+    "original": "hello",
+    "tokenized_translation": "你好",
+    "translation": [
+      {
+        "morphology": "感叹词（叹词）：用于打招呼或引起注意",
+        "phonetic": "həˈloʊ",
+        "text": "hello",
+        "translation": "你好"
+      }
+    ]
+  }
+}
