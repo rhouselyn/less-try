@@ -1,0 +1,12 @@
+{
+  "sentences": [
+    {
+      "original": "Hello world",
+      "tokens": [
+        "Hello",
+        "world"
+      ],
+      "translation": "你好，世界"
+    }
+  ]
+}

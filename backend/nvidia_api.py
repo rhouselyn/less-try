@@ -6,8 +6,8 @@ from typing import List, Dict, Any
 
 class NvidiaAPI:
     def __init__(self):
-        self.api_key = os.getenv("NVIDIA_API_KEY")
-        self.base_url = "https://integrate.api.nvidia.com/v1"
+        self.api_key = "sk-cp-_8A4FS-xzNygSSrcPqjaQJA0aJhxqYkYmNcrTrhpWRM"
+        self.base_url = "https://ai.irobotx.top/v1"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -15,7 +15,7 @@ class NvidiaAPI:
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0):
         payload = {
-            "model": "minimaxai/minimax-m2.7",
+            "model": "claude-sonnet-4.6",
             "messages": messages,
             "temperature": temperature,
             "max_tokens": 4096
@@ -88,9 +88,13 @@ For each word, provide:
         response = await self.call_minimax(messages, [tool_def], temperature=0.0)
         
         try:
-            tool_call = response["choices"][0]["message"]["tool_calls"][0]
-            args = json.loads(tool_call["function"]["arguments"])
-            return args["words"]
+            # 查找包含 tool_calls 的 choice
+            for choice in response["choices"]:
+                if "tool_calls" in choice["message"]:
+                    tool_call = choice["message"]["tool_calls"][0]
+                    args = json.loads(tool_call["function"]["arguments"])
+                    return args["words"]
+            return []
         except Exception as e:
             print(f"Tool call failed: {e}")
             print(f"Response: {response}")
@@ -138,9 +142,13 @@ Text:
         response = await self.call_minimax(messages, [tool_def], temperature=0.0)
         
         try:
-            tool_call = response["choices"][0]["message"]["tool_calls"][0]
-            args = json.loads(tool_call["function"]["arguments"])
-            return args["sentences"]
+            # 查找包含 tool_calls 的 choice
+            for choice in response["choices"]:
+                if "tool_calls" in choice["message"]:
+                    tool_call = choice["message"]["tool_calls"][0]
+                    args = json.loads(tool_call["function"]["arguments"])
+                    return args["sentences"]
+            return []
         except Exception as e:
             print(f"Tool call failed: {e}")
             print(f"Response: {response}")
