@@ -1,0 +1,102 @@
+{
+  "sentences": [
+    {
+      "original": "AI models generate responses and outputs based on complex algorithms and machine learning techniques, and those responses or outputs may be inaccurate, harmful, biased or indecent.",
+      "tokens": [
+        "AI",
+        "models",
+        "generate",
+        "responses",
+        "and",
+        "outputs",
+        "based",
+        "on",
+        "complex",
+        "algorithms",
+        "and",
+        "machine",
+        "learning",
+        "techniques",
+        ",",
+        "and",
+        "those",
+        "responses",
+        "or",
+        "outputs",
+        "may",
+        "be",
+        "inaccurate",
+        ",",
+        "harmful",
+        ",",
+        "biased",
+        "or",
+        "indecent",
+        "."
+      ],
+      "translation": "AI模型基于复杂的算法和机器学习技术生成响应和输出，这些响应或输出可能不准确、有害、带有偏见或不雅。"
+    },
+    {
+      "original": "By testing this model, you assume the risk of any harm caused by any response or output of the model.",
+      "tokens": [
+        "By",
+        "testing",
+        "this",
+        "model",
+        ",",
+        "you",
+        "assume",
+        "the",
+        "risk",
+        "of",
+        "any",
+        "harm",
+        "caused",
+        "by",
+        "any",
+        "response",
+        "or",
+        "output",
+        "of",
+        "the",
+        "model",
+        "."
+      ],
+      "translation": "通过测试此模型，您将承担由模型的任何响应或输出所造成的任何伤害的风险。"
+    },
+    {
+      "original": "Please do not upload any confidential information or personal data unless expressly permitted.",
+      "tokens": [
+        "Please",
+        "do",
+        "not",
+        "upload",
+        "any",
+        "confidential",
+        "information",
+        "or",
+        "personal",
+        "data",
+        "unless",
+        "expressly",
+        "permitted",
+        "."
+      ],
+      "translation": "除非获得明确许可，否则请勿上传任何机密信息或个人数据。"
+    },
+    {
+      "original": "Your use is logged for security purposes.",
+      "tokens": [
+        "Your",
+        "use",
+        "is",
+        "logged",
+        "for",
+        "security",
+        "purposes",
+        "."
+      ],
+      "translation": "您的使用记录将被记录以用于安全目的。"
+    }
+  ]
+}
