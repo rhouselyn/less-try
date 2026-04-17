@@ -120,7 +120,7 @@ For each word, provide:
             "type": "function",
             "function": {
                 "name": "split_and_translate",
-                "description": "Split text into tokens, translate each token, and provide grammar explanation",
+                "description": "Split text into tokens, translate each token, and provide sentence-level grammar explanation",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -138,24 +138,34 @@ For each word, provide:
                                 "required": ["text", "translation", "phonetic", "morphology"]
                             }
                         },
+                        "tokenized_translation": {
+                            "type": "string",
+                            "description": "The complete translation split into words/tokens separated by spaces"
+                        },
                         "grammar_explanation": {"type": "string"}
                     },
-                    "required": ["original", "translation", "grammar_explanation"]
+                    "required": ["original", "translation", "tokenized_translation", "grammar_explanation"]
                 }
             }
         }
 
-        prompt = f"""Process the following {source_lang} text and translate it to {target_lang}:
+        prompt = f"""Process the following {source_lang} text and translate it to {target_lang}.
 
-1. original: The original text in {source_lang}
-2. translation: Split the text into individual words/tokens, each with:
-   - text: The original token (no punctuation)
-   - translation: Translation of the token to {target_lang}
-   - phonetic: Phonetic transcription
-   - morphology: Morphological information (e.g., part of speech, tense, number)
-3. grammar_explanation: Grammar explanation for the text in {target_lang}
+IMPORTANT INSTRUCTIONS:
+1. Use {target_lang} for ALL translations and explanations.
+2. DO NOT give grammar explanations for individual words - only give ONE comprehensive grammar explanation for the entire sentence/text.
 
-Text:
+Process the text with the following structure:
+- original: The original {source_lang} text
+- translation: Array of objects, each with:
+  - text: Original word/token (without punctuation)
+  - translation: Translation of this word to {target_lang}
+  - phonetic: Phonetic transcription (IPA)
+  - morphology: Morphological information (part of speech, tense, number, etc.)
+- tokenized_translation: Complete translation to {target_lang}, split into words separated by spaces
+- grammar_explanation: ONE comprehensive grammar explanation for the entire text in {target_lang}
+
+Text to process:
 {text}
 """
 
@@ -164,11 +174,17 @@ Text:
         response = await self.call_minimax(messages, [tool_def], temperature=0.0)
         
         try:
-            # 查找包含 tool_calls 的 choice
+            print("=== LLM Tool JSON Response ===")
+            print(json.dumps(response, indent=2, ensure_ascii=False))
+            print("======================")
+            
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
+                    print("=== Parsed Tool Arguments ===")
+                    print(json.dumps(args, indent=2, ensure_ascii=False))
+                    print("======================")
                     return args
             return {}
         except Exception as e:

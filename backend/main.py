@@ -45,68 +45,41 @@ async def process_text(request: dict):
         
         file_id = f"text_{int(os.urandom(4).hex(), 16)}"
         
-        # 先使用新的分句功能切分文本
-        original_sentences = text_processor.split_sentences(text)
-        
         # 翻译句子并获取分词结果
-        translation_results = await text_processor.split_and_translate(
+        translation_result = await text_processor.split_and_translate(
             text,
             source_lang,
             target_lang,
             nvidia_api
         )
         
-        # 从翻译结果中提取词汇并去重
-        word_map = {}
-        if isinstance(translation_results, dict) and "translation" in translation_results:
-            for token in translation_results["translation"]:
+        # 直接使用 split_and_translate 的结果作为词汇表
+        vocab = []
+        if isinstance(translation_result, dict) and "translation" in translation_result:
+            seen_words = set()
+            for token in translation_result["translation"]:
                 if isinstance(token, dict) and "text" in token:
                     word = token["text"].lower()
-                    if word not in word_map:
-                        word_map[word] = {
-                            "word": word,
-                            "translations": set(),
-                            "phonetics": [],
+                    if word not in seen_words:
+                        seen_words.add(word)
+                        vocab_entry = {
+                            "word": token["text"],
+                            "ipa": token.get("phonetic", ""),
+                            "context_meaning": token.get("translation", ""),
                             "morphology": token.get("morphology", ""),
-                            "grammar_explanation": translation_results.get("grammar_explanation", "")
+                            "translation": token.get("translation", "")
                         }
-                    # 添加翻译到集合（自动去重）
-                    if "translation" in token:
-                        word_map[word]["translations"].add(token["translation"])
-                    # 收集音标
-                    if "phonetic" in token and token["phonetic"]:
-                        word_map[word]["phonetics"].append(token["phonetic"])
-        
-        # 处理词汇数据，解决音标冲突，构建最终词汇表
-        vocab = []
-        for word_data in word_map.values():
-            # 解决音标冲突
-            phonetic = text_processor.resolve_phonetic_conflicts(word_data["phonetics"])
-            
-            # 构建词汇条目
-            vocab_entry = {
-                "word": word_data["word"],
-                "ipa": phonetic,
-                "context_meaning": "; ".join(word_data["translations"]),
-                "morphology": word_data["morphology"],
-                "variants": [],  # 暂时为空，后续可以通过generate_dictionary生成
-                "examples": [],  # 暂时为空，后续可以通过generate_dictionary生成
-                "options": [],  # 暂时为空，后续可以通过generate_dictionary生成
-                "grammar": word_data["grammar_explanation"],
-                "translation": "; ".join(word_data["translations"]),
-                "tokens": [word_data["word"]]
-            }
-            vocab.append(vocab_entry)
+                        vocab.append(vocab_entry)
         
         # 随机排序词汇表
         random.shuffle(vocab)
         
-        storage.save_pipeline_data(file_id, translation_results)
+        storage.save_pipeline_data(file_id, translation_result)
         storage.save_vocab(file_id, vocab)
         
         return {
             "file_id": file_id,
-            "translation_result": translation_results,
+            "translation_result": translation_result,
             "vocab": vocab
         }
     except Exception as e:

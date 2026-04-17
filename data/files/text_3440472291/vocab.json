@@ -1,0 +1,32 @@
+{
+  "vocab": [
+    {
+      "word": "shit",
+      "ipa": "/ʃɪt/",
+      "context_meaning": "粪便 / 狗屎",
+      "morphology": "名词 (noun)，单数 (singular)；亦可用作感叹词 (interjection)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**\"holly shit\"** 从字面语法来看是一个**名词短语 (Noun Phrase)**，由名词 \"holly\"（冬青）修饰名词 \"shit\"（粪便），字面意思为\"冬青树下的粪便\"，**没有实际常用含义**，通常被认为是 \"holy shit\" 的**拼写错误**。此短语本身不构成完整句子，也没有动词成分。",
+      "translation": "粪便 / 狗屎",
+      "tokens": [
+        "shit"
+      ]
+    },
+    {
+      "word": "holly",
+      "ipa": "/ˈhɒl.i/",
+      "context_meaning": "冬青（植物）",
+      "morphology": "名词 (noun)，单数 (singular)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**\"holly shit\"** 从字面语法来看是一个**名词短语 (Noun Phrase)**，由名词 \"holly\"（冬青）修饰名词 \"shit\"（粪便），字面意思为\"冬青树下的粪便\"，**没有实际常用含义**，通常被认为是 \"holy shit\" 的**拼写错误**。此短语本身不构成完整句子，也没有动词成分。",
+      "translation": "冬青（植物）",
+      "tokens": [
+        "holly"
+      ]
+    }
+  ]
+}

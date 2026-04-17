@@ -1,0 +1,18 @@
+{
+  "vocab": [
+    {
+      "word": "world",
+      "ipa": "/wɜːrld/",
+      "context_meaning": "世界",
+      "morphology": "名词（noun）：普通名词，单数形式，此处作呼语使用",
+      "translation": "世界"
+    },
+    {
+      "word": "Hello",
+      "ipa": "/həˈloʊ/",
+      "context_meaning": "你好",
+      "morphology": "感叹词（interjection）：用于打招呼的问候语，无词形变化",
+      "translation": "你好"
+    }
+  ]
+}

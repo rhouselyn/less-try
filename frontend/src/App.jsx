@@ -214,6 +214,41 @@ function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWor
       exit={{ opacity: 0, y: -20 }}
       className="flex flex-col gap-6"
     >
+      {/* 原文和翻译 */}
+      {translationResult && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm"
+        >
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                原文
+              </h3>
+              <p className="text-lg text-slate-900">{translationResult.original}</p>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                分词译文
+              </h3>
+              <p className="text-lg text-slate-700 font-medium">{translationResult.tokenized_translation}</p>
+            </div>
+            {translationResult.grammar_explanation && (
+              <div>
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  语法讲解
+                </h3>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                  <p className="text-slate-700 leading-relaxed">{translationResult.grammar_explanation}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+
       {/* 单词表 - 横向排列 */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -259,9 +294,9 @@ function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWor
               key="empty"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center h-96 text-slate-400 bg-white rounded-2xl border border-slate-200"
+              className="flex flex-col items-center justify-center h-48 text-slate-400 bg-white rounded-2xl border border-slate-200"
             >
-              <BookOpen className="w-16 h-16 mb-4 opacity-50" />
+              <BookOpen className="w-12 h-12 mb-3 opacity-50" />
               <p>选择一个单词查看详情</p>
             </motion.div>
           )}
@@ -327,7 +362,7 @@ function WordDetail({ word }) {
         )}
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -341,86 +376,6 @@ function WordDetail({ word }) {
             {word.context_meaning}
           </p>
         </motion.div>
-
-        {word.variants && word.variants.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              变体
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              {word.variants.map((variant, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded-full text-sm"
-                >
-                  {variant.type}: {variant.form}
-                </span>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {word.examples && word.examples.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              例句
-            </h3>
-            <div className="space-y-4">
-              {word.examples.map((example, i) => (
-                <div key={i} className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-                  <p className="text-slate-700">{example}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {word.options && word.options.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              选项
-            </h3>
-            <div className="space-y-2">
-              {word.options.map((option, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                  {word.correct_answer === i ? (
-                    <CheckCircle2 className="w-5 h-5 text-green-500 flex-shrink-0" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                  )}
-                  <span className="text-slate-700">{option}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {word.grammar && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              语法讲解
-            </h3>
-            <div className="p-4 bg-slate-50 rounded-lg border border-slate-100">
-              <p className="text-slate-700 leading-relaxed">{word.grammar}</p>
-            </div>
-          </motion.div>
-        )}
       </div>
     </motion.div>
   )
