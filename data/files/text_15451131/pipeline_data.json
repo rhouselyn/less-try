@@ -1,0 +1,26 @@
+{
+  "sentences": {
+    "grammar_explanation": "\n「What the fuck」是一个英语俚语/粗口感叹句，用于表达强烈的惊讶、愤怒、困惑或不满情绪，相当于中文的\"这他妈是什么\"或\"搞什么鬼\"。\n\n**句子结构分析：**\n- 本句源自疑问句 「What the fuck is this/going on?」的省略形式，省略了谓语动词和宾语。\n- 「What」为疑问代词，引导整个感叹/疑问结构。\n- 「the fuck」是一个 **expletive intensifier（粗口强调语）**，插入疑问词之后，起到加强语气的作用，是英语口语中常见的语气增强手段（intensifier），类似用法还有 \"What the hell\"、\"What on earth\" 等。\n- 整体语气强烈，属于非正式、粗俗表达，**不适合在正式场合使用**。\n\n⚠️ **注意：** 该表达含有粗口成分，在日常正式交流、学术或职业场合中应避免使用。\n",
+    "original": "what the fuck",
+    "translation": [
+      {
+        "morphology": "疑问代词 (interrogative pronoun)，用于询问事物或情况",
+        "phonetic": "/wɒt/",
+        "text": "what",
+        "translation": "什么"
+      },
+      {
+        "morphology": "定冠词 (definite article)，修饰特定名词",
+        "phonetic": "/ðə/",
+        "text": "the",
+        "translation": "这/那（定冠词）"
+      },
+      {
+        "morphology": "粗口感叹词 (vulgar interjection/expletive)，此处作强调语气词使用，无实际语义",
+        "phonetic": "/fʌk/",
+        "text": "fuck",
+        "translation": "他妈的"
+      }
+    ]
+  }
+}

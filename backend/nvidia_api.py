@@ -28,7 +28,8 @@ class NvidiaAPI:
         response = requests.post(
             f"{self.base_url}/chat/completions",
             headers=self.headers,
-            json=payload
+            json=payload,
+            timeout=30  # Add 30-second timeout
         )
         response.raise_for_status()
         return response.json()
