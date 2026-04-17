@@ -12,7 +12,7 @@ function App() {
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
   const [shuffledVocab, setShuffledVocab] = useState([])
-  const [sentences, setSentences] = useState([])
+  const [translationResult, setTranslationResult] = useState(null)
   const [selectedWord, setSelectedWord] = useState(null)
 
   useEffect(() => {
@@ -39,7 +39,7 @@ function App() {
       
       setFileId(response.data.file_id)
       setVocab(response.data.vocab)
-      setSentences(response.data.sentences)
+      setTranslationResult(response.data.translation_result)
       setStep('dictionary')
     } catch (error) {
       console.error('Error processing text:', error)
@@ -101,7 +101,7 @@ function App() {
             <DictionaryStep
               key="dictionary"
               vocab={shuffledVocab}
-              sentences={sentences}
+              translationResult={translationResult}
               selectedWord={selectedWord}
               setSelectedWord={setSelectedWord}
               onShuffle={shuffleVocab}
@@ -206,56 +206,51 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, sentences, selectedWord, setSelectedWord, onShuffle }) {
+function DictionaryStep({ vocab, translationResult, selectedWord, setSelectedWord, onShuffle }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+      className="flex flex-col gap-6"
     >
-      <div className="lg:col-span-1">
-        <div className="sticky top-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-slate-900">
-              单词表 ({vocab.length})
-            </h2>
+      {/* 单词表 - 横向排列 */}
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-slate-900">
+            单词表 ({vocab.length})
+          </h2>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onShuffle}
+            className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+          >
+            <Shuffle className="w-5 h-5" />
+          </motion.button>
+        </div>
+        <div className="flex gap-3 overflow-x-auto pb-4">
+          {vocab.map((word, index) => (
             <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onShuffle}
-              className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+              key={word.word || index}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.02 }}
+              onClick={() => setSelectedWord(word)}
+              className={`px-4 py-3 rounded-lg border transition-all whitespace-nowrap ${
+                selectedWord?.word === word.word
+                  ? 'border-black bg-black text-white'
+                  : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
+              }`}
             >
-              <Shuffle className="w-5 h-5" />
+              <span className="font-medium">{word.word}</span>
             </motion.button>
-          </div>
-          <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
-            {vocab.map((word, index) => (
-              <motion.button
-                key={word.word || index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.02 }}
-                onClick={() => setSelectedWord(word)}
-                className={`w-full text-left px-4 py-3 rounded-lg border transition-all ${
-                  selectedWord?.word === word.word
-                    ? 'border-black bg-black text-white'
-                    : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{word.word}</span>
-                  {selectedWord?.word === word.word && (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </div>
-              </motion.button>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="lg:col-span-2">
+      {/* 词典详情 */}
+      <div>
         <AnimatePresence mode="wait">
           {selectedWord ? (
             <WordDetail key={selectedWord.word} word={selectedWord} />
@@ -320,14 +315,14 @@ function WordDetail({ word }) {
             </motion.button>
           </div>
         </div>
-        {word.part_of_speech && (
+        {word.morphology && (
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.15 }}
             className="px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium"
           >
-            {word.part_of_speech}
+            {word.morphology}
           </motion.span>
         )}
       </div>

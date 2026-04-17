@@ -1,0 +1,30 @@
+{
+  "vocab": [
+    {
+      "word": "hello",
+      "ipa": "/həˈloʊ/",
+      "context_meaning": "Hola",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "The sentence \"Hello world.\" is a simple declarative/exclamatory phrase composed of two elements: (1) \"Hello\" — an interjection used as a greeting or to attract attention, carrying no grammatical subject or verb; (2) \"world\" — a singular common noun functioning as the object of address. The sentence lacks a main verb, making it a nominal or verbless utterance, which is typical of greetings and exclamations in English. The period at the end indicates a calm, declarative tone, though an exclamation mark (!) is also commonly used to express enthusiasm.",
+      "translation": "Hola",
+      "tokens": [
+        "hello"
+      ]
+    },
+    {
+      "word": "world",
+      "ipa": "/wɜːrld/",
+      "context_meaning": "mundo",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "The sentence \"Hello world.\" is a simple declarative/exclamatory phrase composed of two elements: (1) \"Hello\" — an interjection used as a greeting or to attract attention, carrying no grammatical subject or verb; (2) \"world\" — a singular common noun functioning as the object of address. The sentence lacks a main verb, making it a nominal or verbless utterance, which is typical of greetings and exclamations in English. The period at the end indicates a calm, declarative tone, though an exclamation mark (!) is also commonly used to express enthusiasm.",
+      "translation": "mundo",
+      "tokens": [
+        "world"
+      ]
+    }
+  ]
+}

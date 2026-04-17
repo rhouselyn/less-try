@@ -1,0 +1,298 @@
+{
+  "vocab": [
+    {
+      "word": "models",
+      "ipa": "/ˈmɒd.əlz/",
+      "context_meaning": "模型",
+      "morphology": "名词，复数",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "模型",
+      "tokens": [
+        "models"
+      ]
+    },
+    {
+      "word": "on",
+      "ipa": "/ɒn/",
+      "context_meaning": "在...基础上",
+      "morphology": "介词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "在...基础上",
+      "tokens": [
+        "on"
+      ]
+    },
+    {
+      "word": "outputs",
+      "ipa": "/ˈaʊt.pʊts/",
+      "context_meaning": "输出",
+      "morphology": "名词，复数",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "输出",
+      "tokens": [
+        "outputs"
+      ]
+    },
+    {
+      "word": "harmful",
+      "ipa": "/ˈhɑːm.fʊl/",
+      "context_meaning": "有害的",
+      "morphology": "形容词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "有害的",
+      "tokens": [
+        "harmful"
+      ]
+    },
+    {
+      "word": "inaccurate",
+      "ipa": "/ɪnˈæk.jʊ.rət/",
+      "context_meaning": "不准确的",
+      "morphology": "形容词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "不准确的",
+      "tokens": [
+        "inaccurate"
+      ]
+    },
+    {
+      "word": "be",
+      "ipa": "/biː/",
+      "context_meaning": "是",
+      "morphology": "动词，原形，与 may 构成情态结构",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "是",
+      "tokens": [
+        "be"
+      ]
+    },
+    {
+      "word": "algorithms",
+      "ipa": "/ˈæl.ɡə.rɪ.ðəmz/",
+      "context_meaning": "算法",
+      "morphology": "名词，复数",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "算法",
+      "tokens": [
+        "algorithms"
+      ]
+    },
+    {
+      "word": "indecent",
+      "ipa": "/ɪnˈdiː.sənt/",
+      "context_meaning": "不雅的",
+      "morphology": "形容词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "不雅的",
+      "tokens": [
+        "indecent"
+      ]
+    },
+    {
+      "word": "learning",
+      "ipa": "/ˈlɜː.nɪŋ/",
+      "context_meaning": "学习",
+      "morphology": "动名词/名词，构成复合名词 machine learning",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "学习",
+      "tokens": [
+        "learning"
+      ]
+    },
+    {
+      "word": "and",
+      "ipa": "/ænd/",
+      "context_meaning": "并且; 和",
+      "morphology": "连词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "并且; 和",
+      "tokens": [
+        "and"
+      ]
+    },
+    {
+      "word": "techniques",
+      "ipa": "/tekˈniːks/",
+      "context_meaning": "技术",
+      "morphology": "名词，复数",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "技术",
+      "tokens": [
+        "techniques"
+      ]
+    },
+    {
+      "word": "those",
+      "ipa": "/ðəʊz/",
+      "context_meaning": "那些",
+      "morphology": "指示代词/限定词，复数",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "那些",
+      "tokens": [
+        "those"
+      ]
+    },
+    {
+      "word": "biased",
+      "ipa": "/ˈbaɪ.əst/",
+      "context_meaning": "有偏见的",
+      "morphology": "形容词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "有偏见的",
+      "tokens": [
+        "biased"
+      ]
+    },
+    {
+      "word": "complex",
+      "ipa": "/ˈkɒm.pleks/",
+      "context_meaning": "复杂的",
+      "morphology": "形容词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "复杂的",
+      "tokens": [
+        "complex"
+      ]
+    },
+    {
+      "word": "ai",
+      "ipa": "/ˌeɪ ˈaɪ/",
+      "context_meaning": "人工智能",
+      "morphology": "名词/缩写词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "人工智能",
+      "tokens": [
+        "ai"
+      ]
+    },
+    {
+      "word": "responses",
+      "ipa": "/rɪˈspɒn.sɪz/",
+      "context_meaning": "回应",
+      "morphology": "名词，复数",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "回应",
+      "tokens": [
+        "responses"
+      ]
+    },
+    {
+      "word": "generate",
+      "ipa": "/ˈdʒen.ə.reɪt/",
+      "context_meaning": "生成",
+      "morphology": "动词，一般现在时，第三人称复数",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "生成",
+      "tokens": [
+        "generate"
+      ]
+    },
+    {
+      "word": "based",
+      "ipa": "/beɪst/",
+      "context_meaning": "基于",
+      "morphology": "动词，过去分词，构成介词短语 based on",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "基于",
+      "tokens": [
+        "based"
+      ]
+    },
+    {
+      "word": "may",
+      "ipa": "/meɪ/",
+      "context_meaning": "可能",
+      "morphology": "情态动词，表示可能性",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "可能",
+      "tokens": [
+        "may"
+      ]
+    },
+    {
+      "word": "machine",
+      "ipa": "/məˈʃiːn/",
+      "context_meaning": "机器",
+      "morphology": "名词，作定语修饰 learning",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "机器",
+      "tokens": [
+        "machine"
+      ]
+    },
+    {
+      "word": "or",
+      "ipa": "/ɔː/",
+      "context_meaning": "或者",
+      "morphology": "连词",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。",
+      "translation": "或者",
+      "tokens": [
+        "or"
+      ]
+    }
+  ]
+}

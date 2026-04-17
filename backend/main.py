@@ -58,25 +58,24 @@ async def process_text(request: dict):
         
         # 从翻译结果中提取词汇并去重
         word_map = {}
-        for result in translation_results:
-            if isinstance(result, dict) and "tokens" in result:
-                for token in result["tokens"]:
-                    if isinstance(token, dict) and "text" in token:
-                        word = token["text"].lower()
-                        if word not in word_map:
-                            word_map[word] = {
-                                "word": word,
-                                "translations": set(),
-                                "phonetics": [],
-                                "morphology": token.get("morphology", ""),
-                                "grammar_explanation": result.get("grammar_explanation", "")
-                            }
-                        # 添加翻译到集合（自动去重）
-                        if "translation" in token:
-                            word_map[word]["translations"].add(token["translation"])
-                        # 收集音标
-                        if "phonetic" in token and token["phonetic"]:
-                            word_map[word]["phonetics"].append(token["phonetic"])
+        if isinstance(translation_results, dict) and "translation" in translation_results:
+            for token in translation_results["translation"]:
+                if isinstance(token, dict) and "text" in token:
+                    word = token["text"].lower()
+                    if word not in word_map:
+                        word_map[word] = {
+                            "word": word,
+                            "translations": set(),
+                            "phonetics": [],
+                            "morphology": token.get("morphology", ""),
+                            "grammar_explanation": translation_results.get("grammar_explanation", "")
+                        }
+                    # 添加翻译到集合（自动去重）
+                    if "translation" in token:
+                        word_map[word]["translations"].add(token["translation"])
+                    # 收集音标
+                    if "phonetic" in token and token["phonetic"]:
+                        word_map[word]["phonetics"].append(token["phonetic"])
         
         # 处理词汇数据，解决音标冲突，构建最终词汇表
         vocab = []
@@ -89,6 +88,7 @@ async def process_text(request: dict):
                 "word": word_data["word"],
                 "ipa": phonetic,
                 "context_meaning": "; ".join(word_data["translations"]),
+                "morphology": word_data["morphology"],
                 "variants": [],  # 暂时为空，后续可以通过generate_dictionary生成
                 "examples": [],  # 暂时为空，后续可以通过generate_dictionary生成
                 "options": [],  # 暂时为空，后续可以通过generate_dictionary生成
@@ -106,7 +106,7 @@ async def process_text(request: dict):
         
         return {
             "file_id": file_id,
-            "sentences": translation_results,
+            "translation_result": translation_results,
             "vocab": vocab
         }
     except Exception as e:

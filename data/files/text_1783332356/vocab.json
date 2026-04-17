@@ -1,0 +1,32 @@
+{
+  "vocab": [
+    {
+      "word": "hello",
+      "ipa": "/həˈloʊ/",
+      "context_meaning": "你好",
+      "morphology": "感叹词 (Interjection)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "该句子是一个简单的感叹句，由感叹词\"Hello\"和名词\"world\"构成。\"Hello\"是一个常见的问候语或感叹词，用于打招呼。\"world\"是一个单数普通名词，作为问候的对象。整个句子没有动词，属于省略句结构，在日常英语中非常常见，通常用于打招呼或引起注意。句末使用句号表示陈述语气。",
+      "translation": "你好",
+      "tokens": [
+        "hello"
+      ]
+    },
+    {
+      "word": "world",
+      "ipa": "/wɜːrld/",
+      "context_meaning": "世界",
+      "morphology": "名词，单数 (Noun, Singular)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "该句子是一个简单的感叹句，由感叹词\"Hello\"和名词\"world\"构成。\"Hello\"是一个常见的问候语或感叹词，用于打招呼。\"world\"是一个单数普通名词，作为问候的对象。整个句子没有动词，属于省略句结构，在日常英语中非常常见，通常用于打招呼或引起注意。句末使用句号表示陈述语气。",
+      "translation": "世界",
+      "tokens": [
+        "world"
+      ]
+    }
+  ]
+}
