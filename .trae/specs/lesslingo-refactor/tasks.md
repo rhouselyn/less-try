@@ -17,26 +17,33 @@
 - **Priority**: P0
 - **Depends On**: Task 1
 - **Description**: 
-  - 优化词汇提取逻辑，从每个句子中提取单词
-  - 实现全局词汇去重，确保每个单词只出现一次
+  - 优化词汇提取逻辑，从每个句子中提取单词，排除标点符号
+  - 实现全局词汇去重，只针对单词去重，取token翻译的并集作为释义集合
+  - 实现音标处理：如果音标有不同（可能的生成错误），选出现最多的，一样多就选第一个
   - 保持词汇提取的准确性和效率
 - **Acceptance Criteria Addressed**: AC-2
 - **Test Requirements**:
   - `programmatic` TR-2.1: 输入包含重复单词的文本，提取的单词列表中每个单词只出现一次
-  - `programmatic` TR-2.2: 词汇提取结果完整，无遗漏
+  - `programmatic` TR-2.2: 词汇提取结果完整，无遗漏，不包含标点符号
+  - `programmatic` TR-2.3: 去重时取token翻译的并集作为释义集合
+  - `programmatic` TR-2.4: 音标处理正确，选择出现最多的音标
 - **Notes**: 去重逻辑应考虑单词的大小写和形态变化
 
 ## [ ] Task 3: Tool Schema 设计与实现
 - **Priority**: P0
 - **Depends On**: None
 - **Description**: 
-  - 设计并实现 `generate_dictionary` Tool Schema
-  - 定义详细的 JSON 输出结构，包含所有必要字段
+  - 设计并实现 `generate_dictionary` Tool Schema，用于答题时再现场生成
+  - 设计 `split_and_translate` 输出结构，包含：
+    - 分词结果（tokens）：每个token包含文字、对应翻译、音标、形态
+    - 翻译结果：按token分词的翻译
+    - 语法讲解：对整个句子的语法分析
   - 确保 LLM 能正确理解并返回符合 Schema 的数据
 - **Acceptance Criteria Addressed**: AC-3, AC-4
 - **Test Requirements**:
   - `programmatic` TR-3.1: LLM 返回的数据符合 Tool Schema 定义
-  - `programmatic` TR-3.2: 输出包含所有必要字段（翻译、分词、音标、释义、变体、例句、选项、语法讲解）
+  - `programmatic` TR-3.2: `split_and_translate` 输出包含所有必要字段（分词、翻译、语法讲解）
+  - `programmatic` TR-3.3: 单词的variants在变种前面需要说明类型（动词等）
 - **Notes**: Schema 设计应清晰明确，便于 LLM 理解
 
 ## [ ] Task 4: 后端 API 调整
@@ -44,12 +51,13 @@
 - **Depends On**: Task 1, Task 2, Task 3
 - **Description**: 
   - 调整 `main.py` 中的 API 逻辑，整合新的文本处理和 Tool Call 功能
-  - 确保 API 响应格式符合前端需求
+  - 确保 `split_and_translate` 输出格式符合前端需求，直接用于生成字典
   - 优化错误处理和日志记录
 - **Acceptance Criteria Addressed**: AC-1, AC-2, AC-3, AC-4
 - **Test Requirements**:
   - `programmatic` TR-4.1: API 能正确处理文本并返回结构化数据
-  - `programmatic` TR-4.2: API 响应时间合理，无明显延迟
+  - `programmatic` TR-4.2: `split_and_translate` 输出包含所有必要字段（分词、翻译、语法讲解）
+  - `programmatic` TR-4.3: API 响应时间合理，无明显延迟
 - **Notes**: 确保 API 接口向后兼容
 
 ## [ ] Task 5: 前端界面重构 - 双栏字典 UI
@@ -59,12 +67,14 @@
   - 重构前端界面，实现双栏/卡片式字典 UI
   - 左侧显示单词列表（随机排列）
   - 右侧显示详细信息（音标、释义、例句等）
+  - 直接使用 `split_and_translate` 的输出生成字典
   - 应用 Anthropic 风格的视觉设计
-- **Acceptance Criteria Addressed**: AC-5
+- **Acceptance Criteria Addressed**: AC-5, AC-6
 - **Test Requirements**:
   - `human-judgment` TR-5.1: 界面布局清晰，双栏结构合理
   - `human-judgment` TR-5.2: 视觉设计符合 Anthropic 风格，简约现代
   - `programmatic` TR-5.3: 左侧单词点击后右侧显示对应详细信息
+  - `programmatic` TR-5.4: 前端直接使用 `split_and_translate` 的输出生成字典
 - **Notes**: 使用 Framer Motion 添加适当的动画效果
 
 ## [ ] Task 6: 前端流程优化 - 自动跳转功能
