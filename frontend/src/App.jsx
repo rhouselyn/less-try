@@ -31,37 +31,58 @@ function App() {
     
     setLoading(true)
     try {
+      console.log('开始处理文本，长度:', text.length)
       const response = await axios.post('/api/process-text', {
         text: text.trim(),
         source_language: sourceLang,
         target_language: targetLang
       })
       
+      console.log('API响应:', response.data)
       if (response.data && response.data.file_id) {
         const fileId = response.data.file_id
         setFileId(fileId)
+        console.log('获取到文件ID:', fileId)
         
         // 轮询检查处理状态
+        let pollCount = 0
+        const maxPolls = 300 // 10分钟
+        
         const pollStatus = async () => {
+          pollCount++
+          console.log(`第${pollCount}次轮询，文件ID: ${fileId}`)
+          
           try {
             const statusResponse = await axios.get(`/api/status/${fileId}`)
             const status = statusResponse.data
+            console.log('状态响应:', status)
             
             if (status.status === 'completed') {
+              console.log('处理完成，词汇表长度:', status.vocab.length)
               setVocab(status.vocab)
               setTranslationResult(status.translation_result)
               setStep('dictionary')
               setLoading(false)
             } else if (status.status === 'error') {
+              console.error('处理错误:', status.error)
               alert(`处理失败: ${status.error}`)
+              setLoading(false)
+            } else if (pollCount >= maxPolls) {
+              console.error('轮询超时')
+              alert('处理超时，请重试')
               setLoading(false)
             } else {
               // 继续轮询
               setTimeout(pollStatus, 2000)
             }
           } catch (error) {
-            console.error('Polling error:', error)
-            setTimeout(pollStatus, 2000)
+            console.error('轮询错误:', error)
+            if (pollCount >= maxPolls) {
+              alert('网络错误，请重试')
+              setLoading(false)
+            } else {
+              setTimeout(pollStatus, 2000)
+            }
           }
         }
         
@@ -70,7 +91,7 @@ function App() {
         throw new Error('无效的API响应')
       }
     } catch (error) {
-      console.error('Error processing text:', error)
+      console.error('处理文本错误:', error)
       alert('处理失败，请重试')
       setLoading(false)
     }
