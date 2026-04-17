@@ -1,0 +1,22 @@
+{
+  "sentences": [
+    {
+      "grammar_explanation": "\\\"Hi\\\" is an informal interjection used as a greeting in English. It is the casual equivalent of \\\"hello\\\" and is typically used in informal or friendly contexts. It does not change form (no conjugation, pluralization, or tense), making it invariable. It can stand alone as a complete utterance or be followed by a name or noun phrase (e.g., \\\"Hi, John!\\\").",
+      "original": "hi",
+      "tokens": [
+        {
+          "morphology": "interjection; used as an informal greeting",
+          "phonetic": "/haɪ/",
+          "text": "hi",
+          "translation": "안녕"
+        }
+      ],
+      "translation": [
+        {
+          "text": "hi",
+          "translation": "안녕"
+        }
+      ]
+    }
+  ]
+}
