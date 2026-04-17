@@ -1,0 +1,33 @@
+{
+  "data": {
+    "grammar_explanation": "本句是一个简单陈述句，结构为\"主语 + 谓语动词 + 宾语\"。\"AI models（人工智能模型）\"作主语，其中\"AI\"是名词修饰语，修饰核心名词\"models\"；\"generate（生成）\"是句子的谓语动词，为一般现在时，表示普遍性事实或习惯性动作；\"responses（回应）\"是动词的直接宾语，接受动作的对象。整句表达的是一个客观事实：人工智能模型能够生成回应。",
+    "original": "AI models generate responses",
+    "tokenized_translation": "人工智能 模型 生成 回应",
+    "translation": [
+      {
+        "morphology": "n",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "text": "AI",
+        "translation": "人工智能"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈmɒd.əlz/",
+        "text": "models",
+        "translation": "模型"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/ˈdʒen.ə.reɪt/",
+        "text": "generate",
+        "translation": "生成"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "text": "responses",
+        "translation": "回应"
+      }
+    ]
+  }
+}

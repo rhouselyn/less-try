@@ -35,28 +35,43 @@ function App() {
         text: text.trim(),
         source_language: sourceLang,
         target_language: targetLang
-      }, {
-        timeout: 600000 // 10分钟超时
       })
       
-      if (response.data && response.data.vocab) {
-        setFileId(response.data.file_id)
-        setVocab(response.data.vocab)
-        setTranslationResult(response.data.translation_result)
-        setStep('dictionary')
+      if (response.data && response.data.file_id) {
+        const fileId = response.data.file_id
+        setFileId(fileId)
+        
+        // 轮询检查处理状态
+        const pollStatus = async () => {
+          try {
+            const statusResponse = await axios.get(`/api/status/${fileId}`)
+            const status = statusResponse.data
+            
+            if (status.status === 'completed') {
+              setVocab(status.vocab)
+              setTranslationResult(status.translation_result)
+              setStep('dictionary')
+              setLoading(false)
+            } else if (status.status === 'error') {
+              alert(`处理失败: ${status.error}`)
+              setLoading(false)
+            } else {
+              // 继续轮询
+              setTimeout(pollStatus, 2000)
+            }
+          } catch (error) {
+            console.error('Polling error:', error)
+            setTimeout(pollStatus, 2000)
+          }
+        }
+        
+        pollStatus()
       } else {
         throw new Error('无效的API响应')
       }
     } catch (error) {
       console.error('Error processing text:', error)
-      if (error.code === 'ECONNABORTED') {
-        alert('处理超时，请重试')
-      } else if (error.response && error.response.status === 504) {
-        alert('服务器响应超时，请稍后重试')
-      } else {
-        alert('处理失败，请重试')
-      }
-    } finally {
+      alert('处理失败，请重试')
       setLoading(false)
     }
   }
