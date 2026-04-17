@@ -1,6 +1,6 @@
 # 少邻国 (Lesslingo) - 核心功能重构 - 实施计划
 
-## [x] Task 1: 后端文本处理器重构 - 自动分句功能
+## [ ] Task 1: 后端文本处理器重构 - 自动分句功能
 - **Priority**: P0
 - **Depends On**: None
 - **Description**: 
