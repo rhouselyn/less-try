@@ -15,7 +15,7 @@ class NvidiaAPI:
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0):
         payload = {
-            "model": "minimax/m2.7-preview",
+            "model": "minimaxai/minimax-m2.7",
             "messages": messages,
             "temperature": temperature,
             "max_tokens": 4096
