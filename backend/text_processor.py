@@ -1,18 +1,13 @@
 import re
 from typing import List, Set
-import nltk
-from nltk.tokenize import word_tokenize
 
 
 class TextProcessor:
     def __init__(self):
-        try:
-            nltk.data.find('tokenizers/punkt')
-        except LookupError:
-            nltk.download('punkt')
+        pass
 
     def extract_words(self, text: str, language: str) -> List[str]:
-        words = word_tokenize(text)
+        words = re.findall(r'\b[a-zA-Z]{2,}\b', text)
         
         clean_words = []
         for word in words:
