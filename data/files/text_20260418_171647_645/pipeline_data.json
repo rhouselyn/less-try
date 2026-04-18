@@ -1,0 +1,232 @@
+{
+  "data": [
+    {
+      "sentence": "Hello world.",
+      "translation_result": {
+        "grammar_explanation": "这是一个简单的感叹句，由感叹词 \"Hello\"（你好）和名词 \"world\"（世界）构成。\"Hello\" 作为打招呼的感叹词，\"world\" 作为招呼的对象（呼语），整句表达对世界的问候，是编程领域中最经典的入门示例语句。",
+        "tokenized_translation": "你好，世界。",
+        "translation": [
+          {
+            "morphology": "interj",
+            "phonetic": "həˈloʊ",
+            "text": "Hello",
+            "translation": "你好"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "wɜːrld",
+            "text": "world",
+            "translation": "世界"
+          }
+        ],
+        "tokenized_translation_quoted": "\"你好\", \"世界\""
+      }
+    },
+    {
+      "sentence": "This is a test sentence.",
+      "translation_result": {
+        "grammar_explanation": "这是一个简单的英语陈述句，结构为\"主语 + 系动词 + 名词短语\"。\"This\"作主语，\"is\"为系动词（be动词的第三人称单数现在时形式），\"a test sentence\"为名词短语作表语，其中\"a\"是不定冠词，\"test\"作形容词修饰名词\"sentence\"。整句表达\"这是一个测试句子\"的含义。",
+        "tokenized_translation": "这是一个测试句子。",
+        "translation": [
+          {
+            "morphology": "pron",
+            "phonetic": "ðɪs",
+            "text": "This",
+            "translation": "这"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "ɪz",
+            "text": "is",
+            "translation": "是"
+          },
+          {
+            "morphology": "det",
+            "phonetic": "ə",
+            "text": "a",
+            "translation": "一个"
+          },
+          {
+            "morphology": "adj",
+            "phonetic": "tɛst",
+            "text": "test",
+            "translation": "测试"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "ˈsɛntəns",
+            "text": "sentence",
+            "translation": "句子"
+          }
+        ],
+        "tokenized_translation_quoted": "\"这\", \"是\", \"一个\", \"测试\", \"句子\""
+      }
+    },
+    {
+      "sentence": "AI models generate responses based on complex algorithms.",
+      "translation_result": {
+        "translation": [
+          {
+            "text": "AI",
+            "translation": "人工智能",
+            "phonetic": "/ˌeɪ ˈaɪ/",
+            "morphology": "n"
+          },
+          {
+            "text": "models",
+            "translation": "模型",
+            "phonetic": "/ˈmɒd.əlz/",
+            "morphology": "n"
+          },
+          {
+            "text": "generate",
+            "translation": "生成",
+            "phonetic": "/ˈdʒen.ə.reɪt/",
+            "morphology": "v"
+          },
+          {
+            "text": "responses",
+            "translation": "响应",
+            "phonetic": "/rɪˈspɒn.sɪz/",
+            "morphology": "n"
+          },
+          {
+            "text": "based",
+            "translation": "基于",
+            "phonetic": "/beɪst/",
+            "morphology": "v"
+          },
+          {
+            "text": "on",
+            "translation": "在…上",
+            "phonetic": "/ɒn/",
+            "morphology": "prep"
+          },
+          {
+            "text": "complex",
+            "translation": "复杂的",
+            "phonetic": "/ˈkɒm.pleks/",
+            "morphology": "adj"
+          },
+          {
+            "text": "algorithms",
+            "translation": "算法",
+            "phonetic": "/ˈæl.ɡə.rɪ.ðəmz/",
+            "morphology": "n"
+          }
+        ],
+        "tokenized_translation": "人工智能模型根据复杂的算法生成响应。",
+        "grammar_explanation": "本句是一个简单陈述句，结构为\"主语 + 谓语 + 宾语 + 状语\"。主语为\"AI models\"（人工智能模型），是名词短语；谓语动词为\"generate\"（生成），为一般现在时，表示普遍规律；宾语为\"responses\"（响应）；\"based on complex algorithms\"是过去分词短语作状语，修饰整个句子，表示动作所依据的条件，相当于\"以复杂算法为基础\"。",
+        "tokenized_translation_quoted": "\"人工智能\", \"模型\", \"生成\", \"响应\", \"基于\", \"在…上\", \"复杂的\", \"算法\""
+      }
+    },
+    {
+      "sentence": "I love programming.",
+      "translation_result": {
+        "grammar_explanation": "这是一个简单的主谓宾结构句子。主语为人称代词 \"I\"（我），谓语动词为 \"love\"（喜爱），宾语为动名词 \"programming\"（编程）。动名词在此充当名词角色，作为动词 \"love\" 的直接宾语，表达说话者对编程这一活动持续性的喜爱之情。",
+        "tokenized_translation": "我热爱编程。",
+        "translation": [
+          {
+            "morphology": "pron",
+            "phonetic": "aɪ",
+            "text": "I",
+            "translation": "我"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "lʌv",
+            "text": "love",
+            "translation": "喜爱"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "ˈproʊɡræmɪŋ",
+            "text": "programming",
+            "translation": "编程"
+          }
+        ],
+        "tokenized_translation_quoted": "\"我\", \"喜爱\", \"编程\""
+      }
+    },
+    {
+      "sentence": "The weather is nice today.",
+      "translation_result": {
+        "grammar_explanation": "本句是一个简单的主系表结构句子。主语是\"The weather\"（天气），系动词\"is\"连接主语与表语形容词\"nice\"（好的），副词\"today\"（今天）作时间状语修饰整个句子，置于句尾。整体结构为：主语 + 系动词 + 表语 + 时间状语。",
+        "tokenized_translation": "今天天气很好。",
+        "translation": [
+          {
+            "morphology": "det",
+            "phonetic": "ðə",
+            "text": "The",
+            "translation": "这"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "ˈwɛðər",
+            "text": "weather",
+            "translation": "天气"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "ɪz",
+            "text": "is",
+            "translation": "是"
+          },
+          {
+            "morphology": "adj",
+            "phonetic": "naɪs",
+            "text": "nice",
+            "translation": "好的"
+          },
+          {
+            "morphology": "adv",
+            "phonetic": "təˈdeɪ",
+            "text": "today",
+            "translation": "今天"
+          }
+        ],
+        "tokenized_translation_quoted": "\"这\", \"天气\", \"是\", \"好的\", \"今天\""
+      }
+    },
+    {
+      "sentence": "Let's go for a walk.",
+      "translation_result": {
+        "grammar_explanation": "本句是一个以 \"Let's\" 开头的祈使句，用于向对方发出邀请或建议，表示\"我们一起……吧\"。\"Let's\" 是 \"Let us\" 的缩写形式，后接动词原形 \"go\" 构成祈使结构。\"go for a walk\" 是固定短语，意为\"去散步\"，其中 \"for\" 为介词，引出目的，\"a walk\" 作介词宾语。整句语气亲切自然，常用于口语中发出共同行动的邀请。",
+        "tokenized_translation": "我们去散散步吧。",
+        "translation": [
+          {
+            "morphology": "v",
+            "phonetic": "/lɛts/",
+            "text": "Let's",
+            "translation": "让我们"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "/ɡoʊ/",
+            "text": "go",
+            "translation": "去"
+          },
+          {
+            "morphology": "prep",
+            "phonetic": "/fɔːr/",
+            "text": "for",
+            "translation": "为了"
+          },
+          {
+            "morphology": "det",
+            "phonetic": "/ə/",
+            "text": "a",
+            "translation": "一"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/wɔːk/",
+            "text": "walk",
+            "translation": "散步"
+          }
+        ],
+        "tokenized_translation_quoted": "\"让我们\", \"去\", \"为了\", \"一\", \"散步\""
+      }
+    }
+  ]
+}

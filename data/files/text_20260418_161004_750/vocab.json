@@ -1,0 +1,53 @@
+{
+  "vocab": [
+    {
+      "word": "网络",
+      "ipa": "wǎng luò",
+      "context_meaning": "网络（互联网或局域网）",
+      "morphology": "n",
+      "translation": "网络（互联网或局域网）"
+    },
+    {
+      "word": "连接",
+      "ipa": "lián jiē",
+      "context_meaning": "连接（链路、接入）",
+      "morphology": "n",
+      "translation": "连接（链路、接入）"
+    },
+    {
+      "word": "重试",
+      "ipa": "chóng shì",
+      "context_meaning": "重新尝试",
+      "morphology": "v",
+      "translation": "重新尝试"
+    },
+    {
+      "word": "超时",
+      "ipa": "chāo shí",
+      "context_meaning": "超出规定时间、请求无响应",
+      "morphology": "v",
+      "translation": "超出规定时间、请求无响应"
+    },
+    {
+      "word": "请",
+      "ipa": "qǐng",
+      "context_meaning": "请（礼貌祈使）",
+      "morphology": "adv",
+      "translation": "请（礼貌祈使）"
+    },
+    {
+      "word": "后",
+      "ipa": "hòu",
+      "context_meaning": "之后、以后",
+      "morphology": "prep",
+      "translation": "之后、以后"
+    },
+    {
+      "word": "检查",
+      "ipa": "jiǎn chá",
+      "context_meaning": "检查、核查",
+      "morphology": "v",
+      "translation": "检查、核查"
+    }
+  ]
+}

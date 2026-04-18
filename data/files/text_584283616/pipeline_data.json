@@ -1,0 +1,33 @@
+{
+  "data": {
+    "grammar_explanation": "本句是一个简单陈述句，结构为\"主语 + 谓语动词 + 宾语\"。\"AI models\"（人工智能模型）作主语，由名词短语构成，其中\"AI\"修饰中心名词\"models\"；\"generate\"（生成）作谓语动词，为一般现在时的第三人称复数形式（与复数主语\"models\"保持一致，无需加-s）；\"responses\"（回应）作宾语，为可数名词复数形式。整句表达一个普遍性事实或习惯性动作。",
+    "original": "AI models generate responses",
+    "tokenized_translation": "人工智能 模型 生成 回应",
+    "translation": [
+      {
+        "morphology": "n",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "text": "AI",
+        "translation": "人工智能"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈmɒd.əlz/",
+        "text": "models",
+        "translation": "模型"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/ˈdʒen.ə.reɪt/",
+        "text": "generate",
+        "translation": "生成"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "text": "responses",
+        "translation": "回应"
+      }
+    ]
+  }
+}

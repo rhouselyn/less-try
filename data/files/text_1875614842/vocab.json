@@ -1,0 +1,18 @@
+{
+  "vocab": [
+    {
+      "word": "hi",
+      "ipa": "/haɪ/",
+      "context_meaning": "你好",
+      "morphology": "感叹词 (Interjection)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "\"hi\" 是一个常见的英语感叹词，用于非正式的打招呼或问候，相当于中文的\"你好\"或\"嗨\"。它不涉及任何时态、数或格的变化，是一个不可变的词汇，通常单独使用或置于句首。与较为正式的问候语 \"hello\" 相比，\"hi\" 更加口语化和随意，适合用于朋友、熟人之间的日常交流。",
+      "translation": "你好",
+      "tokens": [
+        "hi"
+      ]
+    }
+  ]
+}

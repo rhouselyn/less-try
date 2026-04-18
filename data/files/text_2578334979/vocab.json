@@ -1,0 +1,693 @@
+{
+  "vocab": [
+    {
+      "word": "may",
+      "ipa": "/meɪ/",
+      "context_meaning": "可能",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "可能",
+      "tokens": [
+        "may"
+      ]
+    },
+    {
+      "word": "upload",
+      "ipa": "/ʌpˈloʊd/",
+      "context_meaning": "cargar / subir",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "cargar / subir",
+      "tokens": [
+        "upload"
+      ]
+    },
+    {
+      "word": "and",
+      "ipa": "/ænd/",
+      "context_meaning": "和",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "和",
+      "tokens": [
+        "and"
+      ]
+    },
+    {
+      "word": "indecent",
+      "ipa": "/ɪnˈdiː.sənt/",
+      "context_meaning": "不雅的",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "不雅的",
+      "tokens": [
+        "indecent"
+      ]
+    },
+    {
+      "word": "purposes",
+      "ipa": "/ˈpɜːrpəsɪz/",
+      "context_meaning": "fins / objectifs",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **passive voice construction** in the **present simple tense**. Here is a detailed breakdown:\n\n1. **Passive Voice Structure**: The sentence follows the pattern **Subject + auxiliary \"to be\" + past participle**, i.e., *\"Your use\" (subject) + \"is\" (auxiliary) + \"logged\" (past participle)*. The agent (who does the logging) is omitted, which is common in passive constructions when the agent is unknown, unimportant, or intentionally withheld.\n\n2. **Subject – \"Your use\"**: A noun phrase where *\"Your\"* is a **possessive pronoun** acting as a determiner, and *\"use\"* is an **uncountable noun** functioning as the head of the phrase.\n\n3. **Auxiliary Verb – \"is\"**: The third-person singular present form of the verb *\"to be\"*, used here to form the passive voice. It agrees with the singular subject *\"use\"*.\n\n4. **Past Participle – \"logged\"**: Derived from the verb *\"to log\"*, meaning to record or register. In passive constructions, the past participle carries the main semantic meaning of the sentence.\n\n5. **Prepositional Phrase – \"for security purposes\"**: This is an **adverbial prepositional phrase** indicating **purpose**. *\"For\"* is the preposition, *\"security\"* is a noun used **attributively** (as a modifier/adjective) to describe *\"purposes\"*, and *\"purposes\"* is the head noun in the plural form. The phrase answers the question *\"Why is the use logged?\"*\n\n6. **Tense**: **Present Simple Passive** — implies that the logging is a continuous, habitual, or policy-based action rather than a one-time event.",
+      "translation": "fins / objectifs",
+      "tokens": [
+        "purposes"
+      ]
+    },
+    {
+      "word": "on",
+      "ipa": "/ɒn/",
+      "context_meaning": "在...上",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "在...上",
+      "tokens": [
+        "on"
+      ]
+    },
+    {
+      "word": "output",
+      "ipa": "/ˈaʊtpʊt/",
+      "context_meaning": "输出",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "输出",
+      "tokens": [
+        "output"
+      ]
+    },
+    {
+      "word": "by",
+      "ipa": "/baɪ/",
+      "context_meaning": "通过; 由/被",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "通过; 由/被",
+      "tokens": [
+        "by"
+      ]
+    },
+    {
+      "word": "the",
+      "ipa": "/ðə/",
+      "context_meaning": "这个（定冠词）; 该（定冠词）",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "这个（定冠词）; 该（定冠词）",
+      "tokens": [
+        "the"
+      ]
+    },
+    {
+      "word": "learning",
+      "ipa": "/ˈlɜː.nɪŋ/",
+      "context_meaning": "学习",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "学习",
+      "tokens": [
+        "learning"
+      ]
+    },
+    {
+      "word": "this",
+      "ipa": "/ðɪs/",
+      "context_meaning": "此/这个",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "此/这个",
+      "tokens": [
+        "this"
+      ]
+    },
+    {
+      "word": "ai",
+      "ipa": "/ˌeɪ ˈaɪ/",
+      "context_meaning": "人工智能",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "人工智能",
+      "tokens": [
+        "ai"
+      ]
+    },
+    {
+      "word": "caused",
+      "ipa": "/kɔːzd/",
+      "context_meaning": "造成的",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "造成的",
+      "tokens": [
+        "caused"
+      ]
+    },
+    {
+      "word": "based",
+      "ipa": "/beɪst/",
+      "context_meaning": "基于",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "基于",
+      "tokens": [
+        "based"
+      ]
+    },
+    {
+      "word": "inaccurate",
+      "ipa": "/ɪnˈæk.jʊ.rət/",
+      "context_meaning": "不准确的",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "不准确的",
+      "tokens": [
+        "inaccurate"
+      ]
+    },
+    {
+      "word": "of",
+      "ipa": "/ɒv/",
+      "context_meaning": "的",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "的",
+      "tokens": [
+        "of"
+      ]
+    },
+    {
+      "word": "or",
+      "ipa": "/ɔːr/",
+      "context_meaning": "o / ni; 或",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "o / ni; 或",
+      "tokens": [
+        "or"
+      ]
+    },
+    {
+      "word": "those",
+      "ipa": "/ðoʊz/",
+      "context_meaning": "那些",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "那些",
+      "tokens": [
+        "those"
+      ]
+    },
+    {
+      "word": "responses",
+      "ipa": "/rɪˈspɒn.sɪz/",
+      "context_meaning": "响应",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "响应",
+      "tokens": [
+        "responses"
+      ]
+    },
+    {
+      "word": "expressly",
+      "ipa": "/ɪkˈsprɛsli/",
+      "context_meaning": "expresamente",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "expresamente",
+      "tokens": [
+        "expressly"
+      ]
+    },
+    {
+      "word": "biased",
+      "ipa": "/ˈbaɪ.əst/",
+      "context_meaning": "有偏见的",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "有偏见的",
+      "tokens": [
+        "biased"
+      ]
+    },
+    {
+      "word": "response",
+      "ipa": "/rɪˈspɒns/",
+      "context_meaning": "响应/回应",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "响应/回应",
+      "tokens": [
+        "response"
+      ]
+    },
+    {
+      "word": "risk",
+      "ipa": "/rɪsk/",
+      "context_meaning": "风险",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "风险",
+      "tokens": [
+        "risk"
+      ]
+    },
+    {
+      "word": "is",
+      "ipa": "/ɪz/",
+      "context_meaning": "est",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **passive voice construction** in the **present simple tense**. Here is a detailed breakdown:\n\n1. **Passive Voice Structure**: The sentence follows the pattern **Subject + auxiliary \"to be\" + past participle**, i.e., *\"Your use\" (subject) + \"is\" (auxiliary) + \"logged\" (past participle)*. The agent (who does the logging) is omitted, which is common in passive constructions when the agent is unknown, unimportant, or intentionally withheld.\n\n2. **Subject – \"Your use\"**: A noun phrase where *\"Your\"* is a **possessive pronoun** acting as a determiner, and *\"use\"* is an **uncountable noun** functioning as the head of the phrase.\n\n3. **Auxiliary Verb – \"is\"**: The third-person singular present form of the verb *\"to be\"*, used here to form the passive voice. It agrees with the singular subject *\"use\"*.\n\n4. **Past Participle – \"logged\"**: Derived from the verb *\"to log\"*, meaning to record or register. In passive constructions, the past participle carries the main semantic meaning of the sentence.\n\n5. **Prepositional Phrase – \"for security purposes\"**: This is an **adverbial prepositional phrase** indicating **purpose**. *\"For\"* is the preposition, *\"security\"* is a noun used **attributively** (as a modifier/adjective) to describe *\"purposes\"*, and *\"purposes\"* is the head noun in the plural form. The phrase answers the question *\"Why is the use logged?\"*\n\n6. **Tense**: **Present Simple Passive** — implies that the logging is a continuous, habitual, or policy-based action rather than a one-time event.",
+      "translation": "est",
+      "tokens": [
+        "is"
+      ]
+    },
+    {
+      "word": "testing",
+      "ipa": "/ˈtɛstɪŋ/",
+      "context_meaning": "测试",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "测试",
+      "tokens": [
+        "testing"
+      ]
+    },
+    {
+      "word": "data",
+      "ipa": "/ˈdeɪtə/",
+      "context_meaning": "datos",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "datos",
+      "tokens": [
+        "data"
+      ]
+    },
+    {
+      "word": "your",
+      "ipa": "/jʊər/",
+      "context_meaning": "Votre",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **passive voice construction** in the **present simple tense**. Here is a detailed breakdown:\n\n1. **Passive Voice Structure**: The sentence follows the pattern **Subject + auxiliary \"to be\" + past participle**, i.e., *\"Your use\" (subject) + \"is\" (auxiliary) + \"logged\" (past participle)*. The agent (who does the logging) is omitted, which is common in passive constructions when the agent is unknown, unimportant, or intentionally withheld.\n\n2. **Subject – \"Your use\"**: A noun phrase where *\"Your\"* is a **possessive pronoun** acting as a determiner, and *\"use\"* is an **uncountable noun** functioning as the head of the phrase.\n\n3. **Auxiliary Verb – \"is\"**: The third-person singular present form of the verb *\"to be\"*, used here to form the passive voice. It agrees with the singular subject *\"use\"*.\n\n4. **Past Participle – \"logged\"**: Derived from the verb *\"to log\"*, meaning to record or register. In passive constructions, the past participle carries the main semantic meaning of the sentence.\n\n5. **Prepositional Phrase – \"for security purposes\"**: This is an **adverbial prepositional phrase** indicating **purpose**. *\"For\"* is the preposition, *\"security\"* is a noun used **attributively** (as a modifier/adjective) to describe *\"purposes\"*, and *\"purposes\"* is the head noun in the plural form. The phrase answers the question *\"Why is the use logged?\"*\n\n6. **Tense**: **Present Simple Passive** — implies that the logging is a continuous, habitual, or policy-based action rather than a one-time event.",
+      "translation": "Votre",
+      "tokens": [
+        "your"
+      ]
+    },
+    {
+      "word": "algorithms",
+      "ipa": "/ˈæl.ɡə.rɪð.əmz/",
+      "context_meaning": "算法",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "算法",
+      "tokens": [
+        "algorithms"
+      ]
+    },
+    {
+      "word": "models",
+      "ipa": "/ˈmɒd.əlz/",
+      "context_meaning": "模型",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "模型",
+      "tokens": [
+        "models"
+      ]
+    },
+    {
+      "word": "machine",
+      "ipa": "/məˈʃiːn/",
+      "context_meaning": "机器",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "机器",
+      "tokens": [
+        "machine"
+      ]
+    },
+    {
+      "word": "please",
+      "ipa": "/pliːz/",
+      "context_meaning": "Por favor",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "Por favor",
+      "tokens": [
+        "please"
+      ]
+    },
+    {
+      "word": "you",
+      "ipa": "/juː/",
+      "context_meaning": "您/你",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "您/你",
+      "tokens": [
+        "you"
+      ]
+    },
+    {
+      "word": "harm",
+      "ipa": "/hɑːm/",
+      "context_meaning": "危害/伤害",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "危害/伤害",
+      "tokens": [
+        "harm"
+      ]
+    },
+    {
+      "word": "any",
+      "ipa": "/ˈɛni/",
+      "context_meaning": "ningún / algún; 任何",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "ningún / algún; 任何",
+      "tokens": [
+        "any"
+      ]
+    },
+    {
+      "word": "complex",
+      "ipa": "/ˈkɒm.pleks/",
+      "context_meaning": "复杂的",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "复杂的",
+      "tokens": [
+        "complex"
+      ]
+    },
+    {
+      "word": "use",
+      "ipa": "/juːs/",
+      "context_meaning": "utilisation",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **passive voice construction** in the **present simple tense**. Here is a detailed breakdown:\n\n1. **Passive Voice Structure**: The sentence follows the pattern **Subject + auxiliary \"to be\" + past participle**, i.e., *\"Your use\" (subject) + \"is\" (auxiliary) + \"logged\" (past participle)*. The agent (who does the logging) is omitted, which is common in passive constructions when the agent is unknown, unimportant, or intentionally withheld.\n\n2. **Subject – \"Your use\"**: A noun phrase where *\"Your\"* is a **possessive pronoun** acting as a determiner, and *\"use\"* is an **uncountable noun** functioning as the head of the phrase.\n\n3. **Auxiliary Verb – \"is\"**: The third-person singular present form of the verb *\"to be\"*, used here to form the passive voice. It agrees with the singular subject *\"use\"*.\n\n4. **Past Participle – \"logged\"**: Derived from the verb *\"to log\"*, meaning to record or register. In passive constructions, the past participle carries the main semantic meaning of the sentence.\n\n5. **Prepositional Phrase – \"for security purposes\"**: This is an **adverbial prepositional phrase** indicating **purpose**. *\"For\"* is the preposition, *\"security\"* is a noun used **attributively** (as a modifier/adjective) to describe *\"purposes\"*, and *\"purposes\"* is the head noun in the plural form. The phrase answers the question *\"Why is the use logged?\"*\n\n6. **Tense**: **Present Simple Passive** — implies that the logging is a continuous, habitual, or policy-based action rather than a one-time event.",
+      "translation": "utilisation",
+      "tokens": [
+        "use"
+      ]
+    },
+    {
+      "word": "generate",
+      "ipa": "/ˈdʒen.ə.reɪt/",
+      "context_meaning": "生成",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "生成",
+      "tokens": [
+        "generate"
+      ]
+    },
+    {
+      "word": "unless",
+      "ipa": "/ənˈlɛs/",
+      "context_meaning": "a menos que",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "a menos que",
+      "tokens": [
+        "unless"
+      ]
+    },
+    {
+      "word": "security",
+      "ipa": "/sɪˈkjʊərɪti/",
+      "context_meaning": "sécurité",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **passive voice construction** in the **present simple tense**. Here is a detailed breakdown:\n\n1. **Passive Voice Structure**: The sentence follows the pattern **Subject + auxiliary \"to be\" + past participle**, i.e., *\"Your use\" (subject) + \"is\" (auxiliary) + \"logged\" (past participle)*. The agent (who does the logging) is omitted, which is common in passive constructions when the agent is unknown, unimportant, or intentionally withheld.\n\n2. **Subject – \"Your use\"**: A noun phrase where *\"Your\"* is a **possessive pronoun** acting as a determiner, and *\"use\"* is an **uncountable noun** functioning as the head of the phrase.\n\n3. **Auxiliary Verb – \"is\"**: The third-person singular present form of the verb *\"to be\"*, used here to form the passive voice. It agrees with the singular subject *\"use\"*.\n\n4. **Past Participle – \"logged\"**: Derived from the verb *\"to log\"*, meaning to record or register. In passive constructions, the past participle carries the main semantic meaning of the sentence.\n\n5. **Prepositional Phrase – \"for security purposes\"**: This is an **adverbial prepositional phrase** indicating **purpose**. *\"For\"* is the preposition, *\"security\"* is a noun used **attributively** (as a modifier/adjective) to describe *\"purposes\"*, and *\"purposes\"* is the head noun in the plural form. The phrase answers the question *\"Why is the use logged?\"*\n\n6. **Tense**: **Present Simple Passive** — implies that the logging is a continuous, habitual, or policy-based action rather than a one-time event.",
+      "translation": "sécurité",
+      "tokens": [
+        "security"
+      ]
+    },
+    {
+      "word": "do",
+      "ipa": "/duː/",
+      "context_meaning": "hacer",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "hacer",
+      "tokens": [
+        "do"
+      ]
+    },
+    {
+      "word": "assume",
+      "ipa": "/əˈsjuːm/",
+      "context_meaning": "承担",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "承担",
+      "tokens": [
+        "assume"
+      ]
+    },
+    {
+      "word": "logged",
+      "ipa": "/lɒɡd/",
+      "context_meaning": "enregistrée",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **passive voice construction** in the **present simple tense**. Here is a detailed breakdown:\n\n1. **Passive Voice Structure**: The sentence follows the pattern **Subject + auxiliary \"to be\" + past participle**, i.e., *\"Your use\" (subject) + \"is\" (auxiliary) + \"logged\" (past participle)*. The agent (who does the logging) is omitted, which is common in passive constructions when the agent is unknown, unimportant, or intentionally withheld.\n\n2. **Subject – \"Your use\"**: A noun phrase where *\"Your\"* is a **possessive pronoun** acting as a determiner, and *\"use\"* is an **uncountable noun** functioning as the head of the phrase.\n\n3. **Auxiliary Verb – \"is\"**: The third-person singular present form of the verb *\"to be\"*, used here to form the passive voice. It agrees with the singular subject *\"use\"*.\n\n4. **Past Participle – \"logged\"**: Derived from the verb *\"to log\"*, meaning to record or register. In passive constructions, the past participle carries the main semantic meaning of the sentence.\n\n5. **Prepositional Phrase – \"for security purposes\"**: This is an **adverbial prepositional phrase** indicating **purpose**. *\"For\"* is the preposition, *\"security\"* is a noun used **attributively** (as a modifier/adjective) to describe *\"purposes\"*, and *\"purposes\"* is the head noun in the plural form. The phrase answers the question *\"Why is the use logged?\"*\n\n6. **Tense**: **Present Simple Passive** — implies that the logging is a continuous, habitual, or policy-based action rather than a one-time event.",
+      "translation": "enregistrée",
+      "tokens": [
+        "logged"
+      ]
+    },
+    {
+      "word": "confidential",
+      "ipa": "/ˌkɒnfɪˈdɛnʃəl/",
+      "context_meaning": "confidencial",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "confidencial",
+      "tokens": [
+        "confidential"
+      ]
+    },
+    {
+      "word": "techniques",
+      "ipa": "/tekˈniːks/",
+      "context_meaning": "技术",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "技术",
+      "tokens": [
+        "techniques"
+      ]
+    },
+    {
+      "word": "information",
+      "ipa": "/ˌɪnfəˈmeɪʃən/",
+      "context_meaning": "información",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "información",
+      "tokens": [
+        "information"
+      ]
+    },
+    {
+      "word": "for",
+      "ipa": "/fɔːr/",
+      "context_meaning": "à des fins de / pour",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **passive voice construction** in the **present simple tense**. Here is a detailed breakdown:\n\n1. **Passive Voice Structure**: The sentence follows the pattern **Subject + auxiliary \"to be\" + past participle**, i.e., *\"Your use\" (subject) + \"is\" (auxiliary) + \"logged\" (past participle)*. The agent (who does the logging) is omitted, which is common in passive constructions when the agent is unknown, unimportant, or intentionally withheld.\n\n2. **Subject – \"Your use\"**: A noun phrase where *\"Your\"* is a **possessive pronoun** acting as a determiner, and *\"use\"* is an **uncountable noun** functioning as the head of the phrase.\n\n3. **Auxiliary Verb – \"is\"**: The third-person singular present form of the verb *\"to be\"*, used here to form the passive voice. It agrees with the singular subject *\"use\"*.\n\n4. **Past Participle – \"logged\"**: Derived from the verb *\"to log\"*, meaning to record or register. In passive constructions, the past participle carries the main semantic meaning of the sentence.\n\n5. **Prepositional Phrase – \"for security purposes\"**: This is an **adverbial prepositional phrase** indicating **purpose**. *\"For\"* is the preposition, *\"security\"* is a noun used **attributively** (as a modifier/adjective) to describe *\"purposes\"*, and *\"purposes\"* is the head noun in the plural form. The phrase answers the question *\"Why is the use logged?\"*\n\n6. **Tense**: **Present Simple Passive** — implies that the logging is a continuous, habitual, or policy-based action rather than a one-time event.",
+      "translation": "à des fins de / pour",
+      "tokens": [
+        "for"
+      ]
+    },
+    {
+      "word": "harmful",
+      "ipa": "/ˈhɑːrm.fəl/",
+      "context_meaning": "有害的",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "有害的",
+      "tokens": [
+        "harmful"
+      ]
+    },
+    {
+      "word": "model",
+      "ipa": "/ˈmɒd.əl/",
+      "context_meaning": "模型",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone.",
+      "translation": "模型",
+      "tokens": [
+        "model"
+      ]
+    },
+    {
+      "word": "not",
+      "ipa": "/nɒt/",
+      "context_meaning": "no",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "no",
+      "tokens": [
+        "not"
+      ]
+    },
+    {
+      "word": "personal",
+      "ipa": "/ˈpɜːrsənəl/",
+      "context_meaning": "personal",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "personal",
+      "tokens": [
+        "personal"
+      ]
+    },
+    {
+      "word": "outputs",
+      "ipa": "/ˈaʊt.pʊts/",
+      "context_meaning": "输出",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "输出",
+      "tokens": [
+        "outputs"
+      ]
+    },
+    {
+      "word": "permitted",
+      "ipa": "/pərˈmɪtɪd/",
+      "context_meaning": "permitido",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "translation": "permitido",
+      "tokens": [
+        "permitted"
+      ]
+    },
+    {
+      "word": "be",
+      "ipa": "/biː/",
+      "context_meaning": "是",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |",
+      "translation": "是",
+      "tokens": [
+        "be"
+      ]
+    }
+  ]
+}

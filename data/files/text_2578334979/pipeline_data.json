@@ -1,0 +1,448 @@
+{
+  "sentences": [
+    {
+      "original": "AI models generate responses and outputs based on complex algorithms and machine learning techniques, and those responses or outputs may be inaccurate, harmful, biased or indecent.",
+      "translation": [
+        {
+          "text": "AI models generate responses and outputs based on complex algorithms and machine learning techniques, and those responses or outputs may be inaccurate, harmful, biased or indecent.",
+          "translation": "AI 模型根据复杂的算法和机器学习技术生成响应和输出，这些响应或输出可能不准确、有害、有偏见或不雅。"
+        }
+      ],
+      "tokens": [
+        {
+          "text": "AI",
+          "translation": "人工智能",
+          "phonetic": "/ˌeɪ ˈaɪ/",
+          "morphology": "Noun (abbreviation), singular, subject"
+        },
+        {
+          "text": "models",
+          "translation": "模型",
+          "phonetic": "/ˈmɒd.əlz/",
+          "morphology": "Noun, plural, subject complement"
+        },
+        {
+          "text": "generate",
+          "translation": "生成",
+          "phonetic": "/ˈdʒen.ə.reɪt/",
+          "morphology": "Verb, base form, simple present tense, third-person plural"
+        },
+        {
+          "text": "responses",
+          "translation": "响应",
+          "phonetic": "/rɪˈspɒn.sɪz/",
+          "morphology": "Noun, plural, direct object"
+        },
+        {
+          "text": "and",
+          "translation": "和",
+          "phonetic": "/ænd/",
+          "morphology": "Coordinating conjunction"
+        },
+        {
+          "text": "outputs",
+          "translation": "输出",
+          "phonetic": "/ˈaʊt.pʊts/",
+          "morphology": "Noun, plural, direct object"
+        },
+        {
+          "text": "based",
+          "translation": "基于",
+          "phonetic": "/beɪst/",
+          "morphology": "Verb, past participle, used as adjective in participial phrase"
+        },
+        {
+          "text": "on",
+          "translation": "在...上",
+          "phonetic": "/ɒn/",
+          "morphology": "Preposition"
+        },
+        {
+          "text": "complex",
+          "translation": "复杂的",
+          "phonetic": "/ˈkɒm.pleks/",
+          "morphology": "Adjective, attributive"
+        },
+        {
+          "text": "algorithms",
+          "translation": "算法",
+          "phonetic": "/ˈæl.ɡə.rɪð.əmz/",
+          "morphology": "Noun, plural, object of preposition"
+        },
+        {
+          "text": "and",
+          "translation": "和",
+          "phonetic": "/ænd/",
+          "morphology": "Coordinating conjunction"
+        },
+        {
+          "text": "machine",
+          "translation": "机器",
+          "phonetic": "/məˈʃiːn/",
+          "morphology": "Noun, singular, used as attributive adjective"
+        },
+        {
+          "text": "learning",
+          "translation": "学习",
+          "phonetic": "/ˈlɜː.nɪŋ/",
+          "morphology": "Verb/Noun, gerund, part of compound noun 'machine learning'"
+        },
+        {
+          "text": "techniques",
+          "translation": "技术",
+          "phonetic": "/tekˈniːks/",
+          "morphology": "Noun, plural, object of preposition"
+        },
+        {
+          "text": "and",
+          "translation": "和",
+          "phonetic": "/ænd/",
+          "morphology": "Coordinating conjunction, connecting two main clauses"
+        },
+        {
+          "text": "those",
+          "translation": "那些",
+          "phonetic": "/ðoʊz/",
+          "morphology": "Demonstrative determiner, plural"
+        },
+        {
+          "text": "responses",
+          "translation": "响应",
+          "phonetic": "/rɪˈspɒn.sɪz/",
+          "morphology": "Noun, plural, subject of second clause"
+        },
+        {
+          "text": "or",
+          "translation": "或",
+          "phonetic": "/ɔːr/",
+          "morphology": "Coordinating conjunction (disjunctive)"
+        },
+        {
+          "text": "outputs",
+          "translation": "输出",
+          "phonetic": "/ˈaʊt.pʊts/",
+          "morphology": "Noun, plural, subject of second clause"
+        },
+        {
+          "text": "may",
+          "translation": "可能",
+          "phonetic": "/meɪ/",
+          "morphology": "Modal verb, expressing possibility"
+        },
+        {
+          "text": "be",
+          "translation": "是",
+          "phonetic": "/biː/",
+          "morphology": "Verb, base form, infinitive after modal"
+        },
+        {
+          "text": "inaccurate",
+          "translation": "不准确的",
+          "phonetic": "/ɪnˈæk.jʊ.rət/",
+          "morphology": "Adjective, predicative"
+        },
+        {
+          "text": "harmful",
+          "translation": "有害的",
+          "phonetic": "/ˈhɑːrm.fəl/",
+          "morphology": "Adjective, predicative"
+        },
+        {
+          "text": "biased",
+          "translation": "有偏见的",
+          "phonetic": "/ˈbaɪ.əst/",
+          "morphology": "Adjective, predicative (past participle used as adjective)"
+        },
+        {
+          "text": "or",
+          "translation": "或",
+          "phonetic": "/ɔːr/",
+          "morphology": "Coordinating conjunction (disjunctive), connecting last item in list"
+        },
+        {
+          "text": "indecent",
+          "translation": "不雅的",
+          "phonetic": "/ɪnˈdiː.sənt/",
+          "morphology": "Adjective, predicative"
+        }
+      ],
+      "grammar_explanation": "This sentence is a **compound sentence** consisting of two main clauses joined by the coordinating conjunction **\"and\"**:\n\n---\n\n### 🔷 Clause 1:\n**\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"**\n\n- **Subject:** *AI models* — a noun phrase where \"AI\" functions as an attributive noun modifying \"models\" (plural noun).\n- **Predicate/Verb:** *generate* — base form of the verb in simple present tense, agreeing with the plural subject \"AI models.\"\n- **Direct Objects:** *responses and outputs* — two plural nouns joined by \"and,\" both serving as objects of \"generate.\"\n- **Participial Phrase:** *based on complex algorithms and machine learning techniques* — a past participial phrase modifying the direct objects. \"Based on\" functions as a prepositional adjective. The phrase contains two parallel noun phrases: \"complex algorithms\" and \"machine learning techniques,\" connected by \"and.\" \"Machine learning\" is a compound noun used attributively to modify \"techniques.\"\n\n---\n\n### 🔷 Clause 2:\n**\"those responses or outputs may be inaccurate, harmful, biased or indecent\"**\n\n- **Subject:** *those responses or outputs* — the demonstrative determiner \"those\" introduces two nouns (\"responses,\" \"outputs\") joined by the disjunctive conjunction \"or,\" indicating either one or both.\n- **Predicate:** *may be* — a modal verb phrase. \"May\" expresses **epistemic possibility** (something that is possible or likely), followed by the base form \"be.\"\n- **Subject Complements (Predicate Adjectives):** *inaccurate, harmful, biased, or indecent* — four adjectives in a parallel list connected by commas and the final disjunctive \"or,\" all modifying the subject through the linking verb \"be.\" Note: \"biased\" is a past participle used as an adjective.\n\n---\n\n### 🔷 Key Grammar Points:\n| Feature | Example | Explanation |\n|---|---|---|\n| Simple Present Tense | *generate* | Expresses a general/habitual fact |\n| Participial Phrase | *based on...* | Post-modifies the object |\n| Modal Verb | *may be* | Expresses possibility, not certainty |\n| Parallel Structure | *inaccurate, harmful, biased or indecent* | Four adjectives in a coordinated list |\n| Compound Noun | *machine learning* | Noun used attributively as a modifier |\n| Disjunctive Conjunction | *or* | Presents alternatives in subject and predicate |"
+    },
+    {
+      "original": "By testing this model, you assume the risk of any harm caused by any response or output of the model.",
+      "translation": [
+        {
+          "text": "By testing this model, you assume the risk of any harm caused by any response or output of the model.",
+          "translation": "通过测试此模型，您承担由模型的任何响应或输出所造成的任何危害的风险。"
+        }
+      ],
+      "tokens": [
+        {
+          "text": "By",
+          "translation": "通过",
+          "phonetic": "/baɪ/",
+          "morphology": "Preposition – introduces a gerund phrase indicating means or manner"
+        },
+        {
+          "text": "testing",
+          "translation": "测试",
+          "phonetic": "/ˈtɛstɪŋ/",
+          "morphology": "Verb – present participle / gerund of 'test'; functions as the object of the preposition 'by'"
+        },
+        {
+          "text": "this",
+          "translation": "此/这个",
+          "phonetic": "/ðɪs/",
+          "morphology": "Determiner – demonstrative pronoun/adjective, singular, proximal"
+        },
+        {
+          "text": "model",
+          "translation": "模型",
+          "phonetic": "/ˈmɒd.əl/",
+          "morphology": "Noun – common noun, singular, object of gerund 'testing'"
+        },
+        {
+          "text": "you",
+          "translation": "您/你",
+          "phonetic": "/juː/",
+          "morphology": "Pronoun – second person, singular/plural, subject of main clause"
+        },
+        {
+          "text": "assume",
+          "translation": "承担",
+          "phonetic": "/əˈsjuːm/",
+          "morphology": "Verb – base form, present simple, second person; main verb of the clause"
+        },
+        {
+          "text": "the",
+          "translation": "这个（定冠词）",
+          "phonetic": "/ðə/",
+          "morphology": "Article – definite article, precedes the noun 'risk'"
+        },
+        {
+          "text": "risk",
+          "translation": "风险",
+          "phonetic": "/rɪsk/",
+          "morphology": "Noun – common noun, singular, direct object of 'assume'"
+        },
+        {
+          "text": "of",
+          "translation": "的",
+          "phonetic": "/ɒv/",
+          "morphology": "Preposition – introduces a noun phrase modifying 'risk'"
+        },
+        {
+          "text": "any",
+          "translation": "任何",
+          "phonetic": "/ˈɛni/",
+          "morphology": "Determiner – indefinite determiner, used with singular or plural nouns"
+        },
+        {
+          "text": "harm",
+          "translation": "危害/伤害",
+          "phonetic": "/hɑːm/",
+          "morphology": "Noun – common noun, singular (uncountable), object of preposition 'of'"
+        },
+        {
+          "text": "caused",
+          "translation": "造成的",
+          "phonetic": "/kɔːzd/",
+          "morphology": "Verb – past participle of 'cause'; functions as a participial adjective modifying 'harm'"
+        },
+        {
+          "text": "by",
+          "translation": "由/被",
+          "phonetic": "/baɪ/",
+          "morphology": "Preposition – introduces the agent in a passive participial phrase"
+        },
+        {
+          "text": "any",
+          "translation": "任何",
+          "phonetic": "/ˈɛni/",
+          "morphology": "Determiner – indefinite determiner"
+        },
+        {
+          "text": "response",
+          "translation": "响应/回应",
+          "phonetic": "/rɪˈspɒns/",
+          "morphology": "Noun – common noun, singular, part of a compound subject within the prepositional phrase"
+        },
+        {
+          "text": "or",
+          "translation": "或",
+          "phonetic": "/ɔːr/",
+          "morphology": "Conjunction – coordinating conjunction linking 'response' and 'output'"
+        },
+        {
+          "text": "output",
+          "translation": "输出",
+          "phonetic": "/ˈaʊtpʊt/",
+          "morphology": "Noun – common noun, singular, coordinated with 'response'"
+        },
+        {
+          "text": "of",
+          "translation": "的",
+          "phonetic": "/ɒv/",
+          "morphology": "Preposition – introduces the noun phrase 'the model', modifying 'response or output'"
+        },
+        {
+          "text": "the",
+          "translation": "该（定冠词）",
+          "phonetic": "/ðə/",
+          "morphology": "Article – definite article"
+        },
+        {
+          "text": "model",
+          "translation": "模型",
+          "phonetic": "/ˈmɒd.əl/",
+          "morphology": "Noun – common noun, singular, object of the preposition 'of'"
+        }
+      ],
+      "grammar_explanation": "This sentence is a **conditional-consequence statement** structured around a **gerund phrase** and a **main clause**, with an embedded **participial phrase**. Here is a detailed breakdown:\n\n1. **Prepositional Phrase with Gerund (Adverbial Modifier):** \"By testing this model\" — The preposition *by* is followed by the gerund *testing*, forming an adverbial phrase that expresses the **means or condition** by which the consequence occurs. The gerund phrase acts as an adverbial modifier to the main clause.\n\n2. **Main Clause:** \"you assume the risk\" — The subject is the second-person pronoun *you*, and the main verb is *assume* in the **simple present tense** (base form), indicating a general or habitual truth. The direct object is *the risk*, modified by a prepositional phrase.\n\n3. **Postmodifying Prepositional Phrase:** \"of any harm\" — This prepositional phrase (preposition *of* + noun phrase *any harm*) modifies *risk*, specifying what kind of risk is meant.\n\n4. **Participial Phrase (Reduced Relative Clause):** \"caused by any response or output of the model\" — This is a **past participial phrase** functioning as a **postmodifier** of *harm*, equivalent to the relative clause *\"that is caused by any response or output of the model.\"* It uses the **passive construction** (*caused by*) to indicate the agent responsible for the harm.\n\n5. **Coordinating Conjunction:** *or* links two nouns — *response* and *output* — forming a **compound noun phrase** as the agent of the participial phrase.\n\n6. **Tone and Register:** The sentence employs **formal, legal-style language** (e.g., *assume the risk*, *any harm caused by*), commonly found in disclaimers and terms of service. The use of *you assume* (rather than *you may assume*) makes the statement **definitive and binding** in tone."
+    },
+    {
+      "grammar_explanation": "**Sentence Type:** Negative imperative sentence with a conditional/exceptive subordinate clause.\n\n---\n\n### 1. 🔷 Main Clause: Negative Imperative\n**\"Please do not upload any confidential information or personal data\"**\n\n- This is a **negative imperative** constructed with **\"do not + base verb\"** (`do not upload`), which is the standard form for polite negative commands in English.\n- **\"Please\"** softens the command, making it a **polite request** rather than a strict order. It functions as an **interjection/adverb** at the start of the sentence.\n- **\"any\"** is used instead of \"some\" because the sentence is **negative**. In negative and interrogative clauses, English typically uses *any* rather than *some*.\n- **\"confidential information\"** and **\"personal data\"** are two **noun phrases** joined by the **coordinating conjunction \"or\"**, forming a compound direct object. In negative contexts, *or* carries the meaning of *nor* (neither… nor).\n\n---\n\n### 2. 🔷 Subordinate Clause: Exceptive/Conditional Clause\n**\"unless expressly permitted\"**\n\n- **\"unless\"** is a **subordinating conjunction** meaning *\"except if\"* or *\"on the condition that … not\"*. It introduces an **exceptive conditional clause**.\n- The clause is **elliptical** (shortened): the full form would be *\"unless [it is] expressly permitted\"*, where the subject *it* and the auxiliary *is* are omitted because they are recoverable from context.\n- **\"expressly permitted\"** is a **passive participial construction**: *permitted* is a **past participle** used passively, modified by the adverb *expressly* (meaning \"explicitly\" or \"in a clear and direct manner\").\n\n---\n\n### 3. 🔷 Key Grammar Points Summary\n\n| Feature | Example | Explanation |\n|---|---|---|\n| Negative Imperative | `do not upload` | `do + not + base verb` for negative commands |\n| Polite Marker | `Please` | Softens the imperative into a polite request |\n| Negative Determiner | `any` | Used with negatives instead of \"some\" |\n| Coordinating Conjunction | `or` | Joins two noun phrases; acts as \"nor\" in negative context |\n| Subordinating Conjunction | `unless` | Introduces an exceptive condition (\"except if\") |\n| Ellipsis | `unless expressly permitted` | Subject + auxiliary (`it is`) omitted |\n| Passive Participle | `permitted` | Past participle in passive voice |\n| Manner Adverb | `expressly` | Modifies the participle `permitted` |",
+      "original": "Please do not upload any confidential information or personal data unless expressly permitted.",
+      "tokens": [
+        {
+          "morphology": "Adverb/Interjection – used as a polite imperative marker",
+          "phonetic": "/pliːz/",
+          "text": "Please",
+          "translation": "Por favor"
+        },
+        {
+          "morphology": "Auxiliary verb – present tense, base form, used to form the negative imperative",
+          "phonetic": "/duː/",
+          "text": "do",
+          "translation": "hacer"
+        },
+        {
+          "morphology": "Adverb – negation particle",
+          "phonetic": "/nɒt/",
+          "text": "not",
+          "translation": "no"
+        },
+        {
+          "morphology": "Verb – base form / infinitive, main verb of the imperative clause",
+          "phonetic": "/ʌpˈloʊd/",
+          "text": "upload",
+          "translation": "cargar / subir"
+        },
+        {
+          "morphology": "Determiner – used in negative/conditional contexts to indicate an unspecified quantity",
+          "phonetic": "/ˈɛni/",
+          "text": "any",
+          "translation": "ningún / algún"
+        },
+        {
+          "morphology": "Adjective – attributive, modifying 'information'",
+          "phonetic": "/ˌkɒnfɪˈdɛnʃəl/",
+          "text": "confidential",
+          "translation": "confidencial"
+        },
+        {
+          "morphology": "Noun – singular, uncountable, direct object",
+          "phonetic": "/ˌɪnfəˈmeɪʃən/",
+          "text": "information",
+          "translation": "información"
+        },
+        {
+          "morphology": "Coordinating conjunction – connects two noun phrases in a negative context",
+          "phonetic": "/ɔːr/",
+          "text": "or",
+          "translation": "o / ni"
+        },
+        {
+          "morphology": "Adjective – attributive, modifying 'data'",
+          "phonetic": "/ˈpɜːrsənəl/",
+          "text": "personal",
+          "translation": "personal"
+        },
+        {
+          "morphology": "Noun – plural (or uncountable in modern usage), direct object, coordinated with 'information'",
+          "phonetic": "/ˈdeɪtə/",
+          "text": "data",
+          "translation": "datos"
+        },
+        {
+          "morphology": "Subordinating conjunction – introduces a conditional/exceptive adverbial clause",
+          "phonetic": "/ənˈlɛs/",
+          "text": "unless",
+          "translation": "a menos que"
+        },
+        {
+          "morphology": "Adverb – manner adverb, modifying 'permitted'",
+          "phonetic": "/ɪkˈsprɛsli/",
+          "text": "expressly",
+          "translation": "expresamente"
+        },
+        {
+          "morphology": "Verb – past participle, used in a passive construction (ellipted: 'unless [it is] expressly permitted')",
+          "phonetic": "/pərˈmɪtɪd/",
+          "text": "permitted",
+          "translation": "permitido"
+        }
+      ],
+      "translation": [
+        {
+          "text": "Please do not upload any confidential information or personal data unless expressly permitted.",
+          "translation": "Por favor, no cargue ninguna información confidencial ni datos personales a menos que esté expresamente permitido."
+        }
+      ]
+    },
+    {
+      "grammar_explanation": "This sentence is a **passive voice construction** in the **present simple tense**. Here is a detailed breakdown:\n\n1. **Passive Voice Structure**: The sentence follows the pattern **Subject + auxiliary \"to be\" + past participle**, i.e., *\"Your use\" (subject) + \"is\" (auxiliary) + \"logged\" (past participle)*. The agent (who does the logging) is omitted, which is common in passive constructions when the agent is unknown, unimportant, or intentionally withheld.\n\n2. **Subject – \"Your use\"**: A noun phrase where *\"Your\"* is a **possessive pronoun** acting as a determiner, and *\"use\"* is an **uncountable noun** functioning as the head of the phrase.\n\n3. **Auxiliary Verb – \"is\"**: The third-person singular present form of the verb *\"to be\"*, used here to form the passive voice. It agrees with the singular subject *\"use\"*.\n\n4. **Past Participle – \"logged\"**: Derived from the verb *\"to log\"*, meaning to record or register. In passive constructions, the past participle carries the main semantic meaning of the sentence.\n\n5. **Prepositional Phrase – \"for security purposes\"**: This is an **adverbial prepositional phrase** indicating **purpose**. *\"For\"* is the preposition, *\"security\"* is a noun used **attributively** (as a modifier/adjective) to describe *\"purposes\"*, and *\"purposes\"* is the head noun in the plural form. The phrase answers the question *\"Why is the use logged?\"*\n\n6. **Tense**: **Present Simple Passive** — implies that the logging is a continuous, habitual, or policy-based action rather than a one-time event.",
+      "original": "Your use is logged for security purposes.",
+      "tokens": [
+        {
+          "morphology": "Pronoun, possessive, second person, singular/plural",
+          "phonetic": "/jʊər/",
+          "text": "Your",
+          "translation": "Votre"
+        },
+        {
+          "morphology": "Noun, common, singular, uncountable",
+          "phonetic": "/juːs/",
+          "text": "use",
+          "translation": "utilisation"
+        },
+        {
+          "morphology": "Verb, auxiliary, present simple, third person singular",
+          "phonetic": "/ɪz/",
+          "text": "is",
+          "translation": "est"
+        },
+        {
+          "morphology": "Verb, past participle, used in passive voice",
+          "phonetic": "/lɒɡd/",
+          "text": "logged",
+          "translation": "enregistrée"
+        },
+        {
+          "morphology": "Preposition, indicating purpose",
+          "phonetic": "/fɔːr/",
+          "text": "for",
+          "translation": "à des fins de / pour"
+        },
+        {
+          "morphology": "Noun, common, singular, uncountable, attributive (modifies 'purposes')",
+          "phonetic": "/sɪˈkjʊərɪti/",
+          "text": "security",
+          "translation": "sécurité"
+        },
+        {
+          "morphology": "Noun, common, plural",
+          "phonetic": "/ˈpɜːrpəsɪz/",
+          "text": "purposes",
+          "translation": "fins / objectifs"
+        }
+      ],
+      "translation": [
+        {
+          "text": "Your use is logged for security purposes.",
+          "translation": "Votre utilisation est enregistrée à des fins de sécurité."
+        }
+      ]
+    }
+  ]
+}

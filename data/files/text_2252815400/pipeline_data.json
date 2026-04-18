@@ -1,0 +1,27 @@
+{
+  "data": {
+    "original": "AI models generate",
+    "translation": [
+      {
+        "text": "AI",
+        "translation": "人工智能",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "morphology": "n"
+      },
+      {
+        "text": "models",
+        "translation": "模型",
+        "phonetic": "/ˈmɒd.əlz/",
+        "morphology": "n"
+      },
+      {
+        "text": "generate",
+        "translation": "生成",
+        "phonetic": "/ˈdʒen.ə.reɪt/",
+        "morphology": "v"
+      }
+    ],
+    "tokenized_translation": "人工智能 模型 生成",
+    "grammar_explanation": "该句为一个简单的主谓结构，主语为名词短语\"AI models\"（人工智能模型），由名词\"AI\"作定语修饰核心名词\"models\"（复数形式）；谓语动词为\"generate\"（生成），与复数主语保持一致，使用一般现在时，表达一种普遍性事实或能力。整句话虽然简短，但结构完整，描述了\"人工智能模型具有生成（某物）的能力或行为\"。"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "data": {
+    "original": "你好 世界， 这 是 一个 测试 句子， 带有 多个 单词",
+    "translation": [
+      {
+        "text": "你好",
+        "translation": "Hello",
+        "phonetic": "nǐ hǎo",
+        "morphology": "interj"
+      },
+      {
+        "text": "世界",
+        "translation": "world",
+        "phonetic": "shì jiè",
+        "morphology": "n"
+      },
+      {
+        "text": "这",
+        "translation": "this",
+        "phonetic": "zhè",
+        "morphology": "pron"
+      },
+      {
+        "text": "是",
+        "translation": "is",
+        "phonetic": "shì",
+        "morphology": "v"
+      },
+      {
+        "text": "一个",
+        "translation": "a",
+        "phonetic": "yī gè",
+        "morphology": "det"
+      },
+      {
+        "text": "测试",
+        "translation": "test",
+        "phonetic": "cè shì",
+        "morphology": "n"
+      },
+      {
+        "text": "句子",
+        "translation": "sentence",
+        "phonetic": "jù zi",
+        "morphology": "n"
+      },
+      {
+        "text": "带有",
+        "translation": "containing",
+        "phonetic": "dài yǒu",
+        "morphology": "v"
+      },
+      {
+        "text": "多个",
+        "translation": "multiple",
+        "phonetic": "duō gè",
+        "morphology": "adj"
+      },
+      {
+        "text": "单词",
+        "translation": "words",
+        "phonetic": "dān cí",
+        "morphology": "n"
+      }
+    ],
+    "tokenized_translation": "Hello world , this is a test sentence , containing multiple words",
+    "grammar_explanation": "This sentence is composed of two main clauses joined together. The first clause, \"你好世界\" (Hello world), is a greeting interjection directed at \"世界\" (world), functioning as a salutation. The second clause, \"这是一个测试句子，带有多个单词\" (This is a test sentence, containing multiple words), follows a standard Subject-Verb-Object (SVO) structure common in Mandarin Chinese. The subject is \"这\" (this), the verb is \"是\" (is/to be), and \"一个测试句子\" (a test sentence) serves as the predicate nominative. The classifier \"个\" (gè) is used after the numeral \"一\" (one/a), which is a grammatical requirement in Mandarin — nouns must be preceded by a measure word/classifier rather than an article as in English. The participial phrase \"带有多个单词\" (containing multiple words) acts as a modifier for \"句子\" (sentence), where \"多个\" uses the same classifier \"个\" to express plurality. Unlike English, Mandarin does not use articles (a, an, the) or inflect verbs for tense; instead, context and measure words convey quantity and specificity.",
+    "tokenized_translation_quoted": "\"Hello\" \"world\" \"this\" \"is\" \"a\" \"test\" \"sentence\" \"containing\" \"multiple\" \"words\""
+  }
+}

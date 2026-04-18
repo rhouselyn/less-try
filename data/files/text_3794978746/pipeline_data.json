@@ -1,0 +1,164 @@
+{
+  "sentences": {
+    "original": "AI models generate responses and outputs based on complex algorithms and machine learning techniques, and those responses or outputs may be inaccurate, harmful, biased or indecent.",
+    "translation": [
+      {
+        "text": "AI",
+        "translation": "人工智能",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "morphology": "名词/缩写词"
+      },
+      {
+        "text": "models",
+        "translation": "模型",
+        "phonetic": "/ˈmɒd.əlz/",
+        "morphology": "名词，复数"
+      },
+      {
+        "text": "generate",
+        "translation": "生成",
+        "phonetic": "/ˈdʒen.ə.reɪt/",
+        "morphology": "动词，一般现在时，第三人称复数"
+      },
+      {
+        "text": "responses",
+        "translation": "回应",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "morphology": "名词，复数"
+      },
+      {
+        "text": "and",
+        "translation": "和",
+        "phonetic": "/ænd/",
+        "morphology": "连词"
+      },
+      {
+        "text": "outputs",
+        "translation": "输出",
+        "phonetic": "/ˈaʊt.pʊts/",
+        "morphology": "名词，复数"
+      },
+      {
+        "text": "based",
+        "translation": "基于",
+        "phonetic": "/beɪst/",
+        "morphology": "动词，过去分词，构成介词短语 based on"
+      },
+      {
+        "text": "on",
+        "translation": "在...基础上",
+        "phonetic": "/ɒn/",
+        "morphology": "介词"
+      },
+      {
+        "text": "complex",
+        "translation": "复杂的",
+        "phonetic": "/ˈkɒm.pleks/",
+        "morphology": "形容词"
+      },
+      {
+        "text": "algorithms",
+        "translation": "算法",
+        "phonetic": "/ˈæl.ɡə.rɪ.ðəmz/",
+        "morphology": "名词，复数"
+      },
+      {
+        "text": "and",
+        "translation": "和",
+        "phonetic": "/ænd/",
+        "morphology": "连词"
+      },
+      {
+        "text": "machine",
+        "translation": "机器",
+        "phonetic": "/məˈʃiːn/",
+        "morphology": "名词，作定语修饰 learning"
+      },
+      {
+        "text": "learning",
+        "translation": "学习",
+        "phonetic": "/ˈlɜː.nɪŋ/",
+        "morphology": "动名词/名词，构成复合名词 machine learning"
+      },
+      {
+        "text": "techniques",
+        "translation": "技术",
+        "phonetic": "/tekˈniːks/",
+        "morphology": "名词，复数"
+      },
+      {
+        "text": "and",
+        "translation": "并且",
+        "phonetic": "/ænd/",
+        "morphology": "连词，连接两个分句"
+      },
+      {
+        "text": "those",
+        "translation": "那些",
+        "phonetic": "/ðəʊz/",
+        "morphology": "指示代词/限定词，复数"
+      },
+      {
+        "text": "responses",
+        "translation": "回应",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "morphology": "名词，复数"
+      },
+      {
+        "text": "or",
+        "translation": "或者",
+        "phonetic": "/ɔː/",
+        "morphology": "连词"
+      },
+      {
+        "text": "outputs",
+        "translation": "输出",
+        "phonetic": "/ˈaʊt.pʊts/",
+        "morphology": "名词，复数"
+      },
+      {
+        "text": "may",
+        "translation": "可能",
+        "phonetic": "/meɪ/",
+        "morphology": "情态动词，表示可能性"
+      },
+      {
+        "text": "be",
+        "translation": "是",
+        "phonetic": "/biː/",
+        "morphology": "动词，原形，与 may 构成情态结构"
+      },
+      {
+        "text": "inaccurate",
+        "translation": "不准确的",
+        "phonetic": "/ɪnˈæk.jʊ.rət/",
+        "morphology": "形容词"
+      },
+      {
+        "text": "harmful",
+        "translation": "有害的",
+        "phonetic": "/ˈhɑːm.fʊl/",
+        "morphology": "形容词"
+      },
+      {
+        "text": "biased",
+        "translation": "有偏见的",
+        "phonetic": "/ˈbaɪ.əst/",
+        "morphology": "形容词"
+      },
+      {
+        "text": "or",
+        "translation": "或者",
+        "phonetic": "/ɔː/",
+        "morphology": "连词"
+      },
+      {
+        "text": "indecent",
+        "translation": "不雅的",
+        "phonetic": "/ɪnˈdiː.sənt/",
+        "morphology": "形容词"
+      }
+    ],
+    "grammar_explanation": "本句为并列复合句，由连词 \"and\" 连接两个分句。第一个分句 \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\" 为主谓宾结构，主语为 \"AI models\"，谓语为 \"generate\"，宾语为 \"responses and outputs\"，\"based on...\" 为过去分词短语作后置定语，修饰宾语。第二个分句 \"those responses or outputs may be inaccurate, harmful, biased or indecent\" 中，\"may be\" 为情态动词结构，表示可能性，后接四个并列形容词作表语，用逗号与 \"or\" 连接。"
+  }
+}

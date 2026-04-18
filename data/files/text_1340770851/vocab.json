@@ -1,0 +1,32 @@
+{
+  "vocab": [
+    {
+      "word": "hello",
+      "ipa": "/həˈloʊ/",
+      "context_meaning": "你好",
+      "morphology": "感叹词 (Interjection)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "\"Hello world\" 是一个简单的感叹句。\"Hello\" 是一个感叹词，用于打招呼或引起注意；\"world\" 是一个单数普通名词，作为问候的对象。整个句子没有动词，是一种省略结构，常用于表达对世界的问候，也是编程领域中最经典的入门示例程序输出语句。句末使用句号（.）表示陈述语气。",
+      "translation": "你好",
+      "tokens": [
+        "hello"
+      ]
+    },
+    {
+      "word": "world",
+      "ipa": "/wɜːrld/",
+      "context_meaning": "世界",
+      "morphology": "名词，单数 (Noun, Singular)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "\"Hello world\" 是一个简单的感叹句。\"Hello\" 是一个感叹词，用于打招呼或引起注意；\"world\" 是一个单数普通名词，作为问候的对象。整个句子没有动词，是一种省略结构，常用于表达对世界的问候，也是编程领域中最经典的入门示例程序输出语句。句末使用句号（.）表示陈述语气。",
+      "translation": "世界",
+      "tokens": [
+        "world"
+      ]
+    }
+  ]
+}

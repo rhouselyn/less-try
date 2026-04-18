@@ -1,0 +1,64 @@
+{
+  "data": {
+    "grammar_explanation": "该句子的核心结构为\"主语 + 谓语动词 + 宾语\"。主语为\"AI models（人工智能模型）\"，谓语动词为\"generate（生成）\"，宾语为由连词\"and\"连接的并列名词短语\"responses（响应）and outputs（输出）\"。后置分词短语\"based on complex（基于复杂的...）\"作状语，修饰整个主句，表示生成响应和输出的依据或方式。需要注意的是，原文存在两处标点使用不规范的情况：第一个句号出现在\"responses\"之后，打断了并列结构；第二个句号出现在\"complex\"之后，且\"complex\"后缺少宾语名词（如\"algorithms 算法\"），导致句子结构不完整。整体而言，这是一个带有后置状语修饰的简单陈述句。",
+    "original": "AI models generate responses. and outputs based on complex .",
+    "tokenized_translation": "人工智能 模型 基于 复杂的 算法 生成 响应 和 输出",
+    "translation": [
+      {
+        "morphology": "n",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "text": "AI",
+        "translation": "人工智能"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈmɒd.əlz/",
+        "text": "models",
+        "translation": "模型"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/ˈdʒen.ə.reɪt/",
+        "text": "generate",
+        "translation": "生成"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "text": "responses",
+        "translation": "响应"
+      },
+      {
+        "morphology": "conj",
+        "phonetic": "/ænd/",
+        "text": "and",
+        "translation": "和"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈaʊt.pʊts/",
+        "text": "outputs",
+        "translation": "输出"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/beɪst/",
+        "text": "based",
+        "translation": "基于"
+      },
+      {
+        "morphology": "prep",
+        "phonetic": "/ɒn/",
+        "text": "on",
+        "translation": "在...上"
+      },
+      {
+        "morphology": "adj",
+        "phonetic": "/ˈkɒm.pleks/",
+        "text": "complex",
+        "translation": "复杂的"
+      }
+    ],
+    "tokenized_translation_quoted": "\"人工智能\" \"模型\" \"基于\" \"复杂的\" \"算法\" \"生成\" \"响应\" \"和\" \"输出\""
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "data": {
+    "grammar_explanation": "本句由两个分句构成，以逗号分隔。**第一分句**\"网络连接超时\"为主谓结构，主语是\"网络连接\"（名词短语，作话题），谓语是\"超时\"（动词，表示状态），整体陈述一种错误状态。**第二分句**\"请检查网络连接后重试\"为祈使句，以礼貌副词\"请\"开头，谓语动词\"检查\"带宾语\"网络连接\"；\"后\"作时间介词，连接前置条件动作\"检查网络连接\"与后续动作\"重试\"，表示\"完成前者之后再执行后者\"的逻辑顺序。全句为系统提示语，语气简洁、正式，采用先说明问题、再给出操作建议的结构。",
+    "original": "网络连接超时，请检查网络连接后重试",
+    "tokenized_translation": "网络 连接 超时 ， 请 检查 网络 连接 后 重试",
+    "translation": [
+      {
+        "morphology": "n",
+        "phonetic": "wǎng luò",
+        "text": "网络",
+        "translation": "网络（互联网或局域网）"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "lián jiē",
+        "text": "连接",
+        "translation": "连接（链路、接入）"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "chāo shí",
+        "text": "超时",
+        "translation": "超出规定时间、请求无响应"
+      },
+      {
+        "morphology": "adv",
+        "phonetic": "qǐng",
+        "text": "请",
+        "translation": "请（礼貌祈使）"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "jiǎn chá",
+        "text": "检查",
+        "translation": "检查、核查"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "wǎng luò",
+        "text": "网络",
+        "translation": "网络（互联网或局域网）"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "lián jiē",
+        "text": "连接",
+        "translation": "连接（链路、接入）"
+      },
+      {
+        "morphology": "prep",
+        "phonetic": "hòu",
+        "text": "后",
+        "translation": "之后、以后"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "chóng shì",
+        "text": "重试",
+        "translation": "重新尝试"
+      }
+    ],
+    "tokenized_translation_quoted": "\"网络\" \"连接\" \"超时\" \"，\" \"请\" \"检查\" \"网络\" \"连接\" \"后\" \"重试\""
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "sentences": {
+    "grammar_explanation": "该句子是一个简单的感叹句，由感叹词\"Hello\"和名词\"world\"构成。\"Hello\"是一个常见的问候语或感叹词，用于打招呼。\"world\"是一个单数普通名词，作为问候的对象。整个句子没有动词，属于省略句结构，在日常英语中非常常见，通常用于打招呼或引起注意。句末使用句号表示陈述语气。",
+    "original": "Hello world.",
+    "translation": [
+      {
+        "morphology": "感叹词 (Interjection)",
+        "phonetic": "/həˈloʊ/",
+        "text": "Hello",
+        "translation": "你好"
+      },
+      {
+        "morphology": "名词，单数 (Noun, Singular)",
+        "phonetic": "/wɜːrld/",
+        "text": "world",
+        "translation": "世界"
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "sentences": {
+    "grammar_explanation": "**Holy shit** 是一个常见的英语粗口感叹语，用于表达强烈的惊讶、震惊或愤怒情绪，相当于中文的\"我的天！\"或\"操！\"。结构上由形容词 **holy**（神圣的）和名词 **shit**（粪便）组成，两者组合成一个固定的感叹短语。⚠️ 注意：原文 \"holly\" 是 \"holy\" 的常见拼写错误，\"holly\" 实为冬青树的意思。",
+    "original": "holly shit",
+    "translation": [
+      {
+        "morphology": "形容词 (adjective)，用作感叹词 (interjection)",
+        "phonetic": "/ˈhoʊli/",
+        "text": "holy",
+        "translation": "神圣的／妈的（语气词）"
+      },
+      {
+        "morphology": "名词 (noun) / 感叹词 (interjection)，粗口，表示惊讶或愤怒",
+        "phonetic": "/ʃɪt/",
+        "text": "shit",
+        "translation": "狗屎／他妈的"
+      }
+    ]
+  }
+}

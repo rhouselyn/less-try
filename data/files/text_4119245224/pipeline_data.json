@@ -1,0 +1,172 @@
+{
+  "sentences": [
+    {
+      "grammar_explanation": "This sentence is a compound sentence consisting of two main clauses joined by the coordinating conjunction \"and.\"\n\n**Clause 1:** \"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"\n- **Subject:** \"AI models\" — a noun phrase where \"AI\" acts as an attributive noun modifying \"models\" (plural).\n- **Predicate:** \"generate\" — a base-form verb in the present simple tense, used here for a general/habitual fact. It agrees with the plural subject.\n- **Direct Object:** \"responses and outputs\" — two coordinated plural nouns joined by \"and.\"\n- **Participial Phrase:** \"based on complex algorithms and machine learning techniques\" — a past participial phrase functioning as a postmodifier of \"responses and outputs.\" \"Based on\" acts as a prepositional adjective. The prepositional object contains two coordinated noun phrases: \"complex algorithms\" and \"machine learning techniques,\" where \"machine learning\" is a compound noun functioning as an attributive modifier.\n\n**Clause 2:** \"those responses or outputs may be inaccurate, harmful, biased or indecent\"\n- **Subject:** \"those responses or outputs\" — two coordinated plural nouns modified by the demonstrative determiner \"those,\" referring anaphorically back to \"responses and outputs\" in Clause 1. The disjunctive conjunction \"or\" suggests either or both may apply.\n- **Predicate:** \"may be\" — a modal verb phrase. \"May\" expresses epistemic possibility (uncertainty/likelihood). \"Be\" is the base-form linking verb.\n- **Subject Complement:** \"inaccurate, harmful, biased or indecent\" — four predicative adjectives in a list, the last joined by the disjunctive \"or,\" indicating that any one or more of these qualities may apply. Note that \"inaccurate\" and \"indecent\" both use the negative prefix \"in-\", while \"harmful\" uses the suffix \"-ful\" and \"biased\" is a past participle used adjectivally.\n\n**Key Grammar Points:**\n1. **Compound sentence structure** with two independent clauses connected by \"and.\"\n2. **Present simple tense** (\"generate\") used to express a general truth or habitual fact.\n3. **Participial phrase** (\"based on...\") as a postmodifier, a common pattern in formal/technical writing.\n4. **Modal verb \"may\"** for epistemic possibility — softer than \"can\" or \"will,\" indicating a degree of uncertainty.\n5. **Coordinating vs. Disjunctive conjunctions:** \"and\" is used for additive coordination; \"or\" is used for disjunctive/alternative coordination.\n6. **Anaphoric reference:** \"those responses or outputs\" refers back to \"responses and outputs\" mentioned earlier, creating cohesion across the two clauses.",
+      "original": "AI models generate responses and outputs based on complex algorithms and machine learning techniques, and those responses or outputs may be inaccurate, harmful, biased or indecent.",
+      "tokens": [
+        {
+          "morphology": "Noun (abbreviation), singular, subject",
+          "phonetic": "/ˌeɪ ˈaɪ/",
+          "text": "AI",
+          "translation": "人工智能"
+        },
+        {
+          "morphology": "Noun, common noun, plural, subject",
+          "phonetic": "/ˈmɒd.əlz/",
+          "text": "models",
+          "translation": "模型"
+        },
+        {
+          "morphology": "Verb, base form, present simple, third-person plural",
+          "phonetic": "/ˈdʒen.ər.eɪt/",
+          "text": "generate",
+          "translation": "生成"
+        },
+        {
+          "morphology": "Noun, common noun, plural, direct object",
+          "phonetic": "/rɪˈspɒn.sɪz/",
+          "text": "responses",
+          "translation": "响应"
+        },
+        {
+          "morphology": "Conjunction, coordinating",
+          "phonetic": "/ænd/",
+          "text": "and",
+          "translation": "和"
+        },
+        {
+          "morphology": "Noun, common noun, plural, direct object",
+          "phonetic": "/ˈaʊt.pʊts/",
+          "text": "outputs",
+          "translation": "输出"
+        },
+        {
+          "morphology": "Verb, past participle, used as participial adjective in 'based on'",
+          "phonetic": "/beɪst/",
+          "text": "based",
+          "translation": "基于"
+        },
+        {
+          "morphology": "Preposition",
+          "phonetic": "/ɒn/",
+          "text": "on",
+          "translation": "在...上"
+        },
+        {
+          "morphology": "Adjective, attributive, modifying 'algorithms'",
+          "phonetic": "/ˈkɒm.pleks/",
+          "text": "complex",
+          "translation": "复杂的"
+        },
+        {
+          "morphology": "Noun, common noun, plural, object of preposition",
+          "phonetic": "/ˈæl.ɡə.rɪð.əmz/",
+          "text": "algorithms",
+          "translation": "算法"
+        },
+        {
+          "morphology": "Conjunction, coordinating",
+          "phonetic": "/ænd/",
+          "text": "and",
+          "translation": "和"
+        },
+        {
+          "morphology": "Noun, used attributively as modifier of 'learning'",
+          "phonetic": "/məˈʃiːn/",
+          "text": "machine",
+          "translation": "机器"
+        },
+        {
+          "morphology": "Verb/Noun, gerund, used as noun modifier of 'techniques'",
+          "phonetic": "/ˈlɜːr.nɪŋ/",
+          "text": "learning",
+          "translation": "学习"
+        },
+        {
+          "morphology": "Noun, common noun, plural, object of preposition",
+          "phonetic": "/tekˈniːks/",
+          "text": "techniques",
+          "translation": "技术"
+        },
+        {
+          "morphology": "Conjunction, coordinating, connecting two main clauses",
+          "phonetic": "/ænd/",
+          "text": "and",
+          "translation": "和"
+        },
+        {
+          "morphology": "Determiner/Pronoun, demonstrative, plural",
+          "phonetic": "/ðoʊz/",
+          "text": "those",
+          "translation": "这些"
+        },
+        {
+          "morphology": "Noun, common noun, plural, subject of second clause",
+          "phonetic": "/rɪˈspɒn.sɪz/",
+          "text": "responses",
+          "translation": "响应"
+        },
+        {
+          "morphology": "Conjunction, coordinating, disjunctive",
+          "phonetic": "/ɔːr/",
+          "text": "or",
+          "translation": "或"
+        },
+        {
+          "morphology": "Noun, common noun, plural, subject of second clause",
+          "phonetic": "/ˈaʊt.pʊts/",
+          "text": "outputs",
+          "translation": "输出"
+        },
+        {
+          "morphology": "Modal verb, expressing possibility",
+          "phonetic": "/meɪ/",
+          "text": "may",
+          "translation": "可能"
+        },
+        {
+          "morphology": "Verb, base form, auxiliary/linking verb",
+          "phonetic": "/biː/",
+          "text": "be",
+          "translation": "是"
+        },
+        {
+          "morphology": "Adjective, predicative, negative prefix 'in-'",
+          "phonetic": "/ɪnˈæk.jʊ.rɪt/",
+          "text": "inaccurate",
+          "translation": "不准确的"
+        },
+        {
+          "morphology": "Adjective, predicative, formed with suffix '-ful'",
+          "phonetic": "/ˈhɑːrm.fʊl/",
+          "text": "harmful",
+          "translation": "有害的"
+        },
+        {
+          "morphology": "Adjective, predicative, past participle used as adjective",
+          "phonetic": "/ˈbaɪ.əst/",
+          "text": "biased",
+          "translation": "带有偏见的"
+        },
+        {
+          "morphology": "Conjunction, coordinating, disjunctive, connecting last adjective in list",
+          "phonetic": "/ɔːr/",
+          "text": "or",
+          "translation": "或"
+        },
+        {
+          "morphology": "Adjective, predicative, negative prefix 'in-'",
+          "phonetic": "/ɪnˈdiː.sənt/",
+          "text": "indecent",
+          "translation": "不雅的"
+        }
+      ],
+      "translation": [
+        {
+          "text": "AI models generate responses and outputs based on complex algorithms and machine learning techniques, and those responses or outputs may be inaccurate, harmful, biased or indecent.",
+          "translation": "AI 模型根据复杂的算法和机器学习技术生成响应和输出，这些响应或输出可能不准确、有害、带有偏见或不雅。"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "vocab": [
+    {
+      "word": "hi",
+      "ipa": "/haɪ/",
+      "context_meaning": "你好",
+      "morphology": "interj",
+      "translation": "你好"
+    }
+  ]
+}

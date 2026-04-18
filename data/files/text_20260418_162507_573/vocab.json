@@ -1,0 +1,18 @@
+{
+  "vocab": [
+    {
+      "word": "bar",
+      "ipa": "/bɑːr/",
+      "context_meaning": "酒吧",
+      "morphology": "n",
+      "translation": "酒吧"
+    },
+    {
+      "word": "hi",
+      "ipa": "/haɪ/",
+      "context_meaning": "嗨",
+      "morphology": "interj",
+      "translation": "嗨"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "original": "Hello world",
+    "translation": [
+      {
+        "text": "Hello",
+        "translation": "你好",
+        "phonetic": "həˈloʊ",
+        "morphology": "interj"
+      },
+      {
+        "text": "world",
+        "translation": "世界",
+        "phonetic": "wɜːrld",
+        "morphology": "n"
+      }
+    ],
+    "tokenized_translation": "你好 世界",
+    "grammar_explanation": "\"Hello world\" 是一个简单的感叹句，由感叹词 \"Hello\"（你好）和名词 \"world\"（世界）构成。\"Hello\" 用于表示问候，\"world\" 作为问候的对象，整个短语常被用作经典的编程入门示例，表达向世界打招呼的含义。",
+    "tokenized_translation_quoted": "\"你好\" \"世界\""
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "vocab": [
+    {
+      "word": "fuck",
+      "ipa": "fʌk",
+      "context_meaning": "他妈的",
+      "morphology": "interj",
+      "translation": "他妈的",
+      "sentence_index": 1
+    },
+    {
+      "word": "the",
+      "ipa": "ðə",
+      "context_meaning": "这个",
+      "morphology": "det",
+      "translation": "这个",
+      "sentence_index": 1
+    },
+    {
+      "word": "what",
+      "ipa": "hwɒt",
+      "context_meaning": "什么",
+      "morphology": "pron",
+      "translation": "什么",
+      "sentence_index": 0
+    }
+  ]
+}

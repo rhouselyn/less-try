@@ -1,0 +1,18 @@
+{
+  "vocab": [
+    {
+      "word": "holly",
+      "ipa": "/ˈhɒl.i/",
+      "context_meaning": "冬青",
+      "morphology": "名词 (Noun)，单数形式 (Singular)，普通名词 (Common Noun)，不可数/可数名词 (Countable/Uncountable Noun)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "\"Holly\" 是一个英语名词，指的是一种常绿植物，中文名为\"冬青\"，以其深绿色有光泽的叶子和红色浆果而闻名，常用于圣诞节装饰。它的复数形式为 \"hollies\"。作为普通名词，它可以单独使用（如 \"a holly\"，一棵冬青）或复数使用（如 \"hollies\"，多棵冬青）。此外，\"Holly\" 首字母大写时也是一个常见的英语女性人名。",
+      "translation": "冬青",
+      "tokens": [
+        "holly"
+      ]
+    }
+  ]
+}

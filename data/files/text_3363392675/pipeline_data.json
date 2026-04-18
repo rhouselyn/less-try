@@ -1,0 +1,27 @@
+{
+  "data": {
+    "grammar_explanation": "这是一个简单的主谓结构句子，由主语和谓语动词组成。\"AI models\"（人工智能模型）作为名词短语充当句子的主语，其中\"AI\"是名词修饰语，\"models\"是中心名词（复数形式）。\"generate\"（生成）是谓语动词，为一般现在时，因主语为复数，动词不加\"-s\"。整句表达\"人工智能模型（能够）生成……\"，是一个未完成的陈述句，通常后面需要跟宾语来说明所生成的内容。",
+    "original": "AI models generate",
+    "tokenized_translation": "人工智能 模型 生成",
+    "translation": [
+      {
+        "morphology": "n",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "text": "AI",
+        "translation": "人工智能"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈmɒd.əlz/",
+        "text": "models",
+        "translation": "模型"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/ˈdʒen.ə.reɪt/",
+        "text": "generate",
+        "translation": "生成"
+      }
+    ]
+  }
+}

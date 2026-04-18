@@ -1,0 +1,32 @@
+{
+  "vocab": [
+    {
+      "word": "AI",
+      "ipa": "/ˌeɪ ˈaɪ/",
+      "context_meaning": "人工智能",
+      "morphology": "n",
+      "translation": "人工智能"
+    },
+    {
+      "word": "generate",
+      "ipa": "/ˈdʒen.ə.reɪt/",
+      "context_meaning": "生成",
+      "morphology": "v",
+      "translation": "生成"
+    },
+    {
+      "word": "responses",
+      "ipa": "/rɪˈspɒn.sɪz/",
+      "context_meaning": "回应",
+      "morphology": "n",
+      "translation": "回应"
+    },
+    {
+      "word": "models",
+      "ipa": "/ˈmɒd.əlz/",
+      "context_meaning": "模型",
+      "morphology": "n",
+      "translation": "模型"
+    }
+  ]
+}

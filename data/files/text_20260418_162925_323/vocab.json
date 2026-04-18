@@ -1,0 +1,25 @@
+{
+  "vocab": [
+    {
+      "word": "car",
+      "ipa": "/kɑːr/",
+      "context_meaning": "汽车",
+      "morphology": "n",
+      "translation": "汽车"
+    },
+    {
+      "word": "hi",
+      "ipa": "/haɪ/",
+      "context_meaning": "嗨",
+      "morphology": "interj",
+      "translation": "嗨"
+    },
+    {
+      "word": "bar",
+      "ipa": "/bɑːr/",
+      "context_meaning": "酒吧",
+      "morphology": "n",
+      "translation": "酒吧"
+    }
+  ]
+}

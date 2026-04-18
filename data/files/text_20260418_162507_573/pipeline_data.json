@@ -1,0 +1,22 @@
+{
+  "data": {
+    "grammar_explanation": "该文本由两个独立的词语组成，中间以句号分隔，并不构成一个完整的句子。\"hi\"是一个感叹词，用于打招呼或问候；\"bar\"是一个名词，指代酒吧或吧台。两者之间没有语法上的直接关联，属于片段式表达。",
+    "original": "hi。 bar",
+    "tokenized_translation": "嗨。 酒吧",
+    "translation": [
+      {
+        "morphology": "interj",
+        "phonetic": "/haɪ/",
+        "text": "hi",
+        "translation": "嗨"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/bɑːr/",
+        "text": "bar",
+        "translation": "酒吧"
+      }
+    ],
+    "tokenized_translation_quoted": "\"嗨。\" \"酒吧\""
+  }
+}

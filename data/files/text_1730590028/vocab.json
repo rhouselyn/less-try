@@ -1,0 +1,18 @@
+{
+  "vocab": [
+    {
+      "word": "hello",
+      "ipa": "/həˈloʊ/",
+      "context_meaning": "你好",
+      "morphology": "感叹词 (Interjection)",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "\"hello\" 是一个常见的英语感叹词，用于打招呼或问候他人。它没有词形变化，不受时态、数量或格的影响。在句子中通常独立使用，后面可接逗号和称呼语，例如 \"Hello, John!\"。其中文对应词为\"你好\"，在正式场合也可说\"您好\"。",
+      "translation": "你好",
+      "tokens": [
+        "hello"
+      ]
+    }
+  ]
+}

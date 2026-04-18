@@ -1,0 +1,32 @@
+{
+  "vocab": [
+    {
+      "word": "hello",
+      "ipa": "/həˈloʊ/",
+      "context_meaning": "你好",
+      "morphology": "感叹词 (Interjection)：用于打招呼或引起注意",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "该句 \"Hello world.\" 是一个简单的感叹句/问候语，结构极为简洁：\n1. **Hello**：感叹词，用于表示问候或打招呼，相当于中文的\"你好\"。\n2. **world**：名词，作为问候的对象，表示\"世界\"。句尾使用句号（.）表示陈述语气。\n整体句子没有动词，属于省略句（Elliptical Sentence），是英语中最经典的问候表达之一，常见于编程入门示例（如 \"Hello, World!\" 程序）以及日常打招呼用语中。",
+      "translation": "你好",
+      "tokens": [
+        "hello"
+      ]
+    },
+    {
+      "word": "world",
+      "ipa": "/wɜːrld/",
+      "context_meaning": "世界",
+      "morphology": "名词 (Noun)：单数，普通名词，指整个地球或人类社会",
+      "variants": [],
+      "examples": [],
+      "options": [],
+      "grammar": "该句 \"Hello world.\" 是一个简单的感叹句/问候语，结构极为简洁：\n1. **Hello**：感叹词，用于表示问候或打招呼，相当于中文的\"你好\"。\n2. **world**：名词，作为问候的对象，表示\"世界\"。句尾使用句号（.）表示陈述语气。\n整体句子没有动词，属于省略句（Elliptical Sentence），是英语中最经典的问候表达之一，常见于编程入门示例（如 \"Hello, World!\" 程序）以及日常打招呼用语中。",
+      "translation": "世界",
+      "tokens": [
+        "world"
+      ]
+    }
+  ]
+}

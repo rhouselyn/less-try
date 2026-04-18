@@ -1,0 +1,62 @@
+{
+  "data": [
+    {
+      "sentence": "AI models generate responses.",
+      "translation_result": {
+        "original": "AI models generate responses.",
+        "translation": [
+          {
+            "text": "AI",
+            "translation": "人工智能",
+            "phonetic": "/ˌeɪ ˈaɪ/",
+            "morphology": "n"
+          },
+          {
+            "text": "models",
+            "translation": "模型",
+            "phonetic": "/ˈmɒd.əlz/",
+            "morphology": "n"
+          },
+          {
+            "text": "generate",
+            "translation": "生成",
+            "phonetic": "/ˈdʒen.ər.eɪt/",
+            "morphology": "v"
+          },
+          {
+            "text": "responses",
+            "translation": "响应",
+            "phonetic": "/rɪˈspɒn.sɪz/",
+            "morphology": "n"
+          }
+        ],
+        "tokenized_translation": "人工智能模型生成响应。",
+        "grammar_explanation": "此句为简单陈述句，结构为\"主语 + 谓语 + 宾语\"。主语为名词短语\"AI models\"（人工智能模型），其中\"AI\"作定语修饰名词\"models\"；谓语为动词\"generate\"（生成），因主语为复数形式，动词使用原形；宾语为名词\"responses\"（响应），为复数形式。整句表达\"人工智能模型生成响应\"这一客观事实。",
+        "tokenized_translation_quoted": "人工智能 模型 生成 响应"
+      }
+    },
+    {
+      "sentence": "hi bro",
+      "translation_result": {
+        "grammar_explanation": "这是一个非正式的口语打招呼短语。\"hi\" 是感叹词，用于问候；\"bro\" 是名词，是 \"brother\" 的缩写形式，在口语中常用来称呼关系亲近的朋友或男性伙伴。整个短语结构为\"感叹词 + 称呼语\"，没有动词，属于省略句式，常见于非正式的日常对话中。",
+        "original": "hi bro",
+        "tokenized_translation": "嗨，兄弟",
+        "translation": [
+          {
+            "morphology": "interj",
+            "phonetic": "/haɪ/",
+            "text": "hi",
+            "translation": "嗨"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/broʊ/",
+            "text": "bro",
+            "translation": "兄弟"
+          }
+        ],
+        "tokenized_translation_quoted": "嗨 兄弟"
+      }
+    }
+  ]
+}

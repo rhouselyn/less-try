@@ -1,0 +1,21 @@
+{
+  "sentences": {
+    "grammar_explanation": "该句 \"Hello world.\" 是一个简单的感叹/问候句，结构由感叹词 \"Hello\"（你好）加上名词 \"world\"（世界）作为呼语构成，句末使用句号表示陈述语气。整句没有主语、谓语或宾语等典型句子成分，属于省略结构（elliptical structure），是英语中常见的非完整句（minor sentence）。\"world\" 在此充当呼语（vocative），直接指代被问候的对象。该短语广泛用于编程教学中的第一个示例程序，同时也可作为日常问候语使用。",
+    "original": "Hello world.",
+    "tokenized_translation": "你好 世界",
+    "translation": [
+      {
+        "morphology": "感叹词 (Interjection) — 用于打招呼的问候语，无词形变化",
+        "phonetic": "/həˈloʊ/",
+        "text": "Hello",
+        "translation": "你好"
+      },
+      {
+        "morphology": "名词 (Noun) — 单数，普通名词，此处用作呼语（直接称呼对象）",
+        "phonetic": "/wɜːrld/",
+        "text": "world",
+        "translation": "世界"
+      }
+    ]
+  }
+}
