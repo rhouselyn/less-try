@@ -1,0 +1,16 @@
+{
+  "data": {
+    "grammar_explanation": "\"hi\" 是一个常见的英语感叹词，用于非正式场合的问候，相当于中文的\"嗨\"或\"你好\"。它独立成句，不需要主语或谓语，直接表达打招呼的意思。",
+    "original": "hi",
+    "tokenized_translation": "嗨",
+    "translation": [
+      {
+        "morphology": "interj",
+        "phonetic": "haɪ",
+        "text": "hi",
+        "translation": "嗨"
+      }
+    ],
+    "tokenized_translation_quoted": "\"嗨\""
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "data": {
+    "grammar_explanation": "该文本由两个相同的感叹词\"hi\"组成，中间用句号隔开，均为非正式的英语打招呼用语，相当于中文的\"嗨\"或\"你好\"。感叹词独立使用，不充当句子的任何语法成分，无需与其他词搭配即可表达完整的问候含义。两次重复使用\"hi\"可能是为了加强语气或表示热情地打招呼。",
+    "original": "hi。hi",
+    "tokenized_translation": "嗨。 嗨",
+    "translation": [
+      {
+        "morphology": "interj",
+        "phonetic": "/haɪ/",
+        "text": "hi",
+        "translation": "嗨"
+      },
+      {
+        "morphology": "interj",
+        "phonetic": "/haɪ/",
+        "text": "hi",
+        "translation": "嗨"
+      }
+    ],
+    "tokenized_translation_quoted": "\"嗨。\" \"嗨\""
+  }
+}

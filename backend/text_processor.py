@@ -117,29 +117,27 @@ class TextProcessor:
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
             
-            # 生成正确的tokenized_translation（无多余空格，严格翻译）
+            # 确保tokenized_translation是正常的严格翻译（仅去除首尾空白和多余换行，保留自然的语言空格）
             if 'tokenized_translation' in result:
-                # 移除所有空格和换行符，确保是严格的一一对应翻译
-                result['tokenized_translation'] = result['tokenized_translation'].replace(' ', '').replace('\n', '')
+                # 只去除首尾空白和多余换行，保留语言本身需要的空格
+                result['tokenized_translation'] = result['tokenized_translation'].strip().replace('\n', '')
             elif 'translation' in result:
                 # 如果没有tokenized_translation字段，则生成一个
                 tokenized_translation = ''
                 for token in result['translation']:
                     if isinstance(token, dict) and 'translation' in token:
                         tokenized_translation += token['translation']
-                # 移除所有空格和换行符，确保是严格的一一对应翻译
-                tokenized_translation = tokenized_translation.replace(' ', '').replace('\n', '')
-                result['tokenized_translation'] = tokenized_translation
+                result['tokenized_translation'] = tokenized_translation.strip()
             
-            # 生成tokenized_translation_quoted字段（无标点符号，只保留文字）
+            # 生成tokenized_translation_quoted字段（无标点符号，只保留文字，无反斜杠）
             if 'translation' in result:
                 quoted_words = []
                 # 定义所有要移除的标点符号
-                punctuation = '''!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~，。！？；："（）【】「」『』、''' 
+                punctuation = '''!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~，。！？；："（）【】「」『』、\\''' 
                 for token in result['translation']:
                     if isinstance(token, dict) and 'translation' in token:
                         translation = token['translation']
-                        # 移除所有标点符号
+                        # 移除所有标点符号和反斜杠
                         clean_translation = translation
                         for char in punctuation:
                             clean_translation = clean_translation.replace(char, '')
