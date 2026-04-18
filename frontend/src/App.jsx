@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, Loader2, ArrowLeft, Languages, Shuffle, Volume2, ChevronRight, Brain, CheckCircle2, XCircle } from 'lucide-react'
 import axios from 'axios'
 
+// 配置axios超时时间为10分钟
+axios.defaults.timeout = 600000
+
 function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
@@ -36,6 +39,8 @@ function App() {
         text: text.trim(),
         source_language: sourceLang,
         target_language: targetLang
+      }, {
+        timeout: 600000 // 10分钟超时
       })
       
       console.log('API响应:', response.data)
@@ -53,7 +58,9 @@ function App() {
           console.log(`第${pollCount}次轮询，文件ID: ${fileId}`)
           
           try {
-            const statusResponse = await axios.get(`/api/status/${fileId}`)
+            const statusResponse = await axios.get(`/api/status/${fileId}`, {
+              timeout: 600000 // 10分钟超时
+            })
             const status = statusResponse.data
             console.log('状态响应:', status)
             
