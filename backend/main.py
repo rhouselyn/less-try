@@ -39,47 +39,74 @@ async def root():
 
 async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str):
     try:
-        processing_status[file_id] = {"status": "processing"}
+        processing_status[file_id] = {"status": "processing", "progress": 0}
         
-        # 翻译句子并获取分词结果
-        translation_result = await text_processor.process_translation(
-            text,
-            source_lang,
-            target_lang,
-            nvidia_api
-        )
+        # 拆分为多个句子
+        sentences = text_processor.split_sentences(text)
+        total_sentences = len(sentences)
         
-        # 直接使用 split_and_translate 的结果作为词汇表
-        vocab = []
-        if isinstance(translation_result, dict) and "translation" in translation_result:
-            seen_words = set()
-            for token in translation_result["translation"]:
-                if isinstance(token, dict) and "text" in token:
-                    word = token["text"].lower()
-                    if word not in seen_words:
-                        seen_words.add(word)
-                        # 直接使用API返回的形态学缩写
-                        morphology = token.get("morphology", "")
-                        
-                        vocab_entry = {
-                            "word": token["text"],
-                            "ipa": token.get("phonetic", ""),
-                            "context_meaning": token.get("translation", ""),
-                            "morphology": morphology,
-                            "translation": token.get("translation", "")
-                        }
-                        vocab.append(vocab_entry)
+        all_vocab = []
+        all_translation_results = []
         
-        # 随机排序词汇表
-        random.shuffle(vocab)
+        for i, sentence in enumerate(sentences):
+            if sentence.strip():
+                # 翻译句子并获取分词结果
+                translation_result = await text_processor.process_translation(
+                    sentence,
+                    source_lang,
+                    target_lang,
+                    nvidia_api
+                )
+                
+                # 提取词汇
+                if isinstance(translation_result, dict) and "translation" in translation_result:
+                    seen_words = set()
+                    for token in translation_result["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            word = token["text"].lower()
+                            if word not in seen_words:
+                                seen_words.add(word)
+                                # 直接使用API返回的形态学缩写
+                                morphology = token.get("morphology", "")
+                                
+                                vocab_entry = {
+                                    "word": token["text"],
+                                    "ipa": token.get("phonetic", ""),
+                                    "context_meaning": token.get("translation", ""),
+                                    "morphology": morphology,
+                                    "translation": token.get("translation", ""),
+                                    "sentence_index": i
+                                }
+                                all_vocab.append(vocab_entry)
+                
+                all_translation_results.append(translation_result)
+                
+                # 更新进度
+                progress = int((i + 1) / total_sentences * 100)
+                processing_status[file_id] = {
+                    "status": "processing",
+                    "progress": progress,
+                    "current_sentence": i + 1,
+                    "total_sentences": total_sentences,
+                    "vocab": all_vocab,
+                    "translation_results": all_translation_results
+                }
         
-        storage.save_pipeline_data(file_id, translation_result)
-        storage.save_vocab(file_id, vocab)
+        # 按字母表排序词汇表
+        all_vocab.sort(key=lambda x: x["word"].lower())
+        
+        storage.save_pipeline_data(file_id, {
+            "sentences": sentences,
+            "translation_results": all_translation_results
+        })
+        storage.save_vocab(file_id, all_vocab)
         
         processing_status[file_id] = {
             "status": "completed",
-            "translation_result": translation_result,
-            "vocab": vocab
+            "progress": 100,
+            "vocab": all_vocab,
+            "translation_results": all_translation_results,
+            "sentences": sentences
         }
     except Exception as e:
         processing_status[file_id] = {

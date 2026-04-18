@@ -1,0 +1,166 @@
+{
+  "data": {
+    "grammar_explanation": "本句是一个由并列连词\"and\"连接的并列复合句，由两个主要分句构成。第一个分句\"AI models generate responses and outputs based on complex algorithms and machine learning techniques\"以\"AI models\"作主语，\"generate\"为谓语动词，\"responses and outputs\"为并列宾语，过去分词短语\"based on complex algorithms and machine learning techniques\"作宾语的后置定语，说明生成依据。第二个分句\"those responses or outputs may be inaccurate, harmful, biased or indecent\"以\"those responses or outputs\"作主语，情态动词\"may\"加系动词\"be\"构成谓语，后接四个并列形容词\"inaccurate、harmful、biased、indecent\"作表语，用\"or\"连接最后两项，表达一种列举和选择关系，说明上述回应或输出可能存在的各种问题。整句语气较为客观、正式，常见于技术免责声明或风险说明文本中。",
+    "original": "AI models generate responses and outputs based on complex algorithms and machine learning techniques, and those responses or outputs may be inaccurate, harmful, biased or indecent.",
+    "tokenized_translation": "人工智能 模型 基于 复杂的 算法 和 机器学习 技术 生成 回应 和 输出结果， 而且 那些 回应 或 输出结果 可能 是 不准确的、 有害的、 有偏见的 或 不雅的。",
+    "translation": [
+      {
+        "morphology": "n",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "text": "AI",
+        "translation": "人工智能"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈmɒd.əlz/",
+        "text": "models",
+        "translation": "模型"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/ˈdʒen.ər.eɪt/",
+        "text": "generate",
+        "translation": "生成"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "text": "responses",
+        "translation": "回应"
+      },
+      {
+        "morphology": "conj",
+        "phonetic": "/ænd/",
+        "text": "and",
+        "translation": "和"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈaʊt.pʊts/",
+        "text": "outputs",
+        "translation": "输出结果"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/beɪst/",
+        "text": "based",
+        "translation": "基于"
+      },
+      {
+        "morphology": "prep",
+        "phonetic": "/ɒn/",
+        "text": "on",
+        "translation": "在…基础上"
+      },
+      {
+        "morphology": "adj",
+        "phonetic": "/ˈkɒm.pleks/",
+        "text": "complex",
+        "translation": "复杂的"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈæl.ɡə.rɪ.ðəmz/",
+        "text": "algorithms",
+        "translation": "算法"
+      },
+      {
+        "morphology": "conj",
+        "phonetic": "/ænd/",
+        "text": "and",
+        "translation": "和"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/məˈʃiːn/",
+        "text": "machine",
+        "translation": "机器"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈlɜː.nɪŋ/",
+        "text": "learning",
+        "translation": "学习"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/tekˈniːks/",
+        "text": "techniques",
+        "translation": "技术"
+      },
+      {
+        "morphology": "conj",
+        "phonetic": "/ænd/",
+        "text": "and",
+        "translation": "而且"
+      },
+      {
+        "morphology": "det",
+        "phonetic": "/ðəʊz/",
+        "text": "those",
+        "translation": "那些"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "text": "responses",
+        "translation": "回应"
+      },
+      {
+        "morphology": "conj",
+        "phonetic": "/ɔːr/",
+        "text": "or",
+        "translation": "或"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/ˈaʊt.pʊts/",
+        "text": "outputs",
+        "translation": "输出结果"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/meɪ/",
+        "text": "may",
+        "translation": "可能"
+      },
+      {
+        "morphology": "v",
+        "phonetic": "/biː/",
+        "text": "be",
+        "translation": "是"
+      },
+      {
+        "morphology": "adj",
+        "phonetic": "/ɪnˈæk.jʊ.rət/",
+        "text": "inaccurate",
+        "translation": "不准确的"
+      },
+      {
+        "morphology": "adj",
+        "phonetic": "/ˈhɑːm.fʊl/",
+        "text": "harmful",
+        "translation": "有害的"
+      },
+      {
+        "morphology": "adj",
+        "phonetic": "/ˈbaɪ.əst/",
+        "text": "biased",
+        "translation": "有偏见的"
+      },
+      {
+        "morphology": "conj",
+        "phonetic": "/ɔːr/",
+        "text": "or",
+        "translation": "或"
+      },
+      {
+        "morphology": "adj",
+        "phonetic": "/ɪnˈdiː.sənt/",
+        "text": "indecent",
+        "translation": "不雅的"
+      }
+    ],
+    "tokenized_translation_quoted": "\"人工智能\" \"模型\" \"基于\" \"复杂的\" \"算法\" \"和\" \"机器学习\" \"技术\" \"生成\" \"回应\" \"和\" \"输出结果，\" \"而且\" \"那些\" \"回应\" \"或\" \"输出结果\" \"可能\" \"是\" \"不准确的、\" \"有害的、\" \"有偏见的\" \"或\" \"不雅的。\""
+  }
+}

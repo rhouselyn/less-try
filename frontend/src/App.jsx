@@ -15,8 +15,12 @@ function App() {
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
   const [shuffledVocab, setShuffledVocab] = useState([])
-  const [translationResult, setTranslationResult] = useState(null)
+  const [translationResults, setTranslationResults] = useState([])
+  const [sentences, setSentences] = useState([])
   const [selectedWord, setSelectedWord] = useState(null)
+  const [selectedSentence, setSelectedSentence] = useState(null)
+  const [progress, setProgress] = useState(0)
+  const [processingInfo, setProcessingInfo] = useState(null)
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -29,10 +33,20 @@ function App() {
     setShuffledVocab(shuffled)
   }
 
+  const handleSentenceClick = (index) => {
+    setSelectedSentence(index)
+  }
+
+  const handleCloseSentenceDetail = () => {
+    setSelectedSentence(null)
+  }
+
   const handleProcess = async () => {
     if (!text.trim()) return
     
     setLoading(true)
+    setProgress(0)
+    setProcessingInfo(null)
     try {
       console.log('开始处理文本，长度:', text.length)
       const response = await axios.post('/api/process-text', {
@@ -49,6 +63,9 @@ function App() {
         setFileId(fileId)
         console.log('获取到文件ID:', fileId)
         
+        // 立即跳转到单词表页面
+        setStep('dictionary')
+        
         // 轮询检查处理状态
         let pollCount = 0
         const maxPolls = 300 // 10分钟
@@ -64,11 +81,39 @@ function App() {
             const status = statusResponse.data
             console.log('状态响应:', status)
             
+            // 更新进度
+            if (status.progress !== undefined) {
+              setProgress(status.progress)
+            }
+            
+            // 更新处理信息
+            if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
+              setProcessingInfo({
+                current: status.current_sentence,
+                total: status.total_sentences
+              })
+            }
+            
+            // 更新词汇表和翻译结果（实时更新）
+            if (status.vocab) {
+              setVocab(status.vocab)
+            }
+            
+            if (status.translation_results) {
+              setTranslationResults(status.translation_results)
+            }
+            
+            if (status.sentences) {
+              setSentences(status.sentences)
+            }
+            
             if (status.status === 'completed') {
               console.log('处理完成，词汇表长度:', status.vocab.length)
               setVocab(status.vocab)
-              setTranslationResult(status.translation_result)
-              setStep('dictionary')
+              setTranslationResults(status.translation_results)
+              setSentences(status.sentences)
+              setProgress(100)
+              setProcessingInfo(null)
               setLoading(false)
             } else if (status.status === 'error') {
               console.error('处理错误:', status.error)
@@ -153,11 +198,26 @@ function App() {
           )}
           
           {step === 'dictionary' && (
-            <DictionaryStep
-              key="dictionary"
-              vocab={shuffledVocab}
-              onShuffle={shuffleVocab}
-            />
+            <>
+              {selectedSentence !== null && (
+                <SentenceDetail
+                  key={`sentence-${selectedSentence}`}
+                  sentence={sentences[selectedSentence]}
+                  translationResult={translationResults[selectedSentence]}
+                  onClose={handleCloseSentenceDetail}
+                />
+              )}
+              <DictionaryStep
+                key="dictionary"
+                vocab={shuffledVocab}
+                onShuffle={shuffleVocab}
+                progress={progress}
+                processingInfo={processingInfo}
+                sentences={sentences}
+                translationResults={translationResults}
+                onSentenceClick={handleSentenceClick}
+              />
+            </>
           )}
         </AnimatePresence>
       </main>
@@ -258,7 +318,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, onShuffle }) {
+function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentences, translationResults, onSentenceClick }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -266,6 +326,48 @@ function DictionaryStep({ vocab, onShuffle }) {
       exit={{ opacity: 0, y: -20 }}
       className="flex flex-col gap-6"
     >
+      {/* 处理进度条 */}
+      {processingInfo && (
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm text-slate-600">处理中: 句子 {processingInfo.current} / {processingInfo.total}</span>
+            <span className="text-sm text-slate-600">{progress}%</span>
+          </div>
+          <div className="w-full bg-slate-100 rounded-full h-2.5">
+            <div 
+              className="bg-black h-2.5 rounded-full transition-all duration-300" 
+              style={{ width: `${progress}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+
+      {/* 句子列表 */}
+      {sentences.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900 mb-4">句子翻译</h2>
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="divide-y divide-slate-200">
+              {sentences.map((sentence, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.02 }}
+                  className="p-4 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => onSentenceClick(index)}
+                >
+                  <div className="font-medium text-slate-900 mb-2">{sentence}</div>
+                  {translationResults[index] && translationResults[index].tokenized_translation && (
+                    <div className="text-slate-700">{translationResults[index].tokenized_translation}</div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 单词表 - 高中课本附录格式 */}
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -376,6 +478,76 @@ function WordDetail({ word }) {
           </h3>
           <p className="text-lg text-slate-700 leading-relaxed">
             {word.context_meaning}
+          </p>
+        </motion.div>
+      </div>
+    </motion.div>
+  )
+}
+
+function SentenceDetail({ sentence, translationResult, onClose }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
+    >
+      <div className="flex items-center justify-between mb-8">
+        <motion.h2 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-2xl font-semibold text-slate-900"
+        >
+          句子详情
+        </motion.h2>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onClose}
+          className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
+        >
+          <XCircle className="w-5 h-5" />
+        </motion.button>
+      </div>
+
+      <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+        >
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            原文
+          </h3>
+          <p className="text-lg text-slate-900 leading-relaxed">
+            {sentence}
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            翻译
+          </h3>
+          <p className="text-lg text-slate-700 leading-relaxed">
+            {translationResult?.tokenized_translation || '翻译中...'}
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            语法详解
+          </h3>
+          <p className="text-lg text-slate-700 leading-relaxed">
+            {translationResult?.grammar_explanation || '语法分析中...'}
           </p>
         </motion.div>
       </div>
