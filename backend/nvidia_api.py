@@ -160,7 +160,7 @@ For each word, provide:
                         },
                         "tokenized_translation": {
                             "type": "string",
-                            "description": "The complete translation split into words/tokens separated by spaces"
+                            "description": "The complete natural translation to target language, as a normal sentence without artificially added spaces between words"
                         },
                         "grammar_explanation": {"type": "string"}
                     },
@@ -188,6 +188,8 @@ IMPORTANT INSTRUCTIONS:
    - det (determiner)
 4. MORPHOLOGY FIELD MUST ONLY CONTAIN THE ABBREVIATION, NOTHING ELSE
 5. DO NOT include any additional explanation in the morphology field
+6. TOKENIZED_TRANSLATION MUST BE A NATURAL, NORMAL TRANSLATION - DO NOT add spaces between words artificially
+7. For example: "AI models generate responses. and outputs based on complex algorithms." should translate to "人工智能模型根据复杂的算法生成响应和输出。", NOT "人工智能 模型 根据 复杂的 算法 生成 响应 和 输出"
 
 Process the text with the following structure:
 - original: The original TEXT_LANG text
@@ -196,7 +198,7 @@ Process the text with the following structure:
   - translation: Translation of this word to TARGET_LANG
   - phonetic: Phonetic transcription (IPA)
   - morphology: ONLY the part of speech abbreviation (e.g., n, v, adj)
-- tokenized_translation: Complete translation to TARGET_LANG, as a normal strict translation without extra spaces
+- tokenized_translation: Complete natural translation to TARGET_LANG, as a normal sentence without extra spaces between words
 - grammar_explanation: ONE comprehensive grammar explanation for the entire text in TARGET_LANG
 
 Text to process:
