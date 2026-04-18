@@ -144,7 +144,16 @@ function App() {
       }
     } catch (error) {
       console.error('处理文本错误:', error)
-      alert('处理失败，请重试')
+      if (error.response && error.response.status === 504) {
+        // 504错误表示网关超时，可能是网络延迟或后端处理时间过长
+        alert('网络连接超时，请检查网络连接后重试')
+      } else if (error.message && error.message.includes('timeout')) {
+        // 处理超时错误
+        alert('处理超时，请稍后重试')
+      } else {
+        // 其他错误
+        alert('处理失败，请重试')
+      }
       setLoading(false)
     }
   }
