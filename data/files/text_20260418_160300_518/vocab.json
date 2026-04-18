@@ -1,0 +1,151 @@
+{
+  "vocab": [
+    {
+      "word": "and",
+      "ipa": "/ænd/",
+      "context_meaning": "和",
+      "morphology": "conj",
+      "translation": "和"
+    },
+    {
+      "word": "may",
+      "ipa": "/meɪ/",
+      "context_meaning": "可能",
+      "morphology": "v",
+      "translation": "可能"
+    },
+    {
+      "word": "indecent",
+      "ipa": "/ɪnˈdiː.sənt/",
+      "context_meaning": "不雅的",
+      "morphology": "adj",
+      "translation": "不雅的"
+    },
+    {
+      "word": "learning",
+      "ipa": "/ˈlɜː.nɪŋ/",
+      "context_meaning": "学习",
+      "morphology": "n",
+      "translation": "学习"
+    },
+    {
+      "word": "inaccurate",
+      "ipa": "/ɪnˈæk.jʊ.rət/",
+      "context_meaning": "不准确的",
+      "morphology": "adj",
+      "translation": "不准确的"
+    },
+    {
+      "word": "biased",
+      "ipa": "/ˈbaɪ.əst/",
+      "context_meaning": "有偏见的",
+      "morphology": "adj",
+      "translation": "有偏见的"
+    },
+    {
+      "word": "complex",
+      "ipa": "/ˈkɒm.pleks/",
+      "context_meaning": "复杂的",
+      "morphology": "adj",
+      "translation": "复杂的"
+    },
+    {
+      "word": "those",
+      "ipa": "/ðəʊz/",
+      "context_meaning": "那些",
+      "morphology": "det",
+      "translation": "那些"
+    },
+    {
+      "word": "harmful",
+      "ipa": "/ˈhɑːm.fʊl/",
+      "context_meaning": "有害的",
+      "morphology": "adj",
+      "translation": "有害的"
+    },
+    {
+      "word": "generate",
+      "ipa": "/ˈdʒen.ə.reɪt/",
+      "context_meaning": "生成",
+      "morphology": "v",
+      "translation": "生成"
+    },
+    {
+      "word": "techniques",
+      "ipa": "/tekˈniːks/",
+      "context_meaning": "技术",
+      "morphology": "n",
+      "translation": "技术"
+    },
+    {
+      "word": "AI",
+      "ipa": "/ˌeɪ ˈaɪ/",
+      "context_meaning": "人工智能",
+      "morphology": "n",
+      "translation": "人工智能"
+    },
+    {
+      "word": "algorithms",
+      "ipa": "/ˈæl.ɡə.rɪ.ðəmz/",
+      "context_meaning": "算法",
+      "morphology": "n",
+      "translation": "算法"
+    },
+    {
+      "word": "machine",
+      "ipa": "/məˈʃiːn/",
+      "context_meaning": "机器",
+      "morphology": "n",
+      "translation": "机器"
+    },
+    {
+      "word": "be",
+      "ipa": "/biː/",
+      "context_meaning": "是",
+      "morphology": "v",
+      "translation": "是"
+    },
+    {
+      "word": "responses",
+      "ipa": "/rɪˈspɒn.sɪz/",
+      "context_meaning": "回应",
+      "morphology": "n",
+      "translation": "回应"
+    },
+    {
+      "word": "on",
+      "ipa": "/ɒn/",
+      "context_meaning": "在……基础上",
+      "morphology": "prep",
+      "translation": "在……基础上"
+    },
+    {
+      "word": "based",
+      "ipa": "/beɪst/",
+      "context_meaning": "基于",
+      "morphology": "v",
+      "translation": "基于"
+    },
+    {
+      "word": "models",
+      "ipa": "/ˈmɒd.əlz/",
+      "context_meaning": "模型",
+      "morphology": "n",
+      "translation": "模型"
+    },
+    {
+      "word": "or",
+      "ipa": "/ɔːr/",
+      "context_meaning": "或",
+      "morphology": "conj",
+      "translation": "或"
+    },
+    {
+      "word": "outputs",
+      "ipa": "/ˈaʊt.pʊts/",
+      "context_meaning": "输出结果",
+      "morphology": "n",
+      "translation": "输出结果"
+    }
+  ]
+}
