@@ -56,9 +56,6 @@ function App() {
     setProgress(0)
     setProcessingInfo(null)
     
-    // 立即跳转到单词表页面，即使还没有收到响应
-    setStep('dictionary')
-    
     try {
       console.log('开始处理文本，长度:', text.length)
       const response = await axios.post('/api/process-text', {
@@ -74,6 +71,9 @@ function App() {
         const fileId = response.data.file_id
         setFileId(fileId)
         console.log('获取到文件ID:', fileId)
+        
+        // 立即跳转到单词表页面
+        setStep('dictionary')
         
         // 轮询检查处理状态
         let pollCount = 0
