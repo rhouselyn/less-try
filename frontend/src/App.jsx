@@ -15,8 +15,7 @@ function App() {
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
   const [shuffledVocab, setShuffledVocab] = useState([])
-  const [translationResults, setTranslationResults] = useState([])
-  const [sentences, setSentences] = useState([])
+  const [sentenceTranslations, setSentenceTranslations] = useState([])
   const [selectedWord, setSelectedWord] = useState(null)
   const [selectedSentence, setSelectedSentence] = useState(null)
   const [progress, setProgress] = useState(0)
@@ -99,19 +98,14 @@ function App() {
               setVocab(status.vocab)
             }
             
-            if (status.translation_results) {
-              setTranslationResults(status.translation_results)
-            }
-            
-            if (status.sentences) {
-              setSentences(status.sentences)
+            if (status.sentence_translations) {
+              setSentenceTranslations(status.sentence_translations)
             }
             
             if (status.status === 'completed') {
               console.log('处理完成，词汇表长度:', status.vocab.length)
               setVocab(status.vocab)
-              setTranslationResults(status.translation_results)
-              setSentences(status.sentences)
+              setSentenceTranslations(status.sentence_translations)
               setProgress(100)
               setProcessingInfo(null)
               setLoading(false)
@@ -211,8 +205,7 @@ function App() {
               {selectedSentence !== null && (
                 <SentenceDetail
                   key={`sentence-${selectedSentence}`}
-                  sentence={sentences[selectedSentence]}
-                  translationResult={translationResults[selectedSentence]}
+                  sentenceTranslation={sentenceTranslations[selectedSentence]}
                   onClose={handleCloseSentenceDetail}
                 />
               )}
@@ -222,8 +215,7 @@ function App() {
                 onShuffle={shuffleVocab}
                 progress={progress}
                 processingInfo={processingInfo}
-                sentences={sentences}
-                translationResults={translationResults}
+                sentenceTranslations={sentenceTranslations}
                 onSentenceClick={handleSentenceClick}
               />
             </>
@@ -327,10 +319,9 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentences, translationResults, onSentenceClick }) {
-  // 安全检查，确保sentences和translationResults是数组
-  const safeSentences = Array.isArray(sentences) ? sentences : []
-  const safeTranslationResults = Array.isArray(translationResults) ? translationResults : []
+function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentenceTranslations, onSentenceClick }) {
+  // 安全检查，确保sentenceTranslations是数组
+  const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
   return (
     <motion.div
@@ -356,12 +347,12 @@ function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentences,
       )}
 
       {/* 句子列表 */}
-      {safeSentences.length > 0 && (
+      {safeSentenceTranslations.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold text-slate-900 mb-4">句子翻译</h2>
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="divide-y divide-slate-200">
-              {safeSentences.map((sentence, index) => (
+              {safeSentenceTranslations.map((item, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: -5 }}
@@ -370,9 +361,9 @@ function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentences,
                   className="p-4 hover:bg-slate-50 cursor-pointer"
                   onClick={() => onSentenceClick(index)}
                 >
-                  <div className="font-medium text-slate-900 mb-2">{sentence}</div>
-                  {safeTranslationResults[index] && safeTranslationResults[index].tokenized_translation && (
-                    <div className="text-slate-700">{safeTranslationResults[index].tokenized_translation}</div>
+                  <div className="font-medium text-slate-900 mb-2">{item.sentence}</div>
+                  {item.translation_result && item.translation_result.tokenized_translation && (
+                    <div className="text-slate-700">{item.translation_result.tokenized_translation}</div>
                   )}
                 </motion.div>
               ))}
@@ -498,7 +489,10 @@ function WordDetail({ word }) {
   )
 }
 
-function SentenceDetail({ sentence, translationResult, onClose }) {
+function SentenceDetail({ sentenceTranslation, onClose }) {
+  const sentence = sentenceTranslation?.sentence
+  const translationResult = sentenceTranslation?.translation_result
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}

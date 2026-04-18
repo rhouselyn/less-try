@@ -46,7 +46,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         total_sentences = len(sentences)
         
         all_vocab = []
-        all_translation_results = []
+        # 新的数据结构：每个句子单独一条数据
+        sentence_translations = []
         
         for i, sentence in enumerate(sentences):
             if sentence.strip():
@@ -57,6 +58,13 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     target_lang,
                     nvidia_api
                 )
+                
+                # 确保翻译结果的结构
+                sentence_data = {
+                    "sentence": sentence,
+                    "translation_result": translation_result
+                }
+                sentence_translations.append(sentence_data)
                 
                 # 提取词汇
                 if isinstance(translation_result, dict) and "translation" in translation_result:
@@ -79,8 +87,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                 }
                                 all_vocab.append(vocab_entry)
                 
-                all_translation_results.append(translation_result)
-                
                 # 更新进度
                 progress = int((i + 1) / total_sentences * 100)
                 processing_status[file_id] = {
@@ -89,24 +95,21 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     "current_sentence": i + 1,
                     "total_sentences": total_sentences,
                     "vocab": all_vocab,
-                    "translation_results": all_translation_results
+                    "sentence_translations": sentence_translations
                 }
         
         # 按字母表排序词汇表
         all_vocab.sort(key=lambda x: x["word"].lower())
         
-        storage.save_pipeline_data(file_id, {
-            "sentences": sentences,
-            "translation_results": all_translation_results
-        })
+        # 保存新的结构：每个句子单独一条数据
+        storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
         
         processing_status[file_id] = {
             "status": "completed",
             "progress": 100,
             "vocab": all_vocab,
-            "translation_results": all_translation_results,
-            "sentences": sentences
+            "sentence_translations": sentence_translations
         }
     except Exception as e:
         processing_status[file_id] = {

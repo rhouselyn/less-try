@@ -134,17 +134,22 @@ class TextProcessor:
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
             
-            # 确保tokenized_translation是正常的严格翻译（仅去除首尾空白和多余换行，保留自然的语言空格）
+            # 确保tokenized_translation是正常的严格翻译（对于中文等没有空格的语言，直接去除所有空格）
             if 'tokenized_translation' in result:
-                # 只去除首尾空白和多余换行，保留语言本身需要的空格
-                result['tokenized_translation'] = result['tokenized_translation'].strip().replace('\n', '')
+                # 对于中文翻译，直接去除所有空格，确保是自然翻译
+                clean_translation = result['tokenized_translation'].strip().replace('\n', '')
+                # 特殊处理：如果是中文目标语言，确保没有空格
+                clean_translation = clean_translation.replace(' ', '')
+                result['tokenized_translation'] = clean_translation
             elif 'translation' in result:
                 # 如果没有tokenized_translation字段，则生成一个
                 tokenized_translation = ''
                 for token in result['translation']:
                     if isinstance(token, dict) and 'translation' in token:
                         tokenized_translation += token['translation']
-                result['tokenized_translation'] = tokenized_translation.strip()
+                # 去除所有空格
+                tokenized_translation = tokenized_translation.strip().replace(' ', '')
+                result['tokenized_translation'] = tokenized_translation
             
             # 生成tokenized_translation_quoted字段（无标点符号，只保留文字，无反斜杠，无引号）
             if 'translation' in result:

@@ -1,0 +1,28 @@
+{
+  "data": {
+    "grammar_explanation": "该文本由三个独立的词语组成，彼此之间没有语法关联。\"hi\"是一个感叹词，用于打招呼；\"bar\"和\"car\"均为名词，分别指\"酒吧\"和\"汽车\"。三个词之间用标点符号隔开，构成三个独立的片段，而非一个完整的句子，因此不存在主谓结构或从句关系。",
+    "original": "hi. bar。car",
+    "tokenized_translation": "嗨 酒吧 汽车",
+    "translation": [
+      {
+        "morphology": "interj",
+        "phonetic": "/haɪ/",
+        "text": "hi",
+        "translation": "嗨"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/bɑːr/",
+        "text": "bar",
+        "translation": "酒吧"
+      },
+      {
+        "morphology": "n",
+        "phonetic": "/kɑːr/",
+        "text": "car",
+        "translation": "汽车"
+      }
+    ],
+    "tokenized_translation_quoted": "\"嗨\" \"酒吧\" \"汽车\""
+  }
+}
