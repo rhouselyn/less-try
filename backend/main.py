@@ -91,8 +91,9 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                 }
                                 all_vocab.append(vocab_entry)
                 
-                # 立即按字母表排序词汇表
+                # 立即按字母表排序词汇表（确保每次都正确排序）
                 all_vocab.sort(key=lambda x: x["word"].lower())
+                print(f"[DEBUG] 排序后词表: {[word['word'] for word in all_vocab]}")
                 
                 # 更新进度
                 progress = int((i + 1) / total_sentences * 100)

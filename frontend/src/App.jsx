@@ -46,14 +46,19 @@ function App() {
     setLoading(true)
     setProgress(0)
     setProcessingInfo(null)
+    
+    // 立即跳转到单词表页面，即使还没有收到响应
+    setStep('dictionary')
+    
     try {
       console.log('开始处理文本，长度:', text.length)
-      const response = await axios.post('/api/process-text', {
+      const response = await axios.post('http://localhost:8000/api/process-text', {
         text: text.trim(),
         source_language: sourceLang,
         target_language: targetLang
       }, {
-        timeout: 600000 // 10分钟超时
+        timeout: 600000, // 10分钟超时
+        withCredentials: true
       })
       
       console.log('API响应:', response.data)
@@ -61,9 +66,6 @@ function App() {
         const fileId = response.data.file_id
         setFileId(fileId)
         console.log('获取到文件ID:', fileId)
-        
-        // 立即跳转到单词表页面
-        setStep('dictionary')
         
         // 轮询检查处理状态
         let pollCount = 0
@@ -74,7 +76,7 @@ function App() {
           console.log(`第${pollCount}次轮询，文件ID: ${fileId}`)
           
           try {
-            const statusResponse = await axios.get(`/api/status/${fileId}`, {
+            const statusResponse = await axios.get(`http://localhost:8000/api/status/${fileId}`, {
               timeout: 600000 // 10分钟超时
             })
             const status = statusResponse.data
