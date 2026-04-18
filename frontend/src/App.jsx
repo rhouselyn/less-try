@@ -33,6 +33,8 @@ function App() {
   useEffect(() => {
     if (!currentFileId) return
 
+    console.log('开始轮询，文件ID:', currentFileId)
+
     let pollCount = 0
     const maxPolls = 300 // 10分钟
 
@@ -62,10 +64,12 @@ function App() {
 
         // 更新词汇表和翻译结果（实时更新）
         if (status.vocab) {
+          console.log('更新词汇表，长度:', status.vocab.length)
           setVocab(status.vocab)
         }
 
         if (status.sentence_translations) {
+          console.log('更新句子翻译，数量:', status.sentence_translations.length)
           setSentenceTranslations(status.sentence_translations)
         }
 
@@ -134,6 +138,8 @@ function App() {
     setLoading(true)
     setProgress(0)
     setProcessingInfo(null)
+    setVocab([])
+    setSentenceTranslations([])
     
     // 立即跳转到单词表页面，即使还没有收到响应
     setStep('dictionary')
@@ -152,76 +158,8 @@ function App() {
       if (response.data && response.data.file_id) {
         const fileId = response.data.file_id
         setFileId(fileId)
+        setCurrentFileId(fileId)
         console.log('获取到文件ID:', fileId)
-        
-        // 轮询检查处理状态
-        let pollCount = 0
-        const maxPolls = 300 // 10分钟
-        
-        const pollStatus = async () => {
-          pollCount++
-          console.log(`第${pollCount}次轮询，文件ID: ${fileId}`)
-          
-          try {
-            const statusResponse = await axios.get(`/api/status/${fileId}`, {
-              timeout: 600000 // 10分钟超时
-            })
-            const status = statusResponse.data
-            console.log('状态响应:', status)
-            
-            // 更新进度
-            if (status.progress !== undefined) {
-              setProgress(status.progress)
-            }
-            
-            // 更新处理信息
-            if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
-              setProcessingInfo({
-                current: status.current_sentence,
-                total: status.total_sentences
-              })
-            }
-            
-            // 更新词汇表和翻译结果（实时更新）
-            if (status.vocab) {
-              setVocab(status.vocab)
-            }
-            
-            if (status.sentence_translations) {
-              setSentenceTranslations(status.sentence_translations)
-            }
-            
-            if (status.status === 'completed') {
-              console.log('处理完成，词汇表长度:', status.vocab.length)
-              setVocab(status.vocab)
-              setSentenceTranslations(status.sentence_translations)
-              setProgress(100)
-              setProcessingInfo(null)
-              setLoading(false)
-            } else if (status.status === 'error') {
-              console.error('处理错误:', status.error)
-              alert(`处理失败: ${status.error}`)
-              setLoading(false)
-            } else if (pollCount >= maxPolls) {
-              console.error('轮询超时')
-              alert('处理超时，请重试')
-              setLoading(false)
-            } else {
-              // 继续轮询，缩短间隔以获得更实时的更新
-              setTimeout(pollStatus, 500)
-            }
-          } catch (error) {
-            console.error('轮询错误:', error)
-            if (pollCount >= maxPolls) {
-              alert('网络错误，请重试')
-              setLoading(false)
-            } else {
-              setTimeout(pollStatus, 2000)
-            }
-          }
-        }
-        
-        pollStatus()
       } else {
         throw new Error('无效的API响应')
       }

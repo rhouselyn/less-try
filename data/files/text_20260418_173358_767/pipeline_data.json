@@ -1,0 +1,124 @@
+{
+  "data": [
+    {
+      "sentence": "Hello world.",
+      "translation_result": {
+        "translation": [
+          {
+            "text": "Hello",
+            "translation": "你好",
+            "phonetic": "həˈloʊ",
+            "morphology": "interj"
+          },
+          {
+            "text": "world",
+            "translation": "世界",
+            "phonetic": "wɜːrld",
+            "morphology": "n"
+          }
+        ],
+        "tokenized_translation": "你好，世界。",
+        "grammar_explanation": "这是一个简单的感叹句，由感叹词 \"Hello\"（你好）和名词 \"world\"（世界）构成。\"Hello\" 作为打招呼的感叹词，\"world\" 作为被招呼的对象（名词），整句表达对世界的问候，是编程领域中最经典的入门示例语句。",
+        "tokenized_translation_quoted": "\"你好\", \"世界\""
+      }
+    },
+    {
+      "sentence": "This is a test sentence.",
+      "translation_result": {
+        "grammar_explanation": "这是一个简单的英语陈述句，结构为\"主语 + 系动词 + 名词短语\"。\"This\"作主语（指示代词），\"is\"为系动词（be动词的第三人称单数现在时形式），\"a test sentence\"为名词短语作表语，其中\"a\"是不定冠词，\"test\"作前置定语修饰名词\"sentence\"。整句为典型的主系表结构（SVC）。",
+        "tokenized_translation": "这是一个测试句子。",
+        "translation": [
+          {
+            "morphology": "pron",
+            "phonetic": "ðɪs",
+            "text": "This",
+            "translation": "这"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "ɪz",
+            "text": "is",
+            "translation": "是"
+          },
+          {
+            "morphology": "det",
+            "phonetic": "ə",
+            "text": "a",
+            "translation": "一个"
+          },
+          {
+            "morphology": "adj",
+            "phonetic": "tɛst",
+            "text": "test",
+            "translation": "测试"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "ˈsɛntəns",
+            "text": "sentence",
+            "translation": "句子"
+          }
+        ],
+        "tokenized_translation_quoted": "\"这\", \"是\", \"一个\", \"测试\", \"句子\""
+      }
+    },
+    {
+      "sentence": "AI models generate responses based on complex algorithms.",
+      "translation_result": {
+        "grammar_explanation": "本句是一个简单陈述句，结构为\"主语 + 谓语 + 宾语 + 状语\"。主语为\"AI models\"（人工智能模型），谓语动词为\"generate\"（生成），宾语为\"responses\"（响应）。\"based on complex algorithms\"是过去分词短语作状语，修饰谓语动词，表示动作发生的依据或方式，意为\"基于复杂的算法\"。",
+        "tokenized_translation": "人工智能模型基于复杂的算法生成响应。",
+        "translation": [
+          {
+            "morphology": "n",
+            "phonetic": "/ˌeɪ ˈaɪ/",
+            "text": "AI",
+            "translation": "人工智能"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/ˈmɒd.əlz/",
+            "text": "models",
+            "translation": "模型"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "/ˈdʒen.ər.eɪt/",
+            "text": "generate",
+            "translation": "生成"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/rɪˈspɒn.sɪz/",
+            "text": "responses",
+            "translation": "响应"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "/beɪst/",
+            "text": "based",
+            "translation": "基于"
+          },
+          {
+            "morphology": "prep",
+            "phonetic": "/ɒn/",
+            "text": "on",
+            "translation": "在……上"
+          },
+          {
+            "morphology": "adj",
+            "phonetic": "/ˈkɒm.pleks/",
+            "text": "complex",
+            "translation": "复杂的"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/ˈæl.ɡə.rɪ.ðəmz/",
+            "text": "algorithms",
+            "translation": "算法"
+          }
+        ],
+        "tokenized_translation_quoted": "\"人工智能\", \"模型\", \"生成\", \"响应\", \"基于\", \"在……上\", \"复杂的\", \"算法\""
+      }
+    }
+  ]
+}
