@@ -1,0 +1,62 @@
+{
+  "data": [
+    {
+      "sentence": "AI models generate responses.",
+      "translation_result": {
+        "grammar_explanation": "这是一个简单的英语陈述句，结构为\"主语 + 谓语 + 宾语\"。\"AI models\"作主语（名词短语），\"generate\"作谓语动词（一般现在时，主语为复数形式，故动词不加 -s），\"responses\"作宾语（可数名词复数形式）。整句表达的是一个普遍性事实。",
+        "original": "AI models generate responses.",
+        "tokenized_translation": "人工智能模型生成响应。",
+        "translation": [
+          {
+            "morphology": "n",
+            "phonetic": "/ˌeɪ ˈaɪ/",
+            "text": "AI",
+            "translation": "人工智能"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/ˈmɒd.əlz/",
+            "text": "models",
+            "translation": "模型"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "/ˈdʒen.ə.reɪt/",
+            "text": "generate",
+            "translation": "生成"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/rɪˈspɒn.sɪz/",
+            "text": "responses",
+            "translation": "响应"
+          }
+        ],
+        "tokenized_translation_quoted": "人工智能 模型 生成 响应"
+      }
+    },
+    {
+      "sentence": "and outputs .",
+      "translation_result": {
+        "original": "and outputs .",
+        "translation": [
+          {
+            "text": "and",
+            "translation": "和",
+            "phonetic": "ænd",
+            "morphology": "conj"
+          },
+          {
+            "text": "outputs",
+            "translation": "输出",
+            "phonetic": "ˈaʊtpʊts",
+            "morphology": "n"
+          }
+        ],
+        "tokenized_translation": "和输出。",
+        "grammar_explanation": "此片段为一个并列结构的残缺句（片段），由并列连词 \"and\" 引导名词 \"outputs\"，通常作为前一句的延续，将 \"outputs（输出）\" 与前文中的某个名词并列。单独来看，它不构成完整句子，缺少主语和谓语。",
+        "tokenized_translation_quoted": "和 输出"
+      }
+    }
+  ]
+}

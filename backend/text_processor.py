@@ -109,6 +109,10 @@ class TextProcessor:
         
         # 处理结果，确保格式正确
         if isinstance(result, dict):
+            # 移除重复的original字段（与sentence重复）
+            if 'original' in result:
+                del result['original']
+            
             # 确保translation格式正确，不包含标点符号
             if 'translation' in result:
                 # 过滤掉标点符号token
@@ -147,7 +151,7 @@ class TextProcessor:
                 tokenized_translation = tokenized_translation.replace('\r', '')
                 result['tokenized_translation'] = tokenized_translation
             
-            # 生成tokenized_translation_quoted字段（无标点符号，只保留文字，无反斜杠，无引号）
+            # 生成tokenized_translation_quoted字段（每个token用""包裹，用逗号连接，可作为数组读取）
             if 'translation' in result:
                 quoted_words = []
                 # 定义所有要移除的标点符号
@@ -161,9 +165,9 @@ class TextProcessor:
                             clean_translation = clean_translation.replace(char, '')
                         # 如果清理后还有内容，就添加到quoted_words中
                         if clean_translation.strip():
-                            quoted_words.append(clean_translation.strip())
-                # 使用空格连接所有quoted_words（只保留纯文字）
-                result['tokenized_translation_quoted'] = ' '.join(quoted_words)
+                            quoted_words.append(f'"{clean_translation.strip()}"')
+                # 使用逗号连接所有quoted_words
+                result['tokenized_translation_quoted'] = ', '.join(quoted_words)
         
         # 返回处理后的结果
         return result

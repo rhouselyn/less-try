@@ -1,0 +1,62 @@
+{
+  "data": [
+    {
+      "sentence": "and outputs .",
+      "translation_result": {
+        "grammar_explanation": "此片段为不完整句，仅由并列连词 \"and\" 引导的名词短语 \"outputs\" 构成，缺少主句。\"and\" 作并列连词，用于连接前文语境中的并列成分；\"outputs\" 作名词，表示\"输出（结果）\"。该片段通常依附于前一句，作为补充并列成分使用。",
+        "original": "and outputs .",
+        "tokenized_translation": "和输出。",
+        "translation": [
+          {
+            "morphology": "conj",
+            "phonetic": "ænd",
+            "text": "and",
+            "translation": "和"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "ˈaʊtpʊts",
+            "text": "outputs",
+            "translation": "输出"
+          }
+        ],
+        "tokenized_translation_quoted": "和 输出"
+      }
+    },
+    {
+      "sentence": "AI models generate responses.",
+      "translation_result": {
+        "grammar_explanation": "本句是一个简单陈述句，结构为\"主语 + 谓语 + 宾语\"。主语为名词短语\"AI models\"（人工智能模型），其中\"AI\"作定语修饰\"models\"；谓语动词为\"generate\"（生成），为一般现在时，主语为复数故动词不加\"-s\"；宾语为名词\"responses\"（响应）。整句表达一个普遍性事实。",
+        "original": "AI models generate responses.",
+        "tokenized_translation": "人工智能模型生成响应。",
+        "translation": [
+          {
+            "morphology": "n",
+            "phonetic": "/ˌeɪ ˈaɪ/",
+            "text": "AI",
+            "translation": "人工智能"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/ˈmɒd.əlz/",
+            "text": "models",
+            "translation": "模型"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "/ˈdʒen.ər.eɪt/",
+            "text": "generate",
+            "translation": "生成"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/rɪˈspɒn.sɪz/",
+            "text": "responses",
+            "translation": "响应"
+          }
+        ],
+        "tokenized_translation_quoted": "人工智能 模型 生成 响应"
+      }
+    }
+  ]
+}
