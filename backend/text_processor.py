@@ -1,5 +1,5 @@
-import re
 from typing import List, Set, Dict, Any
+import string
 
 
 class TextProcessor:
@@ -8,17 +8,23 @@ class TextProcessor:
 
     def extract_words(self, text: str, language: str) -> List[str]:
         """从文本中提取单词并去重，排除标点符号"""
-        words = re.findall(r'\b[a-zA-Z]{2,}\b', text)
+        # 简单的单词提取，不使用正则表达式
+        words = []
+        current_word = ""
+        for char in text:
+            if char.isalpha():
+                current_word += char
+            else:
+                if current_word and len(current_word) > 1:
+                    words.append(current_word.lower())
+                current_word = ""
+        if current_word and len(current_word) > 1:
+            words.append(current_word.lower())
         
-        clean_words = []
-        for word in words:
-            word = word.lower().strip()
-            if len(word) > 1 and word.isalpha():
-                clean_words.append(word)
-        
+        # 去重
         seen = set()
         unique_words = []
-        for word in clean_words:
+        for word in words:
             if word not in seen:
                 seen.add(word)
                 unique_words.append(word)
@@ -51,22 +57,20 @@ class TextProcessor:
         return chunks
 
     def split_sentences(self, text: str) -> List[str]:
-        # 定义中英文标点符号
-        sentence_endings = r'[.!?。！？]'
+        # 简单的句子分割，不使用正则表达式
+        sentence_endings = '.!?.！？'
+        sentences = []
+        current_sentence = ""
+        for char in text:
+            current_sentence += char
+            if char in sentence_endings:
+                if current_sentence.strip():
+                    sentences.append(current_sentence.strip())
+                current_sentence = ""
+        if current_sentence.strip():
+            sentences.append(current_sentence.strip())
         
-        # 使用正则表达式分割句子
-        sentences = re.split(f'({sentence_endings})', text)
-        
-        # 重建句子，确保标点符号与句子内容在一起
-        result = []
-        for i in range(0, len(sentences), 2):
-            sentence = sentences[i].strip()
-            if i + 1 < len(sentences):
-                sentence += sentences[i + 1]
-            if sentence:
-                result.append(sentence)
-        
-        return result
+        return sentences
 
     def process_word_variants(self, word_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """处理单词变体，确保变体前面有类型标注"""
@@ -95,7 +99,7 @@ class TextProcessor:
         # 返回出现次数最多的音标，如果次数相同则返回第一个
         return sorted_phonetics[0][0]
 
-    async def split_and_translate(self, text: str, source_lang: str, target_lang: str, nvidia_api):
+    async def process_translation(self, text: str, source_lang: str, target_lang: str, nvidia_api):
         # 对整个文本进行翻译
         result = await nvidia_api.split_and_translate(text, source_lang, target_lang)
         
@@ -108,16 +112,17 @@ class TextProcessor:
                 for token in result['translation']:
                     if isinstance(token, dict) and 'text' in token:
                         # 检查token是否为标点符号
-                        if token['text'].strip() and not re.match(r'^[\W_]+$', token['text']):
+                        text = token['text'].strip()
+                        if text and not all(char in '.,;:!?' for char in text):
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
             
             # 生成tokenized_translation_quoted字段
             if 'tokenized_translation' in result and 'tokenized_translation_quoted' not in result:
                 # 移除标点符号，然后给每个词加上引号
-                import re
-                # 移除标点符号
-                clean_translation = re.sub(r'[\W_]+', ' ', result['tokenized_translation'])
+                clean_translation = result['tokenized_translation']
+                for char in string.punctuation:
+                    clean_translation = clean_translation.replace(char, ' ')
                 # 分割成单词并加上引号
                 words = clean_translation.strip().split()
                 quoted_words = [f'"{word}"' for word in words]

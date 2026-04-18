@@ -42,7 +42,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         processing_status[file_id] = {"status": "processing"}
         
         # 翻译句子并获取分词结果
-        translation_result = await text_processor.split_and_translate(
+        translation_result = await text_processor.process_translation(
             text,
             source_lang,
             target_lang,
