@@ -196,7 +196,7 @@ Process the text with the following structure:
   - translation: Translation of this word to TARGET_LANG
   - phonetic: Phonetic transcription (IPA)
   - morphology: ONLY the part of speech abbreviation (e.g., n, v, adj)
-- tokenized_translation: Complete translation to TARGET_LANG, split into words separated by spaces
+- tokenized_translation: Complete translation to TARGET_LANG, as a normal strict translation without extra spaces
 - grammar_explanation: ONE comprehensive grammar explanation for the entire text in TARGET_LANG
 
 Text to process:

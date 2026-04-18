@@ -1,0 +1,70 @@
+{
+  "data": {
+    "original": "AI models generate responses and outputs based on complex algorithms.",
+    "translation": [
+      {
+        "text": "AI",
+        "translation": "人工智能",
+        "phonetic": "/ˌeɪ ˈaɪ/",
+        "morphology": "n"
+      },
+      {
+        "text": "models",
+        "translation": "模型",
+        "phonetic": "/ˈmɒd.əlz/",
+        "morphology": "n"
+      },
+      {
+        "text": "generate",
+        "translation": "生成",
+        "phonetic": "/ˈdʒen.ə.reɪt/",
+        "morphology": "v"
+      },
+      {
+        "text": "responses",
+        "translation": "响应",
+        "phonetic": "/rɪˈspɒn.sɪz/",
+        "morphology": "n"
+      },
+      {
+        "text": "and",
+        "translation": "和",
+        "phonetic": "/ænd/",
+        "morphology": "conj"
+      },
+      {
+        "text": "outputs",
+        "translation": "输出",
+        "phonetic": "/ˈaʊt.pʊts/",
+        "morphology": "n"
+      },
+      {
+        "text": "based",
+        "translation": "基于",
+        "phonetic": "/beɪst/",
+        "morphology": "v"
+      },
+      {
+        "text": "on",
+        "translation": "在...上",
+        "phonetic": "/ɒn/",
+        "morphology": "prep"
+      },
+      {
+        "text": "complex",
+        "translation": "复杂的",
+        "phonetic": "/ˈkɒm.pleks/",
+        "morphology": "adj"
+      },
+      {
+        "text": "algorithms",
+        "translation": "算法",
+        "phonetic": "/ˈæl.ɡə.rɪ.ðəmz/",
+        "morphology": "n"
+      }
+    ],
+    "tokenized_translation": "人工智能 模型 根据 复杂的 算法 生成 响应 和 输出",
+    "grammar_explanation": "本句是一个简单陈述句，主语为\"AI models\"（人工智能模型），谓语动词为\"generate\"（生成），宾语为由连词\"and\"连接的两个并列名词\"responses\"（响应）和\"outputs\"（输出）。句末的\"based on complex algorithms\"是一个过去分词短语，作状语，修饰谓语动词\"generate\"，表示动作的依据或方式，意为\"基于复杂的算法\"。整体句式结构为：主语 + 谓语动词 + 并列宾语 + 分词状语短语。",
+    "tokenized_translation_quoted": "\"人工智能\" \"模型\" \"根据\" \"复杂的\" \"算法\" \"生成\" \"响应\" \"和\" \"输出\""
+  }
+}

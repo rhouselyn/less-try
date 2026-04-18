@@ -117,12 +117,18 @@ class TextProcessor:
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
             
-            # 生成正确的tokenized_translation（无多余空格）
-            if 'translation' in result:
+            # 生成正确的tokenized_translation（无多余空格，严格翻译）
+            if 'tokenized_translation' in result:
+                # 移除所有空格，确保是严格的一一对应翻译
+                result['tokenized_translation'] = result['tokenized_translation'].replace(' ', '')
+            elif 'translation' in result:
+                # 如果没有tokenized_translation字段，则生成一个
                 tokenized_translation = ''
                 for token in result['translation']:
                     if isinstance(token, dict) and 'translation' in token:
                         tokenized_translation += token['translation']
+                # 移除所有空格，确保是严格的一一对应翻译
+                tokenized_translation = tokenized_translation.replace(' ', '')
                 result['tokenized_translation'] = tokenized_translation
             
             # 生成tokenized_translation_quoted字段（无标点符号）
