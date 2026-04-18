@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "sentence": "what。",
+      "translation_result": {
+        "original": "what。",
+        "translation": [
+          {
+            "text": "what",
+            "translation": "什么",
+            "phonetic": "hwɒt",
+            "morphology": "pron"
+          }
+        ],
+        "tokenized_translation": "什么。",
+        "grammar_explanation": "\"what\" 是一个疑问代词，通常用于提问，表示\"什么\"。在此处单独出现，构成一个极简的感叹句或疑问句，表达疑惑、惊讶或追问之意，句子结构不完整，省略了谓语及其他成分。",
+        "tokenized_translation_quoted": "什么"
+      }
+    },
+    {
+      "sentence": "the fuck",
+      "translation_result": {
+        "grammar_explanation": "\"the fuck\" 是一个由限定词 \"the\" 加上粗口词 \"fuck\" 构成的非正式感叹短语，通常用于口语中以加强语气，表达强烈的愤怒、惊讶或困惑。\"the\" 在此并非真正起限定作用，而是与 \"fuck\" 共同构成固定的强调性表达，相当于中文的\"他妈的\"、\"究竟\"或\"到底\"，常见于 \"what the fuck\"、\"who the fuck\" 等结构中。该表达属于粗俗语言，在正式场合应避免使用。",
+        "original": "the fuck",
+        "tokenized_translation": "他妈的",
+        "translation": [
+          {
+            "morphology": "det",
+            "phonetic": "ðə",
+            "text": "the",
+            "translation": "这个"
+          },
+          {
+            "morphology": "interj",
+            "phonetic": "fʌk",
+            "text": "fuck",
+            "translation": "他妈的"
+          }
+        ],
+        "tokenized_translation_quoted": "这个 他妈的"
+      }
+    }
+  ]
+}

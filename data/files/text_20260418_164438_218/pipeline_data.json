@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "sentence": "hi.",
+      "translation_result": {
+        "grammar_explanation": "这是一个简单的感叹句，由单个感叹词\"hi\"构成，用于非正式场合的问候，相当于中文的\"嗨\"或\"你好\"，句末使用句号表示语气平和。",
+        "original": "hi.",
+        "tokenized_translation": "嗨。",
+        "translation": [
+          {
+            "morphology": "interj",
+            "phonetic": "/haɪ/",
+            "text": "hi",
+            "translation": "嗨"
+          }
+        ],
+        "tokenized_translation_quoted": "嗨"
+      }
+    },
+    {
+      "sentence": "bro",
+      "translation_result": {
+        "grammar_explanation": "\"bro\" 是一个非正式口语名词，是 \"brother\"（兄弟）的缩略形式。在现代英语口语中，它不仅用于称呼亲兄弟，还广泛用于称呼朋友或熟人，带有亲切随意的语气，相当于中文里的\"兄弟\"、\"老兄\"或\"哥们\"。此处该词单独使用，作为称呼语（呼语），在句子结构上独立存在，不充当主语或宾语等成分。",
+        "original": "bro",
+        "tokenized_translation": "兄弟",
+        "translation": [
+          {
+            "morphology": "n",
+            "phonetic": "/broʊ/",
+            "text": "bro",
+            "translation": "兄弟"
+          }
+        ],
+        "tokenized_translation_quoted": "兄弟"
+      }
+    }
+  ]
+}

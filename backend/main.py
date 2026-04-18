@@ -39,17 +39,20 @@ async def root():
 
 async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str):
     try:
+        print(f"[DEBUG] 开始处理文件 {file_id}")
         processing_status[file_id] = {"status": "processing", "progress": 0}
         
         # 拆分为多个句子
         sentences = text_processor.split_sentences(text)
         total_sentences = len(sentences)
+        print(f"[DEBUG] 分割为 {total_sentences} 个句子: {sentences}")
         
         all_vocab = []
         # 新的数据结构：每个句子单独一条数据
         sentence_translations = []
         
         for i, sentence in enumerate(sentences):
+            print(f"[DEBUG] 正在处理第 {i+1}/{total_sentences} 个句子: {repr(sentence)}")
             if sentence.strip():
                 # 翻译句子并获取分词结果
                 translation_result = await text_processor.process_translation(
@@ -58,6 +61,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     target_lang,
                     nvidia_api
                 )
+                print(f"[DEBUG] 句子 {i+1} 处理完成")
                 
                 # 确保翻译结果的结构
                 sentence_data = {
@@ -87,6 +91,9 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                 }
                                 all_vocab.append(vocab_entry)
                 
+                # 立即按字母表排序词汇表
+                all_vocab.sort(key=lambda x: x["word"].lower())
+                
                 # 更新进度
                 progress = int((i + 1) / total_sentences * 100)
                 processing_status[file_id] = {
@@ -94,12 +101,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     "progress": progress,
                     "current_sentence": i + 1,
                     "total_sentences": total_sentences,
-                    "vocab": all_vocab,
-                    "sentence_translations": sentence_translations
+                    "vocab": all_vocab.copy(),  # 使用 copy 避免引用问题
+                    "sentence_translations": sentence_translations.copy()
                 }
-        
-        # 按字母表排序词汇表
-        all_vocab.sort(key=lambda x: x["word"].lower())
+                print(f"[DEBUG] 更新状态: 进度 {progress}%, 词表 {len(all_vocab)} 个单词, 已处理 {len(sentence_translations)} 个句子")
         
         # 保存新的结构：每个句子单独一条数据
         storage.save_pipeline_data(file_id, sentence_translations)
@@ -111,7 +116,11 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             "vocab": all_vocab,
             "sentence_translations": sentence_translations
         }
+        print(f"[DEBUG] 所有处理完成！")
     except Exception as e:
+        print(f"[ERROR] 处理出错: {str(e)}")
+        import traceback
+        traceback.print_exc()
         processing_status[file_id] = {
             "status": "error",
             "error": str(e)
