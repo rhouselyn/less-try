@@ -37,6 +37,7 @@ function App() {
 
     let pollCount = 0
     const maxPolls = 300 // 10分钟
+    let pollingInterval = null
 
     const pollStatus = async () => {
       pollCount++
@@ -48,6 +49,17 @@ function App() {
         })
         const status = response.data
         console.log('状态响应:', status)
+
+        // 强制更新词汇表和句子翻译，确保实时显示
+        if (status.vocab) {
+          console.log('更新词汇表，长度:', status.vocab.length)
+          setVocab([...status.vocab]) // 使用展开运算符强制更新
+        }
+
+        if (status.sentence_translations) {
+          console.log('更新句子翻译，数量:', status.sentence_translations.length)
+          setSentenceTranslations([...status.sentence_translations]) // 使用展开运算符强制更新
+        }
 
         // 更新进度
         if (status.progress !== undefined) {
@@ -62,52 +74,57 @@ function App() {
           })
         }
 
-        // 更新词汇表和翻译结果（实时更新）
-        if (status.vocab) {
-          console.log('更新词汇表，长度:', status.vocab.length)
-          setVocab(status.vocab)
-        }
-
-        if (status.sentence_translations) {
-          console.log('更新句子翻译，数量:', status.sentence_translations.length)
-          setSentenceTranslations(status.sentence_translations)
-        }
-
         if (status.status === 'completed') {
           console.log('处理完成，词汇表长度:', status.vocab.length)
-          setVocab(status.vocab)
-          setSentenceTranslations(status.sentence_translations)
+          setVocab([...status.vocab])
+          setSentenceTranslations([...status.sentence_translations])
           setProgress(100)
           setProcessingInfo(null)
           setLoading(false)
+          // 停止轮询
+          if (pollingInterval) {
+            clearInterval(pollingInterval)
+          }
         } else if (status.status === 'error') {
           console.error('处理错误:', status.error)
           alert(`处理失败: ${status.error}`)
           setLoading(false)
+          // 停止轮询
+          if (pollingInterval) {
+            clearInterval(pollingInterval)
+          }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
           alert('处理超时，请重试')
           setLoading(false)
-        } else {
-          // 继续轮询，缩短间隔以获得更实时的更新
-          setTimeout(pollStatus, 500)
+          // 停止轮询
+          if (pollingInterval) {
+            clearInterval(pollingInterval)
+          }
         }
       } catch (error) {
         console.error('轮询错误:', error)
         if (pollCount >= maxPolls) {
           alert('网络错误，请重试')
           setLoading(false)
-        } else {
-          setTimeout(pollStatus, 2000)
+          // 停止轮询
+          if (pollingInterval) {
+            clearInterval(pollingInterval)
+          }
         }
       }
     }
 
+    // 立即执行一次轮询
     pollStatus()
+    // 设置轮询间隔
+    pollingInterval = setInterval(pollStatus, 500)
 
     // 清理函数
     return () => {
-      // 可以在这里添加清理逻辑
+      if (pollingInterval) {
+        clearInterval(pollingInterval)
+      }
     }
   }, [currentFileId])
 
