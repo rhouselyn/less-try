@@ -1,0 +1,5 @@
+# Environment files
+backend/.env
+
+# Data directory
+data/
