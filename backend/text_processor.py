@@ -57,37 +57,24 @@ class TextProcessor:
         return chunks
 
     def split_sentences(self, text: str) -> List[str]:
-        # 句子分割，支持中英文标点
-        sentence_endings = '.!?。！？'
+        """句子分割，支持中英文标点"""
+        sentence_endings = {'.', '!', '?', '。', '！', '？'}
         sentences = []
         current_sentence = ""
+        
         for char in text:
             current_sentence += char
             if char in sentence_endings:
-                # 当遇到结束标点时，分割句子
                 if current_sentence.strip():
                     sentences.append(current_sentence.strip())
                 current_sentence = ""
+        
         if current_sentence.strip():
             sentences.append(current_sentence.strip())
         
-        # 二次处理：确保每个句子是独立的
-        # 如果有句子以句号结尾但没有被正确分割的情况
-        final_sentences = []
-        for sent in sentences:
-            # 检查是否还包含其他句子结束符
-            # 如果是，进一步分割
-            temp = ""
-            for char in sent:
-                temp += char
-                if char in sentence_endings:
-                    if temp.strip():
-                        final_sentences.append(temp.strip())
-                    temp = ""
-            if temp.strip():
-                final_sentences.append(temp.strip())
-        
-        return final_sentences if final_sentences else sentences
+        # 最终过滤：确保没有空句子
+        sentences = [s for s in sentences if s.strip()]
+        return sentences
 
     def process_word_variants(self, word_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """处理单词变体，确保变体前面有类型标注"""
@@ -134,12 +121,18 @@ class TextProcessor:
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
             
-            # 确保tokenized_translation是正常的严格翻译（对于中文等没有空格的语言，直接去除所有空格）
+            # 确保tokenized_translation是正常的严格翻译，完全没有任何空格
             if 'tokenized_translation' in result:
-                # 对于中文翻译，直接去除所有空格，确保是自然翻译
-                clean_translation = result['tokenized_translation'].strip().replace('\n', '')
-                # 特殊处理：如果是中文目标语言，确保没有空格
+                # 严格去除所有空白字符：空格、制表符、换行等
+                clean_translation = result['tokenized_translation']
+                # 依次移除所有空白字符
                 clean_translation = clean_translation.replace(' ', '')
+                clean_translation = clean_translation.replace('\t', '')
+                clean_translation = clean_translation.replace('\n', '')
+                clean_translation = clean_translation.replace('\r', '')
+                clean_translation = clean_translation.replace('\xa0', '')  # 不间断空格
+                clean_translation = clean_translation.replace('\u2002', '')  # 半角空格
+                clean_translation = clean_translation.replace('\u2003', '')  # 全角空格
                 result['tokenized_translation'] = clean_translation
             elif 'translation' in result:
                 # 如果没有tokenized_translation字段，则生成一个
@@ -147,8 +140,11 @@ class TextProcessor:
                 for token in result['translation']:
                     if isinstance(token, dict) and 'translation' in token:
                         tokenized_translation += token['translation']
-                # 去除所有空格
-                tokenized_translation = tokenized_translation.strip().replace(' ', '')
+                # 严格去除所有空白字符
+                tokenized_translation = tokenized_translation.replace(' ', '')
+                tokenized_translation = tokenized_translation.replace('\t', '')
+                tokenized_translation = tokenized_translation.replace('\n', '')
+                tokenized_translation = tokenized_translation.replace('\r', '')
                 result['tokenized_translation'] = tokenized_translation
             
             # 生成tokenized_translation_quoted字段（无标点符号，只保留文字，无反斜杠，无引号）

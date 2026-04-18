@@ -171,37 +171,37 @@ For each word, provide:
 
         # 构建prompt
         prompt = """
-Process the following TEXT_LANG text and translate it to TARGET_LANG.
+处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
 
-IMPORTANT INSTRUCTIONS:
-1. Use TARGET_LANG for ALL translations and explanations.
-2. DO NOT give grammar explanations for individual words - only give ONE comprehensive grammar explanation for the entire sentence/text.
-3. FOR MORPHOLOGY: USE ONLY THESE ABBREVIATIONS - NO OTHER TEXT:
-   - n (noun)
-   - v (verb)
-   - adj (adjective)
-   - adv (adverb)
-   - pron (pronoun)
-   - prep (preposition)
-   - conj (conjunction)
-   - interj (interjection)
-   - det (determiner)
-4. MORPHOLOGY FIELD MUST ONLY CONTAIN THE ABBREVIATION, NOTHING ELSE
-5. DO NOT include any additional explanation in the morphology field
-6. TOKENIZED_TRANSLATION MUST BE A NATURAL, NORMAL TRANSLATION - DO NOT add spaces between words artificially
-7. For example: "AI models generate responses. and outputs based on complex algorithms." should translate to "人工智能模型根据复杂的算法生成响应和输出。", NOT "人工智能 模型 根据 复杂的 算法 生成 响应 和 输出"
+【非常重要的说明】
+1. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
+2. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
+3. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
+   - n (名词)
+   - v (动词)
+   - adj (形容词)
+   - adv (副词)
+   - pron (代词)
+   - prep (介词)
+   - conj (连词)
+   - interj (感叹词)
+   - det (限定词)
+4. morphology 字段必须只包含缩写，不要有其他内容！
+5. morphology 字段里不要加任何额外的解释！
+6. 【重点！】tokenized_translation 必须是自然的、正常的翻译 - 绝对不要在词语之间人工添加空格！
+7. 【举例！】比如英文 "AI models generate responses. And outputs based on complex algorithms." 翻译成中文时，应该是 "人工智能模型根据复杂的算法生成响应和输出。"，绝对不能是 "人工智能 模型 根据 复杂的 算法 生成 响应 和 输出"！
 
-Process the text with the following structure:
-- original: The original TEXT_LANG text
-- translation: Array of objects, each with:
-  - text: Original word/token (without punctuation)
-  - translation: Translation of this word to TARGET_LANG
-  - phonetic: Phonetic transcription (IPA)
-  - morphology: ONLY the part of speech abbreviation (e.g., n, v, adj)
-- tokenized_translation: Complete natural translation to TARGET_LANG, as a normal sentence without extra spaces between words
-- grammar_explanation: ONE comprehensive grammar explanation for the entire text in TARGET_LANG
+按照以下结构处理文本：
+- original: 原始 TEXT_LANG 文本
+- translation: 对象数组，每个对象包含：
+  - text: 原词/标记（不带标点）
+  - translation: 这个词翻译成 TARGET_LANG
+  - phonetic: 音标(IPA)
+  - morphology: 只能是词性缩写（如 n, v, adj）
+- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子，词语之间绝对不要有多余空格！
+- grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 
-Text to process:
+要处理的文本：
 TEXT_CONTENT
 """
 
