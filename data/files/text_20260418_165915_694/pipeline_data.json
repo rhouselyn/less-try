@@ -1,0 +1,86 @@
+{
+  "data": [
+    {
+      "sentence": "AI models generate responses.",
+      "translation_result": {
+        "grammar_explanation": "此句为简单陈述句，结构为\"主语 + 谓语 + 宾语\"。\"AI models\"作主语（名词短语），\"generate\"为句子的谓语动词（一般现在时，主语为复数，故动词不加-s），\"responses\"为宾语（名词复数），表示动作的承受对象。整句表达一个普遍性事实。",
+        "original": "AI models generate responses.",
+        "tokenized_translation": "人工智能模型生成响应。",
+        "translation": [
+          {
+            "morphology": "n",
+            "phonetic": "/ˌeɪ ˈaɪ/",
+            "text": "AI",
+            "translation": "人工智能"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/ˈmɒd.əlz/",
+            "text": "models",
+            "translation": "模型"
+          },
+          {
+            "morphology": "v",
+            "phonetic": "/ˈdʒen.ər.eɪt/",
+            "text": "generate",
+            "translation": "生成"
+          },
+          {
+            "morphology": "n",
+            "phonetic": "/rɪˈspɒn.sɪz/",
+            "text": "responses",
+            "translation": "响应"
+          }
+        ],
+        "tokenized_translation_quoted": "人工智能 模型 生成 响应"
+      }
+    },
+    {
+      "sentence": "and outputs based on complex algorithms.",
+      "translation_result": {
+        "original": "and outputs based on complex algorithms.",
+        "translation": [
+          {
+            "text": "and",
+            "translation": "和",
+            "phonetic": "/ænd/",
+            "morphology": "conj"
+          },
+          {
+            "text": "outputs",
+            "translation": "输出",
+            "phonetic": "/ˈaʊtpʊts/",
+            "morphology": "n"
+          },
+          {
+            "text": "based",
+            "translation": "基于",
+            "phonetic": "/beɪst/",
+            "morphology": "v"
+          },
+          {
+            "text": "on",
+            "translation": "在……上",
+            "phonetic": "/ɒn/",
+            "morphology": "prep"
+          },
+          {
+            "text": "complex",
+            "translation": "复杂的",
+            "phonetic": "/ˈkɒmpleks/",
+            "morphology": "adj"
+          },
+          {
+            "text": "algorithms",
+            "translation": "算法",
+            "phonetic": "/ˈælɡərɪðəmz/",
+            "morphology": "n"
+          }
+        ],
+        "tokenized_translation": "以及基于复杂算法的输出。",
+        "grammar_explanation": "这是一个不完整的并列短语片段，通常作为前一句的延续部分出现。连词 \"and\" 用于连接前文内容与本句的核心名词 \"outputs（输出）\"。\"based on complex algorithms\" 是一个过去分词短语，作后置定语修饰 \"outputs\"，表示\"基于复杂算法的\"，其中 \"based on\" 为固定搭配，意为\"以……为基础/依据\"，\"complex algorithms\" 为名词短语充当介词 \"on\" 的宾语。整体结构为：连词 + 名词 + 过去分词短语（后置定语）。",
+        "tokenized_translation_quoted": "和 输出 基于 在……上 复杂的 算法"
+      }
+    }
+  ]
+}
