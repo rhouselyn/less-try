@@ -328,6 +328,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
 }
 
 function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentences, translationResults, onSentenceClick }) {
+  // 安全检查，确保sentences和translationResults是数组
+  const safeSentences = Array.isArray(sentences) ? sentences : []
+  const safeTranslationResults = Array.isArray(translationResults) ? translationResults : []
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -352,12 +356,12 @@ function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentences,
       )}
 
       {/* 句子列表 */}
-      {sentences.length > 0 && (
+      {safeSentences.length > 0 && (
         <div>
           <h2 className="text-xl font-semibold text-slate-900 mb-4">句子翻译</h2>
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="divide-y divide-slate-200">
-              {sentences.map((sentence, index) => (
+              {safeSentences.map((sentence, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: -5 }}
@@ -367,8 +371,8 @@ function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentences,
                   onClick={() => onSentenceClick(index)}
                 >
                   <div className="font-medium text-slate-900 mb-2">{sentence}</div>
-                  {translationResults[index] && translationResults[index].tokenized_translation && (
-                    <div className="text-slate-700">{translationResults[index].tokenized_translation}</div>
+                  {safeTranslationResults[index] && safeTranslationResults[index].tokenized_translation && (
+                    <div className="text-slate-700">{safeTranslationResults[index].tokenized_translation}</div>
                   )}
                 </motion.div>
               ))}

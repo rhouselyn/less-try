@@ -131,31 +131,22 @@ class TextProcessor:
                 tokenized_translation = tokenized_translation.replace(' ', '').replace('\n', '')
                 result['tokenized_translation'] = tokenized_translation
             
-            # 生成tokenized_translation_quoted字段（无标点符号）
+            # 生成tokenized_translation_quoted字段（无标点符号，只保留文字）
             if 'translation' in result:
                 quoted_words = []
+                # 定义所有要移除的标点符号
+                punctuation = '''!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~，。！？；："（）【】「」『』、''' 
                 for token in result['translation']:
                     if isinstance(token, dict) and 'translation' in token:
-                        # 直接使用token的翻译，每个token都是一个独立的词
                         translation = token['translation']
                         # 移除所有标点符号
-                        punctuation = '''!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~，。！？；："（）【】「」『』、''' 
                         clean_translation = translation
                         for char in punctuation:
                             clean_translation = clean_translation.replace(char, '')
-                        # 处理可能的连续形容词
+                        # 如果清理后还有内容，就添加到quoted_words中
                         if clean_translation.strip():
-                            # 检查是否包含多个形容词
-                            if '的' in clean_translation:
-                                # 简单处理：按'的'分割
-                                parts = clean_translation.split('的')
-                                for i, part in enumerate(parts):
-                                    if part.strip():
-                                        # 重新添加'的'
-                                        adj = part.strip() + '的'
-                                        quoted_words.append(f'"{adj}"')
-                            else:
-                                quoted_words.append(f'"{clean_translation.strip()}"')
+                            quoted_words.append(f'"{clean_translation.strip()}"')
+                # 使用空格连接所有quoted_words
                 result['tokenized_translation_quoted'] = ' '.join(quoted_words)
         
         # 返回处理后的结果
