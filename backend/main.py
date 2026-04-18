@@ -87,7 +87,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                     "ipa": token.get("phonetic", ""),
                                     "context_meaning": token.get("translation", ""),
                                     "morphology": morphology,
-                                    "translation": token.get("translation", ""),
                                     "sentence_index": i
                                 }
                                 all_vocab.append(vocab_entry)

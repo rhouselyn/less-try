@@ -1,0 +1,20 @@
+{
+  "vocab": [
+    {
+      "word": "hello",
+      "ipa": "həˈloʊ",
+      "context_meaning": "你好",
+      "morphology": "interj",
+      "translation": "你好",
+      "sentence_index": 0
+    },
+    {
+      "word": "world",
+      "ipa": "wɜːrld",
+      "context_meaning": "世界",
+      "morphology": "n",
+      "translation": "世界",
+      "sentence_index": 0
+    }
+  ]
+}

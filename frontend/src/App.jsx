@@ -448,7 +448,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 className="grid grid-cols-3 gap-1 p-4 hover:bg-slate-50"
               >
                 <div className="font-medium text-slate-900">{word.word}</div>
-                <div className="text-slate-700">{word.context_meaning || word.translation}</div>
+                <div className="text-slate-700">{word.context_meaning}</div>
                 <div className="text-slate-600 font-mono">{word.morphology}</div>
               </motion.div>
             ))}

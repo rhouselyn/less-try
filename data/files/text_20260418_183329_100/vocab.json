@@ -1,0 +1,151 @@
+{
+  "vocab": [
+    {
+      "word": "AI",
+      "ipa": "/ˌeɪ ˈaɪ/",
+      "context_meaning": "人工智能",
+      "morphology": "n",
+      "sentence_index": 0
+    },
+    {
+      "word": "algorithms",
+      "ipa": "/ˈæl.ɡə.rɪ.ðəmz/",
+      "context_meaning": "算法",
+      "morphology": "n",
+      "sentence_index": 0
+    },
+    {
+      "word": "and",
+      "ipa": "/ænd/",
+      "context_meaning": "和",
+      "morphology": "conj",
+      "sentence_index": 0
+    },
+    {
+      "word": "based",
+      "ipa": "/beɪst/",
+      "context_meaning": "基于",
+      "morphology": "v",
+      "sentence_index": 0
+    },
+    {
+      "word": "be",
+      "ipa": "/biː/",
+      "context_meaning": "是",
+      "morphology": "v",
+      "sentence_index": 0
+    },
+    {
+      "word": "biased",
+      "ipa": "/ˈbaɪ.əst/",
+      "context_meaning": "有偏见的",
+      "morphology": "adj",
+      "sentence_index": 0
+    },
+    {
+      "word": "complex",
+      "ipa": "/ˈkɒm.pleks/",
+      "context_meaning": "复杂的",
+      "morphology": "adj",
+      "sentence_index": 0
+    },
+    {
+      "word": "generate",
+      "ipa": "/ˈdʒen.ər.eɪt/",
+      "context_meaning": "生成",
+      "morphology": "v",
+      "sentence_index": 0
+    },
+    {
+      "word": "harmful",
+      "ipa": "/ˈhɑːm.fʊl/",
+      "context_meaning": "有害的",
+      "morphology": "adj",
+      "sentence_index": 0
+    },
+    {
+      "word": "inaccurate",
+      "ipa": "/ɪnˈæk.jʊ.rət/",
+      "context_meaning": "不准确的",
+      "morphology": "adj",
+      "sentence_index": 0
+    },
+    {
+      "word": "indecent",
+      "ipa": "/ɪnˈdiː.sənt/",
+      "context_meaning": "不雅的",
+      "morphology": "adj",
+      "sentence_index": 0
+    },
+    {
+      "word": "learning",
+      "ipa": "/ˈlɜː.nɪŋ/",
+      "context_meaning": "学习",
+      "morphology": "n",
+      "sentence_index": 0
+    },
+    {
+      "word": "machine",
+      "ipa": "/məˈʃiːn/",
+      "context_meaning": "机器",
+      "morphology": "n",
+      "sentence_index": 0
+    },
+    {
+      "word": "may",
+      "ipa": "/meɪ/",
+      "context_meaning": "可能",
+      "morphology": "v",
+      "sentence_index": 0
+    },
+    {
+      "word": "models",
+      "ipa": "/ˈmɒd.əlz/",
+      "context_meaning": "模型",
+      "morphology": "n",
+      "sentence_index": 0
+    },
+    {
+      "word": "on",
+      "ipa": "/ɒn/",
+      "context_meaning": "在……上",
+      "morphology": "prep",
+      "sentence_index": 0
+    },
+    {
+      "word": "or",
+      "ipa": "/ɔːr/",
+      "context_meaning": "或",
+      "morphology": "conj",
+      "sentence_index": 0
+    },
+    {
+      "word": "outputs",
+      "ipa": "/ˈaʊt.pʊts/",
+      "context_meaning": "输出",
+      "morphology": "n",
+      "sentence_index": 0
+    },
+    {
+      "word": "responses",
+      "ipa": "/rɪˈspɒn.sɪz/",
+      "context_meaning": "响应",
+      "morphology": "n",
+      "sentence_index": 0
+    },
+    {
+      "word": "techniques",
+      "ipa": "/tekˈniːks/",
+      "context_meaning": "技术",
+      "morphology": "n",
+      "sentence_index": 0
+    },
+    {
+      "word": "those",
+      "ipa": "/ðəʊz/",
+      "context_meaning": "这些",
+      "morphology": "det",
+      "sentence_index": 0
+    }
+  ]
+}

@@ -29,7 +29,7 @@ def test_process_text(text):
                 if status_data['status'] == 'completed':
                     print(f"处理完成，用时: {time.time() - start_time:.2f}秒")
                     print(f"词汇表长度: {len(status_data['vocab'])}")
-                    print(f"翻译结果: {status_data['translation_result']}")
+                    print(f"句子翻译数量: {len(status_data['sentence_translations'])}")
                     return True
                 elif status_data['status'] == 'error':
                     print(f"处理错误: {status_data['error']}")
