@@ -119,8 +119,8 @@ function App() {
               alert('处理超时，请重试')
               setLoading(false)
             } else {
-              // 继续轮询
-              setTimeout(pollStatus, 2000)
+              // 继续轮询，缩短间隔以获得更实时的更新
+              setTimeout(pollStatus, 500)
             }
           } catch (error) {
             console.error('轮询错误:', error)
