@@ -21,12 +21,91 @@ function App() {
   const [selectedSentence, setSelectedSentence] = useState(null)
   const [progress, setProgress] = useState(0)
   const [processingInfo, setProcessingInfo] = useState(null)
+  const [currentFileId, setCurrentFileId] = useState(null)
 
   useEffect(() => {
     if (vocab.length > 0) {
       sortVocab()
     }
   }, [vocab, sortOrder])
+
+  // 轮询处理状态
+  useEffect(() => {
+    if (!currentFileId) return
+
+    let pollCount = 0
+    const maxPolls = 300 // 10分钟
+
+    const pollStatus = async () => {
+      pollCount++
+      console.log(`第${pollCount}次轮询，文件ID: ${currentFileId}`)
+
+      try {
+        const response = await axios.get(`/api/status/${currentFileId}`, {
+          timeout: 600000 // 10分钟超时
+        })
+        const status = response.data
+        console.log('状态响应:', status)
+
+        // 更新进度
+        if (status.progress !== undefined) {
+          setProgress(status.progress)
+        }
+
+        // 更新处理信息
+        if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
+          setProcessingInfo({
+            current: status.current_sentence,
+            total: status.total_sentences
+          })
+        }
+
+        // 更新词汇表和翻译结果（实时更新）
+        if (status.vocab) {
+          setVocab(status.vocab)
+        }
+
+        if (status.sentence_translations) {
+          setSentenceTranslations(status.sentence_translations)
+        }
+
+        if (status.status === 'completed') {
+          console.log('处理完成，词汇表长度:', status.vocab.length)
+          setVocab(status.vocab)
+          setSentenceTranslations(status.sentence_translations)
+          setProgress(100)
+          setProcessingInfo(null)
+          setLoading(false)
+        } else if (status.status === 'error') {
+          console.error('处理错误:', status.error)
+          alert(`处理失败: ${status.error}`)
+          setLoading(false)
+        } else if (pollCount >= maxPolls) {
+          console.error('轮询超时')
+          alert('处理超时，请重试')
+          setLoading(false)
+        } else {
+          // 继续轮询，缩短间隔以获得更实时的更新
+          setTimeout(pollStatus, 500)
+        }
+      } catch (error) {
+        console.error('轮询错误:', error)
+        if (pollCount >= maxPolls) {
+          alert('网络错误，请重试')
+          setLoading(false)
+        } else {
+          setTimeout(pollStatus, 2000)
+        }
+      }
+    }
+
+    pollStatus()
+
+    // 清理函数
+    return () => {
+      // 可以在这里添加清理逻辑
+    }
+  }, [currentFileId])
 
   const sortVocab = () => {
     const sorted = [...vocab].sort((a, b) => {
@@ -56,6 +135,9 @@ function App() {
     setProgress(0)
     setProcessingInfo(null)
     
+    // 立即跳转到单词表页面，即使还没有收到响应
+    setStep('dictionary')
+    
     try {
       console.log('开始处理文本，长度:', text.length)
       const response = await axios.post('/api/process-text', {
@@ -71,9 +153,6 @@ function App() {
         const fileId = response.data.file_id
         setFileId(fileId)
         console.log('获取到文件ID:', fileId)
-        
-        // 立即跳转到单词表页面
-        setStep('dictionary')
         
         // 轮询检查处理状态
         let pollCount = 0
