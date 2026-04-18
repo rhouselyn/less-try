@@ -179,55 +179,6 @@ async def get_sentences(file_id: str):
         raise HTTPException(status_code=404, detail=f"Sentences not found: {str(e)}")
 
 
-@app.post("/api/generate-word-card")
-async def generate_word_card(request: dict):
-    """为单个单词生成完整的单词卡（包含例句、选项等）"""
-    try:
-        word = request.get("word")
-        context = request.get("context", "")
-        source_lang = request.get("source_lang", "en")
-        target_lang = request.get("target_lang", "zh")
-        
-        if not word:
-            raise HTTPException(status_code=400, detail="Word is required")
-        
-        # 调用LLM生成单词卡
-        word_cards = await nvidia_api.generate_dictionary([word], context, source_lang, target_lang)
-        
-        if word_cards and len(word_cards) > 0:
-            return {"word_card": word_cards[0]}
-        else:
-            raise HTTPException(status_code=500, detail="Failed to generate word card")
-    except Exception as e:
-        print(f"Error generating word card: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@app.post("/api/generate-word-cards-batch")
-async def generate_word_cards_batch(request: dict):
-    """批量为单词生成单词卡"""
-    try:
-        words = request.get("words", [])
-        context = request.get("context", "")
-        source_lang = request.get("source_lang", "en")
-        target_lang = request.get("target_lang", "zh")
-        
-        if not words:
-            raise HTTPException(status_code=400, detail="Words are required")
-        
-        # 调用LLM生成单词卡
-        word_cards = await nvidia_api.generate_dictionary(words, context, source_lang, target_lang)
-        
-        return {"word_cards": word_cards}
-    except Exception as e:
-        print(f"Error generating word cards: {e}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, timeout_keep_alive=600)

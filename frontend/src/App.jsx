@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Loader2, ArrowLeft, Languages, CheckCircle2, XCircle, ChevronRight, Brain } from 'lucide-react'
+import { BookOpen, Loader2, ArrowLeft, Languages, Shuffle, Volume2, ChevronRight, Brain, CheckCircle2, XCircle } from 'lucide-react'
 import axios from 'axios'
 
 // 配置axios超时时间为10分钟
@@ -14,23 +14,20 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
-  const [wordCards, setWordCards] = useState([])
   const [displayVocab, setDisplayVocab] = useState([])
+  const [sortOrder, setSortOrder] = useState('asc') // 'asc' 或 'desc'
   const [sentenceTranslations, setSentenceTranslations] = useState([])
   const [selectedWord, setSelectedWord] = useState(null)
   const [selectedSentence, setSelectedSentence] = useState(null)
   const [progress, setProgress] = useState(0)
   const [processingInfo, setProcessingInfo] = useState(null)
   const [currentFileId, setCurrentFileId] = useState(null)
-  const [currentWordIndex, setCurrentWordIndex] = useState(0)
-  const [generatingCard, setGeneratingCard] = useState(false)
-  const [currentWordCard, setCurrentWordCard] = useState(null)
 
   useEffect(() => {
     if (vocab.length > 0) {
       sortVocab()
     }
-  }, [vocab])
+  }, [vocab, sortOrder])
 
   // 轮询处理状态
   useEffect(() => {
@@ -135,9 +132,13 @@ function App() {
     const sorted = [...vocab].sort((a, b) => {
       const wordA = a.word.toLowerCase()
       const wordB = b.word.toLowerCase()
-      return wordA.localeCompare(wordB)
+      return sortOrder === 'asc' ? wordA.localeCompare(wordB) : wordB.localeCompare(wordA)
     })
     setDisplayVocab(sorted)
+  }
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
   }
 
   const handleSentenceClick = (index) => {
@@ -156,7 +157,6 @@ function App() {
     setProcessingInfo(null)
     setVocab([])
     setSentenceTranslations([])
-    setWordCards([])
     
     // 立即跳转到单词表页面，即使还没有收到响应
     setStep('dictionary')
@@ -165,8 +165,8 @@ function App() {
       console.log('开始处理文本，长度:', text.length)
       const response = await axios.post('/api/process-text', {
         text: text.trim(),
-        source_lang: sourceLang,
-        target_lang: targetLang
+        source_language: sourceLang,
+        target_language: targetLang
       }, {
         timeout: 600000 // 10分钟超时
       })
@@ -196,93 +196,28 @@ function App() {
     }
   }
 
-  // 开始学习模式
-  const handleStartLearning = async () => {
-    setCurrentWordIndex(0)
-    setWordCards([])
-    setStep('learning')
-    await loadWordCard(0)
-  }
-
-  // 加载单词卡
-  const loadWordCard = async (index) => {
-    if (index < 0 || index >= vocab.length) return
-    
-    const word = vocab[index]
-    setGeneratingCard(true)
-    setCurrentWordCard(null)
-    
-    try {
-      console.log(`正在为单词 "${word.word}" 生成单词卡...`)
-      const response = await axios.post('/api/generate-word-card', {
-        word: word.word,
-        context: text,
-        source_lang: sourceLang,
-        target_lang: targetLang
-      })
-      
-      const wordCard = response.data.word_card
-      console.log('单词卡生成完成:', wordCard)
-      
-      setCurrentWordCard(wordCard)
-      
-      // 保存到单词卡数组
-      setWordCards(prev => {
-        const newCards = [...prev]
-        newCards[index] = wordCard
-        return newCards
-      })
-    } catch (error) {
-      console.error('生成单词卡失败:', error)
-      alert('生成单词卡失败，请重试')
-    } finally {
-      setGeneratingCard(false)
-    }
-  }
-
-  // 下一个单词
-  const handleNextWord = async () => {
-    if (currentWordIndex < vocab.length - 1) {
-      const nextIndex = currentWordIndex + 1
-      setCurrentWordIndex(nextIndex)
-      await loadWordCard(nextIndex)
-    } else {
-      // 完成所有单词
-      setStep('dictionary')
-    }
-  }
-
-  // 上一个单词
-  const handlePrevWord = async () => {
-    if (currentWordIndex > 0) {
-      const prevIndex = currentWordIndex - 1
-      setCurrentWordIndex(prevIndex)
-      await loadWordCard(prevIndex)
-    }
-  }
-
   return (
-    <div className="min-h-screen bg-anthropic-light">
-      <header className="bg-white border-b border-anthropic-light-gray shadow-sm">
+    <div className="min-h-screen bg-slate-50">
+      <header className="bg-white border-b border-slate-200 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-anthropic-dark rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-anthropic-dark font-sans">少邻国</h1>
-                <p className="text-sm text-anthropic-mid-gray font-serif">Lesslingo</p>
+                <h1 className="text-xl font-semibold text-slate-900">少邻国</h1>
+                <p className="text-sm text-slate-500">Lesslingo</p>
               </div>
             </div>
             <AnimatePresence>
-              {(step === 'dictionary' || step === 'learning') && (
+              {step === 'dictionary' && (
                 <motion.button
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  onClick={() => setStep('dictionary')}
-                  className="flex items-center gap-2 px-4 py-2 text-anthropic-mid-gray hover:text-anthropic-dark transition-colors rounded-md hover:bg-anthropic-light-gray"
+                  onClick={() => setStep('input')}
+                  className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   返回
@@ -310,38 +245,25 @@ function App() {
           )}
           
           {step === 'dictionary' && (
-            <DictionaryStep
-              key="dictionary"
-              vocab={displayVocab}
-              wordCards={wordCards}
-              progress={progress}
-              processingInfo={processingInfo}
-              sentenceTranslations={sentenceTranslations}
-              onSentenceClick={handleSentenceClick}
-              onStartLearning={handleStartLearning}
-            />
-          )}
-
-          {step === 'learning' && (
-            <LearningStep
-              key="learning"
-              vocab={vocab}
-              currentWordIndex={currentWordIndex}
-              wordCards={wordCards}
-              currentWordCard={currentWordCard}
-              generatingCard={generatingCard}
-              onNextWord={handleNextWord}
-              onPrevWord={handlePrevWord}
-              onBackToDictionary={() => setStep('dictionary')}
-            />
-          )}
-          
-          {selectedSentence !== null && (
-            <SentenceDetail
-              key={`sentence-${selectedSentence}`}
-              sentenceTranslation={sentenceTranslations[selectedSentence]}
-              onClose={handleCloseSentenceDetail}
-            />
+            <>
+              {selectedSentence !== null && (
+                <SentenceDetail
+                  key={`sentence-${selectedSentence}`}
+                  sentenceTranslation={sentenceTranslations[selectedSentence]}
+                  onClose={handleCloseSentenceDetail}
+                />
+              )}
+              <DictionaryStep
+                key="dictionary"
+                vocab={displayVocab}
+                onToggleSort={toggleSortOrder}
+                sortOrder={sortOrder}
+                progress={progress}
+                processingInfo={processingInfo}
+                sentenceTranslations={sentenceTranslations}
+                onSentenceClick={handleSentenceClick}
+              />
+            </>
           )}
         </AnimatePresence>
       </main>
@@ -363,10 +285,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-4xl font-semibold text-anthropic-dark mb-4 font-sans">
+          <h2 className="text-4xl font-semibold text-slate-900 mb-4">
             开始学习
           </h2>
-          <p className="text-lg text-anthropic-mid-gray font-serif">
+          <p className="text-lg text-slate-600">
             输入任意文本，AI 将自动生成单词表和学习资料
           </p>
         </motion.div>
@@ -375,13 +297,13 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
       <div className="space-y-6">
         <div className="flex gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-anthropic-dark mb-2 font-sans">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               学习语言
             </label>
             <select
               value={sourceLang}
               onChange={(e) => setSourceLang(e.target.value)}
-              className="w-full px-4 py-3 border border-anthropic-light-gray rounded-lg bg-white text-anthropic-dark focus:outline-none focus:ring-2 focus:ring-anthropic-orange focus:border-transparent transition-all font-serif"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
             >
               <option value="en">英语</option>
               <option value="es">西班牙语</option>
@@ -391,13 +313,13 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             </select>
           </div>
           <div className="flex-1">
-            <label className="block text-sm font-medium text-anthropic-dark mb-2 font-sans">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
               母语
             </label>
             <select
               value={targetLang}
               onChange={(e) => setTargetLang(e.target.value)}
-              className="w-full px-4 py-3 border border-anthropic-light-gray rounded-lg bg-white text-anthropic-dark focus:outline-none focus:ring-2 focus:ring-anthropic-orange focus:border-transparent transition-all font-serif"
+              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
             >
               <option value="zh">中文</option>
               <option value="en">英语</option>
@@ -407,14 +329,14 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-anthropic-dark mb-2 font-sans">
+          <label className="block text-sm font-medium text-slate-700 mb-2">
             输入文本
           </label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
             placeholder="粘贴或输入你想学习的文本..."
-            className="w-full h-64 px-4 py-4 border border-anthropic-light-gray rounded-lg bg-white text-anthropic-dark placeholder-anthropic-mid-gray focus:outline-none focus:ring-2 focus:ring-anthropic-orange focus:border-transparent transition-all resize-none font-serif"
+            className="w-full h-64 px-4 py-4 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none"
           />
         </div>
 
@@ -423,7 +345,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           whileTap={{ scale: 0.99 }}
           onClick={onProcess}
           disabled={loading || !text.trim()}
-          className="w-full py-4 bg-anthropic-orange text-white font-medium rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-sans"
+          className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -442,7 +364,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, wordCards, progress, processingInfo, sentenceTranslations, onSentenceClick, onStartLearning }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, onSentenceClick }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -455,62 +377,38 @@ function DictionaryStep({ vocab, wordCards, progress, processingInfo, sentenceTr
     >
       {/* 处理进度条 */}
       {processingInfo && (
-        <div className="bg-white border border-anthropic-light-gray rounded-2xl p-4 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-anthropic-mid-gray font-serif">处理中: 句子 {processingInfo.current} / {processingInfo.total}</span>
-            <span className="text-sm text-anthropic-mid-gray font-serif">{progress}%</span>
+            <span className="text-sm text-slate-600">处理中: 句子 {processingInfo.current} / {processingInfo.total}</span>
+            <span className="text-sm text-slate-600">{progress}%</span>
           </div>
-          <div className="w-full bg-anthropic-light-gray rounded-full h-2.5">
+          <div className="w-full bg-slate-100 rounded-full h-2.5">
             <div 
-              className="bg-anthropic-orange h-2.5 rounded-full transition-all duration-300" 
+              className="bg-black h-2.5 rounded-full transition-all duration-300" 
               style={{ width: `${progress}%` }}
             ></div>
           </div>
         </div>
       )}
 
-      {/* 学习开始按钮 */}
-      {vocab.length > 0 && !processingInfo && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-gradient-to-r from-anthropic-orange to-anthropic-blue rounded-2xl p-6 shadow-lg"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-semibold text-white mb-2 font-sans">准备好学习了吗？</h3>
-              <p className="text-white/80 font-serif">共 {vocab.length} 个单词等待学习</p>
-            </div>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onStartLearning}
-              className="px-8 py-3 bg-white text-anthropic-orange font-semibold rounded-xl hover:bg-white/90 transition-colors font-sans"
-            >
-              开始学习 →
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
-
       {/* 句子列表 */}
       {safeSentenceTranslations.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-anthropic-dark mb-4 font-sans">句子翻译</h2>
-          <div className="bg-white border border-anthropic-light-gray rounded-2xl overflow-hidden shadow-sm">
-            <div className="divide-y divide-anthropic-light-gray">
+          <h2 className="text-xl font-semibold text-slate-900 mb-4">句子翻译</h2>
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="divide-y divide-slate-200">
               {safeSentenceTranslations.map((item, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: -5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.02 }}
-                  className="p-4 hover:bg-anthropic-light cursor-pointer"
+                  className="p-4 hover:bg-slate-50 cursor-pointer"
                   onClick={() => onSentenceClick(index)}
                 >
-                  <div className="font-medium text-anthropic-dark mb-2 font-serif">{item.sentence}</div>
+                  <div className="font-medium text-slate-900 mb-2">{item.sentence}</div>
                   {item.translation_result && item.translation_result.tokenized_translation && (
-                    <div className="text-anthropic-mid-gray font-serif">{item.translation_result.tokenized_translation}</div>
+                    <div className="text-slate-700">{item.translation_result.tokenized_translation}</div>
                   )}
                 </motion.div>
               ))}
@@ -519,29 +417,39 @@ function DictionaryStep({ vocab, wordCards, progress, processingInfo, sentenceTr
         </div>
       )}
 
-      {/* 单词表 */}
+      {/* 单词表 - 高中课本附录格式 */}
       <div>
-        <h2 className="text-xl font-semibold text-anthropic-dark mb-4 font-sans">
-          单词表 ({vocab.length})
-        </h2>
-        <div className="bg-white border border-anthropic-light-gray rounded-2xl overflow-hidden shadow-sm">
-          <div className="grid grid-cols-3 gap-1 p-4 bg-anthropic-light-gray border-b border-anthropic-light-gray">
-            <div className="font-semibold text-anthropic-dark font-sans">单词</div>
-            <div className="font-semibold text-anthropic-dark font-sans">意思</div>
-            <div className="font-semibold text-anthropic-dark font-sans">词性</div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-slate-900">
+            单词表 ({vocab.length})
+          </h2>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onToggleSort}
+            className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+          >
+            {sortOrder === 'asc' ? 'A → Z' : 'Z → A'}
+          </motion.button>
+        </div>
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="grid grid-cols-3 gap-1 p-4 bg-slate-50 border-b border-slate-200">
+            <div className="font-semibold text-slate-700">单词</div>
+            <div className="font-semibold text-slate-700">意思</div>
+            <div className="font-semibold text-slate-700">词性</div>
           </div>
-          <div className="divide-y divide-anthropic-light-gray">
+          <div className="divide-y divide-slate-200">
             {vocab.map((word, index) => (
               <motion.div
                 key={word.word || index}
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.02 }}
-                className="grid grid-cols-3 gap-1 p-4 hover:bg-anthropic-light-gray/50"
+                className="grid grid-cols-3 gap-1 p-4 hover:bg-slate-50"
               >
-                <div className="font-medium text-anthropic-dark font-serif">{word.word}</div>
-                <div className="text-anthropic-mid-gray font-serif">{word.context_meaning || word.translation}</div>
-                <div className="text-anthropic-mid-gray font-mono">{word.morphology}</div>
+                <div className="font-medium text-slate-900">{word.word}</div>
+                <div className="text-slate-700">{word.context_meaning || word.translation}</div>
+                <div className="text-slate-600 font-mono">{word.morphology}</div>
               </motion.div>
             ))}
           </div>
@@ -551,177 +459,78 @@ function DictionaryStep({ vocab, wordCards, progress, processingInfo, sentenceTr
   )
 }
 
-function LearningStep({ vocab, currentWordIndex, wordCards, currentWordCard, generatingCard, onNextWord, onPrevWord, onBackToDictionary }) {
-  const currentWord = vocab[currentWordIndex]
-  const totalWords = vocab.length
-  const progressPercentage = ((currentWordIndex + 1) / totalWords) * 100
+function WordDetail({ word }) {
+  const [isPlaying, setIsPlaying] = useState(false)
+
+  const handlePlayAudio = () => {
+    setIsPlaying(true)
+    setTimeout(() => setIsPlaying(false), 1000)
+  }
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.98 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.98 }}
-      className="max-w-4xl mx-auto"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
     >
-      {/* 进度条 */}
-      <div className="mb-8">
-        <div className="flex justify-between mb-2">
-          <span className="text-sm font-medium text-anthropic-dark font-sans">
-            单词 {currentWordIndex + 1} / {totalWords}
-          </span>
-          <span className="text-sm text-anthropic-mid-gray font-serif">{Math.round(progressPercentage)}% 完成</span>
-        </div>
-        <div className="w-full bg-anthropic-light-gray rounded-full h-2">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progressPercentage}%` }}
-            transition={{ duration: 0.5 }}
-            className="bg-anthropic-orange h-2 rounded-full"
-          />
-        </div>
-      </div>
-
-      {/* 单词卡 */}
-      <div className="bg-white rounded-3xl shadow-lg border border-anthropic-light-gray overflow-hidden">
-        {generatingCard ? (
-          <div className="p-12 text-center">
-            <Loader2 className="w-12 h-12 mx-auto mb-4 text-anthropic-orange animate-spin" />
-            <p className="text-anthropic-mid-gray font-serif">正在为 "{currentWord?.word}" 生成单词卡...</p>
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <motion.h2 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-4xl font-semibold text-slate-900 mb-2"
+          >
+            {word.word}
+          </motion.h2>
+          <div className="flex items-center gap-3">
+            {word.ipa && (
+              <motion.p 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-xl text-slate-500 font-mono"
+              >
+                /{word.ipa}/
+              </motion.p>
+            )}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handlePlayAudio}
+              className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
+            >
+              <Volume2 className={`w-5 h-5 ${isPlaying ? 'animate-pulse' : ''}`} />
+            </motion.button>
           </div>
-        ) : currentWordCard ? (
-          <WordCard wordCard={currentWordCard} />
-        ) : (
-          <div className="p-12 text-center">
-            <p className="text-anthropic-mid-gray font-serif">加载失败</p>
-          </div>
+        </div>
+        {word.morphology && (
+          <motion.span
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium"
+          >
+            {word.morphology}
+          </motion.span>
         )}
       </div>
 
-      {/* 导航按钮 */}
-      <div className="flex justify-between mt-8">
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onPrevWord}
-          disabled={currentWordIndex === 0 || generatingCard}
-          className="flex items-center gap-2 px-6 py-3 bg-white border border-anthropic-light-gray text-anthropic-dark rounded-xl hover:bg-anthropic-light-gray disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-sans"
+      <div className="space-y-6">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
         >
-          <ArrowLeft className="w-4 h-4" />
-          上一个
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onBackToDictionary}
-          disabled={generatingCard}
-          className="px-6 py-3 bg-white border border-anthropic-light-gray text-anthropic-dark rounded-xl hover:bg-anthropic-light-gray disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-sans"
-        >
-          返回单词表
-        </motion.button>
-
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onNextWord}
-          disabled={generatingCard}
-          className="flex items-center gap-2 px-6 py-3 bg-anthropic-orange text-white rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-sans"
-        >
-          {currentWordIndex < totalWords - 1 ? '下一个' : '完成'}
-          <ChevronRight className="w-4 h-4" />
-        </motion.button>
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <Brain className="w-4 h-4" />
+            释义
+          </h3>
+          <p className="text-lg text-slate-700 leading-relaxed">
+            {word.context_meaning}
+          </p>
+        </motion.div>
       </div>
     </motion.div>
-  )
-}
-
-function WordCard({ wordCard }) {
-  return (
-    <div className="p-8">
-      {/* 单词标题 */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 pb-6 border-b border-anthropic-light-gray"
-      >
-        <h2 className="text-4xl font-bold text-anthropic-dark mb-2 font-sans">
-          {wordCard.word}
-        </h2>
-        {wordCard.ipa && (
-          <p className="text-xl text-anthropic-mid-gray font-mono">
-            /{wordCard.ipa}/
-          </p>
-        )}
-      </motion.div>
-
-      {/* 释义 */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="mb-8"
-      >
-        <div className="flex items-center gap-2 mb-3">
-          <Brain className="w-5 h-5 text-anthropic-orange" />
-          <h3 className="text-sm font-semibold text-anthropic-mid-gray uppercase tracking-wider font-sans">释义</h3>
-        </div>
-        <p className="text-2xl text-anthropic-dark font-serif leading-relaxed">
-          {wordCard.context_meaning}
-        </p>
-      </motion.div>
-
-      {/* 变体 */}
-      {wordCard.variants && wordCard.variants.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="mb-8"
-        >
-          <h3 className="text-sm font-semibold text-anthropic-mid-gray uppercase tracking-wider mb-3 font-sans">变体</h3>
-          <div className="flex flex-wrap gap-2">
-            {wordCard.variants.map((variant, idx) => (
-              <span key={idx} className="px-3 py-1 bg-anthropic-light-gray text-anthropic-dark rounded-full text-sm font-serif">
-                {variant.type}: {variant.form}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* 例句 */}
-      {wordCard.examples && wordCard.examples.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="mb-8"
-        >
-          <h3 className="text-sm font-semibold text-anthropic-mid-gray uppercase tracking-wider mb-3 font-sans">例句</h3>
-          <div className="space-y-4">
-            {wordCard.examples.map((example, idx) => (
-              <div key={idx} className="p-4 bg-anthropic-light-gray/50 rounded-xl">
-                <p className="text-anthropic-dark font-serif">{example}</p>
-              </div>
-            ))}
-          </div>
-        </motion.div>
-      )}
-
-      {/* 语法 */}
-      {wordCard.grammar && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <h3 className="text-sm font-semibold text-anthropic-mid-gray uppercase tracking-wider mb-3 font-sans">语法</h3>
-          <div className="p-4 bg-anthropic-blue/10 border border-anthropic-blue/20 rounded-xl">
-            <p className="text-anthropic-dark font-serif">{wordCard.grammar}</p>
-          </div>
-        </motion.div>
-      )}
-    </div>
   )
 }
 
@@ -733,13 +542,13 @@ function SentenceDetail({ sentenceTranslation, onClose }) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-anthropic-light-gray rounded-2xl p-8 shadow-sm"
+      className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
     >
       <div className="flex items-center justify-between mb-8">
         <motion.h2 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-2xl font-semibold text-anthropic-dark font-sans"
+          className="text-2xl font-semibold text-slate-900"
         >
           句子详情
         </motion.h2>
@@ -747,7 +556,7 @@ function SentenceDetail({ sentenceTranslation, onClose }) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={onClose}
-          className="p-2 text-anthropic-mid-gray hover:text-anthropic-dark hover:bg-anthropic-light-gray rounded-full transition-colors"
+          className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
         >
           <XCircle className="w-5 h-5" />
         </motion.button>
@@ -759,11 +568,24 @@ function SentenceDetail({ sentenceTranslation, onClose }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h3 className="text-sm font-semibold text-anthropic-mid-gray uppercase tracking-wider mb-3 font-sans">
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
             原文
           </h3>
-          <p className="text-lg text-anthropic-dark leading-relaxed font-serif">
+          <p className="text-lg text-slate-900 leading-relaxed">
             {sentence}
+          </p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+        >
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            翻译
+          </h3>
+          <p className="text-lg text-slate-700 leading-relaxed">
+            {translationResult?.tokenized_translation || '翻译中...'}
           </p>
         </motion.div>
 
@@ -772,24 +594,11 @@ function SentenceDetail({ sentenceTranslation, onClose }) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <h3 className="text-sm font-semibold text-anthropic-mid-gray uppercase tracking-wider mb-3 font-sans">
-            翻译
-          </h3>
-          <p className="text-lg text-anthropic-mid-gray leading-relaxed font-serif">
-            {translationResult?.tokenized_translation || '翻译中...'}
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h3 className="text-sm font-semibold text-anthropic-mid-gray uppercase tracking-wider mb-3 flex items-center gap-2 font-sans">
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
             <Brain className="w-4 h-4" />
             语法详解
           </h3>
-          <p className="text-lg text-anthropic-mid-gray leading-relaxed font-serif">
+          <p className="text-lg text-slate-700 leading-relaxed">
             {translationResult?.grammar_explanation || '语法分析中...'}
           </p>
         </motion.div>
