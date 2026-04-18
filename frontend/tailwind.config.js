@@ -7,7 +7,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['system-ui', 'sans-serif'],
+        sans: ['Poppins', 'Arial', 'sans-serif'],
+        serif: ['Lora', 'Georgia', 'serif'],
       },
       colors: {
         slate: {
@@ -21,6 +22,15 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a',
+        },
+        anthropic: {
+          dark: '#141413',
+          light: '#faf9f5',
+          'mid-gray': '#b0aea5',
+          'light-gray': '#e8e6dc',
+          orange: '#d97757',
+          blue: '#6a9bcc',
+          green: '#788c5d',
         },
       },
       animation: {
