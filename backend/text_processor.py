@@ -119,33 +119,43 @@ class TextProcessor:
             
             # 生成正确的tokenized_translation（无多余空格，严格翻译）
             if 'tokenized_translation' in result:
-                # 移除所有空格，确保是严格的一一对应翻译
-                result['tokenized_translation'] = result['tokenized_translation'].replace(' ', '')
+                # 移除所有空格和换行符，确保是严格的一一对应翻译
+                result['tokenized_translation'] = result['tokenized_translation'].replace(' ', '').replace('\n', '')
             elif 'translation' in result:
                 # 如果没有tokenized_translation字段，则生成一个
                 tokenized_translation = ''
                 for token in result['translation']:
                     if isinstance(token, dict) and 'translation' in token:
                         tokenized_translation += token['translation']
-                # 移除所有空格，确保是严格的一一对应翻译
-                tokenized_translation = tokenized_translation.replace(' ', '')
+                # 移除所有空格和换行符，确保是严格的一一对应翻译
+                tokenized_translation = tokenized_translation.replace(' ', '').replace('\n', '')
                 result['tokenized_translation'] = tokenized_translation
             
             # 生成tokenized_translation_quoted字段（无标点符号）
             if 'translation' in result:
                 quoted_words = []
-                # 定义所有标点符号
-                all_punctuation = '''!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~，。！？；："（）【】「」『』、''' 
                 for token in result['translation']:
                     if isinstance(token, dict) and 'translation' in token:
-                        # 移除翻译中的所有标点符号
-                        clean_translation = token['translation']
-                        for char in all_punctuation:
+                        # 直接使用token的翻译，每个token都是一个独立的词
+                        translation = token['translation']
+                        # 移除所有标点符号
+                        punctuation = '''!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~，。！？；："（）【】「」『』、''' 
+                        clean_translation = translation
+                        for char in punctuation:
                             clean_translation = clean_translation.replace(char, '')
-                        # 处理连续空格
-                        clean_translation = ' '.join(clean_translation.split())
+                        # 处理可能的连续形容词
                         if clean_translation.strip():
-                            quoted_words.append(f'"{clean_translation.strip()}"')
+                            # 检查是否包含多个形容词
+                            if '的' in clean_translation:
+                                # 简单处理：按'的'分割
+                                parts = clean_translation.split('的')
+                                for i, part in enumerate(parts):
+                                    if part.strip():
+                                        # 重新添加'的'
+                                        adj = part.strip() + '的'
+                                        quoted_words.append(f'"{adj}"')
+                            else:
+                                quoted_words.append(f'"{clean_translation.strip()}"')
                 result['tokenized_translation_quoted'] = ' '.join(quoted_words)
         
         # 返回处理后的结果
