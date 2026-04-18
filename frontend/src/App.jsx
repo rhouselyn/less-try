@@ -52,13 +52,12 @@ function App() {
     
     try {
       console.log('开始处理文本，长度:', text.length)
-      const response = await axios.post('http://localhost:8000/api/process-text', {
+      const response = await axios.post('/api/process-text', {
         text: text.trim(),
         source_language: sourceLang,
         target_language: targetLang
       }, {
-        timeout: 600000, // 10分钟超时
-        withCredentials: true
+        timeout: 600000 // 10分钟超时
       })
       
       console.log('API响应:', response.data)
@@ -76,7 +75,7 @@ function App() {
           console.log(`第${pollCount}次轮询，文件ID: ${fileId}`)
           
           try {
-            const statusResponse = await axios.get(`http://localhost:8000/api/status/${fileId}`, {
+            const statusResponse = await axios.get(`/api/status/${fileId}`, {
               timeout: 600000 // 10分钟超时
             })
             const status = statusResponse.data
