@@ -14,7 +14,8 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
-  const [shuffledVocab, setShuffledVocab] = useState([])
+  const [displayVocab, setDisplayVocab] = useState([])
+  const [sortOrder, setSortOrder] = useState('asc') // 'asc' 或 'desc'
   const [sentenceTranslations, setSentenceTranslations] = useState([])
   const [selectedWord, setSelectedWord] = useState(null)
   const [selectedSentence, setSelectedSentence] = useState(null)
@@ -23,13 +24,21 @@ function App() {
 
   useEffect(() => {
     if (vocab.length > 0) {
-      shuffleVocab()
+      sortVocab()
     }
-  }, [vocab])
+  }, [vocab, sortOrder])
 
-  const shuffleVocab = () => {
-    const shuffled = [...vocab].sort(() => Math.random() - 0.5)
-    setShuffledVocab(shuffled)
+  const sortVocab = () => {
+    const sorted = [...vocab].sort((a, b) => {
+      const wordA = a.word.toLowerCase()
+      const wordB = b.word.toLowerCase()
+      return sortOrder === 'asc' ? wordA.localeCompare(wordB) : wordB.localeCompare(wordA)
+    })
+    setDisplayVocab(sorted)
+  }
+
+  const toggleSortOrder = () => {
+    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
   }
 
   const handleSentenceClick = (index) => {
@@ -212,8 +221,9 @@ function App() {
               )}
               <DictionaryStep
                 key="dictionary"
-                vocab={shuffledVocab}
-                onShuffle={shuffleVocab}
+                vocab={displayVocab}
+                onToggleSort={toggleSortOrder}
+                sortOrder={sortOrder}
                 progress={progress}
                 processingInfo={processingInfo}
                 sentenceTranslations={sentenceTranslations}
@@ -320,7 +330,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentenceTranslations, onSentenceClick }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, onSentenceClick }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -382,10 +392,10 @@ function DictionaryStep({ vocab, onShuffle, progress, processingInfo, sentenceTr
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={onShuffle}
+            onClick={onToggleSort}
             className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
           >
-            <Shuffle className="w-5 h-5" />
+            {sortOrder === 'asc' ? 'A → Z' : 'Z → A'}
           </motion.button>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">

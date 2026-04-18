@@ -48,6 +48,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         print(f"[DEBUG] 分割为 {total_sentences} 个句子: {sentences}")
         
         all_vocab = []
+        # 用于全局查重的集合
+        global_seen_words = set()
         # 新的数据结构：每个句子单独一条数据
         sentence_translations = []
         
@@ -72,12 +74,11 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 
                 # 提取词汇
                 if isinstance(translation_result, dict) and "translation" in translation_result:
-                    seen_words = set()
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
                             word = token["text"].lower()
-                            if word not in seen_words:
-                                seen_words.add(word)
+                            if word not in global_seen_words:
+                                global_seen_words.add(word)
                                 # 直接使用API返回的形态学缩写
                                 morphology = token.get("morphology", "")
                                 
