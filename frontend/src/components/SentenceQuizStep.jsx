@@ -29,8 +29,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
   }
 
   const handleCheckAnswer = () => {
-    const userAnswer = selectedTokens.join(' ')
-    const isCorrectAnswer = userAnswer === quizData.correct_translation
+    // 只需要token顺序匹配即可
+    const isCorrectAnswer = JSON.stringify(selectedTokens) === JSON.stringify(quizData.correct_tokens)
     setIsCorrect(isCorrectAnswer)
     setIsChecked(true)
   }
@@ -102,7 +102,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
             {t.translation}
           </h3>
           <div className="p-4 border border-slate-200 rounded-lg min-h-16">
-            <p className="text-lg">{selectedTokens.join(' ')}</p>
+            <p className="text-lg">{selectedTokens.join('')}</p>
           </div>
         </div>
 
@@ -121,7 +121,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
               <span className="font-medium">{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
-              <p className="text-slate-700">{quizData.correct_translation}</p>
+              <p className="text-slate-700">{quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}</p>
             )}
           </motion.div>
         )}

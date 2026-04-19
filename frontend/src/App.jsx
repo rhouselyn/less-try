@@ -224,18 +224,18 @@ function App() {
   const handleUnitClick = async (unitIndex) => {
     setLoading(true)
     try {
-      // 获取单元单词
-      const unitData = await api.getUnitWords(currentFileId, unitIndex)
-      // 开始学习该单元的第一个单词
-      const firstWord = unitData.words[0]
-      if (firstWord) {
-        setLearningData(firstWord)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-        setLearningMode('word')
-        setStep('learning')
-      }
+      // 计算该单元的起始学习索引
+      const startIndex = unitIndex * 10
+      // 设置学习进度到该单元的起始位置
+      await api.setProgress(currentFileId, startIndex)
+      // 获取第一个单词
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setLearningMode('word')
+      setStep('learning')
     } catch (error) {
       console.error('获取单元单词错误:', error)
       alert('无法获取单元单词，请重试')

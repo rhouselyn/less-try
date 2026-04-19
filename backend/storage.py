@@ -113,3 +113,20 @@ class Storage:
                 data = json.load(f)
                 return data.get("current_index", 0)
         return 0
+    
+    def save_shuffled_order(self, file_id: str, shuffled_indices: List[int]):
+        """保存单词的打乱顺序"""
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / "shuffled_order.json"
+        with open(order_path, 'w', encoding='utf-8') as f:
+            json.dump({"shuffled_indices": shuffled_indices}, f, ensure_ascii=False, indent=2)
+    
+    def load_shuffled_order(self, file_id: str) -> Optional[List[int]]:
+        """加载单词的打乱顺序"""
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / "shuffled_order.json"
+        if order_path.exists():
+            with open(order_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("shuffled_indices")
+        return None

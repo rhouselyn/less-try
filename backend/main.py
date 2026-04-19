@@ -7,6 +7,7 @@ import random
 import asyncio
 from dotenv import load_dotenv
 from pathlib import Path
+import re
 
 from nvidia_api import NvidiaAPI
 from text_processor import TextProcessor
@@ -114,9 +115,15 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
         
-        # 预生成第一个单词的信息
+        # 提前生成并保存固定的单词打乱顺序
         if all_vocab:
-            import asyncio
+            random.seed(42)
+            shuffled_indices = list(range(len(all_vocab)))
+            random.shuffle(shuffled_indices)
+            storage.save_shuffled_order(file_id, shuffled_indices)
+            print(f"[DEBUG] 保存打乱顺序: {shuffled_indices}")
+            
+            # 预生成第一个单词的信息
             asyncio.create_task(pre_generate_next_word(file_id, all_vocab, 0))
             print(f"[DEBUG] 预生成第一个单词信息")
         
@@ -207,11 +214,14 @@ async def get_random_word(file_id: str):
         current_index = storage.load_learning_progress(file_id)
         print(f"[DEBUG] 加载学习进度: current_index = {current_index}")
         
-        # 使用固定随机种子生成顺序
-        random.seed(42)
-        # 生成打乱但固定的顺序
-        shuffled_indices = list(range(len(vocab)))
-        random.shuffle(shuffled_indices)
+        # 使用保存的固定打乱顺序
+        shuffled_indices = storage.load_shuffled_order(file_id)
+        if not shuffled_indices:
+            # 如果没有保存，生成并保存
+            random.seed(42)
+            shuffled_indices = list(range(len(vocab)))
+            random.shuffle(shuffled_indices)
+            storage.save_shuffled_order(file_id, shuffled_indices)
         print(f"[DEBUG] 打乱后的索引顺序: {shuffled_indices}")
         
         # 获取当前单词
@@ -357,6 +367,23 @@ async def next_word(file_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error moving to next word: {str(e)}")
 
+
+@app.post("/api/learn/{file_id}/set-progress")
+async def set_progress(file_id: str, request: dict):
+    try:
+        index = request.get("index", 0)
+        storage.save_learning_progress(file_id, index)
+        print(f"[DEBUG] 设置学习进度: {index}")
+        
+        # 预生成下一个单词
+        vocab = storage.load_vocab(file_id)
+        if vocab:
+            asyncio.create_task(pre_generate_next_word(file_id, vocab, index))
+        
+        return {"success": True, "index": index}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error setting progress: {str(e)}")
+
 async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: int):
     """后台预生成下一个单词的信息"""
     try:
@@ -364,11 +391,14 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
         
-        # 使用固定随机种子生成顺序
-        random.seed(42)
-        # 生成打乱但固定的顺序
-        shuffled_indices = list(range(len(vocab)))
-        random.shuffle(shuffled_indices)
+        # 使用保存的固定打乱顺序
+        shuffled_indices = storage.load_shuffled_order(file_id)
+        if not shuffled_indices:
+            # 如果没有保存，生成并保存
+            random.seed(42)
+            shuffled_indices = list(range(len(vocab)))
+            random.shuffle(shuffled_indices)
+            storage.save_shuffled_order(file_id, shuffled_indices)
         
         # 获取下一个单词
         actual_index = shuffled_indices[next_index % len(vocab)]
@@ -663,10 +693,15 @@ async def check_coverage(file_id: str):
     try:
         vocab = storage.load_vocab(file_id)
         if not vocab:
-            raise HTTPException(status_code=404, detail="Vocab not found")
+            return {"can_form_sentences": False}
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
+        
+        # 至少要学够5个单词后才可能出现句子翻译题
+        if current_index < 4:
+            return {"can_form_sentences": False}
+        
         learned_words = vocab[:current_index + 1]
         learned_word_set = set(word["word"].lower() for word in learned_words)
         
@@ -683,7 +718,7 @@ async def check_coverage(file_id: str):
                 # 简单分词（按空格）
                 words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
                 # 检查是否所有单词都在已学单词中
-                if words_in_sentence.issubset(learned_word_set):
+                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     can_form = True
                     break
         
@@ -720,8 +755,8 @@ async def generate_sentence_quiz(file_id: str):
                 sentence = sentence_data["sentence"]
                 # 简单分词（按空格）
                 words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
-                # 检查是否所有单词都在已学单词中
-                if words_in_sentence.issubset(learned_word_set):
+                # 检查是否所有单词都在已学单词中，且至少2个单词
+                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     eligible_sentences.append(sentence_data)
         
         if not eligible_sentences:
@@ -734,44 +769,58 @@ async def generate_sentence_quiz(file_id: str):
         
         # 获取翻译
         correct_translation = ""
-        if "translation_result" in selected_sentence and "tokenized_translation" in selected_sentence["translation_result"]:
-            correct_translation = selected_sentence["translation_result"]["tokenized_translation"]
+        if "translation_result" in selected_sentence and "translation" in selected_sentence["translation_result"]:
+            # 获取翻译token并过滤掉标点符号
+            translation_tokens = []
+            for token in selected_sentence["translation_result"]["translation"]:
+                if isinstance(token, dict) and "text" in token:
+                    # 过滤掉标点符号
+                    text = token["text"]
+                    # 只保留文字字符
+                    cleaned_text = re.sub(r'[^\w\s]', '', text)
+                    if cleaned_text:
+                        translation_tokens.append(cleaned_text)
+            correct_translation = " ".join(translation_tokens)
         
-        # 生成tokens（包括正确翻译的单词和一些干扰词）
-        tokens = []
+        # 生成正确答案的token列表（不含标点）
+        correct_tokens = []
         if correct_translation:
-            # 拆分正确翻译
             if target_lang == "zh":
                 # 中文按字符拆分
-                tokens = list(correct_translation)
+                correct_tokens = list(correct_translation.replace(" ", ""))
             else:
                 # 英文按空格拆分
-                tokens = correct_translation.split()
-            
-            # 添加一些干扰词
-            # 从其他翻译中随机选择一些单词
-            for sentence_data in sentences:
-                if "translation_result" in sentence_data and "tokenized_translation" in sentence_data["translation_result"]:
-                    other_translation = sentence_data["translation_result"]["tokenized_translation"]
-                    if other_translation != correct_translation:
-                        if target_lang == "zh":
-                            other_tokens = list(other_translation)
-                        else:
-                            other_tokens = other_translation.split()
-                        # 随机添加1-2个干扰词
-                        if other_tokens:
-                            num_distractors = min(2, len(other_tokens))
-                            distractors = random.sample(other_tokens, num_distractors)
-                            tokens.extend(distractors)
-                            break
-            
-            # 打乱tokens
-            random.shuffle(tokens)
+                correct_tokens = correct_translation.split()
+        
+        # 生成干扰词（冗余词）
+        distractors = []
+        for sentence_data in sentences:
+            if sentence_data != selected_sentence and "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                for token in sentence_data["translation_result"]["translation"]:
+                    if isinstance(token, dict) and "text" in token:
+                        text = token["text"]
+                        cleaned_text = re.sub(r'[^\w\s]', '', text)
+                        if cleaned_text and cleaned_text not in correct_tokens:
+                            distractors.append(cleaned_text)
+                if len(distractors) >= 3:
+                    break
+        
+        # 选择2-3个干扰词
+        num_distractors = min(3, len(distractors))
+        if num_distractors > 0:
+            selected_distractors = random.sample(distractors, num_distractors)
+        else:
+            selected_distractors = []
+        
+        # 合并正确tokens和干扰词，然后打乱
+        all_tokens = correct_tokens + selected_distractors
+        random.shuffle(all_tokens)
         
         return {
             "original_sentence": original_sentence,
             "correct_translation": correct_translation,
-            "tokens": tokens
+            "correct_tokens": correct_tokens,
+            "tokens": all_tokens
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating sentence quiz: {str(e)}")
