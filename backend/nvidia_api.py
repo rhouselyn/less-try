@@ -140,7 +140,7 @@ For each word, provide:
             "type": "function",
             "function": {
                 "name": "split_and_translate",
-                "description": "Split text into tokens, translate each token, and provide sentence-level grammar explanation",
+                "description": "Split text into tokens, translate each token, provide sentence-level grammar explanation, and generate distractor tokens for translation exercises",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -162,9 +162,14 @@ For each word, provide:
                             "type": "string",
                             "description": "The complete natural translation to target language, as a normal sentence without artificially added spaces between words"
                         },
-                        "grammar_explanation": {"type": "string"}
+                        "grammar_explanation": {"type": "string"},
+                        "distractor_tokens": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "4 reasonable distractor tokens for translation exercises, related to the sentence but not part of the correct translation"
+                        }
                     },
-                    "required": ["original", "translation", "tokenized_translation", "grammar_explanation"]
+                    "required": ["original", "translation", "tokenized_translation", "grammar_explanation", "distractor_tokens"]
                 }
             }
         }
@@ -207,6 +212,7 @@ For each word, provide:
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
+- distractor_tokens: 4个合理的冗余tokens，用于翻译练习，与句子相关但不是正确翻译的一部分
 
 要处理的文本：
 TEXT_CONTENT

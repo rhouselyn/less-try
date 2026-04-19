@@ -108,6 +108,8 @@ function App() {
   const [showWordCard, setShowWordCard] = useState(false)
   const [selectedOption, setSelectedOption] = useState(null)
   const [isCorrect, setIsCorrect] = useState(null)
+  const [sentenceTranslationData, setSentenceTranslationData] = useState(null)
+  const [selectedTokens, setSelectedTokens] = useState([])
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -320,17 +322,58 @@ function App() {
     try {
       // 先调用 API 更新进度
       await axios.post(`/api/learn/${currentFileId}/next-word`)
-      // 然后获取下一个单词
-      const response = await axios.get(`/api/learn/${currentFileId}/random-word`)
-      setLearningData(response.data)
-      setShowWordCard(false)
-      setSelectedOption(null)
-      setIsCorrect(null)
+      
+      // 检查是否可以生成句子翻译题
+      const coverageResponse = await axios.get(`/api/learn/${currentFileId}/check-coverage`)
+      
+      if (coverageResponse.data.can_generate_sentence && coverageResponse.data.sentence) {
+        // 生成句子翻译题
+        setSentenceTranslationData(coverageResponse.data)
+        setSelectedTokens([])
+        setShowWordCard(false)
+        setSelectedOption(null)
+        setIsCorrect(null)
+      } else {
+        // 获取下一个单词
+        const response = await axios.get(`/api/learn/${currentFileId}/random-word`)
+        setLearningData(response.data)
+        setShowWordCard(false)
+        setSelectedOption(null)
+        setIsCorrect(null)
+      }
     } catch (error) {
       console.error('获取下一个单词错误:', error)
       alert('无法获取下一个单词，请重试')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleTokenSelect = (token) => {
+    setSelectedTokens(prev => [...prev, token])
+  }
+
+  const handleTokenRemove = (index) => {
+    setSelectedTokens(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const submitTranslation = async () => {
+    if (!sentenceTranslationData) return
+    
+    const userTranslation = selectedTokens.join('')
+    const correctTranslation = sentenceTranslationData.correct_translation
+    
+    // 简单的验证逻辑
+    const isTranslationCorrect = userTranslation === correctTranslation
+    setIsCorrect(isTranslationCorrect)
+    
+    if (isTranslationCorrect) {
+      // 翻译正确，继续下一题
+      setTimeout(() => {
+        setSentenceTranslationData(null)
+        setSelectedTokens([])
+        getNextWord()
+      }, 1500)
     }
   }
 
