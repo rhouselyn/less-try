@@ -28,9 +28,6 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t }) {
         >
           {t.progress}
         </motion.h2>
-        <p className="text-lg text-slate-600">
-          {t.selectTokens}
-        </p>
       </div>
 
       {loading ? (
