@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 
-function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t }) {
+function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, allUnitsCompleted }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -37,6 +37,27 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t }) {
         <div className="text-center py-16">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" />
           <p className="text-lg text-slate-600">{t.loading}</p>
+        </div>
+      ) : allUnitsCompleted ? (
+        <div className="text-center py-16">
+          <motion.h2 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-3xl font-semibold text-slate-900 mb-4"
+          >
+            🎉 {t.completed}
+          </motion.h2>
+          <p className="text-lg text-slate-600 mb-8">所有单元学习完成！</p>
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={onBack}
+            className="px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+          >
+            返回单词表
+          </motion.button>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

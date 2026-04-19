@@ -593,9 +593,14 @@ async def get_learning_progress(file_id: str):
             if i < len(units):
                 units[i]["completed"] = True
         
+        total_units = len(units)
+        all_units_completed = current_unit >= total_units
+        
         return {
             "units": units,
-            "current_unit": current_unit
+            "current_unit": current_unit,
+            "total_units": total_units,
+            "all_units_completed": all_units_completed
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting learning progress: {str(e)}")

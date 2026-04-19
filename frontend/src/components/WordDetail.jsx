@@ -161,7 +161,13 @@ function WordDetail({ word, t, onStudyWord }) {
             </h3>
             <div className="space-y-2">
               {word.context_sentences.map((sentence, index) => (
-                <p key={index} className="text-slate-700 italic">{sentence}</p>
+                <div key={index} className="border-l-4 border-slate-200 pl-4">
+                  <p className="text-slate-900 mb-1">{sentence}</p>
+                  {/* 显示对应的中文翻译 */}
+                  {word.translation && (
+                    <p className="text-slate-600 text-sm">{word.translation}</p>
+                  )}
+                </div>
               ))}
             </div>
           </motion.div>

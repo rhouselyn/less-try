@@ -168,35 +168,71 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
         )}
 
         <div className="flex gap-4">
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={handleCheckAnswer}
-            disabled={isChecked || selectedTokens.length === 0}
-            className="flex-1 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {t.checkAnswer}
-          </motion.button>
-          {isChecked && (
+          {!isChecked && (
             <motion.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
-              onClick={handleNextQuestion}
-              disabled={loading}
-              className="flex-1 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              onClick={handleCheckAnswer}
+              disabled={selectedTokens.length === 0}
+              className="flex-1 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  {t.loading}
-                </>
-              ) : (
-                <>
-                  {quizData.unit_completed && isCorrect ? '完成' : t.continue}
-                  <ChevronRight className="w-4 h-4" />
-                </>
-              )}
+              {t.checkAnswer}
             </motion.button>
+          )}
+          {isChecked && (
+            <>
+              {!quizData.unit_completed && (
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={handleNextQuestion}
+                  disabled={loading}
+                  className="flex-1 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      {t.loading}
+                    </>
+                  ) : (
+                    <>
+                      {t.continue}
+                      <ChevronRight className="w-4 h-4" />
+                    </>
+                  )}
+                </motion.button>
+              )}
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={() => {
+                  setSelectedTokens([]);
+                  setIsChecked(false);
+                  setIsCorrect(false);
+                  if (quizData.unit_completed) {
+                    // 如果单元已完成，返回进度页面
+                    window.location.href = "#progress";
+                  } else {
+                    handleNextQuestion();
+                  }
+                }}
+                disabled={loading}
+                className={`flex-1 py-3 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
+                  quizData.unit_completed 
+                    ? 'bg-black text-white hover:bg-slate-800' 
+                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t.loading}
+                  </>
+                ) : (
+                  quizData.unit_completed ? '完成' : '下一题'
+                )}
+              </motion.button>
+            </>
           )}
         </div>
       </div>

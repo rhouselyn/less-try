@@ -33,6 +33,8 @@ function App() {
   const [isCorrect, setIsCorrect] = useState(null)
   const [units, setUnits] = useState([])
   const [currentUnit, setCurrentUnit] = useState(0)
+  const [totalUnits, setTotalUnits] = useState(0)
+  const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
   const [quizData, setQuizData] = useState(null)
   const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
   
@@ -212,6 +214,8 @@ function App() {
       const progressData = await api.getLearningProgress(currentFileId)
       setUnits(progressData.units)
       setCurrentUnit(progressData.current_unit)
+      setTotalUnits(progressData.total_units)
+      setAllUnitsCompleted(progressData.all_units_completed)
       setStep('progress')
     } catch (error) {
       console.error('开始学习错误:', error)
@@ -399,7 +403,13 @@ function App() {
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  onClick={() => setStep('input')}
+                  onClick={() => {
+                    if (step === 'learning' || step === 'sentence-quiz' || step === 'progress') {
+                      setStep('dictionary');
+                    } else {
+                      setStep('input');
+                    }
+                  }}
                   className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -458,6 +468,7 @@ function App() {
               onBack={() => setStep('dictionary')}
               loading={loading}
               t={t}
+              allUnitsCompleted={allUnitsCompleted}
             />
           )}
           
@@ -470,7 +481,7 @@ function App() {
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
               onNextWord={getNextWord}
-              onBack={() => setStep('progress')}
+              onBack={() => setStep('dictionary')}
               loading={loading}
               t={t}
             />
@@ -481,7 +492,7 @@ function App() {
               key="sentence-quiz"
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('learning')}
+              onBack={() => setStep('dictionary')}
               loading={loading}
               t={t}
             />
