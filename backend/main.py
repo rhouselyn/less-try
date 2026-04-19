@@ -262,15 +262,24 @@ async def get_random_word(file_id: str):
                 "memory_hint": cached_word.get("memory_hint", "")
             }
         
-        # 构建上下文
+        # 构建上下文（包含翻译）
         sentences = storage.load_pipeline_data(file_id)
         context = ""
+        context_sentences = []
         if sentences:
             # 找到包含该单词的句子
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
                     if word in sentence_data["sentence"]:
                         context = sentence_data["sentence"]
+                        # 获取翻译
+                        translation = ""
+                        if "translation_result" in sentence_data:
+                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                        context_sentences.append({
+                            "sentence": sentence_data["sentence"],
+                            "translation": translation
+                        })
                         break
             if not context and sentences:
                 # 如果没找到，使用第一个句子作为上下文
@@ -325,7 +334,7 @@ async def get_random_word(file_id: str):
             "ipa": options_result.get("ipa", random_word.get("ipa", "")),
             "meaning": options_result.get("enriched_meaning", correct_meaning),
             "examples": options_result.get("examples", []),
-            "context_sentences": [context] if context else [],
+            "context_sentences": context_sentences,
             "morphology": random_word.get("morphology", ""),
             "variants_detail": options_result.get("variants_detail", []),
             "memory_hint": options_result.get("memory_hint", ""),
@@ -410,15 +419,24 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             print(f"[DEBUG] 预生成单词已缓存: {word}")
             return
         
-        # 构建上下文
+        # 构建上下文（包含翻译）
         sentences = storage.load_pipeline_data(file_id)
         context = ""
+        context_sentences = []
         if sentences:
             # 找到包含该单词的句子
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
                     if word in sentence_data["sentence"]:
                         context = sentence_data["sentence"]
+                        # 获取翻译
+                        translation = ""
+                        if "translation_result" in sentence_data:
+                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                        context_sentences.append({
+                            "sentence": sentence_data["sentence"],
+                            "translation": translation
+                        })
                         break
             if not context and sentences:
                 # 如果没找到，使用第一个句子作为上下文
@@ -450,7 +468,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             "ipa": options_result.get("ipa", random_word.get("ipa", "")),
             "meaning": options_result.get("enriched_meaning", correct_meaning),
             "examples": options_result.get("examples", []),
-            "context_sentences": [context] if context else [],
+            "context_sentences": context_sentences,
             "morphology": random_word.get("morphology", ""),
             "variants_detail": options_result.get("variants_detail", []),
             "memory_hint": options_result.get("memory_hint", ""),
@@ -494,15 +512,24 @@ async def get_word_details(file_id: str, word: str):
         if not word_data:
             raise HTTPException(status_code=404, detail="Word not found")
 
-        # 构建上下文
+        # 构建上下文（包含翻译）
         sentences = storage.load_pipeline_data(file_id)
         context = ""
         context_sentences = []
+        context_sentences_with_translations = []
         if sentences:
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
                     if word_data["word"] in sentence_data["sentence"]:
                         context_sentences.append(sentence_data["sentence"])
+                        # 获取翻译
+                        translation = ""
+                        if "translation_result" in sentence_data:
+                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                        context_sentences_with_translations.append({
+                            "sentence": sentence_data["sentence"],
+                            "translation": translation
+                        })
             if not context and sentences:
                 # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
@@ -548,7 +575,7 @@ async def get_word_details(file_id: str, word: str):
             "meaning": options_result.get("enriched_meaning", correct_meaning),
             "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
             "examples": options_result.get("examples", []),
-            "context_sentences": context_sentences,
+            "context_sentences": context_sentences_with_translations,
             "context": context,
             "morphology": word_data.get("morphology", ""),
             "variants_detail": options_result.get("variants_detail", []),

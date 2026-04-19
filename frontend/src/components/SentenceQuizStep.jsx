@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X } from 'lucide-react'
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t }) {
   const [selectedTokens, setSelectedTokens] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
@@ -15,8 +15,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
         className="max-w-3xl mx-auto"
       >
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" />
-          <p className="text-lg text-slate-600">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" style={{ color: '#b0aea5' }} />
+          <p className="text-lg" style={{ color: '#6b6a61' }}>{t.loading}</p>
         </div>
       </motion.div>
     )
@@ -26,10 +26,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
     if (!isChecked) {
       const index = selectedTokens.indexOf(token)
       if (index > -1) {
-        // 如果已经选中，取消选择
         setSelectedTokens([...selectedTokens.slice(0, index), ...selectedTokens.slice(index + 1)])
       } else {
-        // 如果没有选中，添加选择
         setSelectedTokens([...selectedTokens, token])
       }
     }
@@ -42,7 +40,6 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
   }
 
   const handleCheckAnswer = () => {
-    // 只需要token顺序匹配即可
     const isCorrectAnswer = JSON.stringify(selectedTokens) === JSON.stringify(quizData.correct_tokens)
     setIsCorrect(isCorrectAnswer)
     setIsChecked(true)
@@ -62,52 +59,86 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
       exit={{ opacity: 0, y: -20 }}
       className="max-w-3xl mx-auto"
     >
-      {/* 返回按钮 */}
       <motion.button
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 mb-8"
+        className="flex items-center gap-2 px-4 py-2 rounded-md transition-all mb-8 hover:bg-opacity-20"
+        style={{ color: '#6b6a61' }}
+        whileHover={{ color: '#141413', backgroundColor: 'rgba(20, 20, 19, 0.08)' }}
       >
         <ArrowLeft className="w-4 h-4" />
         {t.backToVocab}
       </motion.button>
 
-      <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+      <div 
+        className="rounded-2xl p-8 shadow-sm"
+        style={{ 
+          backgroundColor: '#faf9f5', 
+          border: '1px solid #e8e6dc' 
+        }}
+      >
         <div className="text-center mb-8">
           <motion.h2 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-2xl font-semibold text-slate-900 mb-4"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-2xl font-semibold mb-4"
+            style={{ 
+              color: '#141413', 
+              fontFamily: 'Poppins, Arial, sans-serif' 
+            }}
           >
             {t.sentenceTranslationQuiz}
           </motion.h2>
-          <p className="text-lg text-slate-700 mb-6">
+          <p 
+            className="text-lg mb-6"
+            style={{ 
+              color: '#141413', 
+              fontFamily: 'Lora, Georgia, serif' 
+            }}
+          >
             {quizData.original_sentence}
           </p>
         </div>
 
-        {/* 翻译输入区 - 下方 */}
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+          <h3 
+            className="text-sm font-semibold uppercase tracking-wider mb-3"
+            style={{ 
+              color: '#b0aea5', 
+              fontFamily: 'Poppins, Arial, sans-serif' 
+            }}
+          >
             {t.translation}
           </h3>
-          <div className="p-4 border border-slate-200 rounded-lg min-h-20 flex flex-wrap gap-2 items-center">
+          <div 
+            className="p-4 rounded-lg min-h-20 flex flex-wrap gap-2 items-center"
+            style={{ 
+              border: '2px dashed #e8e6dc', 
+              backgroundColor: 'white' 
+            }}
+          >
             <AnimatePresence>
               {selectedTokens.map((token, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  whileHover={{ scale: 1.05 }}
-                  className="flex items-center gap-1 bg-black text-white px-3 py-1.5 rounded-full text-sm font-medium"
+                  initial={{ opacity: 0, scale: 0.5, rotate: -5 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                  exit={{ opacity: 0, scale: 0.5, rotate: 5 }}
+                  whileHover={{ scale: 1.1, y: -2 }}
+                  className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium"
+                  style={{ 
+                    backgroundColor: '#d97757', 
+                    color: 'white' 
+                  }}
                 >
-                  <span>{token}</span>
+                  <span style={{ fontFamily: 'Lora, Georgia, serif' }}>{token}</span>
                   <button
                     onClick={() => handleRemoveToken(index)}
                     disabled={isChecked}
-                    className="p-1 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                    className="p-1 rounded-full transition-all"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+                    whileHover={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -115,28 +146,53 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
               ))}
             </AnimatePresence>
             {selectedTokens.length === 0 && (
-              <p className="text-slate-400 italic">{t.selectTokensHint}</p>
+              <p 
+                className="italic"
+                style={{ color: '#b0aea5', fontFamily: 'Lora, Georgia, serif' }}
+              >
+                {t.selectTokensHint}
+              </p>
             )}
           </div>
         </div>
 
-        {/* 选项区 - 上方 */}
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+          <h3 
+            className="text-sm font-semibold uppercase tracking-wider mb-3"
+            style={{ 
+              color: '#b0aea5', 
+              fontFamily: 'Poppins, Arial, sans-serif' 
+            }}
+          >
             {t.selectTokens}
           </h3>
           <div className="flex flex-wrap gap-2">
             {quizData.tokens.map((token, index) => (
               <motion.button
                 key={index}
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
+                transition={{ delay: index * 0.08, type: 'spring', stiffness: 300, damping: 20 }}
+                whileHover={{ scale: 1.1, y: -4, rotate: 2 }}
+                whileTap={{ scale: 0.92, rotate: -2 }}
                 onClick={() => handleTokenClick(token)}
                 disabled={isChecked}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'cursor-not-allowed' : ''}`}
+                style={
+                  selectedTokens.includes(token) ? 
+                  { 
+                    backgroundColor: '#e8e6dc', 
+                    color: '#b0aea5', 
+                    fontFamily: 'Lora, Georgia, serif' 
+                  } : 
+                  { 
+                    backgroundColor: 'white', 
+                    color: '#141413', 
+                    border: '2px solid #e8e6dc', 
+                    fontFamily: 'Lora, Georgia, serif' 
+                  }
+                }
+                whileHover={selectedTokens.includes(token) ? {} : { backgroundColor: '#e8e6dc' }}
               >
                 {token}
               </motion.button>
@@ -146,23 +202,51 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
 
         {isChecked && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`p-4 rounded-lg mb-6 ${isCorrect ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="p-5 rounded-lg mb-6"
+            style={{
+              backgroundColor: isCorrect ? 'rgba(120, 140, 93, 0.15)' : 'rgba(217, 119, 87, 0.15)',
+              border: `2px solid ${isCorrect ? '#788c5d' : '#d97757'}`
+            }}
           >
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-3 mb-3">
               {isCorrect ? (
-                <CheckCircle2 className="w-5 h-5 text-green-600" />
+                <CheckCircle2 className="w-6 h-6" style={{ color: '#788c5d' }} />
               ) : (
-                <XCircle className="w-5 h-5 text-red-600" />
+                <XCircle className="w-6 h-6" style={{ color: '#d97757' }} />
               )}
-              <span className="font-medium">{isCorrect ? t.correct : t.incorrect}</span>
+              <span 
+                className="font-semibold text-lg"
+                style={{ 
+                  color: isCorrect ? '#788c5d' : '#d97757', 
+                  fontFamily: 'Poppins, Arial, sans-serif' 
+                }}
+              >
+                {isCorrect ? t.correct : t.incorrect}
+              </span>
             </div>
             {!isCorrect && (
-              <p className="text-slate-700">{quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}</p>
+              <p 
+                className="text-base"
+                style={{ 
+                  color: '#141413', 
+                  fontFamily: 'Lora, Georgia, serif' 
+                }}
+              >
+                {quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}
+              </p>
             )}
             {isCorrect && quizData.unit_completed && (
-              <p className="text-green-600 font-medium mt-2">🎉 该单元学习已完成！</p>
+              <p 
+                className="font-medium mt-3 text-lg"
+                style={{ 
+                  color: '#788c5d', 
+                  fontFamily: 'Poppins, Arial, sans-serif' 
+                }}
+              >
+                🎉 该单元学习已完成！
+              </p>
             )}
           </motion.div>
         )}
@@ -170,11 +254,12 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
         <div className="flex gap-4">
           {!isChecked && (
             <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.97, y: 1 }}
               onClick={handleCheckAnswer}
               disabled={selectedTokens.length === 0}
-              className="flex-1 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="flex-1 py-4 rounded-xl font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              style={{ backgroundColor: '#d97757', color: 'white', fontFamily: 'Poppins, Arial, sans-serif' }}
             >
               {t.checkAnswer}
             </motion.button>
@@ -183,49 +268,58 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
             <>
               {!quizData.unit_completed && (
                 <motion.button
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.97, y: 1 }}
                   onClick={handleNextQuestion}
                   disabled={loading}
-                  className="flex-1 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 py-4 rounded-xl font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{ backgroundColor: '#6a9bcc', color: 'white', fontFamily: 'Poppins, Arial, sans-serif' }}
                 >
                   {loading ? (
                     <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                       {t.loading}
                     </>
                   ) : (
                     <>
                       {t.continue}
-                      <ChevronRight className="w-4 h-4" />
+                      <ChevronRight className="w-5 h-5" />
                     </>
                   )}
                 </motion.button>
               )}
               <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.97, y: 1 }}
                 onClick={() => {
                   setSelectedTokens([]);
                   setIsChecked(false);
                   setIsCorrect(false);
                   if (quizData.unit_completed) {
-                    // 如果单元已完成，返回进度页面
-                    window.location.href = "#progress";
+                    onComplete();
                   } else {
                     handleNextQuestion();
                   }
                 }}
                 disabled={loading}
-                className={`flex-1 py-3 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
-                  quizData.unit_completed 
-                    ? 'bg-black text-white hover:bg-slate-800' 
-                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                }`}
+                className={`flex-1 py-4 rounded-xl font-semibold text-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
+                style={
+                  quizData.unit_completed ? 
+                  { 
+                    backgroundColor: '#788c5d', 
+                    color: 'white', 
+                    fontFamily: 'Poppins, Arial, sans-serif' 
+                  } : 
+                  { 
+                    backgroundColor: '#e8e6dc', 
+                    color: '#141413', 
+                    fontFamily: 'Poppins, Arial, sans-serif' 
+                  }
+                }
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                     {t.loading}
                   </>
                 ) : (

@@ -493,6 +493,7 @@ function App() {
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => setStep('dictionary')}
+              onComplete={() => setStep('progress')}
               loading={loading}
               t={t}
             />
