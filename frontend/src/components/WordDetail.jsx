@@ -160,15 +160,23 @@ function WordDetail({ word, t, onStudyWord }) {
                     {t.originalSent}
                 </h3>
                 <div className="space-y-4">
-                    {word.context_sentences.map((sentenceObj, index) => (
-                        <div key={index} className="border-l-4 border-slate-200 pl-4 py-2">
-                            <p className="text-slate-900 mb-2 text-lg italic font-serif">{typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence}</p>
-                            {/* 显示对应的中文翻译 */}
-                            {(typeof sentenceObj === 'object' && sentenceObj.translation) && (
-                                <p className="text-slate-600 text-sm font-medium">{sentenceObj.translation}</p>
-                            )}
-                        </div>
-                    ))}
+                    {word.context_sentences.map((sentenceObj, index) => {
+                        let sentence = typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence;
+                        let translation = null;
+                        if (typeof sentenceObj === 'object' && sentenceObj.translation) {
+                            translation = sentenceObj.translation;
+                        } else if (word.context_translations && word.context_translations[index]) {
+                            translation = word.context_translations[index];
+                        }
+                        return (
+                            <div key={index} className="border-l-4 border-slate-200 pl-4 py-2">
+                                <p className="text-slate-900 mb-2 text-lg italic font-serif">{sentence}</p>
+                                {translation && (
+                                    <p className="text-slate-600 text-sm font-medium">{translation}</p>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </motion.div>
         )}

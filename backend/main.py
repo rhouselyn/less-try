@@ -329,17 +329,18 @@ async def get_random_word(file_id: str):
         }
         
         # 构建缓存数据
-        cache_data = {
-            "word": options_result.get("word", word),
-            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
-            "meaning": options_result.get("enriched_meaning", correct_meaning),
-            "examples": options_result.get("examples", []),
-            "context_sentences": context_sentences,
-            "morphology": random_word.get("morphology", ""),
-            "variants_detail": options_result.get("variants_detail", []),
-            "memory_hint": options_result.get("memory_hint", ""),
-            "multiple_choice": options_result.get("multiple_choice", {})
-        }
+        cache_data = dict(options_result)
+        cache_data["word"] = options_result.get("word", word)
+        cache_data["ipa"] = options_result.get("ipa", random_word.get("ipa", ""))
+        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        cache_data["examples"] = options_result.get("examples", [])
+        cache_data["context_sentences"] = context_sentences
+        cache_data["morphology"] = random_word.get("morphology", "")
+        cache_data["variants_detail"] = options_result.get("variants_detail", [])
+        cache_data["memory_hint"] = options_result.get("memory_hint", "")
+        cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+        if "context_translations" in cache_data:
+            del cache_data["context_translations"]
         
         # 缓存结果
         storage.save_word_cache(file_id, word, cache_data)
@@ -463,17 +464,18 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         )
         
         # 构建缓存数据
-        cache_data = {
-            "word": options_result.get("word", word),
-            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
-            "meaning": options_result.get("enriched_meaning", correct_meaning),
-            "examples": options_result.get("examples", []),
-            "context_sentences": context_sentences,
-            "morphology": random_word.get("morphology", ""),
-            "variants_detail": options_result.get("variants_detail", []),
-            "memory_hint": options_result.get("memory_hint", ""),
-            "multiple_choice": options_result.get("multiple_choice", {})
-        }
+        cache_data = dict(options_result)
+        cache_data["word"] = options_result.get("word", word)
+        cache_data["ipa"] = options_result.get("ipa", random_word.get("ipa", ""))
+        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        cache_data["examples"] = options_result.get("examples", [])
+        cache_data["context_sentences"] = context_sentences
+        cache_data["morphology"] = random_word.get("morphology", "")
+        cache_data["variants_detail"] = options_result.get("variants_detail", [])
+        cache_data["memory_hint"] = options_result.get("memory_hint", "")
+        cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+        if "context_translations" in cache_data:
+            del cache_data["context_translations"]
         
         # 缓存结果
         storage.save_word_cache(file_id, word, cache_data)
@@ -569,21 +571,29 @@ async def get_word_details(file_id: str, word: str):
             correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据（同时支持单词详情和学习模式）
-        response_data = {
-            "word": options_result.get("word", word_data["word"]),
-            "ipa": options_result.get("ipa", word_data.get("ipa", "")),
-            "meaning": options_result.get("enriched_meaning", correct_meaning),
-            "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
-            "examples": options_result.get("examples", []),
-            "context_sentences": context_sentences_with_translations,
-            "context": context,
-            "morphology": word_data.get("morphology", ""),
-            "variants_detail": options_result.get("variants_detail", []),
-            "memory_hint": options_result.get("memory_hint", ""),
-            "options": options,
-            "correct_index": correct_index,
-            "multiple_choice": options_result.get("multiple_choice", {})
-        }
+        print(f"[DEBUG] options_result keys: {list(options_result.keys())}")
+        print(f"[DEBUG] options_result['context_sentences']: {options_result.get('context_sentences')}")
+        print(f"[DEBUG] context_sentences_with_translations: {context_sentences_with_translations}")
+        # 先构建 response_data 完全 manually, to avoid issues
+        response_data = {}
+        response_data["word"] = options_result.get("word", word_data["word"])
+        response_data["ipa"] = options_result.get("ipa", word_data.get("ipa", ""))
+        response_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        response_data["correct_meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        response_data["examples"] = options_result.get("examples", [])
+        response_data["context_sentences"] = context_sentences_with_translations
+        response_data["context"] = context
+        response_data["morphology"] = word_data.get("morphology", "")
+        response_data["variants_detail"] = options_result.get("variants_detail", [])
+        response_data["memory_hint"] = options_result.get("memory_hint", "")
+        response_data["options"] = options
+        response_data["correct_index"] = correct_index
+        response_data["multiple_choice"] = options_result.get("multiple_choice", {})
+        # Add any other keys from options_result except context_sentences, context_translations
+        for key, value in options_result.items():
+            if key not in response_data and key not in ["context_translations"]:
+                response_data[key] = value
+        print(f"[DEBUG] response_data['context_sentences']: {response_data['context_sentences']}")
         
         # 缓存结果
         storage.save_word_cache(file_id, word, response_data)

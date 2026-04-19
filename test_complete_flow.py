@@ -110,7 +110,41 @@ def main():
         # 测试3: 查询词汇表
         vocab = test_vocab(file_id)
         
-        # 测试4: 完整学习流程
+        # 测试4: 查询单词详情并检查上下文句子翻译
+        if vocab and len(vocab) > 0:
+            print("\n=== 测试单词详情和上下文句子翻译 ===")
+            word_to_test = vocab[0]["word"]
+            print(f"测试单词: {word_to_test}")
+            word_detail = None
+            word_detail_response = requests.get(f"{BASE_URL}/api/word/{file_id}/{word_to_test}")
+            print(f"单词详情状态码: {word_detail_response.status_code}")
+            if word_detail_response.status_code == 200:
+                word_detail = word_detail_response.json()
+                print(f"单词详情: {json.dumps(word_detail, indent=2, ensure_ascii=False)}")
+                
+                # 检查 context_sentences
+                if "context_sentences" in word_detail and word_detail["context_sentences"]:
+                    print(f"\n✓ 上下文句子数量: {len(word_detail['context_sentences'])}")
+                    for i, ctx in enumerate(word_detail["context_sentences"]):
+                        print(f"  上下文 {i+1}:")
+                        translation_found = False
+                        if isinstance(ctx, dict):
+                            print(f"    原句: {ctx.get('sentence', 'N/A')}")
+                            print(f"    翻译: {ctx.get('translation', 'N/A')}")
+                            if ctx.get('translation'):
+                                translation_found = True
+                        else:
+                            print(f"    原句 (字符串): {ctx}")
+                            # Check if context_translations exists
+                            if "context_translations" in word_detail and len(word_detail["context_translations"]) > i:
+                                print(f"    翻译: {word_detail['context_translations'][i]}")
+                                translation_found = True
+                        if translation_found:
+                            print(f"    ✓ 翻译存在!")
+                        else:
+                            print(f"    ✗ 翻译不存在!")
+        
+        # 测试5: 完整学习流程
         if vocab:
             test_complete_learning_flow(file_id, len(vocab))
         
