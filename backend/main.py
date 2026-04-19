@@ -693,14 +693,28 @@ async def check_coverage(file_id: str):
     try:
         vocab = storage.load_vocab(file_id)
         if not vocab:
-            return {"can_form_sentences": False}
+            return {"can_form_sentences": False, "unit_completed": False}
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
         
-        # 至少要学够5个单词后才可能出现句子翻译题
-        if current_index < 4:
-            return {"can_form_sentences": False}
+        # 检查是否完成了当前单元
+        unit_size = 10
+        current_unit = current_index // unit_size
+        words_in_unit = min(unit_size, len(vocab) - current_unit * unit_size)
+        unit_completed = current_index >= (current_unit * unit_size + words_in_unit - 1)
+        
+        # 检查是否已经学习完所有单词
+        all_words_learned = current_index >= len(vocab) - 1
+        
+        # 对于短文本，学习完所有单词后就可以开始句子翻译
+        if len(vocab) <= 5:
+            if not all_words_learned:
+                return {"can_form_sentences": False, "unit_completed": unit_completed}
+        else:
+            # 至少要学够5个单词后才可能出现句子翻译题
+            if current_index < 4:
+                return {"can_form_sentences": False, "unit_completed": unit_completed}
         
         learned_words = vocab[:current_index + 1]
         learned_word_set = set(word["word"].lower() for word in learned_words)
@@ -708,7 +722,7 @@ async def check_coverage(file_id: str):
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
         if not sentences:
-            return {"can_form_sentences": False}
+            return {"can_form_sentences": False, "unit_completed": unit_completed}
         
         # 检查是否有句子可以用已学单词组成
         can_form = False
@@ -722,7 +736,7 @@ async def check_coverage(file_id: str):
                     can_form = True
                     break
         
-        return {"can_form_sentences": can_form}
+        return {"can_form_sentences": can_form, "unit_completed": unit_completed}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error checking coverage: {str(e)}")
 

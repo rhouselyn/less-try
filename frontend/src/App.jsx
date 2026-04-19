@@ -259,16 +259,38 @@ function App() {
     setLoading(true)
     try {
       // 先调用 API 更新进度
-      await api.nextWord(currentFileId)
+      const nextWordResponse = await api.nextWord(currentFileId)
+      const newIndex = nextWordResponse.new_index
+      
+      // 获取词汇表长度
+      const vocabResponse = await api.getVocab(currentFileId)
+      const vocabLength = vocabResponse.vocab.length
+      
+      // 检查是否学习完所有单词
+      const allWordsLearned = newIndex >= vocabLength
+      
+      if (allWordsLearned) {
+        // 单元已完成
+        alert('该单元学习已完成！')
+        setStep('progress')
+        return
+      }
       
       // 检查是否需要插入句子翻译题
       const coverageData = await api.checkCoverage(currentFileId)
       if (coverageData.can_form_sentences) {
         // 生成句子翻译题
         const quizResponse = await api.generateSentenceQuiz(currentFileId)
-        setQuizData(quizResponse)
+        setQuizData({
+          ...quizResponse,
+          unit_completed: coverageData.unit_completed
+        })
         setLearningMode('sentence')
         setStep('sentence-quiz')
+      } else if (coverageData.unit_completed) {
+        // 单元已完成
+        alert('该单元学习已完成！')
+        setStep('progress')
       } else {
         // 继续单词学习
         const response = await api.getRandomWord(currentFileId)
@@ -318,7 +340,14 @@ function App() {
       if (coverageData.can_form_sentences) {
         // 生成下一个句子翻译题
         const quizResponse = await api.generateSentenceQuiz(currentFileId)
-        setQuizData(quizResponse)
+        setQuizData({
+          ...quizResponse,
+          unit_completed: coverageData.unit_completed
+        })
+      } else if (coverageData.unit_completed) {
+        // 单元已完成
+        alert('该单元学习已完成！')
+        setStep('progress')
       } else {
         // 回到单词学习
         const response = await api.getRandomWord(currentFileId)

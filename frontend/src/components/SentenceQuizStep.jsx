@@ -123,6 +123,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
             {!isCorrect && (
               <p className="text-slate-700">{quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}</p>
             )}
+            {isCorrect && quizData.unit_completed && (
+              <p className="text-green-600 font-medium mt-2">🎉 该单元学习已完成！</p>
+            )}
           </motion.div>
         )}
 
@@ -151,7 +154,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
                 </>
               ) : (
                 <>
-                  {t.continue}
+                  {quizData.unit_completed && isCorrect ? '完成' : t.continue}
                   <ChevronRight className="w-4 h-4" />
                 </>
               )}
