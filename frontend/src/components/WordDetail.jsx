@@ -151,26 +151,26 @@ function WordDetail({ word, t, onStudyWord }) {
         )}
 
         {word.context_sentences && word.context_sentences.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              {t.originalSent}
-            </h3>
-            <div className="space-y-2">
-              {word.context_sentences.map((sentenceObj, index) => (
-                <div key={index} className="border-l-4 border-slate-200 pl-4">
-                  <p className="text-slate-900 mb-1">{typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence}</p>
-                  {/* 显示对应的中文翻译 */}
-                  {(typeof sentenceObj === 'object' && sentenceObj.translation) && (
-                    <p className="text-slate-600 text-sm">{sentenceObj.translation}</p>
-                  )}
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+            >
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                    {t.originalSent}
+                </h3>
+                <div className="space-y-2">
+                    {word.context_sentences.map((sentenceObj, index) => (
+                        <div key={index} className="border-l-4 border-slate-200 pl-4">
+                            <p className="text-slate-900 mb-1">{typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence}</p>
+                            {/* 显示对应的中文翻译 */}
+                            {(typeof sentenceObj === 'object' && sentenceObj.translation) && (
+                                <p className="text-slate-600 text-sm">{sentenceObj.translation}</p>
+                            )}
+                        </div>
+                    ))}
                 </div>
-              ))}
-            </div>
-          </motion.div>
+            </motion.div>
         )}
       </div>
     </motion.div>
