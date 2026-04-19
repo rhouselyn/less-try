@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X } from 'lucide-react'
 
 function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
   const [selectedTokens, setSelectedTokens] = useState([])
@@ -32,6 +32,12 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
         // 如果没有选中，添加选择
         setSelectedTokens([...selectedTokens, token])
       }
+    }
+  }
+
+  const handleRemoveToken = (index) => {
+    if (!isChecked) {
+      setSelectedTokens([...selectedTokens.slice(0, index), ...selectedTokens.slice(index + 1)])
     }
   }
 
@@ -81,6 +87,40 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
           </p>
         </div>
 
+        {/* 翻译输入区 - 下方 */}
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+            {t.translation}
+          </h3>
+          <div className="p-4 border border-slate-200 rounded-lg min-h-20 flex flex-wrap gap-2 items-center">
+            <AnimatePresence>
+              {selectedTokens.map((token, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  whileHover={{ scale: 1.05 }}
+                  className="flex items-center gap-1 bg-black text-white px-3 py-1.5 rounded-full text-sm font-medium"
+                >
+                  <span>{token}</span>
+                  <button
+                    onClick={() => handleRemoveToken(index)}
+                    disabled={isChecked}
+                    className="p-1 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {selectedTokens.length === 0 && (
+              <p className="text-slate-400 italic">{t.selectTokensHint}</p>
+            )}
+          </div>
+        </div>
+
+        {/* 选项区 - 上方 */}
         <div className="mb-8">
           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
             {t.selectTokens}
@@ -92,24 +132,15 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleTokenClick(token)}
                 disabled={isChecked}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'bg-black text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 {token}
               </motion.button>
             ))}
-          </div>
-        </div>
-
-        <div className="mb-8">
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            {t.translation}
-          </h3>
-          <div className="p-4 border border-slate-200 rounded-lg min-h-16">
-            <p className="text-lg">{selectedTokens.join('')}</p>
           </div>
         </div>
 

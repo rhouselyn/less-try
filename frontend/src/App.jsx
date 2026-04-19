@@ -270,9 +270,22 @@ function App() {
       const allWordsLearned = newIndex >= vocabLength
       
       if (allWordsLearned) {
-        // 单元已完成
-        alert('该单元学习已完成！')
-        setStep('progress')
+        // 检查是否可以生成句子翻译题
+        const coverageData = await api.checkCoverage(currentFileId)
+        if (coverageData.can_form_sentences) {
+          // 生成句子翻译题
+          const quizResponse = await api.generateSentenceQuiz(currentFileId)
+          setQuizData({
+            ...quizResponse,
+            unit_completed: coverageData.unit_completed
+          })
+          setLearningMode('sentence')
+          setStep('sentence-quiz')
+        } else {
+          // 单元已完成
+          alert('该单元学习已完成！')
+          setStep('progress')
+        }
         return
       }
       

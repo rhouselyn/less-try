@@ -705,7 +705,7 @@ async def check_coverage(file_id: str):
         unit_completed = current_index >= (current_unit * unit_size + words_in_unit - 1)
         
         # 检查是否已经学习完所有单词
-        all_words_learned = current_index >= len(vocab) - 1
+        all_words_learned = current_index >= len(vocab)
         
         # 对于短文本，学习完所有单词后就可以开始句子翻译
         if len(vocab) <= 5:
@@ -716,8 +716,13 @@ async def check_coverage(file_id: str):
             if current_index < 4:
                 return {"can_form_sentences": False, "unit_completed": unit_completed}
         
-        learned_words = vocab[:current_index + 1]
-        learned_word_set = set(word["word"].lower() for word in learned_words)
+        # 学习完所有单词后，所有单词都算已学
+        if all_words_learned:
+            learned_word_set = set(word["word"].lower() for word in vocab)
+        else:
+            # 否则只算到current_index-1的单词（因为current_index是下一个要学的单词）
+            learned_words = vocab[:current_index]
+            learned_word_set = set(word["word"].lower() for word in learned_words)
         
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
