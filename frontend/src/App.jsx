@@ -233,17 +233,14 @@ function App() {
       const unitData = await api.getUnitWords(currentFileId, unitIndex)
       console.log('获取单元单词成功:', unitData)
       // 开始学习该单元的第一个单词
-      const firstWord = unitData.words[0]
-      if (firstWord) {
-        setLearningData(firstWord)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-        setLearningMode('word')
-        setStep('learning')
-      } else {
-        alert('该单元没有单词')
-      }
+      // 调用getRandomWord获取第一个单词的学习数据
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setLearningMode('word')
+      setStep('learning')
     } catch (error) {
       console.error('获取单元单词错误:', error)
       alert('无法获取单元单词，请重试')
