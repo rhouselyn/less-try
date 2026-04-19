@@ -1,74 +1,78 @@
-# 少邻国 (Lesslingo) - 问题修复计划
+# 少邻国 (Lesslingo) 修复计划
 
 ## 问题分析
 
-### 1. 音标显示不全
-- **问题**：国际音标(IPA)符号显示不完整
-- **原因**：可能是字体支持不够全面，或CSS设置有问题
+### 1. Distractor Tokens 问题
+- **现状**：当前distractor tokens生成的是组合词（如"嘿朋友"）
+- **期望**：只需要单个的token，而不是组合词
+- **原因**：NVIDIA API的prompt没有明确要求生成单个词的distractor tokens
 
-### 2. 单词卡片缺少LLM生成的例句
-- **问题**：单词卡片没有显示由LLM生成的例句
-- **原因**：可能是前端没有正确解析或显示API返回的examples字段
+### 2. 学习单元API 404错误
+- **现状**：前端调用 `/api/learn/{file_id}/units` 时返回404错误
+- **原因**：可能是存储中没有学习单元数据，或者API实现有问题
 
-### 3. 单词卡片缺少词形变化和记忆辅助
-- **问题**：单词卡片没有显示词形变化和记忆辅助文字
-- **原因**：可能是前端没有正确解析或显示API返回的variants_detail和memory_hint字段
+### 3. React Hooks 问题
+- **现状**：用户提到需要将ProgressStep和SentenceTranslationStep组件移到App组件外部
+- **原因**：React hooks不能在嵌套函数中使用
 
-## 解决方案
+### 4. tokenized_translation_quoted 缺失
+- **现状**：之前要求的tokenized_translation_quoted字段被移除了
+- **期望**：需要重新添加这个字段
 
-### 1. 音标显示修复
-- **前端**：添加更全面的IPA字体支持，如Doulos SIL或Charis SIL
-- **实现**：更新CSS字体声明，确保完整的IPA字符集支持
+## 修复计划
 
-### 2. 例句显示修复
-- **前端**：检查并修复LearningStep和WordDetail组件中examples字段的处理
-- **实现**：确保从API响应中正确提取和显示例句
+### 1. 修复 Distractor Tokens 问题
+- **文件**：`/workspace/backend/nvidia_api.py`
+- **修改**：更新split_and_translate方法的prompt，明确要求生成单个词的distractor tokens
+- **具体操作**：在prompt中添加明确的说明，要求distractor tokens必须是单个词，而不是组合词
 
-### 3. 词形变化和记忆辅助显示修复
-- **前端**：检查并修复LearningStep和WordDetail组件中variants_detail和memory_hint字段的处理
-- **实现**：确保从API响应中正确提取和显示这些字段
+### 2. 修复学习单元API 404错误
+- **文件**：`/workspace/backend/main.py`
+- **文件**：`/workspace/backend/storage.py`
+- **修改**：
+  1. 检查`load_learning_units`方法的实现
+  2. 确保API端点正确处理不存在的学习单元情况
+  3. 添加适当的错误处理和日志
 
-### 4. 后端验证
-- **后端**：验证API是否正确返回所有字段
-- **实现**：检查nvidia_api.py中的工具调用和响应处理
+### 3. 修复 React Hooks 问题
+- **文件**：`/workspace/frontend/src/App.jsx`
+- **修改**：检查App.jsx中是否有嵌套的组件定义，如果有，将它们移到外部
+- **验证**：确保所有组件都在App组件外部定义，避免在嵌套函数中使用hooks
+
+### 4. 添加 tokenized_translation_quoted 字段
+- **文件**：`/workspace/backend/nvidia_api.py`
+- **修改**：
+  1. 在split_and_translate工具定义中添加`tokenized_translation_quoted`字段
+  2. 在prompt中添加对该字段的说明，要求生成翻译后划分为单个单词的tokens
 
 ## 实施步骤
 
-### 前端修改
-1. **更新IPA字体支持**：修改index.css，添加更全面的IPA字体
-2. **修复单词卡片组件**：更新LearningStep和WordDetail组件，确保正确显示所有字段
-3. **测试显示效果**：验证所有信息都能正确显示
+1. **第一步**：修改NVIDIA API的prompt和工具定义
+   - 更新distractor tokens的要求
+   - 添加tokenized_translation_quoted字段
 
-### 后端验证
-1. **检查API响应**：验证generate_multiple_choice工具是否正确返回所有字段
-2. **测试工具调用**：确保LLM正确生成例句、词形变化和记忆辅助
+2. **第二步**：检查和修复学习单元API
+   - 检查storage.py中的load_learning_units方法
+   - 确保main.py中的API端点正确处理各种情况
 
-## 文件修改清单
+3. **第三步**：检查App.jsx的组件结构
+   - 确保所有组件都在App组件外部定义
+   - 验证没有在嵌套函数中使用hooks
 
-### 前端文件
-- [index.css](file:///workspace/frontend/src/index.css)：更新IPA字体支持
-- [App.jsx](file:///workspace/frontend/src/App.jsx)：修复LearningStep和WordDetail组件
-
-### 后端文件
-- [nvidia_api.py](file:///workspace/backend/nvidia_api.py)：验证工具调用和响应处理
-- [main.py](file:///workspace/backend/main.py)：验证API响应格式
+4. **第四步**：测试修复效果
+   - 启动后端和前端服务
+   - 测试学习单元功能
+   - 测试句子翻译功能，验证distractor tokens是否为单个词
+   - 验证tokenized_translation_quoted字段是否存在
 
 ## 风险评估
 
-### 潜在风险
-1. **字体加载问题**：添加新字体可能影响页面加载速度
-2. **API响应格式**：后端可能没有正确返回所有字段
-3. **前端解析**：前端可能无法正确解析复杂的JSON结构
+- **API变更风险**：修改NVIDIA API的工具定义可能会影响现有的翻译结果
+- **存储兼容性**：修改学习单元的存储结构可能会影响现有数据
+- **前端兼容性**：修改组件结构可能会影响现有的前端逻辑
 
-### 风险缓解
-1. **字体加载**：使用字体子集或异步加载
-2. **API响应**：添加详细的日志和错误处理
-3. **前端解析**：添加数据验证和默认值处理
+## 解决方案
 
-## 预期结果
-
-1. **完整的IPA显示**：所有音标符号都能正确显示
-2. **例句显示**：单词卡片显示LLM生成的例句
-3. **词形变化**：单词卡片显示单词的不同形式
-4. **记忆辅助**：单词卡片显示记忆辅助文字
-5. **用户体验**：所有信息清晰易读，符合Anthropic品牌指南
+- **API变更**：确保新的工具定义向后兼容，保留现有的字段
+- **存储兼容性**：添加数据迁移逻辑，确保现有数据可以正常使用
+- **前端兼容性**：确保组件的props接口保持不变，避免破坏现有功能
