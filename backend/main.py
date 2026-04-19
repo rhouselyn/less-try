@@ -220,13 +220,29 @@ async def get_random_word(file_id: str):
             target_lang
         )
         
+        # 提取选项和正确索引
+        options = []
+        correct_index = 0
+        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
+            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
+                options.append(opt["text"])
+                if opt["is_correct"]:
+                    correct_index = i
+        else:
+            # 回退到旧格式
+            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+            correct_index = options_result.get("correct_index", 0)
+        
         return {
-            "word": random_word["word"],
-            "ipa": random_word.get("ipa", ""),
-            "correct_meaning": correct_meaning,
-            "options": options_result.get("options", []),
-            "correct_index": options_result.get("correct_index", 0),
-            "context": context
+            "word": options_result.get("word", random_word["word"]),
+            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
+            "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
+            "options": options,
+            "correct_index": correct_index,
+            "context": context,
+            "variants_detail": options_result.get("variants_detail", []),
+            "examples": options_result.get("examples", []),
+            "memory_hint": options_result.get("memory_hint", "")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting random word: {str(e)}")

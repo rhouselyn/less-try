@@ -238,38 +238,99 @@ TEXT_CONTENT
             "type": "function",
             "function": {
                 "name": "generate_multiple_choice",
-                "description": "Generate multiple choice options for a word",
+                "description": "Generate enriched word information with multiple choice options",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "word": {"type": "string"},
-                        "options": {
-                            "type": "array",
-                            "items": {"type": "string"},
-                            "minItems": 4,
-                            "maxItems": 4
+                        "enriched_meaning": {
+                            "type": "string",
+                            "description": "结合上下文的精确释义"
                         },
-                        "correct_index": {"type": "integer"}
+                        "ipa": {"type": "string"},
+                        "variants_detail": {
+                            "type": "array",
+                            "description": "词形变化 + 类型说明",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "form": {"type": "string"},
+                                    "type": {"type": "string"}
+                                }
+                            }
+                        },
+                        "examples": {
+                            "type": "array",
+                            "description": "两个与原文语义一致的例句",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "sentence": {"type": "string"},
+                                    "translation": {"type": "string"}
+                                }
+                            },
+                            "minItems": 2,
+                            "maxItems": 2
+                        },
+                        "memory_hint": {
+                            "type": "string",
+                            "description": "记忆辅助（联想/对比母语）"
+                        },
+                        "multiple_choice": {
+                            "type": "object",
+                            "properties": {
+                                "question": {
+                                    "type": "string",
+                                    "description": "题干（可为空，默认就是词）"
+                                },
+                                "correct_answer": {
+                                    "type": "string"
+                                },
+                                "options": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "text": {"type": "string"},
+                                            "is_correct": {"type": "boolean"}
+                                        }
+                                    },
+                                    "minItems": 4,
+                                    "maxItems": 4
+                                }
+                            }
+                        }
                     },
-                    "required": ["word", "options", "correct_index"]
+                    "required": ["word", "enriched_meaning", "ipa", "examples", "multiple_choice"]
                 }
             }
         }
 
         # 构建prompt
         prompt = f"""
-Generate 4 multiple choice options for the word '{word}' in {target_lang}.
+Generate enriched word information for '{word}' in {target_lang} based on the context.
 
 Correct meaning: {correct_meaning}
 
 Context: {context}
 
+Please generate the following information:
+
+1. enriched_meaning: A precise meaning that fits the context
+2. ipa: International Phonetic Alphabet pronunciation
+3. variants_detail: List of word variants with their types (e.g., past tense, plural)
+4. examples: Two example sentences that match the context meaning, each with a translation in {target_lang}
+5. memory_hint: A memory aid (association or comparison with the user's native language)
+6. multiple_choice: A multiple choice question with:
+   - question: Can be empty (defaults to the word itself)
+   - correct_answer: The correct meaning
+   - options: 4 options (1 correct, 3 incorrect) each with text and is_correct flag
+
 Requirements:
-1. 1 correct option (the given meaning)
-2. 3 incorrect but plausible options
-3. Options should be in {target_lang}
-4. Options should be distinct and not too similar
-5. Return the correct option index (0-3)
+- All output must be in {target_lang}
+- Examples should be natural and fit the context
+- Memory hint should be helpful for language learners
+- Multiple choice options should be distinct and plausible
 """
 
         messages = [{"role": "user", "content": prompt}]
@@ -282,9 +343,53 @@ Requirements:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
                     return args
-            return {"word": word, "options": [correct_meaning, "选项1", "选项2", "选项3"], "correct_index": 0}
+            # 构建默认响应
+            default_response = {
+                "word": word,
+                "enriched_meaning": correct_meaning,
+                "ipa": "",
+                "variants_detail": [],
+                "examples": [
+                    {"sentence": f"This is a sentence with {word}.", "translation": f"这是包含{word}的句子。"},
+                    {"sentence": f"I can use {word} in a sentence.", "translation": f"我可以在句子中使用{word}。"}
+                ],
+                "memory_hint": "",
+                "multiple_choice": {
+                    "question": "",
+                    "correct_answer": correct_meaning,
+                    "options": [
+                        {"text": correct_meaning, "is_correct": True},
+                        {"text": "选项1", "is_correct": False},
+                        {"text": "选项2", "is_correct": False},
+                        {"text": "选项3", "is_correct": False}
+                    ]
+                }
+            }
+            return default_response
         except Exception as e:
             print(f"Tool call failed: {e}")
             print(f"Response: {response}")
-            return {"word": word, "options": [correct_meaning, "选项1", "选项2", "选项3"], "correct_index": 0}
+            # 构建错误时的默认响应
+            error_response = {
+                "word": word,
+                "enriched_meaning": correct_meaning,
+                "ipa": "",
+                "variants_detail": [],
+                "examples": [
+                    {"sentence": f"This is a sentence with {word}.", "translation": f"这是包含{word}的句子。"},
+                    {"sentence": f"I can use {word} in a sentence.", "translation": f"我可以在句子中使用{word}。"}
+                ],
+                "memory_hint": "",
+                "multiple_choice": {
+                    "question": "",
+                    "correct_answer": correct_meaning,
+                    "options": [
+                        {"text": correct_meaning, "is_correct": True},
+                        {"text": "选项1", "is_correct": False},
+                        {"text": "选项2", "is_correct": False},
+                        {"text": "选项3", "is_correct": False}
+                    ]
+                }
+            }
+            return error_response
 

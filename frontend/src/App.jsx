@@ -306,34 +306,22 @@ function App() {
           )}
           
           {step === 'dictionary' && (
-            <>
-              {selectedSentence !== null && (
-                <SentenceDetail
-                  key={`sentence-${selectedSentence}`}
-                  sentenceTranslation={sentenceTranslations[selectedSentence]}
-                  onClose={handleCloseSentenceDetail}
-                />
-              )}
-              {selectedWord && (
-                <WordDetail
-                  key={`word-${selectedWord.word}`}
-                  word={selectedWord}
-                />
-              )}
-              <DictionaryStep
-                key="dictionary"
-                vocab={displayVocab}
-                onToggleSort={toggleSortOrder}
-                sortOrder={sortOrder}
-                progress={progress}
-                processingInfo={processingInfo}
-                sentenceTranslations={sentenceTranslations}
-                onSentenceClick={handleSentenceClick}
-                onStartLearning={startLearning}
-                onWordClick={getWordDetails}
-                loading={loading}
-              />
-            </>
+            <DictionaryStep
+              key="dictionary"
+              vocab={displayVocab}
+              onToggleSort={toggleSortOrder}
+              sortOrder={sortOrder}
+              progress={progress}
+              processingInfo={processingInfo}
+              sentenceTranslations={sentenceTranslations}
+              selectedSentence={selectedSentence}
+              selectedWord={selectedWord}
+              onSentenceClick={handleSentenceClick}
+              onCloseSentenceDetail={handleCloseSentenceDetail}
+              onWordClick={getWordDetails}
+              onStartLearning={startLearning}
+              loading={loading}
+            />
           )}
           
           {step === 'learning' && (
@@ -448,7 +436,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, onSentenceClick, onStartLearning, onWordClick, loading }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -505,19 +493,33 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="divide-y divide-slate-200">
               {safeSentenceTranslations.map((item, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.02 }}
-                  className="p-4 hover:bg-slate-50 cursor-pointer"
-                  onClick={() => onSentenceClick(index)}
-                >
-                  <div className="font-medium text-slate-900 mb-2">{item.sentence}</div>
-                  {item.translation_result && item.translation_result.tokenized_translation && (
-                    <div className="text-slate-700">{item.translation_result.tokenized_translation}</div>
+                <div key={index}>
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.02 }}
+                    className="p-4 hover:bg-slate-50 cursor-pointer"
+                    onClick={() => onSentenceClick(index)}
+                  >
+                    <div className="font-medium text-slate-900 mb-2">{item.sentence}</div>
+                    {item.translation_result && item.translation_result.tokenized_translation && (
+                      <div className="text-slate-700">{item.translation_result.tokenized_translation}</div>
+                    )}
+                  </motion.div>
+                  {selectedSentence === index && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="border-t border-slate-200 p-4 bg-slate-50"
+                    >
+                      <SentenceDetail
+                        sentenceTranslation={safeSentenceTranslations[index]}
+                        onClose={onCloseSentenceDetail}
+                      />
+                    </motion.div>
                   )}
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>
@@ -547,18 +549,31 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           </div>
           <div className="divide-y divide-slate-200">
             {vocab.map((word, index) => (
-              <motion.div
-                key={word.word || index}
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.02 }}
-                className="grid grid-cols-3 gap-1 p-4 hover:bg-slate-50 cursor-pointer"
-                onClick={() => onWordClick(word.word)}
-              >
-                <div className="font-medium text-slate-900 hover:text-black transition-colors">{word.word}</div>
-                <div className="text-slate-700">{word.context_meaning}</div>
-                <div className="text-slate-600 font-mono">{word.morphology}</div>
-              </motion.div>
+              <div key={word.word || index}>
+                <motion.div
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.02 }}
+                  className="grid grid-cols-3 gap-1 p-4 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => onWordClick(word.word)}
+                >
+                  <div className="font-medium text-slate-900 hover:text-black transition-colors">{word.word}</div>
+                  <div className="text-slate-700">{word.context_meaning}</div>
+                  <div className="text-slate-600 font-mono">{word.morphology}</div>
+                </motion.div>
+                {selectedWord && selectedWord.word === word.word && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="border-t border-slate-200 p-4 bg-slate-50"
+                  >
+                    <WordDetail
+                      word={selectedWord}
+                    />
+                  </motion.div>
+                )}
+              </div>
             ))}
           </div>
         </div>
@@ -596,7 +611,7 @@ function WordDetail({ word }) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.1 }}
-                className="text-xl text-slate-500 font-mono"
+                className="text-xl text-slate-500 ipa-font"
               >
                 /{word.ipa}/
               </motion.p>
@@ -634,9 +649,83 @@ function WordDetail({ word }) {
             释义
           </h3>
           <p className="text-lg text-slate-700 leading-relaxed">
-            {word.context_meaning}
+            {word.meaning || word.context_meaning}
           </p>
         </motion.div>
+
+        {word.variants_detail && word.variants_detail.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              词形变化
+            </h3>
+            <div className="space-y-2">
+              {word.variants_detail.map((variant, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-sm font-medium">
+                    {variant.type}
+                  </span>
+                  <span className="text-slate-700">{variant.form}</span>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {word.examples && word.examples.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              例句
+            </h3>
+            <div className="space-y-4">
+              {word.examples.map((example, index) => (
+                <div key={index} className="border-l-4 border-slate-200 pl-4">
+                  <p className="text-slate-900 mb-1">{example.sentence}</p>
+                  <p className="text-slate-600 text-sm">{example.translation}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {word.memory_hint && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              记忆辅助
+            </h3>
+            <p className="text-lg text-slate-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-100">
+              {word.memory_hint}
+            </p>
+          </motion.div>
+        )}
+
+        {word.context_sentences && word.context_sentences.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+          >
+            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+              原文例句
+            </h3>
+            <div className="space-y-2">
+              {word.context_sentences.map((sentence, index) => (
+                <p key={index} className="text-slate-700 italic">{sentence}</p>
+              ))}
+            </div>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   )
@@ -771,7 +860,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="text-xl text-slate-500 font-mono"
+                  className="text-xl text-slate-500 ipa-font"
                 >
                   /{learningData.ipa}/
                 </motion.p>
@@ -788,7 +877,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
-                  disabled={selectedOption !== null}
+                  disabled={selectedOption !== null && isCorrect}
                   className={`w-full py-4 px-6 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800') : 'bg-white border border-slate-200 text-slate-900 hover:bg-slate-50'}`}
                 >
                   <div className="flex items-center gap-3">
@@ -833,7 +922,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="text-xl text-slate-500 font-mono"
+                    className="text-xl text-slate-500 ipa-font"
                   >
                     /{learningData.ipa}/
                   </motion.p>
@@ -867,6 +956,63 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   </h3>
                   <p className="text-lg text-slate-700 leading-relaxed italic">
                     {learningData.context}
+                  </p>
+                </motion.div>
+              )}
+
+              {learningData.variants_detail && learningData.variants_detail.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                >
+                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                    词形变化
+                  </h3>
+                  <div className="space-y-2">
+                    {learningData.variants_detail.map((variant, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-sm font-medium">
+                          {variant.type}
+                        </span>
+                        <span className="text-slate-700">{variant.form}</span>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {learningData.examples && learningData.examples.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                    例句
+                  </h3>
+                  <div className="space-y-4">
+                    {learningData.examples.map((example, index) => (
+                      <div key={index} className="border-l-4 border-slate-200 pl-4">
+                        <p className="text-slate-900 mb-1">{example.sentence}</p>
+                        <p className="text-slate-600 text-sm">{example.translation}</p>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {learningData.memory_hint && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                    记忆辅助
+                  </h3>
+                  <p className="text-lg text-slate-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-100">
+                    {learningData.memory_hint}
                   </p>
                 </motion.div>
               )}
