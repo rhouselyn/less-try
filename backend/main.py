@@ -593,81 +593,9 @@ async def get_unit_words(file_id: str, unit_id: int):
         shuffled_indices = list(range(len(unit_words)))
         random.shuffle(shuffled_indices)
         
-        # 保存打乱顺序到存储
-        storage.save_shuffled_order(file_id, unit_id, shuffled_indices)
-        
-        # 只返回第一个单词的学习数据
-        language_settings = storage.load_language_settings(file_id)
-        target_lang = language_settings["target_lang"]
-        
-        first_word_index = shuffled_indices[0]
-        word_data = unit_words[first_word_index]
-        
-        # 构建上下文
-        sentences = storage.load_pipeline_data(file_id)
-        context = ""
-        if sentences:
-            for sentence_data in sentences:
-                if "sentence" in sentence_data:
-                    if word_data["word"] in sentence_data["sentence"]:
-                        context = sentence_data["sentence"]
-                        break
-            if not context and sentences:
-                # 如果没找到，使用第一个句子作为上下文
-                context = sentences[0].get("sentence", "")
-        
-        correct_meaning = word_data.get("context_meaning", "")
-        
-        if not correct_meaning:
-            # 尝试从其他字段获取释义
-            if "translation" in word_data:
-                correct_meaning = word_data["translation"]
-            elif "meaning" in word_data:
-                correct_meaning = word_data["meaning"]
-        
-        # 调用generate_multiple_choice获取丰富的单词信息
-        options_result = await nvidia_api.generate_multiple_choice(
-            word_data["word"],
-            correct_meaning,
-            context,
-            target_lang
-        )
-        
-        # 提取选项和正确索引
-        options = []
-        correct_index = 0
-        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
-            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
-                options.append(opt["text"])
-                if opt["is_correct"]:
-                    correct_index = i
-        else:
-            # 回退到旧格式
-            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
-            correct_index = options_result.get("correct_index", 0)
-        
-        # 构建学习数据
-        learning_word = {
-            "word": options_result.get("word", word_data["word"]),
-            "ipa": options_result.get("ipa", word_data.get("ipa", "")),
-            "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
-            "options": options,
-            "correct_index": correct_index,
-            "context": context,
-            "variants_detail": options_result.get("variants_detail", []),
-            "examples": options_result.get("examples", []),
-            "memory_hint": options_result.get("memory_hint", "")
-        }
-        
-        # 预生成下一个单词的信息
-        if len(shuffled_indices) > 1:
-            next_word_index = shuffled_indices[1]
-            next_word_data = unit_words[next_word_index]
-            asyncio.create_task(pre_generate_next_word(file_id, unit_words, next_word_index))
-        
         return {
             "unit_id": unit_id,
-            "words": [learning_word],
+            "words": unit_words,
             "shuffled_order": shuffled_indices
         }
     except Exception as e:
