@@ -15,6 +15,7 @@
 - 调整CSS确保字体正确应用
 
 ### 2. 完善单词卡片内容
+- **使用用户提供的tool JSON schema**：确保后端使用正确的schema生成单词信息
 - 检查后端API是否正确生成所有必要字段（例句、变体、记忆提示）
 - 确保前端正确渲染这些字段
 - 验证数据从后端到前端的传递是否完整
@@ -31,7 +32,7 @@
 - `/workspace/frontend/src/index.css`：确保IPA字体正确加载和应用
 
 ### 后端文件
-- `/workspace/backend/nvidia_api.py`：验证Claude Haiku 4.5调用是否生成所有必要字段
+- `/workspace/backend/nvidia_api.py`：**使用用户提供的tool JSON schema**，验证Claude Haiku 4.5调用是否生成所有必要字段
 - `/workspace/backend/main.py`：确保API响应包含所有必要字段
 
 ## 测试步骤
@@ -57,3 +58,82 @@
 - 手动测试所有功能点
 - 检查浏览器控制台是否有错误
 - 验证API响应是否包含所有必要字段
+
+## 工具Schema
+
+用户提供的tool JSON schema：
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "word": { "type": "string" },
+    "enriched_meaning": {
+      "type": "string",
+      "description": "结合上下文的精确释义"
+    },
+    "ipa": {
+      "type": "string"
+    },
+    "variants_detail": {
+      "type": "array",
+      "description": "词形变化 + 类型说明",
+      "items": {
+        "type": "object",
+        "properties": {
+          "form": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      }
+    },
+    "examples": {
+      "type": "array",
+      "description": "两个与原文语义一致的例句",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sentence": { "type": "string" },
+          "translation": { "type": "string" }
+        }
+      },
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "memory_hint": {
+      "type": "string",
+      "description": "记忆辅助（联想/对比母语）"
+    },
+    "multiple_choice": {
+      "type": "object",
+      "properties": {
+        "question": {
+          "type": "string",
+          "description": "题干（可为空，默认就是词）"
+        },
+        "correct_answer": {
+          "type": "string"
+        },
+        "options": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": { "type": "string" },
+              "is_correct": { "type": "boolean" }
+            }
+          },
+          "minItems": 4,
+          "maxItems": 4
+        }
+      }
+    }
+  },
+  "required": [
+    "word",
+    "enriched_meaning",
+    "ipa",
+    "examples",
+    "multiple_choice"
+  ]
+}
+```
