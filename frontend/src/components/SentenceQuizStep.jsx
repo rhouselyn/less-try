@@ -100,14 +100,14 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               {selectedTokens.map((token, index) => (
                 <motion.div
                   key={index}
-                  initial={{ opacity: 0, scale: 0, rotate: 180 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0 }}
-                  exit={{ opacity: 0, scale: 0, rotate: -180 }}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
                   whileHover={{ scale: 1.1, y: -5 }}
                   className="flex items-center gap-1 bg-black text-white px-4 py-2 rounded-full text-sm font-medium"
                 >
                   <span>{token}</span>
-                  <button
+                  <motion.button
                     onClick={() => handleRemoveToken(index)}
                     disabled={isChecked}
                     className="p-1 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
@@ -115,7 +115,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                     whileTap={{ scale: 0.8 }}
                   >
                     <X className="w-3 h-3" />
-                  </button>
+                  </motion.button>
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -159,7 +159,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className={`p-5 rounded-lg mb-6 ${isCorrect ? 'bg-gray-50 border-2 border-gray-200' : 'bg-gray-50 border-2 border-gray-200'}`}
+            className={`p-5 rounded-lg mb-6 ${isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}
           >
             <div className="flex items-center gap-3 mb-3">
               {isCorrect ? (
@@ -168,7 +168,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 10 }}
                 >
-                  <CheckCircle2 className="w-6 h-6 text-black" />
+                  <CheckCircle2 className="w-6 h-6 text-green-600" />
                 </motion.div>
               ) : (
                 <motion.div
@@ -176,10 +176,10 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 500, damping: 10 }}
                 >
-                  <XCircle className="w-6 h-6 text-black" />
+                  <XCircle className="w-6 h-6 text-red-600" />
                 </motion.div>
               )}
-              <span className="font-semibold text-lg text-gray-900">
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
                 {isCorrect ? t.correct : t.incorrect}
               </span>
             </div>
@@ -198,7 +198,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="font-medium mt-3 text-lg text-gray-900"
+                className="font-medium mt-3 text-lg text-green-700"
               >
                 🎉 该单元学习已完成！
               </motion.p>

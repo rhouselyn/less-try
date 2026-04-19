@@ -159,13 +159,13 @@ function WordDetail({ word, t, onStudyWord }) {
                 <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
                     {t.originalSent}
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-4">
                     {word.context_sentences.map((sentenceObj, index) => (
-                        <div key={index} className="border-l-4 border-slate-200 pl-4">
-                            <p className="text-slate-900 mb-1">{typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence}</p>
+                        <div key={index} className="border-l-4 border-slate-200 pl-4 py-2">
+                            <p className="text-slate-900 mb-2 text-lg italic font-serif">{typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence}</p>
                             {/* 显示对应的中文翻译 */}
                             {(typeof sentenceObj === 'object' && sentenceObj.translation) && (
-                                <p className="text-slate-600 text-sm">{sentenceObj.translation}</p>
+                                <p className="text-slate-600 text-sm font-medium">{sentenceObj.translation}</p>
                             )}
                         </div>
                     ))}
