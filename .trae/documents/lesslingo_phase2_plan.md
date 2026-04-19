@@ -59,6 +59,11 @@
 - 添加单元学习状态存储
 - 实现快照机制，防止题目漂移
 
+**1.5 冗余tokens生成**
+- 在NVIDIA API的split_and_translate工具中添加distractor_tokens字段
+- 生成4个合理的冗余tokens作为句子翻译题的干扰项
+- 确保冗余tokens与正确答案相关但不同
+
 #### 2. 前端实现
 
 **2.1 进度显示页面**
@@ -94,6 +99,7 @@
 - 基于原文句子和已学单词
 - 生成4个合理的冗余tokens
 - 确保冗余tokens与正确答案相关但不同
+- 实现方式：在split_and_translate工具中添加distractor_tokens字段
 
 **3.3 学习状态机**
 - 管理读1 → 读2 → 下一单元的流程
@@ -111,6 +117,7 @@
 1. 实现单元管理API
 2. 实现CheckCoverage算法
 3. 扩展NVIDIA API工具调用，支持冗余tokens生成
+4. 修改split_and_translate工具，添加distractor_tokens字段
 
 ### 步骤3：前端进度页面
 1. 创建进度显示组件
@@ -132,7 +139,7 @@
 
 ### 关键技术
 - **CheckCoverage算法**：核心逻辑，决定是否进入读2
-- **冗余tokens生成**：确保句子翻译题的质量
+- **冗余tokens生成**：确保句子翻译题的质量，通过修改split_and_translate工具实现
 - **学习状态管理**：保持学习进度的一致性
 - **快照机制**：防止题目漂移
 

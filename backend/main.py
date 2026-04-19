@@ -114,8 +114,13 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
         
-        # 预生成第一个单词的信息
+        # 生成学习单元
         if all_vocab:
+            units = storage.generate_learning_units(all_vocab, unit_size=10)
+            storage.save_learning_units(file_id, units)
+            print(f"[DEBUG] 生成学习单元: {len(units)}个单元")
+            
+            # 预生成第一个单词的信息
             import asyncio
             asyncio.create_task(pre_generate_next_word(file_id, all_vocab, 0))
             print(f"[DEBUG] 预生成第一个单词信息")
@@ -535,6 +540,157 @@ async def get_word_details(file_id: str, word: str):
         return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting word details: {str(e)}")
+
+
+@app.get("/api/learn/{file_id}/units")
+async def get_learning_units(file_id: str):
+    try:
+        units = storage.load_learning_units(file_id)
+        unit_progress = storage.load_unit_progress(file_id)
+        
+        # 构建单元信息，包括状态
+        units_info = []
+        for i, unit in enumerate(units):
+            is_completed = i in unit_progress.get("completed_units", [])
+            is_current = i == unit_progress.get("current_unit", 0)
+            units_info.append({
+                "unit_id": i,
+                "word_count": len(unit),
+                "is_completed": is_completed,
+                "is_current": is_current,
+                "words": unit
+            })
+        
+        return {
+            "units": units_info,
+            "current_unit": unit_progress.get("current_unit", 0),
+            "completed_units": unit_progress.get("completed_units", []),
+            "total_units": len(units)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting learning units: {str(e)}")
+
+
+@app.post("/api/learn/{file_id}/unit/{unit_id}/start")
+async def start_learning_unit(file_id: str, unit_id: int):
+    try:
+        units = storage.load_learning_units(file_id)
+        if unit_id >= len(units):
+            raise HTTPException(status_code=404, detail="Unit not found")
+        
+        # 加载单元进度
+        unit_progress = storage.load_unit_progress(file_id)
+        
+        # 更新当前单元
+        unit_progress["current_unit"] = unit_id
+        storage.save_unit_progress(file_id, unit_progress)
+        
+        # 获取单元单词
+        unit_words = units[unit_id]
+        
+        return {
+            "success": True,
+            "unit_id": unit_id,
+            "words": unit_words,
+            "total_words": len(unit_words)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error starting learning unit: {str(e)}")
+
+
+@app.post("/api/learn/{file_id}/unit/{unit_id}/complete")
+async def complete_learning_unit(file_id: str, unit_id: int):
+    try:
+        # 加载单元进度
+        unit_progress = storage.load_unit_progress(file_id)
+        
+        # 添加到已完成单元
+        if unit_id not in unit_progress.get("completed_units", []):
+            completed_units = unit_progress.get("completed_units", [])
+            completed_units.append(unit_id)
+            unit_progress["completed_units"] = completed_units
+        
+        # 更新当前单元为下一个
+        unit_progress["current_unit"] = unit_id + 1
+        storage.save_unit_progress(file_id, unit_progress)
+        
+        return {
+            "success": True,
+            "unit_id": unit_id,
+            "next_unit": unit_id + 1
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error completing learning unit: {str(e)}")
+
+
+@app.get("/api/learn/{file_id}/unit/{unit_id}/check-coverage")
+async def check_coverage(file_id: str, unit_id: int):
+    try:
+        # 加载已学单词
+        units = storage.load_learning_units(file_id)
+        unit_progress = storage.load_unit_progress(file_id)
+        
+        # 获取已完成的单元和当前单元的单词
+        learned_words = []
+        for i in range(unit_id + 1):
+            if i < len(units):
+                unit_words = units[i]
+                learned_words.extend([word["word"] for word in unit_words])
+        
+        # 加载句子数据
+        sentences = storage.load_pipeline_data(file_id)
+        covered_sentences = storage.load_sentence_coverage(file_id)
+        
+        # 检查每个句子是否可以由已学单词组成且未覆盖
+        uncovered_sentences = []
+        for i, sentence_data in enumerate(sentences):
+            if i in covered_sentences:
+                continue
+            
+            sentence = sentence_data.get("sentence", "")
+            # 简单检查：句子中的每个单词是否都在已学单词中
+            # 注意：这是一个简化的实现，实际应该考虑单词的变体
+            sentence_words = set([word.lower() for word in sentence.split() if word.isalpha()])
+            learned_words_set = set([word.lower() for word in learned_words])
+            
+            if sentence_words.issubset(learned_words_set):
+                # 检查句子是否有翻译和冗余tokens
+                if sentence_data.get("translation_result"):
+                    uncovered_sentences.append({
+                        "sentence_index": i,
+                        "sentence": sentence,
+                        "translation": sentence_data["translation_result"].get("tokenized_translation", ""),
+                        "distractor_tokens": sentence_data["translation_result"].get("distractor_tokens", [])
+                    })
+        
+        return {
+            "covered_sentences": covered_sentences,
+            "uncovered_sentences": uncovered_sentences,
+            "total_sentences": len(sentences),
+            "learned_words": learned_words
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error checking coverage: {str(e)}")
+
+
+@app.post("/api/learn/{file_id}/sentence/{sentence_index}/mark-covered")
+async def mark_sentence_covered(file_id: str, sentence_index: int):
+    try:
+        # 加载已覆盖的句子
+        covered_sentences = storage.load_sentence_coverage(file_id)
+        
+        # 添加到已覆盖列表
+        if sentence_index not in covered_sentences:
+            covered_sentences.append(sentence_index)
+            storage.save_sentence_coverage(file_id, covered_sentences)
+        
+        return {
+            "success": True,
+            "sentence_index": sentence_index,
+            "covered_sentences": covered_sentences
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error marking sentence as covered: {str(e)}")
 
 
 if __name__ == "__main__":

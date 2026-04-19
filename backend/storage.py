@@ -113,3 +113,86 @@ class Storage:
                 data = json.load(f)
                 return data.get("current_index", 0)
         return 0
+    
+    def generate_learning_units(self, vocab: List[Dict], unit_size: int = 10) -> List[List[Dict]]:
+        """生成学习单元，默认10词一组"""
+        import random
+        # 使用固定种子确保生成的顺序一致
+        random.seed(42)
+        # 打乱单词顺序
+        shuffled_vocab = vocab.copy()
+        random.shuffle(shuffled_vocab)
+        # 按unit_size分组
+        units = []
+        for i in range(0, len(shuffled_vocab), unit_size):
+            unit = shuffled_vocab[i:i + unit_size]
+            units.append(unit)
+        return units
+    
+    def save_learning_units(self, file_id: str, units: List[List[Dict]]):
+        """保存学习单元"""
+        file_dir = self.get_file_dir(file_id)
+        units_path = file_dir / "learning_units.json"
+        # 只保存单词信息的必要字段
+        units_data = []
+        for unit in units:
+            unit_data = []
+            for word in unit:
+                word_data = {
+                    "word": word.get("word"),
+                    "context_meaning": word.get("context_meaning"),
+                    "morphology": word.get("morphology"),
+                    "ipa": word.get("ipa")
+                }
+                unit_data.append(word_data)
+            units_data.append(unit_data)
+        with open(units_path, 'w', encoding='utf-8') as f:
+            json.dump({"units": units_data}, f, ensure_ascii=False, indent=2)
+    
+    def load_learning_units(self, file_id: str) -> List[List[Dict]]:
+        """加载学习单元"""
+        file_dir = self.get_file_dir(file_id)
+        units_path = file_dir / "learning_units.json"
+        if units_path.exists():
+            with open(units_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("units", [])
+        return []
+    
+    def save_unit_progress(self, file_id: str, unit_progress: Dict):
+        """保存单元学习进度"""
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "unit_progress.json"
+        with open(progress_path, 'w', encoding='utf-8') as f:
+            json.dump(unit_progress, f, ensure_ascii=False, indent=2)
+    
+    def load_unit_progress(self, file_id: str) -> Dict:
+        """加载单元学习进度"""
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "unit_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        # 默认返回空进度
+        return {
+            "completed_units": [],
+            "current_unit": 0,
+            "unit_status": {}
+        }
+    
+    def save_sentence_coverage(self, file_id: str, covered_sentences: List[int]):
+        """保存已覆盖的句子索引"""
+        file_dir = self.get_file_dir(file_id)
+        coverage_path = file_dir / "sentence_coverage.json"
+        with open(coverage_path, 'w', encoding='utf-8') as f:
+            json.dump({"covered_sentences": covered_sentences}, f, ensure_ascii=False, indent=2)
+    
+    def load_sentence_coverage(self, file_id: str) -> List[int]:
+        """加载已覆盖的句子索引"""
+        file_dir = self.get_file_dir(file_id)
+        coverage_path = file_dir / "sentence_coverage.json"
+        if coverage_path.exists():
+            with open(coverage_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("covered_sentences", [])
+        return []
