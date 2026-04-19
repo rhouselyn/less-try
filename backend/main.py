@@ -787,21 +787,39 @@ async def generate_sentence_quiz(file_id: str):
             # 获取翻译token并过滤掉标点符号
             translation_tokens = []
             for token in selected_sentence["translation_result"]["translation"]:
-                if isinstance(token, dict) and "text" in token:
+                if isinstance(token, dict):
+                    # 对于中文，使用translation字段
+                    if target_lang == "zh" and "translation" in token:
+                        text = token["translation"]
+                    # 对于其他语言，使用text字段
+                    elif "text" in token:
+                        text = token["text"]
+                    else:
+                        continue
                     # 过滤掉标点符号
-                    text = token["text"]
-                    # 只保留文字字符
                     cleaned_text = re.sub(r'[^\w\s]', '', text)
                     if cleaned_text:
                         translation_tokens.append(cleaned_text)
             correct_translation = " ".join(translation_tokens)
+            
+            # 如果是中文，移除空格
+            if target_lang == "zh":
+                correct_translation = correct_translation.replace(" ", "")
         
         # 生成正确答案的token列表（不含标点）
         correct_tokens = []
         if correct_translation:
             if target_lang == "zh":
-                # 中文按字符拆分
-                correct_tokens = list(correct_translation.replace(" ", ""))
+                # 对于中文，使用翻译token作为词语
+                for token in selected_sentence["translation_result"]["translation"]:
+                    if isinstance(token, dict) and "translation" in token:
+                        text = token["translation"]
+                        cleaned_text = re.sub(r'[^\w\s]', '', text)
+                        if cleaned_text:
+                            correct_tokens.append(cleaned_text)
+                # 如果没有token，才按字符拆分
+                if not correct_tokens:
+                    correct_tokens = list(correct_translation.replace(" ", ""))
             else:
                 # 英文按空格拆分
                 correct_tokens = correct_translation.split()
@@ -811,8 +829,15 @@ async def generate_sentence_quiz(file_id: str):
         for sentence_data in sentences:
             if sentence_data != selected_sentence and "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 for token in sentence_data["translation_result"]["translation"]:
-                    if isinstance(token, dict) and "text" in token:
-                        text = token["text"]
+                    if isinstance(token, dict):
+                        # 对于中文，使用translation字段
+                        if target_lang == "zh" and "translation" in token:
+                            text = token["translation"]
+                        # 对于其他语言，使用text字段
+                        elif "text" in token:
+                            text = token["text"]
+                        else:
+                            continue
                         cleaned_text = re.sub(r'[^\w\s]', '', text)
                         if cleaned_text and cleaned_text not in correct_tokens:
                             distractors.append(cleaned_text)
