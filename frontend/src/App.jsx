@@ -6,6 +6,82 @@ import axios from 'axios'
 // 配置axios超时时间为10分钟
 axios.defaults.timeout = 600000
 
+// 语言翻译字典
+const translations = {
+  zh: {
+    title: "少邻国",
+    subtitle: "Lesslingo",
+    startLearning: "开始学习",
+    inputHint: "输入任意文本，AI 将自动生成单词表和学习资料",
+    learnLang: "学习语言",
+    nativeLang: "母语",
+    inputText: "输入文本",
+    placeholder: "粘贴或输入你想学习的文本...",
+    processing: "处理中...",
+    generateMaterials: "生成学习资料",
+    back: "返回",
+    startRandomLearn: "开始随机单词学习",
+    preparing: "准备中...",
+    sentTranslation: "句子翻译",
+    vocabList: "单词表",
+    wordLabel: "单词",
+    meaningLabel: "意思",
+    posLabel: "词性",
+    definition: "释义",
+    variants: "词形变化",
+    examples: "例句",
+    memoryHint: "记忆辅助",
+    originalSent: "原文例句",
+    sentDetail: "句子详情",
+    original: "原文",
+    translation: "翻译",
+    grammar: "语法详解",
+    backToVocab: "返回单词表",
+    loading: "加载中...",
+    nextQuestion: "下一题",
+    question: "题干",
+    correctAnswer: "正确答案",
+    options: "选项",
+    context: "上下文"
+  },
+  en: {
+    title: "Lesslingo",
+    subtitle: "",
+    startLearning: "Start Learning",
+    inputHint: "Enter any text, AI will automatically generate word list and study materials",
+    learnLang: "Learn Language",
+    nativeLang: "Native Language",
+    inputText: "Enter Text",
+    placeholder: "Paste or enter text you want to learn...",
+    processing: "Processing...",
+    generateMaterials: "Generate Study Materials",
+    back: "Back",
+    startRandomLearn: "Start Random Word Learning",
+    preparing: "Preparing...",
+    sentTranslation: "Sentence Translations",
+    vocabList: "Vocabulary List",
+    wordLabel: "Word",
+    meaningLabel: "Meaning",
+    posLabel: "Part of Speech",
+    definition: "Definition",
+    variants: "Word Forms",
+    examples: "Examples",
+    memoryHint: "Memory Hint",
+    originalSent: "Original Sentence",
+    sentDetail: "Sentence Details",
+    original: "Original",
+    translation: "Translation",
+    grammar: "Grammar Explanation",
+    backToVocab: "Back to Vocab List",
+    loading: "Loading...",
+    nextQuestion: "Next Question",
+    question: "Question",
+    correctAnswer: "Correct Answer",
+    options: "Options",
+    context: "Context"
+  }
+};
+
 function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
@@ -26,6 +102,9 @@ function App() {
   const [showWordCard, setShowWordCard] = useState(false)
   const [selectedOption, setSelectedOption] = useState(null)
   const [isCorrect, setIsCorrect] = useState(null)
+  
+  // 获取当前语言的翻译
+  const t = translations[targetLang] || translations.zh;
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -308,6 +387,7 @@ function App() {
               setTargetLang={setTargetLang}
               loading={loading}
               onProcess={handleProcess}
+              t={t}
             />
           )}
           
@@ -327,6 +407,7 @@ function App() {
               onWordClick={getWordDetails}
               onStartLearning={startLearning}
               loading={loading}
+              t={t}
             />
           )}
           
@@ -341,6 +422,7 @@ function App() {
               onNextWord={getNextWord}
               onBack={() => setStep('dictionary')}
               loading={loading}
+              t={t}
             />
           )}
         </AnimatePresence>
@@ -349,7 +431,7 @@ function App() {
   )
 }
 
-function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess }) {
+function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -364,10 +446,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           transition={{ delay: 0.1 }}
         >
           <h2 className="text-4xl font-semibold text-slate-900 mb-4">
-            开始学习
+            {t.startLearning}
           </h2>
           <p className="text-lg text-slate-600">
-            输入任意文本，AI 将自动生成单词表和学习资料
+            {t.inputHint}
           </p>
         </motion.div>
       </div>
@@ -376,7 +458,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
         <div className="flex gap-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              学习语言
+              {t.learnLang}
             </label>
             <select
               value={sourceLang}
@@ -393,7 +475,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           </div>
           <div className="flex-1">
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              母语
+              {t.nativeLang}
             </label>
             <select
               value={targetLang}
@@ -409,12 +491,12 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            输入文本
+            {t.inputText}
           </label>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="粘贴或输入你想学习的文本..."
+            placeholder={t.placeholder}
             className="w-full h-64 px-4 py-4 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none"
           />
         </div>
@@ -429,12 +511,12 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           {loading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              处理中...
+              {t.processing}
             </>
           ) : (
             <>
               <Languages className="w-5 h-5" />
-              生成学习资料
+              {t.generateMaterials}
             </>
           )}
         </motion.button>
@@ -443,7 +525,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onWordClick, onStartLearning, loading }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onWordClick, onStartLearning, loading, t }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -458,7 +540,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       {processingInfo && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-slate-600">处理中: 句子 {processingInfo.current} / {processingInfo.total}</span>
+            <span className="text-sm text-slate-600">{t.processing}: 句子 {processingInfo.current} / {processingInfo.total}</span>
             <span className="text-sm text-slate-600">{progress}%</span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2.5">
@@ -482,12 +564,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           {loading ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              准备中...
+              {t.preparing}
             </>
           ) : (
             <>
               <Shuffle className="w-5 h-5" />
-              开始随机单词学习
+              {t.startRandomLearn}
             </>
           )}
         </motion.button>

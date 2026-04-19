@@ -171,7 +171,7 @@ For each word, provide:
 
         # 构建prompt
         prompt = """
-处理以下文本，并翻译成 TARGET_LANG。
+处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
 
 【非常重要的说明】
 1. 首先检查输入文本的语言：
@@ -191,8 +191,12 @@ For each word, provide:
    - det (限定词)
 5. morphology 字段必须只包含缩写，不要有其他内容！
 6. morphology 字段里不要加任何额外的解释！
-7. 【重点！】tokenized_translation 必须是自然的、正常的翻译 - 绝对不要在词语之间人工添加空格！
-8. 【举例！】比如英文 "AI models generate responses. And outputs based on complex algorithms." 翻译成中文时，应该是 "人工智能模型根据复杂的算法生成响应和输出。"，绝对不能是 "人工智能 模型 根据 复杂的 算法 生成 响应 和 输出"！
+7. 【重点！】tokenized_translation 必须是自然的、正常的翻译：
+   - 如果是英文翻译：单词之间必须用空格分隔！
+   - 如果是中文翻译：词语之间绝对不要有空格！
+   - 保持自然的句子格式
+8. 【举例！】比如英文 "AI models generate responses." 翻译成中文时，应该是 "人工智能模型生成响应。"，绝对不能是 "人工智能 模型 生成 响应。"！
+   - 【反过来！】如果是中文翻译成英文，必须是 "Artificial intelligence models generate responses."，绝对不能是 "Artificialintelligencemodelsgenerateresponses."！
 
 按照以下结构处理文本：
 - original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）
@@ -201,7 +205,7 @@ For each word, provide:
   - translation: 这个词翻译成 TARGET_LANG
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
-- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子，词语之间绝对不要有多余空格！
+- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 
 要处理的文本：
