@@ -171,12 +171,15 @@ For each word, provide:
 
         # 构建prompt
         prompt = """
-处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
+处理以下文本，并翻译成 TARGET_LANG。
 
 【非常重要的说明】
-1. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
-2. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
-3. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
+1. 首先检查输入文本的语言：
+   - 如果输入文本不是 TEXT_LANG，必须先严格翻译成 TEXT_LANG，然后再进行后续处理
+   - original 字段应该填入翻译后的 TEXT_LANG 文本
+2. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
+3. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
+4. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
    - n (名词)
    - v (动词)
    - adj (形容词)
@@ -186,17 +189,17 @@ For each word, provide:
    - conj (连词)
    - interj (感叹词)
    - det (限定词)
-4. morphology 字段必须只包含缩写，不要有其他内容！
-5. morphology 字段里不要加任何额外的解释！
-6. 【重点！】tokenized_translation 必须是自然的、正常的翻译 - 绝对不要在词语之间人工添加空格！
-7. 【举例！】比如英文 "AI models generate responses. And outputs based on complex algorithms." 翻译成中文时，应该是 "人工智能模型根据复杂的算法生成响应和输出。"，绝对不能是 "人工智能 模型 根据 复杂的 算法 生成 响应 和 输出"！
+5. morphology 字段必须只包含缩写，不要有其他内容！
+6. morphology 字段里不要加任何额外的解释！
+7. 【重点！】tokenized_translation 必须是自然的、正常的翻译 - 绝对不要在词语之间人工添加空格！
+8. 【举例！】比如英文 "AI models generate responses. And outputs based on complex algorithms." 翻译成中文时，应该是 "人工智能模型根据复杂的算法生成响应和输出。"，绝对不能是 "人工智能 模型 根据 复杂的 算法 生成 响应 和 输出"！
 
 按照以下结构处理文本：
-- original: 原始 TEXT_LANG 文本
+- original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）
 - translation: 对象数组，每个对象包含：
-  - text: 原词/标记（不带标点）
+  - text: TEXT_LANG 原词/标记（不带标点）
   - translation: 这个词翻译成 TARGET_LANG
-  - phonetic: 音标(IPA)
+  - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子，词语之间绝对不要有多余空格！
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
@@ -308,29 +311,29 @@ TEXT_CONTENT
 
         # 构建prompt
         prompt = f"""
-Generate enriched word information for '{word}' in {target_lang} based on the context.
+为单词 '{word}' 生成丰富的信息，使用 {target_lang} 输出。
 
-Correct meaning: {correct_meaning}
+正确释义：{correct_meaning}
 
-Context: {context}
+上下文：{context}
 
-Please generate the following information:
+请生成以下信息：
 
-1. enriched_meaning: A precise meaning that fits the context
-2. ipa: International Phonetic Alphabet pronunciation
-3. variants_detail: List of word variants with their types (e.g., past tense, plural)
-4. examples: Two example sentences that match the context meaning, each with a translation in {target_lang}
-5. memory_hint: A memory aid (association or comparison with the user's native language)
-6. multiple_choice: A multiple choice question with:
-   - question: Can be empty (defaults to the word itself)
-   - correct_answer: The correct meaning
-   - options: 4 options (1 correct, 3 incorrect) each with text and is_correct flag
+1. enriched_meaning: 符合上下文的精准释义
+2. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
+3. variants_detail: 词形变化列表，带类型说明（如过去式、复数等）
+4. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
+5. memory_hint: 记忆辅助（与用户母语的联想或对比）
+6. multiple_choice: 选择题，包含：
+   - question: 可为空（默认为单词本身）
+   - correct_answer: 正确释义
+   - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
 
-Requirements:
-- All output must be in {target_lang}
-- Examples should be natural and fit the context
-- Memory hint should be helpful for language learners
-- Multiple choice options should be distinct and plausible
+要求：
+- 所有输出必须使用 {target_lang}
+- 例句要自然，符合上下文
+- 记忆辅助对语言学习者要有帮助
+- 选择题选项要清晰且合理
 """
 
         messages = [{"role": "user", "content": prompt}]

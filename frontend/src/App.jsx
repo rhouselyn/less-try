@@ -383,6 +383,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
               onChange={(e) => setSourceLang(e.target.value)}
               className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
             >
+              <option value="zh">中文</option>
               <option value="en">英语</option>
               <option value="es">西班牙语</option>
               <option value="de">德语</option>

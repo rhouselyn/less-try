@@ -411,21 +411,21 @@ async def get_word_details(file_id: str, word: str):
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
             return cached_word
-        
+
         vocab = storage.load_vocab(file_id)
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
-        
+
         # 查找单词
         word_data = None
         for entry in vocab:
             if entry["word"].lower() == word.lower():
                 word_data = entry
                 break
-        
+
         if not word_data:
             raise HTTPException(status_code=404, detail="Word not found")
-        
+
         # 构建上下文
         sentences = storage.load_pipeline_data(file_id)
         context = ""
@@ -438,18 +438,20 @@ async def get_word_details(file_id: str, word: str):
             if not context and sentences:
                 # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
-        
-        # 生成丰富的单词信息
-        target_lang = "zh"  # 默认目标语言为中文
+
+        # 加载语言设置
+        language_settings = storage.load_language_settings(file_id)
+        target_lang = language_settings["target_lang"]
+
         correct_meaning = word_data.get("context_meaning", "")
-        
+
         if not correct_meaning:
             # 尝试从其他字段获取释义
             if "translation" in word_data:
                 correct_meaning = word_data["translation"]
             elif "meaning" in word_data:
                 correct_meaning = word_data["meaning"]
-        
+
         # 调用generate_multiple_choice获取丰富的单词信息
         options_result = await nvidia_api.generate_multiple_choice(
             word_data["word"],
