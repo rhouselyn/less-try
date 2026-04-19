@@ -245,99 +245,49 @@ TEXT_CONTENT
             "type": "function",
             "function": {
                 "name": "generate_multiple_choice",
-                "description": "Generate enriched word information with multiple choice options",
+                "description": "Generate simple word information with multiple choice options",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "word": {"type": "string"},
-                        "enriched_meaning": {
+                        "meaning": {
                             "type": "string",
-                            "description": "结合上下文的精确释义"
+                            "description": "单词的意思"
                         },
-                        "ipa": {"type": "string"},
-                        "variants_detail": {
+                        "options": {
                             "type": "array",
-                            "description": "词形变化 + 类型说明",
+                            "description": "4个选项（1个正确，3个错误）",
                             "items": {
-                                "type": "object",
-                                "properties": {
-                                    "form": {"type": "string"},
-                                    "type": {"type": "string"}
-                                }
-                            }
-                        },
-                        "examples": {
-                            "type": "array",
-                            "description": "两个与原文语义一致的例句",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "sentence": {"type": "string"},
-                                    "translation": {"type": "string"}
-                                }
+                                "type": "string"
                             },
-                            "minItems": 2,
-                            "maxItems": 2
+                            "minItems": 4,
+                            "maxItems": 4
                         },
-                        "memory_hint": {
-                            "type": "string",
-                            "description": "记忆辅助（联想/对比母语）"
-                        },
-                        "multiple_choice": {
-                            "type": "object",
-                            "properties": {
-                                "question": {
-                                    "type": "string",
-                                    "description": "题干（可为空，默认就是词）"
-                                },
-                                "correct_answer": {
-                                    "type": "string"
-                                },
-                                "options": {
-                                    "type": "array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "text": {"type": "string"},
-                                            "is_correct": {"type": "boolean"}
-                                        }
-                                    },
-                                    "minItems": 4,
-                                    "maxItems": 4
-                                }
-                            }
+                        "correct_index": {
+                            "type": "integer",
+                            "description": "正确选项的索引"
                         }
                     },
-                    "required": ["word", "enriched_meaning", "ipa", "examples", "multiple_choice"]
+                    "required": ["word", "meaning", "options", "correct_index"]
                 }
             }
         }
 
-        # 构建prompt
+        # 构建简化的prompt
         prompt = f"""
-为单词 '{word}' 生成丰富的信息，使用 {target_lang} 输出。
+为单词 '{word}' 生成简单的信息，使用 {target_lang} 输出。
 
-正确释义：{correct_meaning}
+单词意思：{correct_meaning}
 
-上下文：{context}
-
-请生成以下信息：
-
-1. enriched_meaning: 符合上下文的精准释义
-2. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
-3. variants_detail: 词形变化列表，带类型说明（如过去式、复数等）
-4. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
-5. memory_hint: 记忆辅助（与用户母语的联想或对比）
-6. multiple_choice: 选择题，包含：
-   - question: 可为空（默认为单词本身）
-   - correct_answer: 正确释义
-   - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
+请生成：
+1. meaning: 单词的意思
+2. options: 4个选项（1个正确，3个错误）
+3. correct_index: 正确选项的索引
 
 要求：
 - 所有输出必须使用 {target_lang}
-- 例句要自然，符合上下文
-- 记忆辅助对语言学习者要有帮助
-- 选择题选项要清晰且合理
+- 选项要清晰且合理
+- 正确选项就是给定的单词意思
 """
 
         messages = [{"role": "user", "content": prompt}]
