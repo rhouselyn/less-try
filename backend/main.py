@@ -284,36 +284,42 @@ async def get_random_word(file_id: str):
         )
         
         # 提取选项和正确索引
-        options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
-        correct_index = options_result.get("correct_index", 0)
+        options = []
+        correct_index = 0
+        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
+            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
+                options.append(opt["text"])
+                if opt["is_correct"]:
+                    correct_index = i
+        else:
+            # 回退到旧格式
+            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+            correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据
         response_data = {
             "word": options_result.get("word", word),
-            "ipa": random_word.get("ipa", ""),
-            "correct_meaning": options_result.get("meaning", correct_meaning),
+            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
+            "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
             "options": options,
             "correct_index": correct_index,
             "context": context,
-            "variants_detail": [],
-            "examples": [],
-            "memory_hint": ""
+            "variants_detail": options_result.get("variants_detail", []),
+            "examples": options_result.get("examples", []),
+            "memory_hint": options_result.get("memory_hint", "")
         }
         
         # 构建缓存数据
         cache_data = {
             "word": options_result.get("word", word),
-            "ipa": random_word.get("ipa", ""),
-            "meaning": options_result.get("meaning", correct_meaning),
-            "examples": [],
+            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
+            "meaning": options_result.get("enriched_meaning", correct_meaning),
+            "examples": options_result.get("examples", []),
             "context_sentences": [context] if context else [],
             "morphology": random_word.get("morphology", ""),
-            "variants_detail": [],
-            "memory_hint": "",
-            "multiple_choice": {
-                "options": options,
-                "correct_index": correct_index
-            }
+            "variants_detail": options_result.get("variants_detail", []),
+            "memory_hint": options_result.get("memory_hint", ""),
+            "multiple_choice": options_result.get("multiple_choice", {})
         }
         
         # 缓存结果
@@ -400,7 +406,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         
         print(f"[DEBUG] 后台预生成单词信息: {word}")
         
-        # 调用generate_multiple_choice获取单词信息
+        # 调用generate_multiple_choice获取丰富的单词信息
         options_result = await nvidia_api.generate_multiple_choice(
             word,
             correct_meaning,
@@ -411,17 +417,14 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         # 构建缓存数据
         cache_data = {
             "word": options_result.get("word", word),
-            "ipa": random_word.get("ipa", ""),
-            "meaning": options_result.get("meaning", correct_meaning),
-            "examples": [],
+            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
+            "meaning": options_result.get("enriched_meaning", correct_meaning),
+            "examples": options_result.get("examples", []),
             "context_sentences": [context] if context else [],
             "morphology": random_word.get("morphology", ""),
-            "variants_detail": [],
-            "memory_hint": "",
-            "multiple_choice": {
-                "options": options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"]),
-                "correct_index": options_result.get("correct_index", 0)
-            }
+            "variants_detail": options_result.get("variants_detail", []),
+            "memory_hint": options_result.get("memory_hint", ""),
+            "multiple_choice": options_result.get("multiple_choice", {})
         }
         
         # 缓存结果
@@ -487,7 +490,7 @@ async def get_word_details(file_id: str, word: str):
             elif "meaning" in word_data:
                 correct_meaning = word_data["meaning"]
 
-        # 调用generate_multiple_choice获取单词信息
+        # 调用generate_multiple_choice获取丰富的单词信息
         options_result = await nvidia_api.generate_multiple_choice(
             word_data["word"],
             correct_meaning,
@@ -496,27 +499,33 @@ async def get_word_details(file_id: str, word: str):
         )
         
         # 提取选项和正确索引
-        options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
-        correct_index = options_result.get("correct_index", 0)
+        options = []
+        correct_index = 0
+        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
+            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
+                options.append(opt["text"])
+                if opt["is_correct"]:
+                    correct_index = i
+        else:
+            # 回退到旧格式
+            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+            correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据（同时支持单词详情和学习模式）
         response_data = {
             "word": options_result.get("word", word_data["word"]),
-            "ipa": word_data.get("ipa", ""),
-            "meaning": options_result.get("meaning", correct_meaning),
-            "correct_meaning": options_result.get("meaning", correct_meaning),
-            "examples": [],
+            "ipa": options_result.get("ipa", word_data.get("ipa", "")),
+            "meaning": options_result.get("enriched_meaning", correct_meaning),
+            "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
+            "examples": options_result.get("examples", []),
             "context_sentences": context_sentences,
             "context": context,
             "morphology": word_data.get("morphology", ""),
-            "variants_detail": [],
-            "memory_hint": "",
+            "variants_detail": options_result.get("variants_detail", []),
+            "memory_hint": options_result.get("memory_hint", ""),
             "options": options,
             "correct_index": correct_index,
-            "multiple_choice": {
-                "options": options,
-                "correct_index": correct_index
-            }
+            "multiple_choice": options_result.get("multiple_choice", {})
         }
         
         # 缓存结果
