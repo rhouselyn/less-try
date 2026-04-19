@@ -30,7 +30,15 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
 
   const handleCheckAnswer = () => {
     const userAnswer = selectedTokens.join(' ')
-    const isCorrectAnswer = userAnswer === quizData.correct_translation
+    // 过滤正确答案中的标点符号，只保留单词和空格
+    const filteredCorrectAnswer = quizData.correct_translation.replace(/[.,!?'";:()\[\]]/g, '').trim()
+    // 确保空格格式一致
+    const normalizedUserAnswer = userAnswer.trim().replace(/\s+/g, ' ')
+    const normalizedCorrectAnswer = filteredCorrectAnswer.trim().replace(/\s+/g, ' ')
+    const isCorrectAnswer = normalizedUserAnswer === normalizedCorrectAnswer
+    console.log('用户答案:', normalizedUserAnswer)
+    console.log('正确答案:', normalizedCorrectAnswer)
+    console.log('是否正确:', isCorrectAnswer)
     setIsCorrect(isCorrectAnswer)
     setIsChecked(true)
   }

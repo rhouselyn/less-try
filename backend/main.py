@@ -207,8 +207,11 @@ async def get_random_word(file_id: str):
         current_index = storage.load_learning_progress(file_id)
         print(f"[DEBUG] 加载学习进度: current_index = {current_index}")
         
-        # 使用固定随机种子生成顺序
-        random.seed(42)
+        # 生成打乱但固定的顺序（只在第一次生成）
+        import hashlib
+        # 使用file_id作为种子，确保每个文件有不同的顺序
+        seed = int(hashlib.md5(file_id.encode()).hexdigest(), 16) % 10**9
+        random.seed(seed)
         # 生成打乱但固定的顺序
         shuffled_indices = list(range(len(vocab)))
         random.shuffle(shuffled_indices)
@@ -364,8 +367,11 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
         
-        # 使用固定随机种子生成顺序
-        random.seed(42)
+        # 生成打乱但固定的顺序
+        import hashlib
+        # 使用file_id作为种子，确保每个文件有不同的顺序
+        seed = int(hashlib.md5(file_id.encode()).hexdigest(), 16) % 10**9
+        random.seed(seed)
         # 生成打乱但固定的顺序
         shuffled_indices = list(range(len(vocab)))
         random.shuffle(shuffled_indices)
@@ -716,6 +722,7 @@ async def generate_sentence_quiz(file_id: str):
             
             # 添加一些干扰词
             # 从其他翻译中随机选择一些单词
+            distractors = []
             for sentence_data in sentences:
                 if "translation_result" in sentence_data and "tokenized_translation" in sentence_data["translation_result"]:
                     other_translation = sentence_data["translation_result"]["tokenized_translation"]
@@ -732,9 +739,14 @@ async def generate_sentence_quiz(file_id: str):
                         # 随机添加1-2个干扰词
                         if other_tokens:
                             num_distractors = min(2, len(other_tokens))
-                            distractors = random.sample(other_tokens, num_distractors)
-                            tokens.extend(distractors)
-                            break
+                            distractors.extend(random.sample(other_tokens, num_distractors))
+                            # 收集足够的干扰词后停止
+                            if len(distractors) >= 3:
+                                break
+            
+            # 添加干扰词到tokens中
+            if distractors:
+                tokens.extend(distractors)
             
             # 打乱tokens
             random.shuffle(tokens)
