@@ -1,5 +1,5 @@
 import os
-import requests
+import aiohttp
 import json
 from typing import List, Dict, Any
 
@@ -26,25 +26,34 @@ class NvidiaAPI:
             payload["tool_choice"] = "auto"
 
         try:
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=self.headers,
-                json=payload,
-                timeout=600  # 10分钟超时
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.Timeout:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{self.base_url}/chat/completions",
+                    headers=self.headers,
+                    json=payload,
+                    timeout=aiohttp.ClientTimeout(total=600)  # 10分钟超时
+                ) as response:
+                    response.raise_for_status()
+                    return await response.json()
+        except aiohttp.ClientTimeout:
             print("API request timed out. Retrying...")
             # Retry once
-            response = requests.post(
-                f"{self.base_url}/chat/completions",
-                headers=self.headers,
-                json=payload,
-                timeout=600  # 10分钟超时
-            )
-            response.raise_for_status()
-            return response.json()
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(
+                        f"{self.base_url}/chat/completions",
+                        headers=self.headers,
+                        json=payload,
+                        timeout=aiohttp.ClientTimeout(total=600)  # 10分钟超时
+                    ) as response:
+                        response.raise_for_status()
+                        return await response.json()
+            except Exception as e:
+                print(f"API request failed after retry: {e}")
+                return {"choices": []}
+        except Exception as e:
+            print(f"API request failed: {e}")
+            return {"choices": []}
 
     async def generate_dictionary(self, words: List[str], context: str, source_lang: str, target_lang: str):
         tool_def = {
@@ -232,14 +241,15 @@ TEXT_CONTENT
             print(json.dumps(response, indent=2, ensure_ascii=False))
             print("======================")
             
-            for choice in response["choices"]:
-                if "tool_calls" in choice["message"]:
-                    tool_call = choice["message"]["tool_calls"][0]
-                    args = json.loads(tool_call["function"]["arguments"])
-                    print("=== Parsed Tool Arguments ===")
-                    print(json.dumps(args, indent=2, ensure_ascii=False))
-                    print("======================")
-                    return args
+            if "choices" in response:
+                for choice in response["choices"]:
+                    if choice and "message" in choice and "tool_calls" in choice["message"]:
+                        tool_call = choice["message"]["tool_calls"][0]
+                        args = json.loads(tool_call["function"]["arguments"])
+                        print("=== Parsed Tool Arguments ===")
+                        print(json.dumps(args, indent=2, ensure_ascii=False))
+                        print("======================")
+                        return args
             return {}
         except Exception as e:
             print(f"Tool call failed: {e}")
