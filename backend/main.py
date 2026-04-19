@@ -781,12 +781,19 @@ async def generate_sentence_quiz(file_id: str):
         selected_sentence = random.choice(eligible_sentences)
         original_sentence = selected_sentence["sentence"]
         
-        # 获取翻译
-        correct_translation = ""
-        if "translation_result" in selected_sentence and "translation" in selected_sentence["translation_result"]:
-            # 获取翻译token并过滤掉标点符号
-            translation_tokens = []
-            for token in selected_sentence["translation_result"]["translation"]:
+        # 直接使用LLM生成的数据
+        translation_result = selected_sentence["translation_result"]
+        tokenized_translation = translation_result.get("tokenized_translation", "")
+        redundant_tokens = translation_result.get("redundant_tokens", [])
+        
+        # 过滤掉标点符号，只保留文字
+        def clean_token(token):
+            return re.sub(r'[^\w\s]', '', token)
+        
+        # 生成正确答案的token列表
+        correct_tokens = []
+        if "translation" in translation_result:
+            for token in translation_result["translation"]:
                 if isinstance(token, dict):
                     # 对于中文，使用translation字段
                     if target_lang == "zh" and "translation" in token:
@@ -796,64 +803,27 @@ async def generate_sentence_quiz(file_id: str):
                         text = token["text"]
                     else:
                         continue
-                    # 过滤掉标点符号
-                    cleaned_text = re.sub(r'[^\w\s]', '', text)
+                    cleaned_text = clean_token(text)
                     if cleaned_text:
-                        translation_tokens.append(cleaned_text)
-            correct_translation = " ".join(translation_tokens)
-            
-            # 如果是中文，移除空格
-            if target_lang == "zh":
-                correct_translation = correct_translation.replace(" ", "")
+                        correct_tokens.append(cleaned_text)
         
-        # 生成正确答案的token列表（不含标点）
-        correct_tokens = []
-        if correct_translation:
-            if target_lang == "zh":
-                # 对于中文，使用翻译token作为词语
-                for token in selected_sentence["translation_result"]["translation"]:
-                    if isinstance(token, dict) and "translation" in token:
-                        text = token["translation"]
-                        cleaned_text = re.sub(r'[^\w\s]', '', text)
-                        if cleaned_text:
-                            correct_tokens.append(cleaned_text)
-                # 如果没有token，才按字符拆分
-                if not correct_tokens:
-                    correct_tokens = list(correct_translation.replace(" ", ""))
-            else:
-                # 英文按空格拆分
-                correct_tokens = correct_translation.split()
+        # 清理冗余词
+        cleaned_redundant_tokens = []
+        for token in redundant_tokens:
+            cleaned_text = clean_token(token)
+            if cleaned_text and cleaned_text not in correct_tokens:
+                cleaned_redundant_tokens.append(cleaned_text)
         
-        # 生成干扰词（冗余词）
-        distractors = []
-        for sentence_data in sentences:
-            if sentence_data != selected_sentence and "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                for token in sentence_data["translation_result"]["translation"]:
-                    if isinstance(token, dict):
-                        # 对于中文，使用translation字段
-                        if target_lang == "zh" and "translation" in token:
-                            text = token["translation"]
-                        # 对于其他语言，使用text字段
-                        elif "text" in token:
-                            text = token["text"]
-                        else:
-                            continue
-                        cleaned_text = re.sub(r'[^\w\s]', '', text)
-                        if cleaned_text and cleaned_text not in correct_tokens:
-                            distractors.append(cleaned_text)
-                if len(distractors) >= 3:
-                    break
-        
-        # 选择2-3个干扰词
-        num_distractors = min(3, len(distractors))
-        if num_distractors > 0:
-            selected_distractors = random.sample(distractors, num_distractors)
-        else:
-            selected_distractors = []
+        # 过滤掉重复的冗余词，只保留不超过3个
+        unique_redundant = list(set(cleaned_redundant_tokens))
+        selected_distractors = unique_redundant[:3]
         
         # 合并正确tokens和干扰词，然后打乱
         all_tokens = correct_tokens + selected_distractors
         random.shuffle(all_tokens)
+        
+        # 清理正确翻译，移除标点符号
+        correct_translation = clean_token(tokenized_translation)
         
         return {
             "original_sentence": original_sentence,

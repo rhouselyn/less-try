@@ -24,7 +24,14 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
 
   const handleTokenClick = (token) => {
     if (!isChecked) {
-      setSelectedTokens([...selectedTokens, token])
+      const index = selectedTokens.indexOf(token)
+      if (index > -1) {
+        // 如果已经选中，取消选择
+        setSelectedTokens([...selectedTokens.slice(0, index), ...selectedTokens.slice(index + 1)])
+      } else {
+        // 如果没有选中，添加选择
+        setSelectedTokens([...selectedTokens, token])
+      }
     }
   }
 
