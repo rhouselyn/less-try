@@ -319,12 +319,14 @@ TEXT_CONTENT
 
 正确释义：{correct_meaning}
 
+上下文：{context}
+
 请生成以下信息：
 
-1. enriched_meaning: 精准释义
+1. enriched_meaning: 符合上下文的精准释义
 2. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
 3. variants_detail: 词形变化列表，带类型说明（如过去式、复数等）
-4. examples: 两个例句，每个都有 {target_lang} 的翻译
+4. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
 5. memory_hint: 记忆辅助（与用户母语的联想或对比）
 6. multiple_choice: 选择题，包含：
    - question: 可为空（默认为单词本身）
@@ -333,7 +335,7 @@ TEXT_CONTENT
 
 要求：
 - 所有输出必须使用 {target_lang}
-- 例句要自然
+- 例句要自然，符合上下文
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
 """

@@ -255,18 +255,16 @@ async def get_random_word(file_id: str):
         # 构建上下文
         sentences = storage.load_pipeline_data(file_id)
         context = ""
-        context_sentences = []
         if sentences:
-            # 找到包含该单词的所有句子
+            # 找到包含该单词的句子
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
-                    # 直接添加句子，因为我们需要显示原文句子
-                    context_sentences.append(sentence_data["sentence"])
+                    if word in sentence_data["sentence"]:
+                        context = sentence_data["sentence"]
+                        break
             if not context and sentences:
                 # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
-                if context and not context_sentences:
-                    context_sentences.append(context)
         
         # 生成选项
         correct_meaning = random_word.get("context_meaning", "")
@@ -306,7 +304,6 @@ async def get_random_word(file_id: str):
             "options": options,
             "correct_index": correct_index,
             "context": context,
-            "context_sentences": context_sentences,
             "variants_detail": options_result.get("variants_detail", []),
             "examples": options_result.get("examples", []),
             "memory_hint": options_result.get("memory_hint", "")

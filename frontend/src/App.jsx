@@ -1081,23 +1081,6 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 </motion.div>
               )}
 
-              {learningData.context_sentences && learningData.context_sentences.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 }}
-                >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    {t.originalSent}
-                  </h3>
-                  <div className="space-y-2">
-                    {learningData.context_sentences.map((sentence, index) => (
-                      <p key={index} className="text-slate-700 italic">{sentence}</p>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
               {learningData.variants_detail && learningData.variants_detail.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
