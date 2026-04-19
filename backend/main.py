@@ -178,6 +178,98 @@ async def get_sentences(file_id: str):
         raise HTTPException(status_code=404, detail=f"Sentences not found: {str(e)}")
 
 
+@app.get("/api/learn/{file_id}/random-word")
+async def get_random_word(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+        
+        # 随机选择一个单词
+        random_word = random.choice(vocab)
+        
+        # 构建上下文
+        sentences = storage.load_pipeline_data(file_id)
+        context = ""
+        if sentences:
+            # 找到包含该单词的句子
+            for sentence_data in sentences:
+                if "sentence" in sentence_data:
+                    if random_word["word"] in sentence_data["sentence"]:
+                        context = sentence_data["sentence"]
+                        break
+            if not context and sentences:
+                # 如果没找到，使用第一个句子作为上下文
+                context = sentences[0].get("sentence", "")
+        
+        # 生成选项
+        target_lang = "zh"  # 默认目标语言为中文
+        correct_meaning = random_word.get("context_meaning", "")
+        
+        if not correct_meaning:
+            # 尝试从其他字段获取释义
+            if "translation" in random_word:
+                correct_meaning = random_word["translation"]
+            elif "meaning" in random_word:
+                correct_meaning = random_word["meaning"]
+        
+        options_result = await nvidia_api.generate_multiple_choice(
+            random_word["word"],
+            correct_meaning,
+            context,
+            target_lang
+        )
+        
+        return {
+            "word": random_word["word"],
+            "ipa": random_word.get("ipa", ""),
+            "correct_meaning": correct_meaning,
+            "options": options_result.get("options", []),
+            "correct_index": options_result.get("correct_index", 0),
+            "context": context
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting random word: {str(e)}")
+
+
+@app.get("/api/word/{file_id}/{word}")
+async def get_word_details(file_id: str, word: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+        
+        # 查找单词
+        word_data = None
+        for entry in vocab:
+            if entry["word"].lower() == word.lower():
+                word_data = entry
+                break
+        
+        if not word_data:
+            raise HTTPException(status_code=404, detail="Word not found")
+        
+        # 构建上下文
+        sentences = storage.load_pipeline_data(file_id)
+        context_sentences = []
+        if sentences:
+            for sentence_data in sentences:
+                if "sentence" in sentence_data:
+                    if word_data["word"] in sentence_data["sentence"]:
+                        context_sentences.append(sentence_data["sentence"])
+        
+        return {
+            "word": word_data["word"],
+            "ipa": word_data.get("ipa", ""),
+            "meaning": word_data.get("context_meaning", word_data.get("translation", "")),
+            "examples": word_data.get("examples", []),
+            "context_sentences": context_sentences,
+            "morphology": word_data.get("morphology", "")
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting word details: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, timeout_keep_alive=600)

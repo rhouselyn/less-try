@@ -15,7 +15,7 @@ class NvidiaAPI:
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0):
         payload = {
-            "model": "claude-sonnet-4.6",
+            "model": "claude-haiku-4.5",
             "messages": messages,
             "temperature": temperature,
             "max_tokens": 4096
@@ -232,3 +232,59 @@ TEXT_CONTENT
             print(f"Tool call failed: {e}")
             print(f"Response: {response}")
             return {}
+
+    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str):
+        tool_def = {
+            "type": "function",
+            "function": {
+                "name": "generate_multiple_choice",
+                "description": "Generate multiple choice options for a word",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "word": {"type": "string"},
+                        "options": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "minItems": 4,
+                            "maxItems": 4
+                        },
+                        "correct_index": {"type": "integer"}
+                    },
+                    "required": ["word", "options", "correct_index"]
+                }
+            }
+        }
+
+        # 构建prompt
+        prompt = f"""
+Generate 4 multiple choice options for the word '{word}' in {target_lang}.
+
+Correct meaning: {correct_meaning}
+
+Context: {context}
+
+Requirements:
+1. 1 correct option (the given meaning)
+2. 3 incorrect but plausible options
+3. Options should be in {target_lang}
+4. Options should be distinct and not too similar
+5. Return the correct option index (0-3)
+"""
+
+        messages = [{"role": "user", "content": prompt}]
+        
+        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
+        
+        try:
+            for choice in response["choices"]:
+                if "tool_calls" in choice["message"]:
+                    tool_call = choice["message"]["tool_calls"][0]
+                    args = json.loads(tool_call["function"]["arguments"])
+                    return args
+            return {"word": word, "options": [correct_meaning, "选项1", "选项2", "选项3"], "correct_index": 0}
+        except Exception as e:
+            print(f"Tool call failed: {e}")
+            print(f"Response: {response}")
+            return {"word": word, "options": [correct_meaning, "选项1", "选项2", "选项3"], "correct_index": 0}
+
