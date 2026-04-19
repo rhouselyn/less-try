@@ -587,66 +587,21 @@ async def get_unit_words(file_id: str, unit_id: int):
         if not unit_words:
             raise HTTPException(status_code=404, detail="Unit not found")
         
-        # 为每个单词生成学习数据
-        language_settings = storage.load_language_settings(file_id)
-        target_lang = language_settings["target_lang"]
-        
+        # 只返回单词基本信息，不生成学习数据
+        # 学习数据将在用户请求单个单词时生成
         learning_words = []
         for word_data in unit_words:
-            # 构建上下文
-            sentences = storage.load_pipeline_data(file_id)
-            context = ""
-            if sentences:
-                for sentence_data in sentences:
-                    if "sentence" in sentence_data:
-                        if word_data["word"] in sentence_data["sentence"]:
-                            context = sentence_data["sentence"]
-                            break
-                if not context and sentences:
-                    # 如果没找到，使用第一个句子作为上下文
-                    context = sentences[0].get("sentence", "")
-            
-            correct_meaning = word_data.get("context_meaning", "")
-            
-            if not correct_meaning:
-                # 尝试从其他字段获取释义
-                if "translation" in word_data:
-                    correct_meaning = word_data["translation"]
-                elif "meaning" in word_data:
-                    correct_meaning = word_data["meaning"]
-            
-            # 调用generate_multiple_choice获取丰富的单词信息
-            options_result = await nvidia_api.generate_multiple_choice(
-                word_data["word"],
-                correct_meaning,
-                context,
-                target_lang
-            )
-            
-            # 提取选项和正确索引
-            options = []
-            correct_index = 0
-            if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
-                for i, opt in enumerate(options_result["multiple_choice"]["options"]):
-                    options.append(opt["text"])
-                    if opt["is_correct"]:
-                        correct_index = i
-            else:
-                # 回退到旧格式
-                options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
-                correct_index = options_result.get("correct_index", 0)
-            
-            # 构建学习数据
+            # 构建基本学习数据
             learning_word = {
-                "word": options_result.get("word", word_data["word"]),
-                "ipa": options_result.get("ipa", word_data.get("ipa", "")),
-                "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
-                "options": options,
-                "correct_index": correct_index,
-                "context": context,
-                "variants_detail": options_result.get("variants_detail", []),
-                "examples": options_result.get("examples", []),
-                "memory_hint": options_result.get("memory_hint", "")
+                "word": word_data["word"],
+                "ipa": word_data.get("ipa", ""),
+                "correct_meaning": word_data.get("context_meaning", ""),
+                "options": [word_data.get("context_meaning", ""), "选项1", "选项2", "选项3"],
+                "correct_index": 0,
+                "context": "",
+                "variants_detail": [],
+                "examples": [],
+                "memory_hint": ""
             }
             learning_words.append(learning_word)
         
@@ -667,6 +622,11 @@ async def check_coverage(file_id: str):
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
+        
+        # 确保至少学习了3个单词才考虑句子翻译题
+        if current_index < 2:
+            return {"can_form_sentences": False}
+        
         learned_words = vocab[:current_index + 1]
         learned_word_set = set(word["word"].lower() for word in learned_words)
         
@@ -742,11 +702,17 @@ async def generate_sentence_quiz(file_id: str):
         if correct_translation:
             # 拆分正确翻译
             if target_lang == "zh":
-                # 中文按字符拆分
-                tokens = list(correct_translation)
+                # 中文按字符拆分，过滤标点符号
+                import re
+                # 过滤掉标点符号，只保留汉字
+                tokens = [char for char in correct_translation if re.match(r'[\u4e00-\u9fa5]', char)]
             else:
-                # 英文按空格拆分
-                tokens = correct_translation.split()
+                # 英文按空格拆分，过滤标点符号
+                import re
+                # 拆分并过滤掉标点符号
+                raw_tokens = correct_translation.split()
+                # 过滤掉包含标点符号的token
+                tokens = [token for token in raw_tokens if re.match(r'^[a-zA-Z]+$', token)]
             
             # 添加一些干扰词
             # 从其他翻译中随机选择一些单词
@@ -755,9 +721,14 @@ async def generate_sentence_quiz(file_id: str):
                     other_translation = sentence_data["translation_result"]["tokenized_translation"]
                     if other_translation != correct_translation:
                         if target_lang == "zh":
-                            other_tokens = list(other_translation)
+                            # 中文过滤标点符号
+                            import re
+                            other_tokens = [char for char in other_translation if re.match(r'[\u4e00-\u9fa5]', char)]
                         else:
-                            other_tokens = other_translation.split()
+                            # 英文过滤标点符号
+                            import re
+                            raw_other_tokens = other_translation.split()
+                            other_tokens = [token for token in raw_other_tokens if re.match(r'^[a-zA-Z]+$', token)]
                         # 随机添加1-2个干扰词
                         if other_tokens:
                             num_distractors = min(2, len(other_tokens))

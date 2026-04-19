@@ -229,7 +229,9 @@ function App() {
       // 开始学习该单元的第一个单词
       const firstWord = unitData.words[0]
       if (firstWord) {
-        setLearningData(firstWord)
+        // 获取第一个单词的详细学习数据
+        const wordDetails = await api.getWordDetails(currentFileId, firstWord.word)
+        setLearningData(wordDetails)
         setShowWordCard(false)
         setSelectedOption(null)
         setIsCorrect(null)
