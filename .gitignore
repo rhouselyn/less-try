@@ -3,3 +3,41 @@ backend/.env
 
 # Data directory
 data/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Node modules
+frontend/node_modules/
+
+# Trae internal directory
+.trae/
+
+# Test files (optional)
+test_*.py
+test
+debug.py
+
+# Build files
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
