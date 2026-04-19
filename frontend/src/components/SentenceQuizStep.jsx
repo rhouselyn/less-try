@@ -15,8 +15,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
         className="max-w-3xl mx-auto"
       >
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-[#b0aea5]" />
-          <p className="text-lg text-[#141413] font-['Lora',Georgia,serif]">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" />
+          <p className="text-lg text-slate-600">{t.loading}</p>
         </div>
       </motion.div>
     )
@@ -67,32 +67,32 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-[#141413] hover:text-[#141413] transition-colors rounded-md hover:bg-[#e8e6dc] mb-8 font-['Lora',Georgia,serif]"
+        className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 mb-8"
       >
         <ArrowLeft className="w-4 h-4" />
         {t.backToVocab}
       </motion.button>
 
-      <div className="bg-[#faf9f5] border border-[#e8e6dc] rounded-2xl p-8 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
         <div className="text-center mb-8">
           <motion.h2 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-2xl font-semibold text-[#141413] mb-4 font-['Poppins',Arial,sans-serif]"
+            className="text-2xl font-semibold text-slate-900 mb-4"
           >
             {t.sentenceTranslationQuiz}
           </motion.h2>
-          <p className="text-lg text-[#141413] mb-6 font-['Lora',Georgia,serif]">
+          <p className="text-lg text-slate-700 mb-6">
             {quizData.original_sentence}
           </p>
         </div>
 
         {/* 翻译输入区 - 下方 */}
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-[#b0aea5] uppercase tracking-wider mb-3 font-['Poppins',Arial,sans-serif]">
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
             {t.translation}
           </h3>
-          <div className="p-4 border border-[#e8e6dc] rounded-lg min-h-20 flex flex-wrap gap-2 items-center bg-white">
+          <div className="p-4 border border-slate-200 rounded-lg min-h-20 flex flex-wrap gap-2 items-center">
             <AnimatePresence>
               {selectedTokens.map((token, index) => (
                 <motion.div
@@ -101,7 +101,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   whileHover={{ scale: 1.05 }}
-                  className="flex items-center gap-1 bg-[#d97757] text-white px-3 py-1.5 rounded-full text-sm font-medium"
+                  className="flex items-center gap-1 bg-black text-white px-3 py-1.5 rounded-full text-sm font-medium"
                 >
                   <span>{token}</span>
                   <button
@@ -115,15 +115,14 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
               ))}
             </AnimatePresence>
             {selectedTokens.length === 0 && (
-              <p className="text-[#b0aea5] italic font-['Lora',Georgia,serif]">{t.selectTokensHint}</p>
+              <p className="text-slate-400 italic">{t.selectTokensHint}</p>
             )}
           </div>
         </div>
 
-        {/* Table
         {/* 选项区 - 上方 */}
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-[#b0aea5] uppercase tracking-wider mb-3 font-['Poppins',Arial,sans-serif]">
+          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
             {t.selectTokens}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -137,7 +136,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => handleTokenClick(token)}
                 disabled={isChecked}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'bg-[#e8e6dc] text-[#b0aea5] cursor-not-allowed' : 'bg-[#e8e6dc] text-[#141413] hover:bg-[#b0aea5] hover:text-white'}`}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'bg-slate-200 text-slate-500 cursor-not-allowed' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
               >
                 {token}
               </motion.button>
@@ -153,17 +152,17 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
           >
             <div className="flex items-center gap-2 mb-2">
               {isCorrect ? (
-                <CheckCircle2 className="w-5 h-5 text-[#788c5d]" />
+                <CheckCircle2 className="w-5 h-5 text-green-600" />
               ) : (
-                <XCircle className="w-5 h-5 text-[#d97757]" />
+                <XCircle className="w-5 h-5 text-red-600" />
               )}
-              <span className="font-medium font-['Poppins',Arial,sans-serif]">{isCorrect ? t.correct : t.incorrect}</span>
+              <span className="font-medium">{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
-              <p className="text-[#141413] font-['Lora',Georgia,serif]">{quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}</p>
+              <p className="text-slate-700">{quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}</p>
             )}
             {isCorrect && quizData.unit_completed && (
-              <p className="text-[#788c5d] font-medium mt-2 font-['Poppins',Arial,sans-serif]">🎉 该单元学习已完成！</p>
+              <p className="text-green-600 font-medium mt-2">🎉 该单元学习已完成！</p>
             )}
           </motion.div>
         )}
@@ -175,7 +174,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
               whileTap={{ scale: 0.99 }}
               onClick={handleCheckAnswer}
               disabled={selectedTokens.length === 0}
-              className="flex-1 py-3 bg-[#141413] text-[#faf9f5] font-medium rounded-lg hover:bg-[#b0aea5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-['Poppins',Arial,sans-serif]"
+              className="flex-1 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {t.checkAnswer}
             </motion.button>
@@ -188,7 +187,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
                   whileTap={{ scale: 0.99 }}
                   onClick={handleNextQuestion}
                   disabled={loading}
-                  className="flex-1 py-3 bg-[#141413] text-[#faf9f5] font-medium rounded-lg hover:bg-[#b0aea5] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-['Poppins',Arial,sans-serif]"
+                  className="flex-1 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <>
@@ -212,11 +211,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
                   setIsCorrect(false);
                   if (quizData.unit_completed) {
                     // 如果单元已完成，返回进度页面
-                    window.location.href = "/#progress";
-                    // 强制刷新页面以确保导航生效
-                    setTimeout(() => {
-                      window.location.reload();
-                    }, 100);
+                    window.location.href = "#progress";
                   } else {
                     handleNextQuestion();
                   }
@@ -224,9 +219,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, loading, t }) {
                 disabled={loading}
                 className={`flex-1 py-3 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 ${
                   quizData.unit_completed 
-                    ? 'bg-[#141413] text-[#faf9f5] hover:bg-[#b0aea5]' 
-                    : 'bg-[#e8e6dc] text-[#141413] hover:bg-[#b0aea5] hover:text-white'
-                } font-['Poppins',Arial,sans-serif]`}
+                    ? 'bg-black text-white hover:bg-slate-800' 
+                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                }`}
               >
                 {loading ? (
                   <>

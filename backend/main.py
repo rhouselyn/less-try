@@ -319,17 +319,6 @@ async def get_random_word(file_id: str):
             "memory_hint": options_result.get("memory_hint", "")
         }
         
-        # 构建上下文翻译
-        context_translations = []
-        if context:
-            # 查找包含该单词的句子的翻译
-            sentences = storage.load_pipeline_data(file_id)
-            for sentence_data in sentences:
-                if "sentence" in sentence_data and context == sentence_data["sentence"]:
-                    if "translation_result" in sentence_data and "tokenized_translation" in sentence_data["translation_result"]:
-                        context_translations.append(sentence_data["translation_result"]["tokenized_translation"])
-                    break
-        
         # 构建缓存数据
         cache_data = {
             "word": options_result.get("word", word),
@@ -337,7 +326,6 @@ async def get_random_word(file_id: str):
             "meaning": options_result.get("enriched_meaning", correct_meaning),
             "examples": options_result.get("examples", []),
             "context_sentences": [context] if context else [],
-            "context_translations": context_translations,
             "morphology": random_word.get("morphology", ""),
             "variants_detail": options_result.get("variants_detail", []),
             "memory_hint": options_result.get("memory_hint", ""),
@@ -456,17 +444,6 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             target_lang
         )
         
-        # 构建上下文翻译
-        context_translations = []
-        if context:
-            # 查找包含该单词的句子的翻译
-            sentences = storage.load_pipeline_data(file_id)
-            for sentence_data in sentences:
-                if "sentence" in sentence_data and context == sentence_data["sentence"]:
-                    if "translation_result" in sentence_data and "tokenized_translation" in sentence_data["translation_result"]:
-                        context_translations.append(sentence_data["translation_result"]["tokenized_translation"])
-                    break
-        
         # 构建缓存数据
         cache_data = {
             "word": options_result.get("word", word),
@@ -474,7 +451,6 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             "meaning": options_result.get("enriched_meaning", correct_meaning),
             "examples": options_result.get("examples", []),
             "context_sentences": [context] if context else [],
-            "context_translations": context_translations,
             "morphology": random_word.get("morphology", ""),
             "variants_detail": options_result.get("variants_detail", []),
             "memory_hint": options_result.get("memory_hint", ""),
@@ -522,17 +498,11 @@ async def get_word_details(file_id: str, word: str):
         sentences = storage.load_pipeline_data(file_id)
         context = ""
         context_sentences = []
-        context_translations = []
         if sentences:
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
                     if word_data["word"] in sentence_data["sentence"]:
                         context_sentences.append(sentence_data["sentence"])
-                        # 获取句子的翻译
-                        if "translation_result" in sentence_data and "tokenized_translation" in sentence_data["translation_result"]:
-                            context_translations.append(sentence_data["translation_result"]["tokenized_translation"])
-                        else:
-                            context_translations.append("")
             if not context and sentences:
                 # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
@@ -579,7 +549,6 @@ async def get_word_details(file_id: str, word: str):
             "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
             "examples": options_result.get("examples", []),
             "context_sentences": context_sentences,
-            "context_translations": context_translations,
             "context": context,
             "morphology": word_data.get("morphology", ""),
             "variants_detail": options_result.get("variants_detail", []),

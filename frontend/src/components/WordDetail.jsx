@@ -162,10 +162,10 @@ function WordDetail({ word, t, onStudyWord }) {
             <div className="space-y-2">
               {word.context_sentences.map((sentence, index) => (
                 <div key={index} className="border-l-4 border-slate-200 pl-4">
-                  <p className="text-slate-900 mb-1 font-['Lora',Georgia,serif]">{sentence}</p>
-                  {/* 显示对应的母语翻译 */}
-                  {word.context_translations && word.context_translations[index] && (
-                    <p className="text-slate-600 text-sm font-['Lora',Georgia,serif]">{word.context_translations[index]}</p>
+                  <p className="text-slate-900 mb-1">{sentence}</p>
+                  {/* 显示对应的中文翻译 */}
+                  {word.translation && (
+                    <p className="text-slate-600 text-sm">{word.translation}</p>
                   )}
                 </div>
               ))}
