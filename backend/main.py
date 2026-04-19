@@ -615,39 +615,57 @@ async def get_unit_words(file_id: str, unit_id: int):
                 elif "meaning" in word_data:
                     correct_meaning = word_data["meaning"]
             
-            # 调用generate_multiple_choice获取丰富的单词信息
-            options_result = await nvidia_api.generate_multiple_choice(
-                word_data["word"],
-                correct_meaning,
-                context,
-                target_lang
-            )
-            
-            # 提取选项和正确索引
-            options = []
-            correct_index = 0
-            if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
-                for i, opt in enumerate(options_result["multiple_choice"]["options"]):
-                    options.append(opt["text"])
-                    if opt["is_correct"]:
-                        correct_index = i
-            else:
-                # 回退到旧格式
-                options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
-                correct_index = options_result.get("correct_index", 0)
-            
-            # 构建学习数据
-            learning_word = {
-                "word": options_result.get("word", word_data["word"]),
-                "ipa": options_result.get("ipa", word_data.get("ipa", "")),
-                "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
-                "options": options,
-                "correct_index": correct_index,
-                "context": context,
-                "variants_detail": options_result.get("variants_detail", []),
-                "examples": options_result.get("examples", []),
-                "memory_hint": options_result.get("memory_hint", "")
-            }
+            try:
+                # 调用generate_multiple_choice获取丰富的单词信息
+                options_result = await nvidia_api.generate_multiple_choice(
+                    word_data["word"],
+                    correct_meaning,
+                    context,
+                    target_lang
+                )
+                
+                # 提取选项和正确索引
+                options = []
+                correct_index = 0
+                if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
+                    for i, opt in enumerate(options_result["multiple_choice"]["options"]):
+                        options.append(opt["text"])
+                        if opt["is_correct"]:
+                            correct_index = i
+                else:
+                    # 回退到旧格式
+                    options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+                    correct_index = options_result.get("correct_index", 0)
+                
+                # 构建学习数据
+                learning_word = {
+                    "word": options_result.get("word", word_data["word"]),
+                    "ipa": options_result.get("ipa", word_data.get("ipa", "")),
+                    "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
+                    "options": options,
+                    "correct_index": correct_index,
+                    "context": context,
+                    "variants_detail": options_result.get("variants_detail", []),
+                    "examples": options_result.get("examples", []),
+                    "memory_hint": options_result.get("memory_hint", "")
+                }
+            except Exception as e:
+                print(f"Error generating word data: {str(e)}")
+                # 生成默认数据，避免API限流导致整个请求失败
+                learning_word = {
+                    "word": word_data["word"],
+                    "ipa": word_data.get("ipa", ""),
+                    "correct_meaning": correct_meaning,
+                    "options": [correct_meaning, "选项1", "选项2", "选项3"],
+                    "correct_index": 0,
+                    "context": context,
+                    "variants_detail": [],
+                    "examples": [
+                        {"sentence": f"This is a sentence with {word_data['word']}.", "translation": f"这是包含{word_data['word']}的句子。"},
+                        {"sentence": f"I can use {word_data['word']} in a sentence.", "translation": f"我可以在句子中使用{word_data['word']}。"}
+                    ],
+                    "memory_hint": ""
+                }
             learning_words.append(learning_word)
         
         return {

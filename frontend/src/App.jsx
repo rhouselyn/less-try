@@ -222,10 +222,16 @@ function App() {
   }
 
   const handleUnitClick = async (unitIndex) => {
+    if (!currentFileId) {
+      alert('文件ID不存在，请重新上传文本')
+      return
+    }
     setLoading(true)
     try {
+      console.log('获取单元单词，文件ID:', currentFileId, '单元索引:', unitIndex)
       // 获取单元单词
       const unitData = await api.getUnitWords(currentFileId, unitIndex)
+      console.log('获取单元单词成功:', unitData)
       // 开始学习该单元的第一个单词
       const firstWord = unitData.words[0]
       if (firstWord) {
@@ -235,6 +241,8 @@ function App() {
         setIsCorrect(null)
         setLearningMode('word')
         setStep('learning')
+      } else {
+        alert('该单元没有单词')
       }
     } catch (error) {
       console.error('获取单元单词错误:', error)
