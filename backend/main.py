@@ -410,7 +410,13 @@ async def get_word_details(file_id: str, word: str):
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
-            return cached_word
+            # 如果是学习模式请求，需要补充 options 和 correct_index
+            if "multiple_choice" in cached_word and "options" in cached_word["multiple_choice"]:
+                # 已经包含完整数据，直接返回
+                return cached_word
+            else:
+                # 旧格式缓存，需要补充
+                pass
 
         vocab = storage.load_vocab(file_id)
         if not vocab:
@@ -460,16 +466,34 @@ async def get_word_details(file_id: str, word: str):
             target_lang
         )
         
-        # 构建响应数据
+        # 提取选项和正确索引
+        options = []
+        correct_index = 0
+        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
+            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
+                options.append(opt["text"])
+                if opt["is_correct"]:
+                    correct_index = i
+        else:
+            # 回退到旧格式
+            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+            correct_index = options_result.get("correct_index", 0)
+        
+        # 构建响应数据（同时支持单词详情和学习模式）
         response_data = {
             "word": options_result.get("word", word_data["word"]),
             "ipa": options_result.get("ipa", word_data.get("ipa", "")),
             "meaning": options_result.get("enriched_meaning", correct_meaning),
+            "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
             "examples": options_result.get("examples", []),
             "context_sentences": context_sentences,
+            "context": context,
             "morphology": word_data.get("morphology", ""),
             "variants_detail": options_result.get("variants_detail", []),
-            "memory_hint": options_result.get("memory_hint", "")
+            "memory_hint": options_result.get("memory_hint", ""),
+            "options": options,
+            "correct_index": correct_index,
+            "multiple_choice": options_result.get("multiple_choice", {})
         }
         
         # 缓存结果

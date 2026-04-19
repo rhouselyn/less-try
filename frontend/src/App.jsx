@@ -42,7 +42,10 @@ const translations = {
     question: "题干",
     correctAnswer: "正确答案",
     options: "选项",
-    context: "上下文"
+    context: "上下文",
+    studyThisWord: "学习这个单词",
+    aToZ: "A → Z",
+    zToA: "Z → A"
   },
   en: {
     title: "Lesslingo",
@@ -78,7 +81,10 @@ const translations = {
     question: "Question",
     correctAnswer: "Correct Answer",
     options: "Options",
-    context: "Context"
+    context: "Context",
+    studyThisWord: "Study This Word",
+    aToZ: "A → Z",
+    zToA: "Z → A"
   }
 };
 
@@ -342,6 +348,14 @@ function App() {
     }
   }
 
+  const handleStudyWord = (wordData) => {
+    setLearningData(wordData)
+    setShowWordCard(false)
+    setSelectedOption(null)
+    setIsCorrect(null)
+    setStep('learning')
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200 shadow-sm">
@@ -352,8 +366,8 @@ function App() {
                 <BookOpen className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-slate-900">少邻国</h1>
-                <p className="text-sm text-slate-500">Lesslingo</p>
+                <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
+                <p className="text-sm text-slate-500">{t.subtitle || 'Lesslingo'}</p>
               </div>
             </div>
             <AnimatePresence>
@@ -366,7 +380,7 @@ function App() {
                   className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  返回
+                  {t.back}
                 </motion.button>
               )}
             </AnimatePresence>
@@ -408,6 +422,7 @@ function App() {
               onStartLearning={startLearning}
               loading={loading}
               t={t}
+              onStudyWord={handleStudyWord}
             />
           )}
           
@@ -525,7 +540,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onWordClick, onStartLearning, loading, t }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onWordClick, onStartLearning, loading, t, onStudyWord }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -578,7 +593,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       {/* 句子列表 */}
       {safeSentenceTranslations.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">句子翻译</h2>
+          <h2 className="text-xl font-semibold text-slate-900 mb-4">{t.sentTranslation}</h2>
           <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
             <div className="divide-y divide-slate-200">
               {safeSentenceTranslations.map((item, index) => (
@@ -604,6 +619,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                     >
                       <SentenceDetail
                         sentenceTranslation={safeSentenceTranslations[index]}
+                        t={t}
                       />
                     </motion.div>
                   )}
@@ -618,7 +634,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold text-slate-900">
-            单词表 ({vocab.length})
+            {t.vocabList} ({vocab.length})
           </h2>
           <motion.button
             whileHover={{ scale: 1.05 }}
@@ -626,14 +642,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             onClick={onToggleSort}
             className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
           >
-            {sortOrder === 'asc' ? 'A → Z' : 'Z → A'}
+            {sortOrder === 'asc' ? t.aToZ : t.zToA}
           </motion.button>
         </div>
         <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
           <div className="grid grid-cols-3 gap-1 p-4 bg-slate-50 border-b border-slate-200">
-            <div className="font-semibold text-slate-700">单词</div>
-            <div className="font-semibold text-slate-700">意思</div>
-            <div className="font-semibold text-slate-700">词性</div>
+            <div className="font-semibold text-slate-700">{t.wordLabel}</div>
+            <div className="font-semibold text-slate-700">{t.meaningLabel}</div>
+            <div className="font-semibold text-slate-700">{t.posLabel}</div>
           </div>
           <div className="divide-y divide-slate-200">
             {vocab.map((word, index) => (
@@ -658,6 +674,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                   >
                     <WordDetail
                       word={selectedWord}
+                      t={t}
+                      onStudyWord={onStudyWord}
                     />
                   </motion.div>
                 )}
@@ -670,7 +688,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   )
 }
 
-function WordDetail({ word }) {
+function WordDetail({ word, t, onStudyWord }) {
   const [isPlaying, setIsPlaying] = useState(false)
 
   const handlePlayAudio = () => {
@@ -726,6 +744,26 @@ function WordDetail({ word }) {
         )}
       </div>
 
+      {/* 学习按钮 */}
+      {word.options && word.options.length > 0 && onStudyWord && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6"
+        >
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => onStudyWord(word)}
+            className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
+          >
+            <Brain className="w-5 h-5" />
+            {t.studyThisWord}
+          </motion.button>
+        </motion.div>
+      )}
+
       <div className="space-y-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -734,7 +772,7 @@ function WordDetail({ word }) {
         >
           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
             <Brain className="w-4 h-4" />
-            释义
+            {t.definition}
           </h3>
           <p className="text-lg text-slate-700 leading-relaxed">
             {word.meaning || word.context_meaning}
@@ -748,7 +786,7 @@ function WordDetail({ word }) {
             transition={{ delay: 0.2 }}
           >
             <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              词形变化
+              {t.variants}
             </h3>
             <div className="space-y-2">
               {word.variants_detail.map((variant, index) => (
@@ -770,7 +808,7 @@ function WordDetail({ word }) {
             transition={{ delay: 0.25 }}
           >
             <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              例句
+              {t.examples}
             </h3>
             <div className="space-y-4">
               {word.examples.map((example, index) => (
@@ -790,7 +828,7 @@ function WordDetail({ word }) {
             transition={{ delay: 0.3 }}
           >
             <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              记忆辅助
+              {t.memoryHint}
             </h3>
             <p className="text-lg text-slate-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-100">
               {word.memory_hint}
@@ -805,7 +843,7 @@ function WordDetail({ word }) {
             transition={{ delay: 0.35 }}
           >
             <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              原文例句
+              {t.originalSent}
             </h3>
             <div className="space-y-2">
               {word.context_sentences.map((sentence, index) => (
@@ -819,7 +857,7 @@ function WordDetail({ word }) {
   )
 }
 
-function SentenceDetail({ sentenceTranslation }) {
+function SentenceDetail({ sentenceTranslation, t }) {
   const sentence = sentenceTranslation?.sentence
   const translationResult = sentenceTranslation?.translation_result
   
@@ -835,7 +873,7 @@ function SentenceDetail({ sentenceTranslation }) {
           animate={{ opacity: 1 }}
           className="text-2xl font-semibold text-slate-900"
         >
-          句子详情
+          {t.sentDetail}
         </motion.h2>
       </div>
 
@@ -846,7 +884,7 @@ function SentenceDetail({ sentenceTranslation }) {
           transition={{ delay: 0.1 }}
         >
           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            原文
+            {t.original}
           </h3>
           <p className="text-lg text-slate-900 leading-relaxed">
             {sentence}
@@ -859,10 +897,10 @@ function SentenceDetail({ sentenceTranslation }) {
           transition={{ delay: 0.15 }}
         >
           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            翻译
+            {t.translation}
           </h3>
           <p className="text-lg text-slate-700 leading-relaxed">
-            {translationResult?.tokenized_translation || '翻译中...'}
+            {translationResult?.tokenized_translation || t.loading}
           </p>
         </motion.div>
 
@@ -873,10 +911,10 @@ function SentenceDetail({ sentenceTranslation }) {
         >
           <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
             <Brain className="w-4 h-4" />
-            语法详解
+            {t.grammar}
           </h3>
           <p className="text-lg text-slate-700 leading-relaxed">
-            {translationResult?.grammar_explanation || '语法分析中...'}
+            {translationResult?.grammar_explanation || t.loading}
           </p>
         </motion.div>
       </div>
@@ -884,7 +922,7 @@ function SentenceDetail({ sentenceTranslation }) {
   )
 }
 
-function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, loading }) {
+function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, loading, t }) {
   if (!learningData) {
     return (
       <motion.div
@@ -894,7 +932,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
       >
         <div className="text-center py-16">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" />
-          <p className="text-lg text-slate-600">加载中...</p>
+          <p className="text-lg text-slate-600">{t.loading}</p>
         </div>
       </motion.div>
     )
@@ -915,7 +953,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
         className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 mb-8"
       >
         <ArrowLeft className="w-4 h-4" />
-        返回单词表
+        {t.backToVocab}
       </motion.button>
 
       <AnimatePresence mode="wait">
@@ -1018,7 +1056,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
               >
                 <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Brain className="w-4 h-4" />
-                  释义
+                  {t.definition}
                 </h3>
                 <p className="text-lg text-slate-700 leading-relaxed">
                   {learningData.correct_meaning}
@@ -1032,7 +1070,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   transition={{ delay: 0.2 }}
                 >
                   <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    上下文
+                    {t.context}
                   </h3>
                   <p className="text-lg text-slate-700 leading-relaxed italic">
                     {learningData.context}
@@ -1047,7 +1085,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   transition={{ delay: 0.25 }}
                 >
                   <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    词形变化
+                    {t.variants}
                   </h3>
                   <div className="space-y-2">
                     {learningData.variants_detail.map((variant, index) => (
@@ -1069,7 +1107,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   transition={{ delay: 0.3 }}
                 >
                   <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    例句
+                    {t.examples}
                   </h3>
                   <div className="space-y-4">
                     {learningData.examples.map((example, index) => (
@@ -1089,7 +1127,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   transition={{ delay: 0.35 }}
                 >
                   <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    记忆辅助
+                    {t.memoryHint}
                   </h3>
                   <p className="text-lg text-slate-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-100">
                     {learningData.memory_hint}
@@ -1111,11 +1149,11 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  加载中...
+                  {t.loading}
                 </>
               ) : (
                 <>
-                  下一题
+                  {t.nextQuestion}
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}
