@@ -178,6 +178,9 @@ async def get_sentences(file_id: str):
         raise HTTPException(status_code=404, detail=f"Sentences not found: {str(e)}")
 
 
+# 存储预生成的单词信息
+pre_generated_words = {}
+
 @app.get("/api/learn/{file_id}/random-word")
 async def get_random_word(file_id: str):
     try:
@@ -185,8 +188,44 @@ async def get_random_word(file_id: str):
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
         
+        # 固定随机种子，确保每次顺序一致
+        random.seed(42)
+        
         # 随机选择一个单词
         random_word = random.choice(vocab)
+        word = random_word["word"]
+        
+        # 先检查缓存
+        cached_word = storage.load_word_cache(file_id, word)
+        if cached_word:
+            print(f"[DEBUG] 从缓存中获取随机单词信息: {word}")
+            # 构建学习模式响应
+            options = []
+            correct_index = 0
+            if "multiple_choice" in cached_word and "options" in cached_word["multiple_choice"]:
+                for i, opt in enumerate(cached_word["multiple_choice"]["options"]):
+                    options.append(opt["text"])
+                    if opt["is_correct"]:
+                        correct_index = i
+            else:
+                # 回退到旧格式
+                options = [cached_word.get("meaning", ""), "选项1", "选项2", "选项3"]
+                correct_index = 0
+            
+            # 启动后台任务预生成下一个单词
+            asyncio.create_task(pre_generate_next_word(file_id, vocab))
+            
+            return {
+                "word": cached_word.get("word", word),
+                "ipa": cached_word.get("ipa", ""),
+                "correct_meaning": cached_word.get("meaning", ""),
+                "options": options,
+                "correct_index": correct_index,
+                "context": "",  # 上下文在单词详情中显示
+                "variants_detail": cached_word.get("variants_detail", []),
+                "examples": cached_word.get("examples", []),
+                "memory_hint": cached_word.get("memory_hint", "")
+            }
         
         # 构建上下文
         sentences = storage.load_pipeline_data(file_id)
@@ -195,7 +234,7 @@ async def get_random_word(file_id: str):
             # 找到包含该单词的句子
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
-                    if random_word["word"] in sentence_data["sentence"]:
+                    if word in sentence_data["sentence"]:
                         context = sentence_data["sentence"]
                         break
             if not context and sentences:
@@ -214,7 +253,7 @@ async def get_random_word(file_id: str):
                 correct_meaning = random_word["meaning"]
         
         options_result = await nvidia_api.generate_multiple_choice(
-            random_word["word"],
+            word,
             correct_meaning,
             context,
             target_lang
@@ -233,8 +272,9 @@ async def get_random_word(file_id: str):
             options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
             correct_index = options_result.get("correct_index", 0)
         
-        return {
-            "word": options_result.get("word", random_word["word"]),
+        # 构建响应数据
+        response_data = {
+            "word": options_result.get("word", word),
             "ipa": options_result.get("ipa", random_word.get("ipa", "")),
             "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
             "options": options,
@@ -244,13 +284,111 @@ async def get_random_word(file_id: str):
             "examples": options_result.get("examples", []),
             "memory_hint": options_result.get("memory_hint", "")
         }
+        
+        # 构建缓存数据
+        cache_data = {
+            "word": options_result.get("word", word),
+            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
+            "meaning": options_result.get("enriched_meaning", correct_meaning),
+            "examples": options_result.get("examples", []),
+            "context_sentences": [context] if context else [],
+            "morphology": random_word.get("morphology", ""),
+            "variants_detail": options_result.get("variants_detail", []),
+            "memory_hint": options_result.get("memory_hint", ""),
+            "multiple_choice": options_result.get("multiple_choice", {})
+        }
+        
+        # 缓存结果
+        storage.save_word_cache(file_id, word, cache_data)
+        print(f"[DEBUG] 缓存随机单词信息: {word}")
+        
+        # 启动后台任务预生成下一个单词
+        asyncio.create_task(pre_generate_next_word(file_id, vocab))
+        
+        return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting random word: {str(e)}")
+
+async def pre_generate_next_word(file_id: str, vocab: List[Dict]):
+    """后台预生成下一个单词的信息"""
+    try:
+        # 固定随机种子，确保每次顺序一致
+        random.seed(42)
+        
+        # 随机选择一个单词
+        random_word = random.choice(vocab)
+        word = random_word["word"]
+        
+        # 检查是否已缓存
+        if storage.load_word_cache(file_id, word):
+            print(f"[DEBUG] 预生成单词已缓存: {word}")
+            return
+        
+        # 构建上下文
+        sentences = storage.load_pipeline_data(file_id)
+        context = ""
+        if sentences:
+            # 找到包含该单词的句子
+            for sentence_data in sentences:
+                if "sentence" in sentence_data:
+                    if word in sentence_data["sentence"]:
+                        context = sentence_data["sentence"]
+                        break
+            if not context and sentences:
+                # 如果没找到，使用第一个句子作为上下文
+                context = sentences[0].get("sentence", "")
+        
+        # 生成选项
+        target_lang = "zh"  # 默认目标语言为中文
+        correct_meaning = random_word.get("context_meaning", "")
+        
+        if not correct_meaning:
+            # 尝试从其他字段获取释义
+            if "translation" in random_word:
+                correct_meaning = random_word["translation"]
+            elif "meaning" in random_word:
+                correct_meaning = random_word["meaning"]
+        
+        print(f"[DEBUG] 后台预生成单词信息: {word}")
+        
+        # 调用generate_multiple_choice获取丰富的单词信息
+        options_result = await nvidia_api.generate_multiple_choice(
+            word,
+            correct_meaning,
+            context,
+            target_lang
+        )
+        
+        # 构建缓存数据
+        cache_data = {
+            "word": options_result.get("word", word),
+            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
+            "meaning": options_result.get("enriched_meaning", correct_meaning),
+            "examples": options_result.get("examples", []),
+            "context_sentences": [context] if context else [],
+            "morphology": random_word.get("morphology", ""),
+            "variants_detail": options_result.get("variants_detail", []),
+            "memory_hint": options_result.get("memory_hint", ""),
+            "multiple_choice": options_result.get("multiple_choice", {})
+        }
+        
+        # 缓存结果
+        storage.save_word_cache(file_id, word, cache_data)
+        print(f"[DEBUG] 缓存预生成单词信息: {word}")
+        
+    except Exception as e:
+        print(f"[ERROR] 预生成单词信息失败: {str(e)}")
 
 
 @app.get("/api/word/{file_id}/{word}")
 async def get_word_details(file_id: str, word: str):
     try:
+        # 先检查缓存
+        cached_word = storage.load_word_cache(file_id, word)
+        if cached_word:
+            print(f"[DEBUG] 从缓存中获取单词信息: {word}")
+            return cached_word
+        
         vocab = storage.load_vocab(file_id)
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
@@ -297,7 +435,8 @@ async def get_word_details(file_id: str, word: str):
             target_lang
         )
         
-        return {
+        # 构建响应数据
+        response_data = {
             "word": options_result.get("word", word_data["word"]),
             "ipa": options_result.get("ipa", word_data.get("ipa", "")),
             "meaning": options_result.get("enriched_meaning", correct_meaning),
@@ -307,6 +446,12 @@ async def get_word_details(file_id: str, word: str):
             "variants_detail": options_result.get("variants_detail", []),
             "memory_hint": options_result.get("memory_hint", "")
         }
+        
+        # 缓存结果
+        storage.save_word_cache(file_id, word, response_data)
+        print(f"[DEBUG] 缓存单词信息: {word}")
+        
+        return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting word details: {str(e)}")
 

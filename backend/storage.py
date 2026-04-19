@@ -49,3 +49,27 @@ class Storage:
         text_path = file_dir / "cleaned_text.txt"
         with open(text_path, 'w', encoding='utf-8') as f:
             f.write(text)
+
+    def save_word_cache(self, file_id: str, word: str, word_info: Dict):
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "word_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        word_file = cache_dir / f"{word.lower()}.json"
+        with open(word_file, 'w', encoding='utf-8') as f:
+            json.dump(word_info, f, ensure_ascii=False, indent=2)
+
+    def load_word_cache(self, file_id: str, word: str) -> Optional[Dict]:
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "word_cache"
+        word_file = cache_dir / f"{word.lower()}.json"
+        if word_file.exists():
+            with open(word_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None
+
+    def clear_word_cache(self, file_id: str):
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "word_cache"
+        if cache_dir.exists():
+            import shutil
+            shutil.rmtree(cache_dir)
