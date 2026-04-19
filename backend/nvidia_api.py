@@ -170,10 +170,9 @@ For each word, provide:
         }
 
         # 构建prompt
-        prompt = """
-处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
+        prompt = """处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
 
-【非常重要的说明】
+【非常非常重要的说明！！！】
 1. 首先检查输入文本的语言：
    - 如果输入文本不是 TEXT_LANG，必须先严格翻译成 TEXT_LANG，然后再进行后续处理
    - original 字段应该填入翻译后的 TEXT_LANG 文本
@@ -191,16 +190,16 @@ For each word, provide:
    - det (限定词)
 5. morphology 字段必须只包含缩写，不要有其他内容！
 6. morphology 字段里不要加任何额外的解释！
-7. 【重点！】tokenized_translation 必须是自然的、正常的翻译：
-   - 如果是英文翻译：单词之间必须用空格分隔！标点符号前也应该有空格！
-   - 如果是中文翻译：词语之间绝对不要有空格！
+7. 【超级重要！！！】tokenized_translation 必须是自然的、正常的翻译：
+   - 如果是英文翻译：单词之间必须用空格分隔！！！
+   - 如果是中文翻译：词语之间绝对不要有空格！！！
    - 保持自然的句子格式
-8. 【举例！】比如英文 "AI models generate responses." 翻译成中文时，应该是 "人工智能模型生成响应。"，绝对不能是 "人工智能 模型 生成 响应。"！
-   - 【反过来！】如果是中文翻译成英文，必须是 "Artificial intelligence models generate responses."，绝对不能是 "Artificialintelligencemodelsgenerateresponses."！
-   - 【标点符号示例！】中文 "你好，你是谁？" 翻译成英文必须是 "Hello, who are you?"，绝对不能是 "Hello,whoareyou?" 或 "Hello, whoareyou?"！
+8. 【举例！！！】比如英文 "AI models generate responses." 翻译成中文时，应该是 "人工智能模型生成响应。"，绝对不能是 "人工智能 模型 生成 响应。"！
+   - 【反过来！！！】如果是中文翻译成英文，必须是 "Artificial intelligence models generate responses."，绝对不能是 "Artificialintelligencemodelsgenerateresponses."！
+9. 【绝对不要！！！】不要修改 original 字段中的空格，不要去掉任何空格！！！
 
 按照以下结构处理文本：
-- original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）
+- original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
   - text: TEXT_LANG 原词/标记（不带标点）
   - translation: 这个词翻译成 TARGET_LANG

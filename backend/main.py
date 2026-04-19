@@ -197,26 +197,28 @@ async def get_random_word(file_id: str):
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
         
+        print(f"[DEBUG] 单词总数: {len(vocab)}, 单词列表: {[w['word'] for w in vocab]}")
+        
         # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
+        print(f"[DEBUG] 加载学习进度: current_index = {current_index}")
         
         # 使用固定随机种子生成顺序
         random.seed(42)
         # 生成打乱但固定的顺序
         shuffled_indices = list(range(len(vocab)))
         random.shuffle(shuffled_indices)
+        print(f"[DEBUG] 打乱后的索引顺序: {shuffled_indices}")
         
         # 获取当前单词
         actual_index = shuffled_indices[current_index % len(vocab)]
         random_word = vocab[actual_index]
         word = random_word["word"]
-        
-        # 更新进度
-        storage.save_learning_progress(file_id, current_index + 1)
+        print(f"[DEBUG] 当前单词索引: {current_index}, 实际索引: {actual_index}, 单词: {word}")
         
         # 先检查缓存
         cached_word = storage.load_word_cache(file_id, word)
@@ -330,6 +332,30 @@ async def get_random_word(file_id: str):
         return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting random word: {str(e)}")
+
+
+@app.post("/api/learn/{file_id}/next-word")
+async def next_word(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+        
+        # 加载学习进度
+        current_index = storage.load_learning_progress(file_id)
+        print(f"[DEBUG] 加载学习进度: current_index = {current_index}")
+        
+        # 更新进度
+        new_index = current_index + 1
+        storage.save_learning_progress(file_id, new_index)
+        print(f"[DEBUG] 保存学习进度: {new_index}")
+        
+        # 启动后台任务预生成下一个单词
+        asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
+        
+        return {"success": True, "new_index": new_index}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error moving to next word: {str(e)}")
 
 async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: int):
     """后台预生成下一个单词的信息"""

@@ -318,6 +318,9 @@ function App() {
     
     setLoading(true)
     try {
+      // 先调用 API 更新进度
+      await axios.post(`/api/learn/${currentFileId}/next-word`)
+      // 然后获取下一个单词
       const response = await axios.get(`/api/learn/${currentFileId}/random-word`)
       setLearningData(response.data)
       setShowWordCard(false)

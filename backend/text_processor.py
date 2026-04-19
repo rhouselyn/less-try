@@ -57,7 +57,7 @@ class TextProcessor:
         return chunks
 
     def split_sentences(self, text: str) -> List[str]:
-        """句子分割，支持中英文标点"""
+        """句子分割，支持中英文标点，保留原始空格"""
         sentence_endings = {'.', '!', '?', '。', '！', '？'}
         sentences = []
         current_sentence = ""
@@ -66,11 +66,12 @@ class TextProcessor:
             current_sentence += char
             if char in sentence_endings:
                 if current_sentence.strip():
-                    sentences.append(current_sentence.strip())
+                    # 保留原始句子，只去掉首尾可能的多余空白，但保留句子内部的空格
+                    sentences.append(current_sentence)
                 current_sentence = ""
         
         if current_sentence.strip():
-            sentences.append(current_sentence.strip())
+            sentences.append(current_sentence)
         
         # 最终过滤：确保没有空句子
         sentences = [s for s in sentences if s.strip()]
