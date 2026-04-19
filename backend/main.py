@@ -783,7 +783,6 @@ async def generate_sentence_quiz(file_id: str):
         
         # 获取翻译
         correct_translation = ""
-        correct_tokens = []
         if "translation_result" in selected_sentence and "translation" in selected_sentence["translation_result"]:
             # 获取翻译token并过滤掉标点符号
             translation_tokens = []
@@ -795,9 +794,17 @@ async def generate_sentence_quiz(file_id: str):
                     cleaned_text = re.sub(r'[^\w\s]', '', text)
                     if cleaned_text:
                         translation_tokens.append(cleaned_text)
-                        # 直接添加到correct_tokens，确保是完整的词语
-                        correct_tokens.append(cleaned_text)
             correct_translation = " ".join(translation_tokens)
+        
+        # 生成正确答案的token列表（不含标点）
+        correct_tokens = []
+        if correct_translation:
+            if target_lang == "zh":
+                # 中文按字符拆分
+                correct_tokens = list(correct_translation.replace(" ", ""))
+            else:
+                # 英文按空格拆分
+                correct_tokens = correct_translation.split()
         
         # 生成干扰词（冗余词）
         distractors = []
