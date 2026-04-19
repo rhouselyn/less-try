@@ -537,6 +537,246 @@ async def get_word_details(file_id: str, word: str):
         raise HTTPException(status_code=500, detail=f"Error getting word details: {str(e)}")
 
 
+@app.get("/api/learn/{file_id}/progress")
+async def get_learning_progress(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+        
+        # 实现10个单词一组的分组
+        group_size = 10
+        units = []
+        for i in range(0, len(vocab), group_size):
+            unit_words = vocab[i:i+group_size]
+            units.append({
+                "word_count": len(unit_words),
+                "completed": False
+            })
+        
+        # 加载学习进度
+        current_index = storage.load_learning_progress(file_id)
+        current_unit = current_index // group_size
+        
+        # 标记已完成的单元
+        for i in range(current_unit):
+            if i < len(units):
+                units[i]["completed"] = True
+        
+        return {
+            "units": units,
+            "current_unit": current_unit
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting learning progress: {str(e)}")
+
+
+@app.get("/api/learn/{file_id}/unit/{unit_id}")
+async def get_unit_words(file_id: str, unit_id: int):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+        
+        # 实现10个单词一组的分组
+        group_size = 10
+        start_index = unit_id * group_size
+        end_index = start_index + group_size
+        unit_words = vocab[start_index:end_index]
+        
+        if not unit_words:
+            raise HTTPException(status_code=404, detail="Unit not found")
+        
+        # 为每个单词生成学习数据
+        language_settings = storage.load_language_settings(file_id)
+        target_lang = language_settings["target_lang"]
+        
+        learning_words = []
+        for word_data in unit_words:
+            # 构建上下文
+            sentences = storage.load_pipeline_data(file_id)
+            context = ""
+            if sentences:
+                for sentence_data in sentences:
+                    if "sentence" in sentence_data:
+                        if word_data["word"] in sentence_data["sentence"]:
+                            context = sentence_data["sentence"]
+                            break
+                if not context and sentences:
+                    # 如果没找到，使用第一个句子作为上下文
+                    context = sentences[0].get("sentence", "")
+            
+            correct_meaning = word_data.get("context_meaning", "")
+            
+            if not correct_meaning:
+                # 尝试从其他字段获取释义
+                if "translation" in word_data:
+                    correct_meaning = word_data["translation"]
+                elif "meaning" in word_data:
+                    correct_meaning = word_data["meaning"]
+            
+            # 调用generate_multiple_choice获取丰富的单词信息
+            options_result = await nvidia_api.generate_multiple_choice(
+                word_data["word"],
+                correct_meaning,
+                context,
+                target_lang
+            )
+            
+            # 提取选项和正确索引
+            options = []
+            correct_index = 0
+            if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
+                for i, opt in enumerate(options_result["multiple_choice"]["options"]):
+                    options.append(opt["text"])
+                    if opt["is_correct"]:
+                        correct_index = i
+            else:
+                # 回退到旧格式
+                options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+                correct_index = options_result.get("correct_index", 0)
+            
+            # 构建学习数据
+            learning_word = {
+                "word": options_result.get("word", word_data["word"]),
+                "ipa": options_result.get("ipa", word_data.get("ipa", "")),
+                "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
+                "options": options,
+                "correct_index": correct_index,
+                "context": context,
+                "variants_detail": options_result.get("variants_detail", []),
+                "examples": options_result.get("examples", []),
+                "memory_hint": options_result.get("memory_hint", "")
+            }
+            learning_words.append(learning_word)
+        
+        return {
+            "unit_id": unit_id,
+            "words": learning_words
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting unit words: {str(e)}")
+
+
+@app.get("/api/learn/{file_id}/check-coverage")
+async def check_coverage(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+        
+        # 加载学习进度
+        current_index = storage.load_learning_progress(file_id)
+        learned_words = vocab[:current_index + 1]
+        learned_word_set = set(word["word"].lower() for word in learned_words)
+        
+        # 加载句子
+        sentences = storage.load_pipeline_data(file_id)
+        if not sentences:
+            return {"can_form_sentences": False}
+        
+        # 检查是否有句子可以用已学单词组成
+        can_form = False
+        for sentence_data in sentences:
+            if "sentence" in sentence_data:
+                sentence = sentence_data["sentence"]
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                # 检查是否所有单词都在已学单词中
+                if words_in_sentence.issubset(learned_word_set):
+                    can_form = True
+                    break
+        
+        return {"can_form_sentences": can_form}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error checking coverage: {str(e)}")
+
+
+@app.get("/api/learn/{file_id}/sentence-quiz")
+async def generate_sentence_quiz(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+        
+        # 加载语言设置
+        language_settings = storage.load_language_settings(file_id)
+        target_lang = language_settings["target_lang"]
+        
+        # 加载学习进度
+        current_index = storage.load_learning_progress(file_id)
+        learned_words = vocab[:current_index + 1]
+        learned_word_set = set(word["word"].lower() for word in learned_words)
+        
+        # 加载句子
+        sentences = storage.load_pipeline_data(file_id)
+        if not sentences:
+            raise HTTPException(status_code=404, detail="Sentences not found")
+        
+        # 找到可以用已学单词组成的句子
+        eligible_sentences = []
+        for sentence_data in sentences:
+            if "sentence" in sentence_data:
+                sentence = sentence_data["sentence"]
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                # 检查是否所有单词都在已学单词中
+                if words_in_sentence.issubset(learned_word_set):
+                    eligible_sentences.append(sentence_data)
+        
+        if not eligible_sentences:
+            raise HTTPException(status_code=404, detail="No eligible sentences found")
+        
+        # 随机选择一个句子
+        import random
+        selected_sentence = random.choice(eligible_sentences)
+        original_sentence = selected_sentence["sentence"]
+        
+        # 获取翻译
+        correct_translation = ""
+        if "translation_result" in selected_sentence and "tokenized_translation" in selected_sentence["translation_result"]:
+            correct_translation = selected_sentence["translation_result"]["tokenized_translation"]
+        
+        # 生成tokens（包括正确翻译的单词和一些干扰词）
+        tokens = []
+        if correct_translation:
+            # 拆分正确翻译
+            if target_lang == "zh":
+                # 中文按字符拆分
+                tokens = list(correct_translation)
+            else:
+                # 英文按空格拆分
+                tokens = correct_translation.split()
+            
+            # 添加一些干扰词
+            # 从其他翻译中随机选择一些单词
+            for sentence_data in sentences:
+                if "translation_result" in sentence_data and "tokenized_translation" in sentence_data["translation_result"]:
+                    other_translation = sentence_data["translation_result"]["tokenized_translation"]
+                    if other_translation != correct_translation:
+                        if target_lang == "zh":
+                            other_tokens = list(other_translation)
+                        else:
+                            other_tokens = other_translation.split()
+                        # 随机添加1-2个干扰词
+                        if other_tokens:
+                            num_distractors = min(2, len(other_tokens))
+                            distractors = random.sample(other_tokens, num_distractors)
+                            tokens.extend(distractors)
+                            break
+            
+            # 打乱tokens
+            random.shuffle(tokens)
+        
+        return {
+            "original_sentence": original_sentence,
+            "correct_translation": correct_translation,
+            "tokens": tokens
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error generating sentence quiz: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, timeout_keep_alive=600)
