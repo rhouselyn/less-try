@@ -1,3 +1,7 @@
+/* IPA Font Support */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+IPA&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,6 +17,12 @@ body {
   background: #ffffff;
   color: #1e293b;
   line-height: 1.6;
+}
+
+/* IPA Font Class */
+.ipa-font {
+  font-family: 'Noto Sans IPA', 'Doulos SIL', 'Charis SIL', 'Noto Sans', system-ui, sans-serif;
+  font-feature-settings: "tnum" 0;
 }
 
 @layer utilities {

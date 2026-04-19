@@ -1,7 +1,7 @@
 import os
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 
 class Storage:
@@ -49,3 +49,67 @@ class Storage:
         text_path = file_dir / "cleaned_text.txt"
         with open(text_path, 'w', encoding='utf-8') as f:
             f.write(text)
+
+    def save_word_cache(self, file_id: str, word: str, word_info: Dict):
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "word_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        word_file = cache_dir / f"{word.lower()}.json"
+        with open(word_file, 'w', encoding='utf-8') as f:
+            json.dump(word_info, f, ensure_ascii=False, indent=2)
+
+    def load_word_cache(self, file_id: str, word: str) -> Optional[Dict]:
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "word_cache"
+        word_file = cache_dir / f"{word.lower()}.json"
+        if word_file.exists():
+            with open(word_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None
+
+    def clear_word_cache(self, file_id: str):
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "word_cache"
+        if cache_dir.exists():
+            import shutil
+            shutil.rmtree(cache_dir)
+    
+    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str):
+        """保存语言设置"""
+        file_dir = self.get_file_dir(file_id)
+        settings_path = file_dir / "language_settings.json"
+        with open(settings_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "source_lang": source_lang,
+                "target_lang": target_lang
+            }, f, ensure_ascii=False, indent=2)
+    
+    def load_language_settings(self, file_id: str) -> Dict[str, str]:
+        """加载语言设置"""
+        file_dir = self.get_file_dir(file_id)
+        settings_path = file_dir / "language_settings.json"
+        if settings_path.exists():
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        # 默认返回中文和英文
+        return {
+            "source_lang": "en",
+            "target_lang": "zh"
+        }
+    
+    def save_learning_progress(self, file_id: str, current_index: int):
+        """保存学习进度"""
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "learning_progress.json"
+        with open(progress_path, 'w', encoding='utf-8') as f:
+            json.dump({"current_index": current_index}, f, ensure_ascii=False, indent=2)
+    
+    def load_learning_progress(self, file_id: str) -> int:
+        """加载学习进度"""
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "learning_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("current_index", 0)
+        return 0
