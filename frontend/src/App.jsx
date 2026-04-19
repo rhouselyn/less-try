@@ -222,25 +222,20 @@ function App() {
   }
 
   const handleUnitClick = async (unitIndex) => {
-    if (!currentFileId) {
-      alert('文件ID不存在，请重新上传文本')
-      return
-    }
     setLoading(true)
     try {
-      console.log('获取单元单词，文件ID:', currentFileId, '单元索引:', unitIndex)
       // 获取单元单词
       const unitData = await api.getUnitWords(currentFileId, unitIndex)
-      console.log('获取单元单词成功:', unitData)
       // 开始学习该单元的第一个单词
-      // 调用getRandomWord获取第一个单词的学习数据
-      const response = await api.getRandomWord(currentFileId)
-      setLearningData(response)
-      setShowWordCard(false)
-      setSelectedOption(null)
-      setIsCorrect(null)
-      setLearningMode('word')
-      setStep('learning')
+      const firstWord = unitData.words[0]
+      if (firstWord) {
+        setLearningData(firstWord)
+        setShowWordCard(false)
+        setSelectedOption(null)
+        setIsCorrect(null)
+        setLearningMode('word')
+        setStep('learning')
+      }
     } catch (error) {
       console.error('获取单元单词错误:', error)
       alert('无法获取单元单词，请重试')
