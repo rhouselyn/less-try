@@ -8,7 +8,6 @@ import { translations } from './utils/translations'
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
-import ProgressStep from './components/ProgressStep'
 import SentenceQuizStep from './components/SentenceQuizStep'
 
 function App() {
@@ -31,10 +30,7 @@ function App() {
   const [showWordCard, setShowWordCard] = useState(false)
   const [selectedOption, setSelectedOption] = useState(null)
   const [isCorrect, setIsCorrect] = useState(null)
-  const [units, setUnits] = useState([])
-  const [currentUnit, setCurrentUnit] = useState(0)
   const [quizData, setQuizData] = useState(null)
-  const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -208,37 +204,16 @@ function App() {
     
     setLoading(true)
     try {
-      // 获取学习进度和分组信息
-      const progressData = await api.getLearningProgress(currentFileId)
-      setUnits(progressData.units)
-      setCurrentUnit(progressData.current_unit)
-      setStep('progress')
+      // 直接获取第一个单词开始学习（保持原来的方式）
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setStep('learning')
     } catch (error) {
       console.error('开始学习错误:', error)
       alert('无法开始学习，请重试')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleUnitClick = async (unitIndex) => {
-    setLoading(true)
-    try {
-      // 获取单元单词
-      const unitData = await api.getUnitWords(currentFileId, unitIndex)
-      // 开始学习该单元的第一个单词
-      const firstWord = unitData.words[0]
-      if (firstWord) {
-        setLearningData(firstWord)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-        setLearningMode('word')
-        setStep('learning')
-      }
-    } catch (error) {
-      console.error('获取单元单词错误:', error)
-      alert('无法获取单元单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -261,22 +236,12 @@ function App() {
       // 先调用 API 更新进度
       await api.nextWord(currentFileId)
       
-      // 检查是否需要插入句子翻译题
-      const coverageData = await api.checkCoverage(currentFileId)
-      if (coverageData.can_form_sentences) {
-        // 生成句子翻译题
-        const quizResponse = await api.generateSentenceQuiz(currentFileId)
-        setQuizData(quizResponse)
-        setLearningMode('sentence')
-        setStep('sentence-quiz')
-      } else {
-        // 继续单词学习
-        const response = await api.getRandomWord(currentFileId)
-        setLearningData(response)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-      }
+      // 获取下一个单词
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
     } catch (error) {
       console.error('获取下一个单词错误:', error)
       alert('无法获取下一个单词，请重试')
@@ -310,32 +275,7 @@ function App() {
     setStep('learning')
   }
 
-  const handleNextSentenceQuiz = async () => {
-    setLoading(true)
-    try {
-      // 检查是否还有可组成的句子
-      const coverageData = await api.checkCoverage(currentFileId)
-      if (coverageData.can_form_sentences) {
-        // 生成下一个句子翻译题
-        const quizResponse = await api.generateSentenceQuiz(currentFileId)
-        setQuizData(quizResponse)
-      } else {
-        // 回到单词学习
-        const response = await api.getRandomWord(currentFileId)
-        setLearningData(response)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-        setLearningMode('word')
-        setStep('learning')
-      }
-    } catch (error) {
-      console.error('获取下一个句子翻译题错误:', error)
-      alert('无法获取下一个句子翻译题，请重试')
-    } finally {
-      setLoading(false)
-    }
-  }
+
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -407,18 +347,6 @@ function App() {
             />
           )}
           
-          {step === 'progress' && (
-            <ProgressStep
-              key="progress"
-              units={units}
-              currentUnit={currentUnit}
-              onUnitClick={handleUnitClick}
-              onBack={() => setStep('dictionary')}
-              loading={loading}
-              t={t}
-            />
-          )}
-          
           {step === 'learning' && (
             <LearningStep
               key="learning"
@@ -428,18 +356,7 @@ function App() {
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
               onNextWord={getNextWord}
-              onBack={() => setStep('progress')}
-              loading={loading}
-              t={t}
-            />
-          )}
-          
-          {step === 'sentence-quiz' && (
-            <SentenceQuizStep
-              key="sentence-quiz"
-              quizData={quizData}
-              onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('learning')}
+              onBack={() => setStep('dictionary')}
               loading={loading}
               t={t}
             />
