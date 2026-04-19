@@ -500,23 +500,30 @@ async def get_next_module(file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/learning/test/{file_id}")
-async def test_learning_engine(file_id: str):
+@app.post("/api/learning/generate-quiz/{file_id}")
+async def generate_quiz(file_id: str, request: dict):
     try:
-        # Test the learning engine
+        # Get parameters
+        quiz_type = request.get("quiz_type", "multiple_choice")
+        module_number = request.get("module_number")
+        
+        # Get user progress
         progress = learning_engine.get_user_progress(file_id)
-        coverage = learning_engine.check_coverage(file_id, progress)
+        
+        # Get module words
         module = learning_engine.get_next_module(file_id, progress)
+        
+        # Generate quiz
+        questions = learning_engine.generate_quiz(file_id, module["module"], quiz_type)
         
         return {
             "status": "success",
             "file_id": file_id,
-            "progress": progress,
-            "coverage": coverage,
-            "module": module
+            "quiz_type": quiz_type,
+            "questions": questions
         }
     except Exception as e:
-        print(f"[ERROR] Test error: {str(e)}")
+        print(f"[ERROR] Quiz generation error: {str(e)}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

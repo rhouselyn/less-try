@@ -143,29 +143,31 @@ class LearningEngine:
         
         return dynamic_sentences
     
-    async def generate_quiz(self, file_id: str, words: List[Dict[str, Any]], quiz_type: str = "multiple_choice") -> List[Dict[str, Any]]:
+    def generate_quiz(self, file_id: str, words: List[Dict[str, Any]], quiz_type: str = "multiple_choice") -> List[Dict[str, Any]]:
         """
         Generate quiz questions for the given words
         """
-        # Return static questions for testing
-        return [
-            {
-                "id": "1",
-                "question": "What does 'Hello' mean?",
-                "word": "Hello",
-                "correct_answer": "你好",
-                "options": ["你好", "再见", "谢谢", "对不起"],
-                "context": "Hello world"
-            },
-            {
-                "id": "2",
-                "question": "What does 'world' mean?",
-                "word": "world",
-                "correct_answer": "世界",
-                "options": ["世界", "国家", "城市", "村庄"],
-                "context": "Hello world"
-            }
-        ]
+        from nvidia_api import NvidiaAPI
+        nvidia_api = NvidiaAPI()
+        
+        # Load context from sentences
+        sentences_data = self.storage.load_pipeline_data(file_id)
+        context = " ".join([s.get("sentence", "") for s in sentences_data if "sentence" in s])
+        
+        # Get language information
+        metadata = self.storage.load_file_metadata(file_id)
+        source_lang = metadata.get("source_language", "en")
+        target_lang = metadata.get("target_language", "zh")
+        
+        # Generate quiz based on type
+        if quiz_type == "multiple_choice":
+            questions = nvidia_api.generate_multiple_choice(words, context, source_lang, target_lang)
+        elif quiz_type == "matching":
+            questions = nvidia_api.generate_matching(words, context, source_lang, target_lang)
+        else:
+            questions = []
+        
+        return questions
     
     def update_progress(self, file_id: str, word: str, is_correct: bool) -> Dict[str, Any]:
         """
