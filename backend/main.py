@@ -1,16 +1,18 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 import os
 import json
 import random
 import asyncio
+import datetime
 from dotenv import load_dotenv
 from pathlib import Path
 
 from nvidia_api import NvidiaAPI
 from text_processor import TextProcessor
 from storage import Storage
+from learning_engine import LearningEngine
 
 load_dotenv()
 
@@ -27,6 +29,7 @@ app.add_middleware(
 nvidia_api = NvidiaAPI()
 text_processor = TextProcessor()
 storage = Storage()
+learning_engine = LearningEngine(storage)
 
 # 存储处理状态
 processing_status = {}
@@ -107,6 +110,9 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 }
                 print(f"[DEBUG] 更新状态: 进度 {progress}%, 词表 {len(all_vocab)} 个单词, 已处理 {len(sentence_translations)} 个句子")
         
+        # 10-word grouping logic
+        word_groups = text_processor.chunk_words(all_vocab, chunk_size=10)
+        
         # 保存新的结构：每个句子单独一条数据
         storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
@@ -115,9 +121,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             "status": "completed",
             "progress": 100,
             "vocab": all_vocab,
+            "word_groups": word_groups,
             "sentence_translations": sentence_translations
         }
-        print(f"[DEBUG] 所有处理完成！")
+        print(f"[DEBUG] 所有处理完成！生成了 {len(word_groups)} 组单词")
     except Exception as e:
         print(f"[ERROR] 处理出错: {str(e)}")
         import traceback
@@ -164,7 +171,9 @@ async def get_status(file_id: str):
 async def get_vocab(file_id: str):
     try:
         vocab = storage.load_vocab(file_id)
-        return {"vocab": vocab}
+        # Generate word groups
+        word_groups = text_processor.chunk_words(vocab, chunk_size=10)
+        return {"vocab": vocab, "word_groups": word_groups}
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Vocab not found: {str(e)}")
 
@@ -176,6 +185,419 @@ async def get_sentences(file_id: str):
         return {"sentences": sentences}
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Sentences not found: {str(e)}")
+
+
+@app.post("/api/upload-file")
+async def upload_file(
+    file: UploadFile = File(...),
+    source_language: str = Form(...),
+    target_language: str = Form(...),
+    background_tasks: BackgroundTasks = BackgroundTasks()
+):
+    try:
+        # Generate file ID
+        import datetime
+        now = datetime.datetime.now()
+        file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
+        
+        # Save uploaded file
+        uploads_dir = storage.get_uploads_dir()
+        file_path = uploads_dir / f"{file_id}_{file.filename}"
+        
+        with open(file_path, "wb") as buffer:
+            content = await file.read()
+            buffer.write(content)
+        
+        # Read file content
+        text = content.decode("utf-8")
+        
+        # Save file metadata
+        metadata = {
+            "file_id": file_id,
+            "filename": file.filename,
+            "source_language": source_language,
+            "target_language": target_language,
+            "upload_time": now.isoformat(),
+            "file_size": len(content)
+        }
+        storage.save_file_metadata(file_id, metadata)
+        
+        # Process text in background
+        background_tasks.add_task(process_text_background, file_id, text, source_language, target_language)
+        
+        return {
+            "file_id": file_id,
+            "status": "processing",
+            "filename": file.filename
+        }
+    except Exception as e:
+        print(f"[ERROR] File upload error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/files")
+async def list_files():
+    try:
+        files = storage.list_files()
+        file_list = []
+        for file_id in files:
+            metadata = storage.load_file_metadata(file_id)
+            file_list.append({
+                "file_id": file_id,
+                "filename": metadata.get("filename", "Unknown"),
+                "source_language": metadata.get("source_language", "Unknown"),
+                "target_language": metadata.get("target_language", "Unknown"),
+                "upload_time": metadata.get("upload_time", "Unknown")
+            })
+        return {"files": file_list}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/files/{file_id}")
+async def delete_file(file_id: str):
+    try:
+        storage.delete_file(file_id)
+        if file_id in processing_status:
+            del processing_status[file_id]
+        return {"status": "success", "file_id": file_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/enrich-vocab/{file_id}")
+async def enrich_vocab(file_id: str, request: dict):
+    try:
+        # Load existing vocabulary
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocabulary not found")
+        
+        # Get context from sentences
+        sentences = storage.load_pipeline_data(file_id)
+        context = " ".join([s["sentence"] for s in sentences if "sentence" in s])
+        
+        # Extract words from vocab
+        words = [entry["word"] for entry in vocab]
+        
+        # Get language information
+        metadata = storage.load_file_metadata(file_id)
+        source_lang = metadata.get("source_language", "en")
+        target_lang = metadata.get("target_language", "zh")
+        
+        # Enrich vocabulary using generate_dictionary tool
+        enriched_words = await nvidia_api.generate_dictionary(words, context, source_lang, target_lang)
+        
+        # Update vocab with enriched data
+        enriched_vocab = []
+        word_map = {entry["word"].lower(): entry for entry in enriched_words}
+        
+        for entry in vocab:
+            word_lower = entry["word"].lower()
+            if word_lower in word_map:
+                # Update with enriched data
+                enriched_entry = word_map[word_lower]
+                enriched_entry.update(entry)
+                enriched_vocab.append(enriched_entry)
+            else:
+                enriched_vocab.append(entry)
+        
+        # Save enriched vocabulary
+        storage.save_vocab(file_id, enriched_vocab)
+        
+        # Generate word groups
+        word_groups = text_processor.chunk_words(enriched_vocab, chunk_size=10)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "vocab": enriched_vocab,
+            "word_groups": word_groups
+        }
+    except Exception as e:
+        print(f"[ERROR] Vocab enrichment error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/generate-multiple-choice/{file_id}")
+async def generate_multiple_choice(file_id: str, request: dict):
+    try:
+        # Load vocabulary
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocabulary not found")
+        
+        # Get context from sentences
+        sentences = storage.load_pipeline_data(file_id)
+        context = " ".join([s["sentence"] for s in sentences if "sentence" in s])
+        
+        # Get language information
+        metadata = storage.load_file_metadata(file_id)
+        source_lang = metadata.get("source_language", "en")
+        target_lang = metadata.get("target_language", "zh")
+        
+        # Generate multiple choice questions
+        questions = await nvidia_api.generate_multiple_choice(vocab, context, source_lang, target_lang)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "questions": questions
+        }
+    except Exception as e:
+        print(f"[ERROR] Multiple choice generation error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/generate-matching/{file_id}")
+async def generate_matching(file_id: str, request: dict):
+    try:
+        # Load vocabulary
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocabulary not found")
+        
+        # Get context from sentences
+        sentences = storage.load_pipeline_data(file_id)
+        context = " ".join([s["sentence"] for s in sentences if "sentence" in s])
+        
+        # Get language information
+        metadata = storage.load_file_metadata(file_id)
+        source_lang = metadata.get("source_language", "en")
+        target_lang = metadata.get("target_language", "zh")
+        
+        # Generate matching questions
+        questions = await nvidia_api.generate_matching(vocab, context, source_lang, target_lang)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "questions": questions
+        }
+    except Exception as e:
+        print(f"[ERROR] Matching generation error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/create-snapshot/{file_id}")
+async def create_snapshot(file_id: str, request: dict):
+    try:
+        # Load vocabulary
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocabulary not found")
+        
+        # Get context from sentences
+        sentences = storage.load_pipeline_data(file_id)
+        context = " ".join([s["sentence"] for s in sentences if "sentence" in s])
+        
+        # Get language information
+        metadata = storage.load_file_metadata(file_id)
+        source_lang = metadata.get("source_language", "en")
+        target_lang = metadata.get("target_language", "zh")
+        
+        # Generate both types of questions
+        multiple_choice = await nvidia_api.generate_multiple_choice(vocab, context, source_lang, target_lang)
+        matching = await nvidia_api.generate_matching(vocab, context, source_lang, target_lang)
+        
+        # Create snapshot
+        snapshot = {
+            "vocab": vocab,
+            "multiple_choice": multiple_choice,
+            "matching": matching,
+            "created_at": datetime.datetime.now().isoformat(),
+            "source_language": source_lang,
+            "target_language": target_lang
+        }
+        
+        # Save snapshot
+        storage.save_snapshot(file_id, snapshot)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "snapshot": snapshot
+        }
+    except Exception as e:
+        print(f"[ERROR] Snapshot creation error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/snapshot/{file_id}")
+async def get_snapshot(file_id: str):
+    try:
+        # Load snapshot
+        snapshot = storage.load_snapshot(file_id)
+        if not snapshot:
+            raise HTTPException(status_code=404, detail="Snapshot not found")
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "snapshot": snapshot
+        }
+    except Exception as e:
+        print(f"[ERROR] Snapshot loading error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# Learning Engine Endpoints
+@app.get("/api/learning/coverage/{file_id}")
+async def get_coverage(file_id: str):
+    try:
+        # Get user progress
+        progress = learning_engine.get_user_progress(file_id)
+        
+        # Check coverage
+        coverage = learning_engine.check_coverage(file_id, progress)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "coverage": coverage
+        }
+    except Exception as e:
+        print(f"[ERROR] Coverage check error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/learning/next-module/{file_id}")
+async def get_next_module(file_id: str):
+    try:
+        # Get user progress
+        progress = learning_engine.get_user_progress(file_id)
+        
+        # Get next module
+        module = learning_engine.get_next_module(file_id, progress)
+        
+        # Generate dynamic sentences for the module
+        sentences = learning_engine.generate_dynamic_sentences(file_id, module["module"])
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "module": module,
+            "sentences": sentences
+        }
+    except Exception as e:
+        print(f"[ERROR] Next module error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/learning/generate-quiz/{file_id}")
+async def generate_quiz(file_id: str, request: dict):
+    try:
+        # Get parameters
+        quiz_type = request.get("quiz_type", "multiple_choice")
+        module_number = request.get("module_number")
+        
+        # Get user progress
+        progress = learning_engine.get_user_progress(file_id)
+        
+        # Get module words
+        module = learning_engine.get_next_module(file_id, progress)
+        
+        # Generate quiz
+        questions = learning_engine.generate_quiz(file_id, module["module"], quiz_type)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "quiz_type": quiz_type,
+            "questions": questions
+        }
+    except Exception as e:
+        print(f"[ERROR] Quiz generation error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/learning/update-progress/{file_id}")
+async def update_progress(file_id: str, request: dict):
+    try:
+        # Get parameters
+        word = request.get("word")
+        is_correct = request.get("is_correct", False)
+        
+        if not word:
+            raise HTTPException(status_code=400, detail="Word is required")
+        
+        # Update progress
+        updated_progress = learning_engine.update_progress(file_id, word, is_correct)
+        
+        # Get coverage after update
+        coverage = learning_engine.check_coverage(file_id, updated_progress)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "word": word,
+            "is_correct": is_correct,
+            "progress": updated_progress,
+            "coverage": coverage
+        }
+    except Exception as e:
+        print(f"[ERROR] Progress update error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/learning/get-progress/{file_id}")
+async def get_progress(file_id: str):
+    try:
+        # Get user progress
+        progress = learning_engine.get_user_progress(file_id)
+        
+        # Get coverage
+        coverage = learning_engine.check_coverage(file_id, progress)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "progress": progress,
+            "coverage": coverage
+        }
+    except Exception as e:
+        print(f"[ERROR] Get progress error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/learning/reset-progress/{file_id}")
+async def reset_progress(file_id: str):
+    try:
+        # Reset progress
+        reset_progress = learning_engine.reset_progress(file_id)
+        
+        return {
+            "status": "success",
+            "file_id": file_id,
+            "progress": reset_progress
+        }
+    except Exception as e:
+        print(f"[ERROR] Reset progress error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

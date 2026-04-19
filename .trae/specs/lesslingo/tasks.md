@@ -1,6 +1,6 @@
 # Lesslingo - The Implementation Plan (Decomposed and Prioritized Task List)
 
-## [ ] Task 1: Project Setup and Basic Infrastructure
+## [x] Task 1: Project Setup and Basic Infrastructure
 - **Priority**: P0
 - **Depends On**: None
 - **Description**:
@@ -10,12 +10,12 @@
   - Establish basic API endpoints
 - **Acceptance Criteria Addressed**: AC-1, AC-7
 - **Test Requirements**:
-  - `programmatic` TR-1.1: Verify backend server starts successfully
-  - `programmatic` TR-1.2: Verify frontend builds without errors
-  - `human-judgment` TR-1.3: Evaluate project structure organization
+  - `programmatic` TR-1.1: Verify backend server starts successfully ✅
+  - `programmatic` TR-1.2: Verify frontend builds without errors ✅
+  - `human-judgment` TR-1.3: Evaluate project structure organization ✅
 - **Notes**: Focus on minimal viable setup with basic folder structure
 
-## [ ] Task 2: Local Storage System Implementation
+## [x] Task 2: Local Storage System Implementation
 - **Priority**: P0
 - **Depends On**: Task 1
 - **Description**:
@@ -25,12 +25,12 @@
   - Implement file upload handling
 - **Acceptance Criteria Addressed**: AC-1
 - **Test Requirements**:
-  - `programmatic` TR-2.1: Verify directory structure is created correctly
-  - `programmatic` TR-2.2: Verify JSON files are written and read properly
-  - `programmatic` TR-2.3: Test file upload functionality
+  - `programmatic` TR-2.1: Verify directory structure is created correctly ✅
+  - `programmatic` TR-2.2: Verify JSON files are written and read properly ✅
+  - `programmatic` TR-2.3: Test file upload functionality ✅
 - **Notes**: Follow the specified directory structure from the requirements
 
-## [ ] Task 3: Core Text Processing Pipeline
+## [x] Task 3: Core Text Processing Pipeline
 - **Priority**: P0
 - **Depends On**: Task 2
 - **Description**:
@@ -41,27 +41,27 @@
   - Add 10-word grouping logic
 - **Acceptance Criteria Addressed**: AC-3
 - **Test Requirements**:
-  - `programmatic` TR-3.1: Verify text is correctly segmented into sentences
-  - `programmatic` TR-3.2: Verify vocabulary extraction and grouping
-  - `programmatic` TR-3.3: Test translation accuracy
+  - `programmatic` TR-3.1: Verify text is correctly segmented into sentences ✅
+  - `programmatic` TR-3.2: Verify vocabulary extraction and grouping ✅
+  - `programmatic` TR-3.3: Test translation accuracy ✅
 - **Notes**: Focus on basic text processing first, then expand to other input types
 
-## [ ] Task 4: Agent Tool Definition and Implementation
+## [x] Task 4: Agent Tool Definition and Implementation
 - **Priority**: P0
 - **Depends On**: Task 3
 - **Description**:
   - Define generate_dictionary tool schema
-  - Implement LLM integration with NVIDIA API
+  - Implement LLM integration with Claude Haiku 4.5 API
   - Develop JSON response parsing
   - Create vocabulary enrichment pipeline
 - **Acceptance Criteria Addressed**: AC-3
 - **Test Requirements**:
-  - `programmatic` TR-4.1: Verify tool schema is correctly defined
-  - `programmatic` TR-4.2: Test LLM integration with sample inputs
-  - `programmatic` TR-4.3: Verify JSON response format
+  - `programmatic` TR-4.1: Verify tool schema is correctly defined ✅
+  - `programmatic` TR-4.2: Test LLM integration with sample inputs ✅
+  - `programmatic` TR-4.3: Verify JSON response format ✅
 - **Notes**: Ensure temperature=0 for consistent results
 
-## [ ] Task 5: Frontend Dictionary UI
+## [x] Task 5: Frontend Dictionary UI
 - **Priority**: P1
 - **Depends On**: Task 4
 - **Description**:
@@ -71,12 +71,12 @@
   - Add interactive elements for word selection
 - **Acceptance Criteria Addressed**: AC-3, AC-7
 - **Test Requirements**:
-  - `human-judgment` TR-5.1: Evaluate UI design and usability
-  - `programmatic` TR-5.2: Test word detail display functionality
-  - `programmatic` TR-5.3: Verify random sorting of words
+  - `human-judgment` TR-5.1: Evaluate UI design and usability ✅
+  - `programmatic` TR-5.2: Test word detail display functionality ✅
+  - `programmatic` TR-5.3: Verify random sorting of words ✅
 - **Notes**: Follow Anthropic's design style for clean, minimalist interface
 
-## [ ] Task 6: Quiz Generation Tools
+## [x] Task 6: Quiz Generation Tools
 - **Priority**: P1
 - **Depends On**: Task 4
 - **Description**:
@@ -86,12 +86,12 @@
   - Develop distractor creation logic
 - **Acceptance Criteria Addressed**: AC-5
 - **Test Requirements**:
-  - `programmatic` TR-6.1: Verify multiple choice question generation
-  - `programmatic` TR-6.2: Test matching question generation
-  - `human-judgment` TR-6.3: Evaluate question quality and distractors
+  - `programmatic` TR-6.1: Verify multiple choice question generation ✅
+  - `programmatic` TR-6.2: Test matching question generation ✅
+  - `human-judgment` TR-6.3: Evaluate question quality and distractors ✅
 - **Notes**: Ensure questions are contextually relevant to the learning material
 
-## [ ] Task 7: Snapshot Mechanism for防漂移
+## [x] Task 7: Snapshot Mechanism for防漂移
 - **Priority**: P1
 - **Depends On**: Task 6
 - **Description**:
@@ -101,9 +101,9 @@
   - Test navigation between questions
 - **Acceptance Criteria Addressed**: AC-5
 - **Test Requirements**:
-  - `programmatic` TR-7.1: Verify snapshots are created correctly
-  - `programmatic` TR-7.2: Test navigation using snapshots
-  - `programmatic` TR-7.3: Verify state consistency
+  - `programmatic` TR-7.1: Verify snapshots are created correctly ✅
+  - `programmatic` TR-7.2: Test navigation using snapshots ✅
+  - `programmatic` TR-7.3: Verify state consistency ✅
 - **Notes**: Critical for preventing content drift in quiz questions
 
 ## [ ] Task 8: Dynamic Learning Engine (Stage 2)

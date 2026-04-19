@@ -20,7 +20,7 @@
 - Social features or community aspects
 
 ## Background & Context
-- Lesslingo leverages NVIDIA API for AI capabilities including text generation, speech recognition, and synthesis
+- Lesslingo leverages Claude Haiku 4.5 for AI capabilities including text generation, speech recognition, and synthesis
 - The system uses a local file-based storage approach with JSON files and audio/image assets
 - The learning process is divided into three distinct stages with progressive difficulty
 - The platform prioritizes privacy and offline functionality
@@ -46,14 +46,14 @@
 - **NFR-6**: Scalability - Ability to handle large input files and extensive vocabulary
 
 ## Constraints
-- **Technical**: NVIDIA API dependency for AI capabilities
+- **Technical**: Claude Haiku 4.5 API dependency for AI capabilities
 - **Technical**: Local file system storage limitations
 - **Technical**: API rate limits for TTS generation
 - **Business**: No external cloud services
 - **Dependencies**: Python FastAPI, React/Vue, TailwindCSS, shadcn/ui, Motion
 
 ## Assumptions
-- Users have access to a local NVIDIA API endpoint
+- Users have access to a Claude Haiku 4.5 API endpoint
 - Users have sufficient local storage for audio and image files
 - Users are comfortable with local web application usage
 - Python and web development environment is available for setup

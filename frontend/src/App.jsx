@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Loader2, ArrowLeft, Languages, Shuffle, Volume2, ChevronRight, Brain, CheckCircle2, XCircle } from 'lucide-react'
+import { BookOpen, Loader2, ArrowLeft, Languages, Shuffle, Volume2, ChevronRight, Brain, CheckCircle2, XCircle, PlayCircle, Menu, ChevronLeft, ChevronRight as ChevronRightIcon } from 'lucide-react'
 import axios from 'axios'
 
 // 配置axios超时时间为10分钟
@@ -15,13 +15,23 @@ function App() {
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
   const [displayVocab, setDisplayVocab] = useState([])
-  const [sortOrder, setSortOrder] = useState('asc') // 'asc' 或 'desc'
+  const [wordGroups, setWordGroups] = useState([])
+  const [sortOrder, setSortOrder] = useState('asc') // 'asc', 'desc', 'random'
   const [sentenceTranslations, setSentenceTranslations] = useState([])
   const [selectedWord, setSelectedWord] = useState(null)
   const [selectedSentence, setSelectedSentence] = useState(null)
   const [progress, setProgress] = useState(0)
   const [processingInfo, setProcessingInfo] = useState(null)
   const [currentFileId, setCurrentFileId] = useState(null)
+  // Quiz state
+  const [snapshot, setSnapshot] = useState(null)
+  const [quizLoading, setQuizLoading] = useState(false)
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
+  const [selectedAnswer, setSelectedAnswer] = useState(null)
+  const [showResult, setShowResult] = useState(false)
+  const [score, setScore] = useState(0)
+  const [quizType, setQuizType] = useState('multiple_choice') // 'multiple_choice' or 'matching'
+  const [matchingAnswers, setMatchingAnswers] = useState({})
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -56,6 +66,11 @@ function App() {
           setVocab([...status.vocab]) // 使用展开运算符强制更新
         }
 
+        if (status.word_groups) {
+          console.log('更新单词组，数量:', status.word_groups.length)
+          setWordGroups([...status.word_groups]) // 使用展开运算符强制更新
+        }
+
         if (status.sentence_translations) {
           console.log('更新句子翻译，数量:', status.sentence_translations.length)
           setSentenceTranslations([...status.sentence_translations]) // 使用展开运算符强制更新
@@ -77,6 +92,10 @@ function App() {
         if (status.status === 'completed') {
           console.log('处理完成，词汇表长度:', status.vocab.length)
           setVocab([...status.vocab])
+          if (status.word_groups) {
+            console.log('处理完成，单词组数量:', status.word_groups.length)
+            setWordGroups([...status.word_groups])
+          }
           setSentenceTranslations([...status.sentence_translations])
           setProgress(100)
           setProcessingInfo(null)
@@ -129,16 +148,25 @@ function App() {
   }, [currentFileId])
 
   const sortVocab = () => {
-    const sorted = [...vocab].sort((a, b) => {
-      const wordA = a.word.toLowerCase()
-      const wordB = b.word.toLowerCase()
-      return sortOrder === 'asc' ? wordA.localeCompare(wordB) : wordB.localeCompare(wordA)
-    })
-    setDisplayVocab(sorted)
+    if (sortOrder === 'random') {
+      const shuffled = [...vocab].sort(() => Math.random() - 0.5)
+      setDisplayVocab(shuffled)
+    } else {
+      const sorted = [...vocab].sort((a, b) => {
+        const wordA = a.word.toLowerCase()
+        const wordB = b.word.toLowerCase()
+        return sortOrder === 'asc' ? wordA.localeCompare(wordB) : wordB.localeCompare(wordA)
+      })
+      setDisplayVocab(sorted)
+    }
   }
 
   const toggleSortOrder = () => {
-    setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')
+    setSortOrder(prev => {
+      if (prev === 'asc') return 'desc'
+      if (prev === 'desc') return 'random'
+      return 'asc'
+    })
   }
 
   const handleSentenceClick = (index) => {
@@ -194,6 +222,115 @@ function App() {
       }
       setLoading(false)
     }
+  }
+
+  const handleCreateSnapshot = async () => {
+    if (!fileId) return
+    
+    setQuizLoading(true)
+    try {
+      const response = await axios.post(`/api/create-snapshot/${fileId}`, {})
+      console.log('Snapshot created:', response.data)
+      setSnapshot(response.data.snapshot)
+      setStep('quiz')
+    } catch (error) {
+      console.error('Error creating snapshot:', error)
+      alert('创建快照失败，请重试')
+    } finally {
+      setQuizLoading(false)
+    }
+  }
+
+  const handleLoadSnapshot = async () => {
+    if (!fileId) return
+    
+    setQuizLoading(true)
+    try {
+      const response = await axios.get(`/api/snapshot/${fileId}`)
+      console.log('Snapshot loaded:', response.data)
+      setSnapshot(response.data.snapshot)
+      setStep('quiz')
+    } catch (error) {
+      console.error('Error loading snapshot:', error)
+      if (error.response && error.response.status === 404) {
+        // Snapshot not found, create one
+        await handleCreateSnapshot()
+      } else {
+        alert('加载快照失败，请重试')
+      }
+    } finally {
+      setQuizLoading(false)
+    }
+  }
+
+  const handleStartQuiz = () => {
+    if (!snapshot) {
+      handleLoadSnapshot()
+    } else {
+      setStep('quiz')
+    }
+  }
+
+  const handleQuizNavigation = (direction) => {
+    if (direction === 'next') {
+      setCurrentQuestionIndex(prev => Math.min(prev + 1, getCurrentQuizLength() - 1))
+    } else if (direction === 'prev') {
+      setCurrentQuestionIndex(prev => Math.max(prev - 1, 0))
+    }
+    setSelectedAnswer(null)
+    setShowResult(false)
+  }
+
+  const getCurrentQuizLength = () => {
+    if (!snapshot) return 0
+    return quizType === 'multiple_choice' ? snapshot.multiple_choice.length : snapshot.matching.length
+  }
+
+  const handleAnswerSelect = (answer) => {
+    setSelectedAnswer(answer)
+    setShowResult(true)
+    
+    // Check if answer is correct
+    const currentQuestions = quizType === 'multiple_choice' ? snapshot.multiple_choice : snapshot.matching
+    const currentQuestion = currentQuestions[currentQuestionIndex]
+    if (answer === currentQuestion.correct_answer) {
+      setScore(prev => prev + 1)
+    }
+  }
+
+  const handleMatchingAnswer = (questionId, answerId) => {
+    setMatchingAnswers(prev => ({
+      ...prev,
+      [questionId]: answerId
+    }))
+  }
+
+  const handleSubmitMatching = () => {
+    // Calculate score for matching questions
+    const currentQuestions = snapshot.matching
+    let matchingScore = 0
+    
+    currentQuestions.forEach(question => {
+      if (matchingAnswers[question.id] === question.correct_answer) {
+        matchingScore++
+      }
+    })
+    
+    setScore(matchingScore)
+    setShowResult(true)
+  }
+
+  const resetQuiz = () => {
+    setCurrentQuestionIndex(0)
+    setSelectedAnswer(null)
+    setShowResult(false)
+    setScore(0)
+    setMatchingAnswers({})
+  }
+
+  const switchQuizType = (type) => {
+    setQuizType(type)
+    resetQuiz()
   }
 
   return (
@@ -256,14 +393,38 @@ function App() {
               <DictionaryStep
                 key="dictionary"
                 vocab={displayVocab}
+                wordGroups={wordGroups}
                 onToggleSort={toggleSortOrder}
                 sortOrder={sortOrder}
                 progress={progress}
                 processingInfo={processingInfo}
                 sentenceTranslations={sentenceTranslations}
                 onSentenceClick={handleSentenceClick}
+                onWordSelect={setSelectedWord}
+                selectedWord={selectedWord}
+                onStartQuiz={handleStartQuiz}
+                quizLoading={quizLoading}
               />
             </>
+          )}
+          
+          {step === 'quiz' && snapshot && (
+            <QuizStep
+              key="quiz"
+              snapshot={snapshot}
+              currentQuestionIndex={currentQuestionIndex}
+              selectedAnswer={selectedAnswer}
+              showResult={showResult}
+              score={score}
+              quizType={quizType}
+              matchingAnswers={matchingAnswers}
+              onAnswerSelect={handleAnswerSelect}
+              onMatchingAnswer={handleMatchingAnswer}
+              onSubmitMatching={handleSubmitMatching}
+              onNavigation={handleQuizNavigation}
+              onSwitchType={switchQuizType}
+              onBack={() => setStep('dictionary')}
+            />
           )}
         </AnimatePresence>
       </main>
@@ -364,7 +525,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, onSentenceClick }) {
+function DictionaryStep({ vocab, wordGroups, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, onSentenceClick, onWordSelect, selectedWord, onStartQuiz, quizLoading }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -390,6 +551,84 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           </div>
         </div>
       )}
+
+      {/* 双列布局 */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 左侧单词列表 */}
+        <div className="lg:col-span-1">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-slate-900">
+              单词表 ({vocab.length})
+            </h2>
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onToggleSort}
+                className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors flex items-center gap-1"
+              >
+                {sortOrder === 'asc' && (
+                  <>
+                    <ChevronRight className="w-4 h-4" />
+                    A → Z
+                  </>
+                )}
+                {sortOrder === 'desc' && (
+                  <>
+                    <ChevronRight className="w-4 h-4 rotate-180" />
+                    Z → A
+                  </>
+                )}
+                {sortOrder === 'random' && (
+                  <>
+                    <Shuffle className="w-4 h-4" />
+                    随机
+                  </>
+                )}
+              </motion.button>
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm h-[calc(100vh-320px)] overflow-y-auto">
+            <div className="divide-y divide-slate-200">
+              {vocab.map((word, index) => (
+                <motion.div
+                  key={word.word || index}
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.02 }}
+                  className={`p-4 hover:bg-slate-50 cursor-pointer transition-colors ${selectedWord?.word === word.word ? 'bg-slate-100' : ''}`}
+                  onClick={() => onWordSelect(word)}
+                >
+                  <div className="font-medium text-slate-900">{word.word}</div>
+                  <div className="text-sm text-slate-600">{word.context_meaning}</div>
+                  {word.morphology && (
+                    <div className="text-xs text-slate-500 font-mono mt-1">{word.morphology}</div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* 右侧单词详情 */}
+        <div className="lg:col-span-2">
+          {selectedWord ? (
+            <WordDetail word={selectedWord} />
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm h-[calc(100vh-320px)] flex items-center justify-center"
+            >
+              <div className="text-center">
+                <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-slate-700 mb-2">选择一个单词</h3>
+                <p className="text-slate-500">点击左侧列表中的单词查看详细信息</p>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </div>
 
       {/* 句子列表 */}
       {safeSentenceTranslations.length > 0 && (
@@ -417,44 +656,65 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </div>
       )}
 
-      {/* 单词表 - 高中课本附录格式 */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-slate-900">
-            单词表 ({vocab.length})
+      {/* 10-word groups */}
+      {wordGroups && wordGroups.length > 0 && (
+        <div>
+          <h2 className="text-xl font-semibold text-slate-900 mb-4">
+            单词分组 ({wordGroups.length} 组)
           </h2>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onToggleSort}
-            className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
-          >
-            {sortOrder === 'asc' ? 'A → Z' : 'Z → A'}
-          </motion.button>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="grid grid-cols-3 gap-1 p-4 bg-slate-50 border-b border-slate-200">
-            <div className="font-semibold text-slate-700">单词</div>
-            <div className="font-semibold text-slate-700">意思</div>
-            <div className="font-semibold text-slate-700">词性</div>
-          </div>
-          <div className="divide-y divide-slate-200">
-            {vocab.map((word, index) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {wordGroups.map((group, groupIndex) => (
               <motion.div
-                key={word.word || index}
+                key={groupIndex}
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.02 }}
-                className="grid grid-cols-3 gap-1 p-4 hover:bg-slate-50"
+                transition={{ delay: groupIndex * 0.05 }}
+                className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm"
               >
-                <div className="font-medium text-slate-900">{word.word}</div>
-                <div className="text-slate-700">{word.context_meaning}</div>
-                <div className="text-slate-600 font-mono">{word.morphology}</div>
+                <h3 className="font-medium text-slate-900 mb-3">组 {groupIndex + 1}</h3>
+                <div className="space-y-2">
+                  {group.map((word, wordIndex) => (
+                    <div key={wordIndex} className="flex items-center justify-between">
+                      <div className="font-medium text-slate-900">{word.word}</div>
+                      <div className="text-slate-700">{word.context_meaning}</div>
+                    </div>
+                  ))}
+                </div>
               </motion.div>
             ))}
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Quiz button */}
+      {wordGroups && wordGroups.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mt-8"
+        >
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={onStartQuiz}
+            disabled={quizLoading}
+            className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          >
+            {quizLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                准备中...
+              </>
+            ) : (
+              <>
+                <PlayCircle className="w-5 h-5" />
+                开始测验
+              </>
+            )}
+          </motion.button>
+        </motion.div>
+      )}
     </motion.div>
   )
 }
@@ -602,6 +862,254 @@ function SentenceDetail({ sentenceTranslation, onClose }) {
             {translationResult?.grammar_explanation || '语法分析中...'}
           </p>
         </motion.div>
+      </div>
+    </motion.div>
+  )
+}
+
+function QuizStep({ 
+  snapshot, 
+  currentQuestionIndex, 
+  selectedAnswer, 
+  showResult, 
+  score, 
+  quizType, 
+  matchingAnswers, 
+  onAnswerSelect, 
+  onMatchingAnswer, 
+  onSubmitMatching, 
+  onNavigation, 
+  onSwitchType, 
+  onBack 
+}) {
+  const currentQuestions = quizType === 'multiple_choice' ? snapshot.multiple_choice : snapshot.matching
+  const currentQuestion = currentQuestions[currentQuestionIndex]
+  const totalQuestions = currentQuestions.length
+
+  const getAnswerClass = (answer) => {
+    if (!showResult) return ''
+    if (answer === currentQuestion.correct_answer) return 'bg-green-100 border-green-500 text-green-700'
+    if (answer === selectedAnswer && answer !== currentQuestion.correct_answer) return 'bg-red-100 border-red-500 text-red-700'
+    return ''
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="flex flex-col gap-6"
+    >
+      {/* Quiz header */}
+      <div className="flex items-center justify-between">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          返回单词表
+        </motion.button>
+        
+        <div className="flex gap-2">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onSwitchType('multiple_choice')}
+            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+              quizType === 'multiple_choice' 
+                ? 'bg-black text-white' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            选择题
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onSwitchType('matching')}
+            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+              quizType === 'matching' 
+                ? 'bg-black text-white' 
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            匹配题
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Quiz content */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+        {/* Progress */}
+        <div className="flex justify-between items-center mb-8">
+          <h2 className="text-2xl font-semibold text-slate-900">
+            {quizType === 'multiple_choice' ? '选择题' : '匹配题'}
+          </h2>
+          <div className="text-slate-600">
+            {currentQuestionIndex + 1} / {totalQuestions}
+          </div>
+        </div>
+
+        {/* Question */}
+        {quizType === 'multiple_choice' ? (
+          /* Multiple Choice Question */
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-lg font-medium text-slate-900 mb-6"
+            >
+              {currentQuestion.question}
+            </motion.div>
+
+            <div className="space-y-3">
+              {currentQuestion.options.map((option, index) => (
+                <motion.button
+                  key={index}
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={() => onAnswerSelect(option)}
+                  disabled={showResult}
+                  className={`w-full text-left px-6 py-4 border rounded-lg transition-colors ${
+                    getAnswerClass(option)
+                  }`}
+                >
+                  {option}
+                </motion.button>
+              ))}
+            </div>
+
+            {showResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200"
+              >
+                <p className="text-slate-700">
+                  <strong>正确答案:</strong> {currentQuestion.correct_answer}
+                </p>
+                {currentQuestion.explanation && (
+                  <p className="mt-2 text-slate-600 text-sm">
+                    <strong>解析:</strong> {currentQuestion.explanation}
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </div>
+        ) : (
+          /* Matching Question */
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="text-lg font-medium text-slate-900 mb-6"
+            >
+              {currentQuestion.question}
+            </motion.div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Questions */}
+              <div className="space-y-3">
+                <h3 className="font-medium text-slate-700 mb-2">词汇</h3>
+                {currentQuestion.options.map((option, index) => (
+                  <div key={index} className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                    {option}
+                  </div>
+                ))}
+              </div>
+
+              {/* Answers */}
+              <div className="space-y-3">
+                <h3 className="font-medium text-slate-700 mb-2">释义</h3>
+                {currentQuestion.answers.map((answer, index) => (
+                  <motion.button
+                    key={index}
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => onMatchingAnswer(currentQuestion.id, answer)}
+                    disabled={showResult}
+                    className={`w-full text-left px-4 py-4 border rounded-lg transition-colors ${
+                      showResult && matchingAnswers[currentQuestion.id] === answer
+                        ? matchingAnswers[currentQuestion.id] === currentQuestion.correct_answer
+                          ? 'bg-green-100 border-green-500 text-green-700'
+                          : 'bg-red-100 border-red-500 text-red-700'
+                        : ''
+                    }`}
+                  >
+                    {answer}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+
+            {!showResult && (
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
+                onClick={onSubmitMatching}
+                className="w-full py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 transition-colors mt-4"
+              >
+                提交答案
+              </motion.button>
+            )}
+
+            {showResult && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200"
+              >
+                <p className="text-slate-700">
+                  <strong>正确答案:</strong> {currentQuestion.correct_answer}
+                </p>
+                {currentQuestion.explanation && (
+                  <p className="mt-2 text-slate-600 text-sm">
+                    <strong>解析:</strong> {currentQuestion.explanation}
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex justify-between mt-8">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onNavigation('prev')}
+            disabled={currentQuestionIndex === 0}
+            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            上一题
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => onNavigation('next')}
+            disabled={currentQuestionIndex === totalQuestions - 1}
+            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            下一题
+            <ChevronRightIcon className="w-4 h-4" />
+          </motion.button>
+        </div>
+
+        {/* Score */}
+        {showResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-8 p-4 bg-slate-100 rounded-lg text-center"
+          >
+            <p className="text-lg font-medium text-slate-900">
+              得分: {score} / {totalQuestions}
+            </p>
+          </motion.div>
+        )}
       </div>
     </motion.div>
   )
