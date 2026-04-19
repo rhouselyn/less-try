@@ -146,7 +146,7 @@ function App() {
   }
 
   const handleSentenceClick = (index) => {
-    setSelectedSentence(index)
+    setSelectedSentence(prev => prev === index ? null : index)
   }
 
   const handleCloseSentenceDetail = () => {
@@ -248,6 +248,12 @@ function App() {
 
   const getWordDetails = async (word) => {
     if (!currentFileId) return
+    
+    // 如果点击的是当前选中的单词，则取消选中
+    if (selectedWord && selectedWord.word === word) {
+      setSelectedWord(null)
+      return
+    }
     
     try {
       const response = await axios.get(`/api/word/${currentFileId}/${word}`)
@@ -436,7 +442,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onWordClick, onStartLearning, loading }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -515,7 +521,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                     >
                       <SentenceDetail
                         sentenceTranslation={safeSentenceTranslations[index]}
-                        onClose={onCloseSentenceDetail}
                       />
                     </motion.div>
                   )}
@@ -731,7 +736,7 @@ function WordDetail({ word }) {
   )
 }
 
-function SentenceDetail({ sentenceTranslation, onClose }) {
+function SentenceDetail({ sentenceTranslation }) {
   const sentence = sentenceTranslation?.sentence
   const translationResult = sentenceTranslation?.translation_result
   
@@ -741,7 +746,7 @@ function SentenceDetail({ sentenceTranslation, onClose }) {
       animate={{ opacity: 1, y: 0 }}
       className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
     >
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center mb-8">
         <motion.h2 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -749,14 +754,6 @@ function SentenceDetail({ sentenceTranslation, onClose }) {
         >
           句子详情
         </motion.h2>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onClose}
-          className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
-        >
-          <XCircle className="w-5 h-5" />
-        </motion.button>
       </div>
 
       <div className="space-y-6">

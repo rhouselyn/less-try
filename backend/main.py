@@ -267,20 +267,45 @@ async def get_word_details(file_id: str, word: str):
         
         # 构建上下文
         sentences = storage.load_pipeline_data(file_id)
+        context = ""
         context_sentences = []
         if sentences:
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
                     if word_data["word"] in sentence_data["sentence"]:
                         context_sentences.append(sentence_data["sentence"])
+            if not context and sentences:
+                # 如果没找到，使用第一个句子作为上下文
+                context = sentences[0].get("sentence", "")
+        
+        # 生成丰富的单词信息
+        target_lang = "zh"  # 默认目标语言为中文
+        correct_meaning = word_data.get("context_meaning", "")
+        
+        if not correct_meaning:
+            # 尝试从其他字段获取释义
+            if "translation" in word_data:
+                correct_meaning = word_data["translation"]
+            elif "meaning" in word_data:
+                correct_meaning = word_data["meaning"]
+        
+        # 调用generate_multiple_choice获取丰富的单词信息
+        options_result = await nvidia_api.generate_multiple_choice(
+            word_data["word"],
+            correct_meaning,
+            context,
+            target_lang
+        )
         
         return {
-            "word": word_data["word"],
-            "ipa": word_data.get("ipa", ""),
-            "meaning": word_data.get("context_meaning", word_data.get("translation", "")),
-            "examples": word_data.get("examples", []),
+            "word": options_result.get("word", word_data["word"]),
+            "ipa": options_result.get("ipa", word_data.get("ipa", "")),
+            "meaning": options_result.get("enriched_meaning", correct_meaning),
+            "examples": options_result.get("examples", []),
             "context_sentences": context_sentences,
-            "morphology": word_data.get("morphology", "")
+            "morphology": word_data.get("morphology", ""),
+            "variants_detail": options_result.get("variants_detail", []),
+            "memory_hint": options_result.get("memory_hint", "")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting word details: {str(e)}")
