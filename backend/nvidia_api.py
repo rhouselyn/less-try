@@ -192,11 +192,12 @@ For each word, provide:
 5. morphology 字段必须只包含缩写，不要有其他内容！
 6. morphology 字段里不要加任何额外的解释！
 7. 【重点！】tokenized_translation 必须是自然的、正常的翻译：
-   - 如果是英文翻译：单词之间必须用空格分隔！
+   - 如果是英文翻译：单词之间必须用空格分隔！标点符号前也应该有空格！
    - 如果是中文翻译：词语之间绝对不要有空格！
    - 保持自然的句子格式
 8. 【举例！】比如英文 "AI models generate responses." 翻译成中文时，应该是 "人工智能模型生成响应。"，绝对不能是 "人工智能 模型 生成 响应。"！
    - 【反过来！】如果是中文翻译成英文，必须是 "Artificial intelligence models generate responses."，绝对不能是 "Artificialintelligencemodelsgenerateresponses."！
+   - 【标点符号示例！】中文 "你好，你是谁？" 翻译成英文必须是 "Hello, who are you?"，绝对不能是 "Hello,whoareyou?" 或 "Hello, whoareyou?"！
 
 按照以下结构处理文本：
 - original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）

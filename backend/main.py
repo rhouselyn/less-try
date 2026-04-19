@@ -114,6 +114,12 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
         
+        # 预生成第一个单词的信息
+        if all_vocab:
+            import asyncio
+            asyncio.create_task(pre_generate_next_word(file_id, all_vocab, 0))
+            print(f"[DEBUG] 预生成第一个单词信息")
+        
         processing_status[file_id] = {
             "status": "completed",
             "progress": 100,
