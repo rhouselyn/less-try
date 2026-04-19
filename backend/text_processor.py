@@ -107,67 +107,22 @@ class TextProcessor:
         # 对整个文本进行翻译
         result = await nvidia_api.split_and_translate(text, source_lang, target_lang)
         
-        # 处理结果，确保格式正确
+        # 简单处理，保留LLM生成的自然结果
         if isinstance(result, dict):
             # 移除重复的original字段（与sentence重复）
             if 'original' in result:
                 del result['original']
             
-            # 确保translation格式正确，不包含标点符号
+            # 简单过滤：只过滤掉纯标点符号的token
             if 'translation' in result:
-                # 过滤掉标点符号token
                 filtered_translation = []
                 for token in result['translation']:
                     if isinstance(token, dict) and 'text' in token:
-                        # 检查token是否为标点符号
                         text = token['text'].strip()
+                        # 只过滤完全是标点符号的token
                         if text and not all(char in '.,;:!?' for char in text):
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
-            
-            # 确保tokenized_translation是正常的严格翻译，完全没有任何空格
-            if 'tokenized_translation' in result:
-                # 严格去除所有空白字符：空格、制表符、换行等
-                clean_translation = result['tokenized_translation']
-                # 依次移除所有空白字符
-                clean_translation = clean_translation.replace(' ', '')
-                clean_translation = clean_translation.replace('\t', '')
-                clean_translation = clean_translation.replace('\n', '')
-                clean_translation = clean_translation.replace('\r', '')
-                clean_translation = clean_translation.replace('\xa0', '')  # 不间断空格
-                clean_translation = clean_translation.replace('\u2002', '')  # 半角空格
-                clean_translation = clean_translation.replace('\u2003', '')  # 全角空格
-                result['tokenized_translation'] = clean_translation
-            elif 'translation' in result:
-                # 如果没有tokenized_translation字段，则生成一个
-                tokenized_translation = ''
-                for token in result['translation']:
-                    if isinstance(token, dict) and 'translation' in token:
-                        tokenized_translation += token['translation']
-                # 严格去除所有空白字符
-                tokenized_translation = tokenized_translation.replace(' ', '')
-                tokenized_translation = tokenized_translation.replace('\t', '')
-                tokenized_translation = tokenized_translation.replace('\n', '')
-                tokenized_translation = tokenized_translation.replace('\r', '')
-                result['tokenized_translation'] = tokenized_translation
-            
-            # 生成tokenized_translation_quoted字段（每个token用""包裹，用逗号连接，可作为数组读取）
-            if 'translation' in result:
-                quoted_words = []
-                # 定义所有要移除的标点符号
-                punctuation = '''!"#$%&'()*+,-./:;<=>?@[\]^_`{|}~，。！？；："（）【】「」『』、\\''' 
-                for token in result['translation']:
-                    if isinstance(token, dict) and 'translation' in token:
-                        translation = token['translation']
-                        # 移除所有标点符号和反斜杠
-                        clean_translation = translation
-                        for char in punctuation:
-                            clean_translation = clean_translation.replace(char, '')
-                        # 如果清理后还有内容，就添加到quoted_words中
-                        if clean_translation.strip():
-                            quoted_words.append(f'"{clean_translation.strip()}"')
-                # 使用逗号连接所有quoted_words
-                result['tokenized_translation_quoted'] = ', '.join(quoted_words)
         
-        # 返回处理后的结果
+        # 返回处理后的结果，保留LLM生成的自然翻译
         return result

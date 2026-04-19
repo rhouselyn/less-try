@@ -42,6 +42,9 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         print(f"[DEBUG] 开始处理文件 {file_id}")
         processing_status[file_id] = {"status": "processing", "progress": 0}
         
+        # 保存语言设置
+        storage.save_language_settings(file_id, source_lang, target_lang)
+        
         # 拆分为多个句子
         sentences = text_processor.split_sentences(text)
         total_sentences = len(sentences)
@@ -188,12 +191,26 @@ async def get_random_word(file_id: str):
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
         
-        # 固定随机种子，确保每次顺序一致
-        random.seed(42)
+        # 加载语言设置
+        language_settings = storage.load_language_settings(file_id)
+        target_lang = language_settings["target_lang"]
         
-        # 随机选择一个单词
-        random_word = random.choice(vocab)
+        # 加载学习进度
+        current_index = storage.load_learning_progress(file_id)
+        
+        # 使用固定随机种子生成顺序
+        random.seed(42)
+        # 生成打乱但固定的顺序
+        shuffled_indices = list(range(len(vocab)))
+        random.shuffle(shuffled_indices)
+        
+        # 获取当前单词
+        actual_index = shuffled_indices[current_index % len(vocab)]
+        random_word = vocab[actual_index]
         word = random_word["word"]
+        
+        # 更新进度
+        storage.save_learning_progress(file_id, current_index + 1)
         
         # 先检查缓存
         cached_word = storage.load_word_cache(file_id, word)
@@ -213,7 +230,7 @@ async def get_random_word(file_id: str):
                 correct_index = 0
             
             # 启动后台任务预生成下一个单词
-            asyncio.create_task(pre_generate_next_word(file_id, vocab))
+            asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
             
             return {
                 "word": cached_word.get("word", word),
@@ -242,7 +259,6 @@ async def get_random_word(file_id: str):
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
-        target_lang = "zh"  # 默认目标语言为中文
         correct_meaning = random_word.get("context_meaning", "")
         
         if not correct_meaning:
@@ -303,20 +319,28 @@ async def get_random_word(file_id: str):
         print(f"[DEBUG] 缓存随机单词信息: {word}")
         
         # 启动后台任务预生成下一个单词
-        asyncio.create_task(pre_generate_next_word(file_id, vocab))
+        asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
         
         return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting random word: {str(e)}")
 
-async def pre_generate_next_word(file_id: str, vocab: List[Dict]):
+async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: int):
     """后台预生成下一个单词的信息"""
     try:
-        # 固定随机种子，确保每次顺序一致
-        random.seed(42)
+        # 加载语言设置
+        language_settings = storage.load_language_settings(file_id)
+        target_lang = language_settings["target_lang"]
         
-        # 随机选择一个单词
-        random_word = random.choice(vocab)
+        # 使用固定随机种子生成顺序
+        random.seed(42)
+        # 生成打乱但固定的顺序
+        shuffled_indices = list(range(len(vocab)))
+        random.shuffle(shuffled_indices)
+        
+        # 获取下一个单词
+        actual_index = shuffled_indices[next_index % len(vocab)]
+        random_word = vocab[actual_index]
         word = random_word["word"]
         
         # 检查是否已缓存
@@ -339,7 +363,6 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict]):
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
-        target_lang = "zh"  # 默认目标语言为中文
         correct_meaning = random_word.get("context_meaning", "")
         
         if not correct_meaning:
