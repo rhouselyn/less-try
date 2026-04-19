@@ -18,7 +18,8 @@ class NvidiaAPI:
             "model": "claude-haiku-4.5",
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 4096
+            "max_tokens": 4096,
+            "stream": False  # 确保不使用流式输出
         }
         
         if tools:

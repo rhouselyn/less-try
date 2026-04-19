@@ -32,6 +32,13 @@ function App() {
   const [score, setScore] = useState(0)
   const [quizType, setQuizType] = useState('multiple_choice') // 'multiple_choice' or 'matching'
   const [matchingAnswers, setMatchingAnswers] = useState({})
+  // Word learning state
+  const [learningVocab, setLearningVocab] = useState([])
+  const [currentLearningIndex, setCurrentLearningIndex] = useState(0)
+  const [learningOptions, setLearningOptions] = useState([])
+  const [learningSelectedAnswer, setLearningSelectedAnswer] = useState(null)
+  const [learningShowResult, setLearningShowResult] = useState(false)
+  const [learningLoading, setLearningLoading] = useState(false)
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -333,6 +340,81 @@ function App() {
     resetQuiz()
   }
 
+  const handleStartLearning = async () => {
+    if (!vocab.length) return
+    
+    setLearningLoading(true)
+    try {
+      // 随机排序词汇
+      const shuffledVocab = [...vocab].sort(() => Math.random() - 0.5)
+      setLearningVocab(shuffledVocab)
+      setCurrentLearningIndex(0)
+      
+      // 提前生成第一个单词的选项
+      await generateWordOptions(shuffledVocab[0])
+      
+      setStep('learning')
+    } catch (error) {
+      console.error('开始学习失败:', error)
+      alert('开始学习失败，请重试')
+    } finally {
+      setLearningLoading(false)
+    }
+  }
+
+  const generateWordOptions = async (word) => {
+    try {
+      // 生成4个选项：1个正确，3个错误
+      const correctMeaning = word.context_meaning
+      const allMeanings = vocab.map(w => w.context_meaning).filter(m => m !== correctMeaning)
+      
+      // 随机选择3个错误选项
+      const shuffledMeanings = allMeanings.sort(() => Math.random() - 0.5)
+      const wrongMeanings = shuffledMeanings.slice(0, 3)
+      
+      // 组合选项并随机排序
+      const options = [correctMeaning, ...wrongMeanings].sort(() => Math.random() - 0.5)
+      setLearningOptions(options)
+    } catch (error) {
+      console.error('生成选项失败:', error)
+    }
+  }
+
+  const handleLearningAnswerSelect = (answer) => {
+    const currentWord = learningVocab[currentLearningIndex]
+    setLearningSelectedAnswer(answer)
+    setLearningShowResult(true)
+  }
+
+  const handleLearningNavigation = async (direction) => {
+    if (direction === 'next') {
+      const nextIndex = currentLearningIndex + 1
+      if (nextIndex < learningVocab.length) {
+        setCurrentLearningIndex(nextIndex)
+        setLearningSelectedAnswer(null)
+        setLearningShowResult(false)
+        // 提前生成下一个单词的选项
+        await generateWordOptions(learningVocab[nextIndex])
+      } else {
+        // 学习完成，返回单词表
+        setStep('dictionary')
+      }
+    } else if (direction === 'prev') {
+      const prevIndex = currentLearningIndex - 1
+      if (prevIndex >= 0) {
+        setCurrentLearningIndex(prevIndex)
+        setLearningSelectedAnswer(null)
+        setLearningShowResult(false)
+        // 重新生成当前单词的选项
+        await generateWordOptions(learningVocab[prevIndex])
+      }
+    }
+  }
+
+  const handleLearningBack = () => {
+    setStep('dictionary')
+  }
+
   return (
     <div className="min-h-screen bg-slate-50">
       <header className="bg-white border-b border-slate-200 shadow-sm">
@@ -404,6 +486,8 @@ function App() {
                 selectedWord={selectedWord}
                 onStartQuiz={handleStartQuiz}
                 quizLoading={quizLoading}
+                onStartLearning={handleStartLearning}
+                learningLoading={learningLoading}
               />
             </>
           )}
@@ -424,6 +508,21 @@ function App() {
               onNavigation={handleQuizNavigation}
               onSwitchType={switchQuizType}
               onBack={() => setStep('dictionary')}
+            />
+          )}
+          
+          {step === 'learning' && learningVocab.length > 0 && (
+            <LearningStep
+              key="learning"
+              vocab={learningVocab}
+              currentIndex={currentLearningIndex}
+              options={learningOptions}
+              selectedAnswer={learningSelectedAnswer}
+              showResult={learningShowResult}
+              loading={learningLoading}
+              onAnswerSelect={handleLearningAnswerSelect}
+              onNavigation={handleLearningNavigation}
+              onBack={handleLearningBack}
             />
           )}
         </AnimatePresence>
@@ -525,7 +624,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
-function DictionaryStep({ vocab, wordGroups, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, onSentenceClick, onWordSelect, selectedWord, onStartQuiz, quizLoading }) {
+function DictionaryStep({ vocab, wordGroups, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, onSentenceClick, onWordSelect, selectedWord, onStartQuiz, quizLoading, onStartLearning, learningLoading }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -686,20 +785,39 @@ function DictionaryStep({ vocab, wordGroups, onToggleSort, sortOrder, progress, 
         </div>
       )}
 
-      {/* Quiz button */}
+      {/* Learning and Quiz buttons */}
       {wordGroups && wordGroups.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-8"
+          className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4"
         >
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={onStartLearning}
+            disabled={learningLoading}
+            className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          >
+            {learningLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                准备中...
+              </>
+            ) : (
+              <>
+                <Brain className="w-5 h-5" />
+                开始学习
+              </>
+            )}
+          </motion.button>
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={onStartQuiz}
             disabled={quizLoading}
-            className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="w-full py-4 bg-slate-100 text-slate-900 font-medium rounded-lg hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {quizLoading ? (
               <>
@@ -1110,6 +1228,141 @@ function QuizStep({
             </p>
           </motion.div>
         )}
+      </div>
+    </motion.div>
+  )
+}
+
+function LearningStep({ 
+  vocab, 
+  currentIndex, 
+  options, 
+  selectedAnswer, 
+  showResult, 
+  loading, 
+  onAnswerSelect, 
+  onNavigation, 
+  onBack 
+}) {
+  const currentWord = vocab[currentIndex]
+  const totalWords = vocab.length
+
+  const getAnswerClass = (answer) => {
+    if (!showResult) return ''
+    if (answer === currentWord.context_meaning) return 'bg-green-100 border-green-500 text-green-700'
+    if (answer === selectedAnswer && answer !== currentWord.context_meaning) return 'bg-red-100 border-red-500 text-red-700'
+    return ''
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className="flex flex-col gap-6"
+    >
+      {/* Learning header */}
+      <div className="flex items-center justify-between">
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          返回单词表
+        </motion.button>
+        <div className="text-slate-600">
+          {currentIndex + 1} / {totalWords}
+        </div>
+      </div>
+
+      {/* Learning content */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm">
+        {/* Word display */}
+        <div className="text-center mb-8">
+          <motion.h2 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-4xl font-semibold text-slate-900 mb-2"
+          >
+            {currentWord.word}
+          </motion.h2>
+          {currentWord.ipa && (
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-xl text-slate-500 font-mono mb-4"
+            >
+              /{currentWord.ipa}/
+            </motion.p>
+          )}
+        </div>
+
+        {/* Question */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-lg font-medium text-slate-900 mb-6 text-center"
+        >
+          选择正确的释义
+        </motion.div>
+
+        {/* Options */}
+        <div className="space-y-3">
+          {options.map((option, index) => (
+            <motion.button
+              key={index}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => onAnswerSelect(option)}
+              disabled={showResult || loading}
+              className={`w-full text-left px-6 py-4 border rounded-lg transition-colors ${
+                getAnswerClass(option)
+              }`}
+            >
+              {option}
+            </motion.button>
+          ))}
+        </div>
+
+        {/* Result */}
+        {showResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-6 p-4 bg-slate-50 rounded-lg border border-slate-200"
+          >
+            <p className="text-slate-700">
+              <strong>正确答案:</strong> {currentWord.context_meaning}
+            </p>
+          </motion.div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex justify-between mt-8">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => onNavigation('prev')}
+            disabled={currentIndex === 0 || loading}
+            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            上一个
+          </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => onNavigation('next')}
+            disabled={currentIndex === totalWords - 1 || loading}
+            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            下一个
+            <ChevronRightIcon className="w-4 h-4" />
+          </motion.button>
+        </div>
       </div>
     </motion.div>
   )
