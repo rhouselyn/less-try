@@ -144,7 +144,7 @@ For each word, provide:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "original": {"type": "string", "description": "The text translated to target language. If the input text is already in target language, keep it unchanged."},
+                        "original": {"type": "string"},
                         "translation": {
                             "type": "array",
                             "items": {
@@ -175,13 +175,12 @@ For each word, provide:
         }
 
         # 构建prompt
-        prompt = """处理以下输入文本，并翻译成 TARGET_LANG。
+        prompt = """处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
 
 【非常非常重要的说明！！！】
 1. 首先检查输入文本的语言：
-   - 如果输入文本不是 TARGET_LANG，必须先严格翻译成 TARGET_LANG，然后再进行后续处理
-   - original 字段必须填入翻译后的 TARGET_LANG 文本
-   - 如果输入文本已经是 TARGET_LANG，original 字段保持不变
+   - 如果输入文本不是 TEXT_LANG，必须先严格翻译成 TEXT_LANG，然后再进行后续处理
+   - original 字段应该填入翻译后的 TEXT_LANG 文本
 2. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
 3. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
 4. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
@@ -199,9 +198,9 @@ For each word, provide:
 7. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 
 按照以下结构处理文本：
-- original: TARGET_LANG 文本（如果输入不是 TARGET_LANG，先翻译成 TARGET_LANG）- 完全保留原始空格！！！
+- original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
-  - text: 输入文本的原词/标记（不带标点）
+  - text: TEXT_LANG 原词/标记（不带标点）
   - translation: 这个词翻译成 TARGET_LANG
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
@@ -214,6 +213,7 @@ TEXT_CONTENT
 """
 
         # 替换占位符
+        prompt = prompt.replace("TEXT_LANG", source_lang)
         prompt = prompt.replace("TARGET_LANG", target_lang)
         prompt = prompt.replace("TEXT_CONTENT", text)
 
@@ -233,9 +233,6 @@ TEXT_CONTENT
                     print("=== Parsed Tool Arguments ===")
                     print(json.dumps(args, indent=2, ensure_ascii=False))
                     print("======================")
-                    # 确保original字段存在，如果不存在则使用输入文本
-                    if "original" not in args:
-                        args["original"] = text
                     return args
             return {}
         except Exception as e:
@@ -311,7 +308,7 @@ TEXT_CONTENT
                             }
                         }
                     },
-                    "required": ["word", "enriched_meaning", "ipa", "examples", "multiple_choice", "memory_hint"]
+                    "required": ["word", "enriched_meaning", "ipa", "examples", "multiple_choice"]
                 }
             }
         }
@@ -364,15 +361,15 @@ TEXT_CONTENT
                     {"sentence": f"This is a sentence with {word}.", "translation": f"这是包含{word}的句子。"},
                     {"sentence": f"I can use {word} in a sentence.", "translation": f"我可以在句子中使用{word}。"}
                 ],
-                "memory_hint": f"记忆提示：{word}的意思是{correct_meaning}，可以通过例句来记忆它的用法。",
+                "memory_hint": "",
                 "multiple_choice": {
                     "question": "",
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
-                        {"text": f"与{correct_meaning}相关但不同的含义1", "is_correct": False},
-                        {"text": f"与{correct_meaning}相关但不同的含义2", "is_correct": False},
-                        {"text": f"与{correct_meaning}相关但不同的含义3", "is_correct": False}
+                        {"text": "选项1", "is_correct": False},
+                        {"text": "选项2", "is_correct": False},
+                        {"text": "选项3", "is_correct": False}
                     ]
                 }
             }
@@ -390,15 +387,15 @@ TEXT_CONTENT
                     {"sentence": f"This is a sentence with {word}.", "translation": f"这是包含{word}的句子。"},
                     {"sentence": f"I can use {word} in a sentence.", "translation": f"我可以在句子中使用{word}。"}
                 ],
-                "memory_hint": f"记忆提示：{word}的意思是{correct_meaning}，可以通过例句来记忆它的用法。",
+                "memory_hint": "",
                 "multiple_choice": {
                     "question": "",
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
-                        {"text": f"与{correct_meaning}相关但不同的含义1", "is_correct": False},
-                        {"text": f"与{correct_meaning}相关但不同的含义2", "is_correct": False},
-                        {"text": f"与{correct_meaning}相关但不同的含义3", "is_correct": False}
+                        {"text": "选项1", "is_correct": False},
+                        {"text": "选项2", "is_correct": False},
+                        {"text": "选项3", "is_correct": False}
                     ]
                 }
             }
