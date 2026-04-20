@@ -48,7 +48,28 @@ export const translations = {
     checkAnswer: "检查答案",
     correct: "正确！",
     incorrect: "错误，正确答案是：",
-    continue: "继续"
+    continue: "继续",
+    // 新添加的翻译
+    studiedLanguages: "已学习语言",
+    availableLanguages: "发现语言",
+    selectLanguage: "选择语言开始学习",
+    articles: "文章",
+    noArticles: "暂无文章",
+    newParagraph: "学习新段落",
+    languageIntro: "语言介绍",
+    quotes: "名言",
+    history: "历史",
+    relatedLanguages: "相关语言",
+    switchNativeLang: "切换母语",
+    delete: "删除",
+    batchManage: "批量管理",
+    cancel: "取消",
+    confirm: "确认",
+    deleteConfirm: "确定要删除这篇文章吗？",
+    noLanguages: "还没有学习任何语言",
+    startFirstArticle: "开始学习你的第一篇文章",
+    exploreMore: "探索更多语言",
+    home: "首页"
   },
   en: {
     title: "Lesslingo",
@@ -98,6 +119,27 @@ export const translations = {
     checkAnswer: "Check Answer",
     correct: "Correct!",
     incorrect: "Incorrect, the correct answer is:",
-    continue: "Continue"
+    continue: "Continue",
+    // 新添加的翻译
+    studiedLanguages: "Studied Languages",
+    availableLanguages: "Available Languages",
+    selectLanguage: "Select a language to start learning",
+    articles: "Articles",
+    noArticles: "No articles yet",
+    newParagraph: "Learn New Paragraph",
+    languageIntro: "Language Introduction",
+    quotes: "Quotes",
+    history: "History",
+    relatedLanguages: "Related Languages",
+    switchNativeLang: "Switch Native Language",
+    delete: "Delete",
+    batchManage: "Batch Manage",
+    cancel: "Cancel",
+    confirm: "Confirm",
+    deleteConfirm: "Are you sure you want to delete this article?",
+    noLanguages: "No languages studied yet",
+    startFirstArticle: "Start your first article",
+    exploreMore: "Explore more languages",
+    home: "Home"
   }
 };

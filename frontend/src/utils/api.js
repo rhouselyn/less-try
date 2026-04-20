@@ -80,10 +80,40 @@ export const api = {
   },
 
   // 设置学习进度
-  setProgress: async (fileId, index) => {
-    const response = await axios.post(`${baseUrl}/api/learn/${fileId}/set-progress`, {
+  setProgress: async (file_id, index) => {
+    const response = await axios.post(`${baseUrl}/api/learn/${file_id}/set-progress`, {
       index: index,
     });
+    return response.data;
+  },
+
+  // 获取所有文章
+  getArticles: async () => {
+    const response = await axios.get(`${baseUrl}/api/articles`);
+    return response.data;
+  },
+
+  // 按语言获取文章
+  getArticlesByLanguage: async (targetLang) => {
+    const response = await axios.get(`${baseUrl}/api/articles/${targetLang}`);
+    return response.data;
+  },
+
+  // 删除文章
+  deleteArticle: async (fileId) => {
+    const response = await axios.delete(`${baseUrl}/api/articles/${fileId}`);
+    return response.data;
+  },
+
+  // 获取语言介绍
+  getLanguageIntro: async (lang) => {
+    const response = await axios.get(`${baseUrl}/api/languages/${lang}/intro`);
+    return response.data;
+  },
+
+  // 获取已学习的语言列表
+  getStudiedLanguages: async () => {
+    const response = await axios.get(`${baseUrl}/api/languages/studied`);
     return response.data;
   }
 };

@@ -101,6 +101,24 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
         
+        # 保存文章元数据
+        # 从文本中提取第一句作为标题，或者尝试提取
+        title = sentences[0] if sentences and len(sentences) > 0 else "未命名文章"
+        # 如果标题太长，截断
+        if len(title) > 100:
+            title = title[:100] + "..."
+        
+        import datetime
+        article_data = {
+            "id": file_id,
+            "title": title,
+            "sourceLang": source_lang,
+            "targetLang": target_lang,
+            "createdAt": datetime.datetime.utcnow().isoformat(),
+            "fileId": file_id
+        }
+        storage.save_article(article_data)
+        
         # 提前生成并保存固定的单词打乱顺序
         if all_vocab:
             random.seed(42)
@@ -859,6 +877,64 @@ async def generate_sentence_quiz(file_id: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating sentence quiz: {str(e)}")
+
+
+@app.get("/api/articles")
+async def get_all_articles():
+    """获取所有文章"""
+    try:
+        articles = storage.load_articles()
+        return {"articles": articles}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/articles/{target_lang}")
+async def get_articles_by_language(target_lang: str):
+    """按语言获取文章"""
+    try:
+        articles = storage.get_articles_by_language(target_lang)
+        return {"articles": articles}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/articles/{file_id}")
+async def delete_article(file_id: str):
+    """删除文章"""
+    try:
+        success = storage.delete_article(file_id)
+        if success:
+            return {"success": True}
+        else:
+            raise HTTPException(status_code=404, detail="Article not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/languages/{lang}/intro")
+async def get_language_intro(lang: str):
+    """获取语言介绍"""
+    try:
+        intro = storage.get_language_intro(lang)
+        if intro:
+            return intro
+        else:
+            raise HTTPException(status_code=404, detail="Language introduction not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/languages/studied")
+async def get_studied_languages():
+    """获取已学习的语言列表"""
+    try:
+        languages = storage.get_studied_languages()
+        return {"languages": languages}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 if __name__ == "__main__":

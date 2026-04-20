@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft } from 'lucide-react'
+import { BookOpen, ArrowLeft, Home } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 
@@ -10,17 +10,21 @@ import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
 import ProgressStep from './components/ProgressStep'
 import SentenceQuizStep from './components/SentenceQuizStep'
+import HomePage from './components/HomePage'
+import LanguageDetailPage from './components/LanguageDetailPage'
 
 function App() {
-  const [step, setStep] = useState('input')
+  const [page, setPage] = useState('home') // 'home', 'language', 'input', 'dictionary', 'progress', 'learning', 'sentence-quiz'
+  const [selectedLanguage, setSelectedLanguage] = useState(null)
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('en')
   const [targetLang, setTargetLang] = useState('zh')
+  const [nativeLang, setNativeLang] = useState('zh')
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
   const [displayVocab, setDisplayVocab] = useState([])
-  const [sortOrder, setSortOrder] = useState('asc') // 'asc' 或 'desc'
+  const [sortOrder, setSortOrder] = useState('asc') // 'asc' or 'desc'
   const [sentenceTranslations, setSentenceTranslations] = useState([])
   const [selectedWord, setSelectedWord] = useState(null)
   const [selectedSentence, setSelectedSentence] = useState(null)
@@ -37,9 +41,9 @@ function App() {
   const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
   const [quizData, setQuizData] = useState(null)
   const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
-  
+
   // 获取当前语言的翻译
-  const t = translations[targetLang] || translations.zh;
+  const t = translations[nativeLang] || translations.zh
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -174,7 +178,7 @@ function App() {
     setSentenceTranslations([])
     
     // 立即跳转到单词表页面，即使还没有收到响应
-    setStep('dictionary')
+    setPage('dictionary')
     
     try {
       console.log('开始处理文本，长度:', text.length)
@@ -192,17 +196,46 @@ function App() {
     } catch (error) {
       console.error('处理文本错误:', error)
       if (error.response && error.response.status === 504) {
-        // 504错误表示网关超时，可能是网络延迟或后端处理时间过长
         alert('网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
-        // 处理超时错误
         alert('处理超时，请稍后重试')
       } else {
-        // 其他错误
         alert('处理失败，请重试')
       }
       setLoading(false)
     }
+  }
+
+  const handleSelectLanguage = (lang) => {
+    setSelectedLanguage(lang)
+    setPage('language')
+  }
+
+  const handleNewParagraph = () => {
+    if (selectedLanguage) {
+      setTargetLang(selectedLanguage)
+    }
+    setText('')
+    setPage('input')
+  }
+
+  const handleArticleClick = (article) => {
+    setFileId(article.fileId)
+    setCurrentFileId(article.fileId)
+    setSourceLang(article.sourceLang)
+    setTargetLang(article.targetLang)
+    
+    const loadArticleData = async () => {
+      try {
+        const response = await api.getVocab(article.fileId)
+        setVocab(response.vocab)
+      } catch (error) {
+        console.error('加载文章数据错误:', error)
+      }
+    }
+    loadArticleData()
+    
+    setPage('dictionary')
   }
 
   const startLearning = async () => {
@@ -210,13 +243,12 @@ function App() {
     
     setLoading(true)
     try {
-      // 获取学习进度和分组信息
       const progressData = await api.getLearningProgress(currentFileId)
       setUnits(progressData.units)
       setCurrentUnit(progressData.current_unit)
       setTotalUnits(progressData.total_units)
       setAllUnitsCompleted(progressData.all_units_completed)
-      setStep('progress')
+      setPage('progress')
     } catch (error) {
       console.error('开始学习错误:', error)
       alert('无法开始学习，请重试')
@@ -228,18 +260,15 @@ function App() {
   const handleUnitClick = async (unitIndex) => {
     setLoading(true)
     try {
-      // 计算该单元的起始学习索引
       const startIndex = unitIndex * 10
-      // 设置学习进度到该单元的起始位置
       await api.setProgress(currentFileId, startIndex)
-      // 获取第一个单词
       const response = await api.getRandomWord(currentFileId)
       setLearningData(response)
       setShowWordCard(false)
       setSelectedOption(null)
       setIsCorrect(null)
       setLearningMode('word')
-      setStep('learning')
+      setPage('learning')
     } catch (error) {
       console.error('获取单元单词错误:', error)
       alert('无法获取单元单词，请重试')
@@ -262,54 +291,44 @@ function App() {
     
     setLoading(true)
     try {
-      // 先调用 API 更新进度
       const nextWordResponse = await api.nextWord(currentFileId)
       const newIndex = nextWordResponse.new_index
       
-      // 获取词汇表长度
       const vocabResponse = await api.getVocab(currentFileId)
       const vocabLength = vocabResponse.vocab.length
       
-      // 检查是否学习完所有单词
       const allWordsLearned = newIndex >= vocabLength
       
       if (allWordsLearned) {
-        // 检查是否可以生成句子翻译题
         const coverageData = await api.checkCoverage(currentFileId)
         if (coverageData.can_form_sentences) {
-          // 生成句子翻译题
           const quizResponse = await api.generateSentenceQuiz(currentFileId)
           setQuizData({
             ...quizResponse,
             unit_completed: coverageData.unit_completed
           })
           setLearningMode('sentence')
-          setStep('sentence-quiz')
+          setPage('sentence-quiz')
         } else {
-          // 单元已完成
           alert('该单元学习已完成！')
-          setStep('progress')
+          setPage('progress')
         }
         return
       }
       
-      // 检查是否需要插入句子翻译题
       const coverageData = await api.checkCoverage(currentFileId)
       if (coverageData.can_form_sentences) {
-        // 生成句子翻译题
         const quizResponse = await api.generateSentenceQuiz(currentFileId)
         setQuizData({
           ...quizResponse,
           unit_completed: coverageData.unit_completed
         })
         setLearningMode('sentence')
-        setStep('sentence-quiz')
+        setPage('sentence-quiz')
       } else if (coverageData.unit_completed) {
-        // 单元已完成
         alert('该单元学习已完成！')
-        setStep('progress')
+        setPage('progress')
       } else {
-        // 继续单词学习
         const response = await api.getRandomWord(currentFileId)
         setLearningData(response)
         setShowWordCard(false)
@@ -327,7 +346,6 @@ function App() {
   const getWordDetails = async (word) => {
     if (!currentFileId) return
     
-    // 如果点击的是当前选中的单词，则取消选中
     if (selectedWord && selectedWord.word === word) {
       setSelectedWord(null)
       return
@@ -346,40 +364,52 @@ function App() {
     setShowWordCard(false)
     setSelectedOption(null)
     setIsCorrect(null)
-    setStep('learning')
+    setPage('learning')
   }
 
   const handleNextSentenceQuiz = async () => {
     setLoading(true)
     try {
-      // 检查是否还有可组成的句子
       const coverageData = await api.checkCoverage(currentFileId)
       if (coverageData.can_form_sentences) {
-        // 生成下一个句子翻译题
         const quizResponse = await api.generateSentenceQuiz(currentFileId)
         setQuizData({
           ...quizResponse,
           unit_completed: coverageData.unit_completed
         })
       } else if (coverageData.unit_completed) {
-        // 单元已完成
         alert('该单元学习已完成！')
-        setStep('progress')
+        setPage('progress')
       } else {
-        // 回到单词学习
         const response = await api.getRandomWord(currentFileId)
         setLearningData(response)
         setShowWordCard(false)
         setSelectedOption(null)
         setIsCorrect(null)
         setLearningMode('word')
-        setStep('learning')
+        setPage('learning')
       }
     } catch (error) {
       console.error('获取下一个句子翻译题错误:', error)
       alert('无法获取下一个句子翻译题，请重试')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleBack = () => {
+    if (page === 'language') {
+      setPage('home')
+    } else if (page === 'input') {
+      setPage(selectedLanguage ? 'language' : 'home')
+    } else if (page === 'dictionary') {
+      if (selectedLanguage) {
+        setPage('language')
+      } else {
+        setPage('home')
+      }
+    } else if (page === 'learning' || page === 'sentence-quiz' || page === 'progress') {
+      setPage('dictionary')
     }
   }
 
@@ -398,22 +428,25 @@ function App() {
               </div>
             </div>
             <AnimatePresence>
-              {step !== 'input' && (
+              {page !== 'home' && (
                 <motion.button
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  onClick={() => {
-                    if (step === 'learning' || step === 'sentence-quiz' || step === 'progress') {
-                      setStep('dictionary');
-                    } else {
-                      setStep('input');
-                    }
-                  }}
+                  onClick={handleBack}
                   className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  {t.back}
+                  {page === 'language' ? (
+                    <>
+                      <Home className="w-4 h-4" />
+                      {t.home}
+                    </>
+                  ) : (
+                    <>
+                      <ArrowLeft className="w-4 h-4" />
+                      {t.back}
+                    </>
+                  )}
                 </motion.button>
               )}
             </AnimatePresence>
@@ -423,7 +456,32 @@ function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <AnimatePresence mode="wait">
-          {step === 'input' && (
+          {page === 'home' && (
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <HomePage
+                t={t}
+                nativeLang={nativeLang}
+                onSelectLanguage={handleSelectLanguage}
+                onNewParagraph={() => handleNewParagraph()}
+              />
+            </motion.div>
+          )}
+
+          {page === 'language' && (
+            <motion.div key="language" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <LanguageDetailPage
+                t={t}
+                language={selectedLanguage}
+                nativeLang={nativeLang}
+                setNativeLang={setNativeLang}
+                onBack={handleBack}
+                onNewParagraph={handleNewParagraph}
+                onArticleClick={handleArticleClick}
+              />
+            </motion.div>
+          )}
+
+          {page === 'input' && (
             <InputStep
               key="input"
               text={text}
@@ -438,7 +496,7 @@ function App() {
             />
           )}
           
-          {step === 'dictionary' && (
+          {page === 'dictionary' && (
             <DictionaryStep
               key="dictionary"
               vocab={displayVocab}
@@ -458,20 +516,20 @@ function App() {
             />
           )}
           
-          {step === 'progress' && (
+          {page === 'progress' && (
             <ProgressStep
               key="progress"
               units={units}
               currentUnit={currentUnit}
               onUnitClick={handleUnitClick}
-              onBack={() => setStep('dictionary')}
+              onBack={() => setPage('dictionary')}
               loading={loading}
               t={t}
               allUnitsCompleted={allUnitsCompleted}
             />
           )}
           
-          {step === 'learning' && (
+          {page === 'learning' && (
             <LearningStep
               key="learning"
               learningData={learningData}
@@ -480,19 +538,19 @@ function App() {
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
               onNextWord={getNextWord}
-              onBack={() => setStep('dictionary')}
+              onBack={() => setPage('dictionary')}
               loading={loading}
               t={t}
             />
           )}
           
-          {step === 'sentence-quiz' && (
+          {page === 'sentence-quiz' && (
             <SentenceQuizStep
               key="sentence-quiz"
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('dictionary')}
-              onComplete={() => setStep('progress')}
+              onBack={() => setPage('dictionary')}
+              onComplete={() => setPage('progress')}
               loading={loading}
               t={t}
             />

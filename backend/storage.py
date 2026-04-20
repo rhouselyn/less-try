@@ -2,6 +2,7 @@ import os
 import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+import shutil
 
 
 class Storage:
@@ -12,6 +13,7 @@ class Storage:
         
         self.files_dir.mkdir(parents=True, exist_ok=True)
         self.languages_dir.mkdir(parents=True, exist_ok=True)
+        self._init_articles_index()
 
     def get_file_dir(self, file_id: str) -> Path:
         file_dir = self.files_dir / file_id
@@ -130,3 +132,80 @@ class Storage:
                 data = json.load(f)
                 return data.get("shuffled_indices")
         return None
+    
+    def _init_articles_index(self):
+        """初始化文章索引文件"""
+        articles_path = self.base_dir / "articles.json"
+        if not articles_path.exists():
+            with open(articles_path, 'w', encoding='utf-8') as f:
+                json.dump({"articles": []}, f, ensure_ascii=False, indent=2)
+    
+    def save_article(self, article_data: Dict[str, Any]):
+        """保存文章元数据"""
+        articles_path = self.base_dir / "articles.json"
+        with open(articles_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            # 检查是否已存在该文章
+            existing_index = None
+            for i, article in enumerate(data["articles"]):
+                if article["id"] == article_data["id"]:
+                    existing_index = i
+                    break
+            if existing_index is not None:
+                data["articles"][existing_index] = article_data
+            else:
+                data["articles"].append(article_data)
+        with open(articles_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    
+    def load_articles(self) -> List[Dict[str, Any]]:
+        """加载所有文章"""
+        articles_path = self.base_dir / "articles.json"
+        with open(articles_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            return data["articles"]
+    
+    def get_articles_by_language(self, target_lang: str) -> List[Dict[str, Any]]:
+        """按语言获取文章"""
+        articles = self.load_articles()
+        return [a for a in articles if a["targetLang"] == target_lang]
+    
+    def delete_article(self, file_id: str) -> bool:
+        """删除文章及其所有相关数据"""
+        articles_path = self.base_dir / "articles.json"
+        with open(articles_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        article_found = False
+        new_articles = []
+        for article in data["articles"]:
+            if article["id"] != file_id:
+                new_articles.append(article)
+            else:
+                article_found = True
+        if article_found:
+            data["articles"] = new_articles
+            with open(articles_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            # 删除文件目录
+            file_dir = self.files_dir / file_id
+            if file_dir.exists():
+                shutil.rmtree(file_dir)
+            return True
+        return False
+    
+    def get_language_intro(self, lang_code: str) -> Optional[Dict[str, Any]]:
+        """获取语言介绍"""
+        lang_dir = self.languages_dir / lang_code
+        intro_path = lang_dir / "intro.json"
+        if intro_path.exists():
+            with open(intro_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None
+    
+    def get_studied_languages(self) -> List[str]:
+        """获取已学习的语言列表"""
+        articles = self.load_articles()
+        languages = set()
+        for article in articles:
+            languages.add(article["targetLang"])
+        return sorted(list(languages))
