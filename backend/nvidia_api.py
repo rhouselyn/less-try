@@ -243,7 +243,7 @@ TEXT_CONTENT
             print(f"Response: {response}")
             return {}
 
-    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str):
+    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str, native_lang: str = "en"):
         tool_def = {
             "type": "function",
             "function": {
@@ -329,8 +329,8 @@ TEXT_CONTENT
 1. enriched_meaning: 符合上下文的精准释义
 2. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
 3. variants_detail: 词形变化列表，带类型说明（如过去式、复数等）
-4. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
-5. memory_hint: 记忆辅助（与用户母语的联想或对比）
+4. examples: 两个符合上下文含义的例句，使用 {target_lang} 编写，每个都有对应的 {native_lang} 翻译
+5. memory_hint: 记忆辅助（与用户母语 {native_lang} 的联想或对比）
 6. multiple_choice: 选择题，包含：
    - question: 可为空（默认为单词本身）
    - correct_answer: 正确释义
