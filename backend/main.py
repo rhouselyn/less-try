@@ -774,25 +774,13 @@ async def check_coverage(file_id: str):
         can_form = False
         for sentence_data in sentences:
             if "sentence" in sentence_data:
-                # 从translation_result中获取原始单词
-                if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                    # 从translation字段中提取原始单词
-                    original_words = set()
-                    for token in sentence_data["translation_result"]["translation"]:
-                        if isinstance(token, dict) and "text" in token:
-                            original_words.add(token["text"].lower())
-                    if original_words and len(original_words) >= 2:
-                        # 检查是否所有单词都在已学单词中
-                        if original_words.issubset(learned_word_set):
-                            can_form = True
-                            break
-                # 如果没有translation_result字段，回退到按空格分词
-                else:
-                    sentence = sentence_data["sentence"]
-                    words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
-                    if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
-                        can_form = True
-                        break
+                sentence = sentence_data["sentence"]
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                # 检查是否所有单词都在已学单词中
+                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
+                    can_form = True
+                    break
         
         return {"can_form_sentences": can_form, "unit_completed": unit_completed}
     except Exception as e:
@@ -824,23 +812,12 @@ async def generate_sentence_quiz(file_id: str):
         eligible_sentences = []
         for sentence_data in sentences:
             if "sentence" in sentence_data:
-                # 从translation_result中获取原始单词
-                if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                    # 从translation字段中提取原始单词
-                    original_words = set()
-                    for token in sentence_data["translation_result"]["translation"]:
-                        if isinstance(token, dict) and "text" in token:
-                            original_words.add(token["text"].lower())
-                    if original_words and len(original_words) >= 2:
-                        # 检查是否所有单词都在已学单词中
-                        if original_words.issubset(learned_word_set):
-                            eligible_sentences.append(sentence_data)
-                # 如果没有translation_result字段，回退到按空格分词
-                else:
-                    sentence = sentence_data["sentence"]
-                    words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
-                    if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
-                        eligible_sentences.append(sentence_data)
+                sentence = sentence_data["sentence"]
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                # 检查是否所有单词都在已学单词中，且至少2个单词
+                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
+                    eligible_sentences.append(sentence_data)
         
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")
