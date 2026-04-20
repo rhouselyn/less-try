@@ -77,7 +77,16 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 sentence_translations.append(sentence_data)
                 
                 # 提取词汇
-                if isinstance(translation_result, dict) and "translation" in translation_result:
+                if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
+                    for entry in translation_result["dictionary_entries"]:
+                        word = entry.get("word", "").lower()
+                        if word and word not in global_seen_words:
+                            global_seen_words.add(word)
+                            # 添加句子索引
+                            entry["sentence_index"] = i
+                            all_vocab.append(entry)
+                # 回退到旧方法，确保兼容性
+                elif isinstance(translation_result, dict) and "translation" in translation_result:
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
                             word = token["text"].lower()
