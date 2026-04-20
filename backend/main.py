@@ -823,19 +823,15 @@ async def generate_sentence_quiz(file_id: str):
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
-        # 生成正确答案的token列表 - 使用整个句子的翻译按token进行拆分
+        # 生成正确答案的token列表 - 使用LLM生成的translation数组中的translation字段
         correct_tokens = []
-        # 直接使用tokenized_translation（整个句子的翻译）按token进行拆分
-        if tokenized_translation:
-            # 对于中文，按字符拆分
-            if target_lang == "zh":
-                # 移除标点符号后按字符拆分
-                cleaned_translation = clean_token(tokenized_translation)
-                correct_tokens = list(cleaned_translation)
-            else:
-                # 对于其他语言，按空格拆分
-                cleaned_translation = clean_token(tokenized_translation)
-                correct_tokens = cleaned_translation.split()
+        if "translation" in translation_result:
+            for token in translation_result["translation"]:
+                if isinstance(token, dict) and "translation" in token:
+                    text = token["translation"]
+                    cleaned_text = clean_token(text)
+                    if cleaned_text:
+                        correct_tokens.append(cleaned_text)
         
         # 清理冗余词
         cleaned_redundant_tokens = []
