@@ -70,10 +70,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 print(f"[DEBUG] 句子 {i+1} 处理完成")
                 
                 # 确保翻译结果的结构
-                # 使用翻译后的文本作为sentence字段
-                translated_sentence = translation_result.get("tokenized_translation", sentence)
+                # 使用LLM输出的original字段作为sentence字段
+                original_sentence = translation_result.get("original", sentence)
                 sentence_data = {
-                    "sentence": translated_sentence,
+                    "sentence": original_sentence,
                     "translation_result": translation_result
                 }
                 sentence_translations.append(sentence_data)

@@ -144,7 +144,7 @@ For each word, provide:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "original": {"type": "string", "description": "The text translated to target language"},
+                        "original": {"type": "string", "description": "The text translated to target language. If the input text is already in target language, keep it unchanged."},
                         "translation": {
                             "type": "array",
                             "items": {
@@ -180,7 +180,8 @@ For each word, provide:
 【非常非常重要的说明！！！】
 1. 首先检查输入文本的语言：
    - 如果输入文本不是 TARGET_LANG，必须先严格翻译成 TARGET_LANG，然后再进行后续处理
-   - original 字段应该填入翻译后的 TARGET_LANG 文本
+   - original 字段必须填入翻译后的 TARGET_LANG 文本
+   - 如果输入文本已经是 TARGET_LANG，original 字段保持不变
 2. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
 3. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
 4. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
@@ -232,9 +233,18 @@ TEXT_CONTENT
                     print("=== Parsed Tool Arguments ===")
                     print(json.dumps(args, indent=2, ensure_ascii=False))
                     print("======================")
-                    # 确保original字段存在，如果不存在则使用tokenized_translation
-                    if "original" not in args and "tokenized_translation" in args:
+                    # 强制将original字段设置为tokenized_translation，确保显示翻译后的文本
+                    print(f"[DEBUG] Before setting original: {args.get('original')}")
+                    print(f"[DEBUG] tokenized_translation: {args.get('tokenized_translation')}")
+                    if "tokenized_translation" in args:
                         args["original"] = args["tokenized_translation"]
+                        print(f"[DEBUG] After setting original from tokenized_translation: {args['original']}")
+                    elif "original" not in args:
+                        # 如果tokenized_translation也不存在，使用输入文本
+                        args["original"] = text
+                        print(f"[DEBUG] After setting original from input text: {args['original']}")
+                    else:
+                        print(f"[DEBUG] Keeping existing original: {args['original']}")
                     return args
             return {}
         except Exception as e:
