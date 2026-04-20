@@ -350,7 +350,36 @@ TEXT_CONTENT
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    return args
+                    
+                    # 验证返回的参数格式
+                    if isinstance(args, dict):
+                        # 确保multiple_choice和options字段存在且格式正确
+                        if "multiple_choice" not in args:
+                            args["multiple_choice"] = {
+                                "question": "",
+                                "correct_answer": correct_meaning,
+                                "options": [
+                                    {"text": correct_meaning, "is_correct": True},
+                                    {"text": "选项1", "is_correct": False},
+                                    {"text": "选项2", "is_correct": False},
+                                    {"text": "选项3", "is_correct": False}
+                                ]
+                            }
+                        elif "options" not in args["multiple_choice"] or not isinstance(args["multiple_choice"]["options"], list):
+                            args["multiple_choice"]["options"] = [
+                                {"text": correct_meaning, "is_correct": True},
+                                {"text": "选项1", "is_correct": False},
+                                {"text": "选项2", "is_correct": False},
+                                {"text": "选项3", "is_correct": False}
+                            ]
+                        
+                        # 确保memory_hint字段存在且是字符串
+                        if "memory_hint" not in args:
+                            args["memory_hint"] = ""
+                        elif not isinstance(args["memory_hint"], str):
+                            args["memory_hint"] = str(args["memory_hint"])
+                        
+                        return args
             # 构建默认响应
             default_response = {
                 "word": word,
