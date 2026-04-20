@@ -521,30 +521,20 @@ async def get_word_details(file_id: str, word: str):
         context_sentences_with_translations = []
         if sentences:
             for sentence_data in sentences:
-                if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                    # 检查单词是否在translation数组的text字段中
-                    found_word = False
-                    for token in sentence_data["translation_result"]["translation"]:
-                        if isinstance(token, dict) and "text" in token and word_data["word"] in token["text"]:
-                            found_word = True
-                            break
-                    
-                    if found_word or (word_data["word"] in sentence_data.get("sentence", "")):
-                        # 使用新的数据结构，original是目标语言，tokenized_translation是源语言
-                        original_sentence = sentence_data["translation_result"].get("original", sentence_data.get("sentence", ""))
-                        translated_sentence = sentence_data["translation_result"].get("tokenized_translation", "")
-                        
-                        context_sentences.append(original_sentence)
+                if "sentence" in sentence_data:
+                    if word_data["word"] in sentence_data["sentence"]:
+                        context_sentences.append(sentence_data["sentence"])
+                        # 获取翻译
+                        translation = ""
+                        if "translation_result" in sentence_data:
+                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
                         context_sentences_with_translations.append({
-                            "sentence": original_sentence,
-                            "translation": translated_sentence
+                            "sentence": sentence_data["sentence"],
+                            "translation": translation
                         })
             if not context and sentences:
                 # 如果没找到，使用第一个句子作为上下文
-                if sentences[0].get("translation_result", {}).get("original"):
-                    context = sentences[0]["translation_result"]["original"]
-                else:
-                    context = sentences[0].get("sentence", "")
+                context = sentences[0].get("sentence", "")
 
         # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
@@ -764,7 +754,7 @@ async def check_coverage(file_id: str):
             if not all_words_learned:
                 return {"can_form_sentences": False, "unit_completed": unit_completed}
         else:
-            # 至少要学够5个单词后才可能出现句子翻译
+            # 至少要学够5个单词后才可能出现句子翻译题
             if current_index < 4:
                 return {"can_form_sentences": False, "unit_completed": unit_completed}
         
@@ -784,16 +774,10 @@ async def check_coverage(file_id: str):
         # 检查是否有句子可以用已学单词组成
         can_form = False
         for sentence_data in sentences:
-            if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                # 从translation数组中提取单词
-                translation_tokens = sentence_data["translation_result"]["translation"]
-                words_in_sentence = set()
-                for token in translation_tokens:
-                    if isinstance(token, dict) and "text" in token:
-                        word = token["text"].lower()
-                        if word.isalpha():
-                            words_in_sentence.add(word)
-                
+            if "sentence" in sentence_data:
+                sentence = sentence_data["sentence"]
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
                 # 检查是否所有单词都在已学单词中
                 if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     can_form = True
@@ -814,7 +798,6 @@ async def generate_sentence_quiz(file_id: str):
         # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
-        source_lang = language_settings["source_lang"]
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
@@ -829,16 +812,10 @@ async def generate_sentence_quiz(file_id: str):
         # 找到可以用已学单词组成的句子
         eligible_sentences = []
         for sentence_data in sentences:
-            if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                # 从translation数组中提取单词
-                translation_tokens = sentence_data["translation_result"]["translation"]
-                words_in_sentence = set()
-                for token in translation_tokens:
-                    if isinstance(token, dict) and "text" in token:
-                        word = token["text"].lower()
-                        if word.isalpha():
-                            words_in_sentence.add(word)
-                
+            if "sentence" in sentence_data:
+                sentence = sentence_data["sentence"]
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
                 # 检查是否所有单词都在已学单词中，且至少2个单词
                 if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     eligible_sentences.append(sentence_data)
@@ -849,24 +826,30 @@ async def generate_sentence_quiz(file_id: str):
         # 随机选择一个句子
         import random
         selected_sentence = random.choice(eligible_sentences)
-        translation_result = selected_sentence["translation_result"]
+        original_sentence = selected_sentence["sentence"]
         
-        # 现在original_sentence显示的是目标语言，而我们要翻译的是源语言
-        original_sentence = translation_result.get("original", selected_sentence["sentence"])
-        tokenized_translation = translation_result.get("tokenized_translation", selected_sentence["sentence"])
+        # 直接使用LLM生成的数据
+        translation_result = selected_sentence["translation_result"]
+        tokenized_translation = translation_result.get("tokenized_translation", "")
         redundant_tokens = translation_result.get("redundant_tokens", [])
         
         # 过滤掉标点符号，只保留文字
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
-        # 生成正确答案的token列表 - 使用translation字段（目标语言的翻译）
+        # 生成正确答案的token列表
         correct_tokens = []
         if "translation" in translation_result:
             for token in translation_result["translation"]:
-                if isinstance(token, dict) and "translation" in token:
-                    # 使用translation字段（目标语言的翻译）
-                    text = token["translation"]
+                if isinstance(token, dict):
+                    # 对于中文，使用translation字段
+                    if target_lang == "zh" and "translation" in token:
+                        text = token["translation"]
+                    # 对于其他语言，使用text字段
+                    elif "text" in token:
+                        text = token["text"]
+                    else:
+                        continue
                     cleaned_text = clean_token(text)
                     if cleaned_text:
                         correct_tokens.append(cleaned_text)
