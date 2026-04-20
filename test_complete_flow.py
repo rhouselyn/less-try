@@ -6,10 +6,10 @@ import time
 BASE_URL = "http://localhost:8000"
 
 def test_process_text():
-    print("=== 测试文本处理（hello world） ===")
+    print("=== 测试文本处理（hi bro） ===")
     response = requests.post(
         f"{BASE_URL}/api/process-text",
-        json={"text": "hello world", "source_language": "en", "target_language": "zh"}
+        json={"text": "hi bro", "source_language": "en", "target_language": "zh"}
     )
     print(f"状态码: {response.status_code}")
     result = response.json()
@@ -55,12 +55,6 @@ def test_complete_learning_flow(file_id, vocab_count):
         if word_response.status_code == 200:
             word_data = word_response.json()
             print(f"当前单词: {word_data.get('word')}")
-            print(f"是否包含examples: {'examples' in word_data}")
-            if 'examples' in word_data:
-                print(f"examples数量: {len(word_data['examples'])}")
-                for j, example in enumerate(word_data['examples']):
-                    print(f"  例句{j+1}: {example.get('sentence')}")
-                    print(f"  翻译{j+1}: {example.get('translation')}")
         else:
             print(f"获取单词失败: {word_response.status_code}")
             break
@@ -116,7 +110,41 @@ def main():
         # 测试3: 查询词汇表
         vocab = test_vocab(file_id)
         
-        # 测试4: 完整学习流程
+        # 测试4: 查询单词详情并检查上下文句子翻译
+        if vocab and len(vocab) > 0:
+            print("\n=== 测试单词详情和上下文句子翻译 ===")
+            word_to_test = vocab[0]["word"]
+            print(f"测试单词: {word_to_test}")
+            word_detail = None
+            word_detail_response = requests.get(f"{BASE_URL}/api/word/{file_id}/{word_to_test}")
+            print(f"单词详情状态码: {word_detail_response.status_code}")
+            if word_detail_response.status_code == 200:
+                word_detail = word_detail_response.json()
+                print(f"单词详情: {json.dumps(word_detail, indent=2, ensure_ascii=False)}")
+                
+                # 检查 context_sentences
+                if "context_sentences" in word_detail and word_detail["context_sentences"]:
+                    print(f"\n✓ 上下文句子数量: {len(word_detail['context_sentences'])}")
+                    for i, ctx in enumerate(word_detail["context_sentences"]):
+                        print(f"  上下文 {i+1}:")
+                        translation_found = False
+                        if isinstance(ctx, dict):
+                            print(f"    原句: {ctx.get('sentence', 'N/A')}")
+                            print(f"    翻译: {ctx.get('translation', 'N/A')}")
+                            if ctx.get('translation'):
+                                translation_found = True
+                        else:
+                            print(f"    原句 (字符串): {ctx}")
+                            # Check if context_translations exists
+                            if "context_translations" in word_detail and len(word_detail["context_translations"]) > i:
+                                print(f"    翻译: {word_detail['context_translations'][i]}")
+                                translation_found = True
+                        if translation_found:
+                            print(f"    ✓ 翻译存在!")
+                        else:
+                            print(f"    ✗ 翻译不存在!")
+        
+        # 测试5: 完整学习流程
         if vocab:
             test_complete_learning_flow(file_id, len(vocab))
         

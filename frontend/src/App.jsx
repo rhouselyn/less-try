@@ -1,92 +1,15 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, Loader2, ArrowLeft, Languages, Shuffle, Volume2, ChevronRight, Brain, CheckCircle2, XCircle } from 'lucide-react'
-import axios from 'axios'
+import { BookOpen, ArrowLeft } from 'lucide-react'
+import { api } from './utils/api'
+import { translations } from './utils/translations'
 
-// 配置axios超时时间为10分钟
-axios.defaults.timeout = 600000
-
-// 语言翻译字典
-const translations = {
-  zh: {
-    title: "少邻国",
-    subtitle: "Lesslingo",
-    startLearning: "开始学习",
-    inputHint: "输入任意文本，AI 将自动生成单词表和学习资料",
-    learnLang: "学习语言",
-    nativeLang: "母语",
-    inputText: "输入文本",
-    placeholder: "粘贴或输入你想学习的文本...",
-    processing: "处理中...",
-    generateMaterials: "生成学习资料",
-    back: "返回",
-    startRandomLearn: "开始随机单词学习",
-    preparing: "准备中...",
-    sentTranslation: "句子翻译",
-    vocabList: "单词表",
-    wordLabel: "单词",
-    meaningLabel: "意思",
-    posLabel: "词性",
-    definition: "释义",
-    variants: "词形变化",
-    examples: "例句",
-    memoryHint: "记忆辅助",
-    originalSent: "原文例句",
-    sentDetail: "句子详情",
-    original: "原文",
-    translation: "翻译",
-    grammar: "语法详解",
-    backToVocab: "返回单词表",
-    loading: "加载中...",
-    nextQuestion: "下一题",
-    question: "题干",
-    correctAnswer: "正确答案",
-    options: "选项",
-    context: "上下文",
-    studyThisWord: "学习这个单词",
-    aToZ: "A → Z",
-    zToA: "Z → A"
-  },
-  en: {
-    title: "Lesslingo",
-    subtitle: "",
-    startLearning: "Start Learning",
-    inputHint: "Enter any text, AI will automatically generate word list and study materials",
-    learnLang: "Learn Language",
-    nativeLang: "Native Language",
-    inputText: "Enter Text",
-    placeholder: "Paste or enter text you want to learn...",
-    processing: "Processing...",
-    generateMaterials: "Generate Study Materials",
-    back: "Back",
-    startRandomLearn: "Start Random Word Learning",
-    preparing: "Preparing...",
-    sentTranslation: "Sentence Translations",
-    vocabList: "Vocabulary List",
-    wordLabel: "Word",
-    meaningLabel: "Meaning",
-    posLabel: "Part of Speech",
-    definition: "Definition",
-    variants: "Word Forms",
-    examples: "Examples",
-    memoryHint: "Memory Hint",
-    originalSent: "Original Sentence",
-    sentDetail: "Sentence Details",
-    original: "Original",
-    translation: "Translation",
-    grammar: "Grammar Explanation",
-    backToVocab: "Back to Vocab List",
-    loading: "Loading...",
-    nextQuestion: "Next Question",
-    question: "Question",
-    correctAnswer: "Correct Answer",
-    options: "Options",
-    context: "Context",
-    studyThisWord: "Study This Word",
-    aToZ: "A → Z",
-    zToA: "Z → A"
-  }
-};
+// 导入组件
+import InputStep from './components/InputStep'
+import DictionaryStep from './components/DictionaryStep'
+import LearningStep from './components/LearningStep'
+import ProgressStep from './components/ProgressStep'
+import SentenceQuizStep from './components/SentenceQuizStep'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -108,6 +31,12 @@ function App() {
   const [showWordCard, setShowWordCard] = useState(false)
   const [selectedOption, setSelectedOption] = useState(null)
   const [isCorrect, setIsCorrect] = useState(null)
+  const [units, setUnits] = useState([])
+  const [currentUnit, setCurrentUnit] = useState(0)
+  const [totalUnits, setTotalUnits] = useState(0)
+  const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
+  const [quizData, setQuizData] = useState(null)
+  const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -133,10 +62,7 @@ function App() {
       console.log(`第${pollCount}次轮询，文件ID: ${currentFileId}`)
 
       try {
-        const response = await axios.get(`/api/status/${currentFileId}`, {
-          timeout: 600000 // 10分钟超时
-        })
-        const status = response.data
+        const status = await api.getStatus(currentFileId)
         console.log('状态响应:', status)
 
         // 强制更新词汇表和句子翻译，确保实时显示
@@ -252,17 +178,11 @@ function App() {
     
     try {
       console.log('开始处理文本，长度:', text.length)
-      const response = await axios.post('/api/process-text', {
-        text: text.trim(),
-        source_language: sourceLang,
-        target_language: targetLang
-      }, {
-        timeout: 600000 // 10分钟超时
-      })
+      const response = await api.processText(text, sourceLang, targetLang)
       
-      console.log('API响应:', response.data)
-      if (response.data && response.data.file_id) {
-        const fileId = response.data.file_id
+      console.log('API响应:', response)
+      if (response && response.file_id) {
+        const fileId = response.file_id
         setFileId(fileId)
         setCurrentFileId(fileId)
         console.log('获取到文件ID:', fileId)
@@ -290,15 +210,39 @@ function App() {
     
     setLoading(true)
     try {
-      const response = await axios.get(`/api/learn/${currentFileId}/random-word`)
-      setLearningData(response.data)
-      setShowWordCard(false)
-      setSelectedOption(null)
-      setIsCorrect(null)
-      setStep('learning')
+      // 获取学习进度和分组信息
+      const progressData = await api.getLearningProgress(currentFileId)
+      setUnits(progressData.units)
+      setCurrentUnit(progressData.current_unit)
+      setTotalUnits(progressData.total_units)
+      setAllUnitsCompleted(progressData.all_units_completed)
+      setStep('progress')
     } catch (error) {
       console.error('开始学习错误:', error)
       alert('无法开始学习，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleUnitClick = async (unitIndex) => {
+    setLoading(true)
+    try {
+      // 计算该单元的起始学习索引
+      const startIndex = unitIndex * 10
+      // 设置学习进度到该单元的起始位置
+      await api.setProgress(currentFileId, startIndex)
+      // 获取第一个单词
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setLearningMode('word')
+      setStep('learning')
+    } catch (error) {
+      console.error('获取单元单词错误:', error)
+      alert('无法获取单元单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -319,13 +263,59 @@ function App() {
     setLoading(true)
     try {
       // 先调用 API 更新进度
-      await axios.post(`/api/learn/${currentFileId}/next-word`)
-      // 然后获取下一个单词
-      const response = await axios.get(`/api/learn/${currentFileId}/random-word`)
-      setLearningData(response.data)
-      setShowWordCard(false)
-      setSelectedOption(null)
-      setIsCorrect(null)
+      const nextWordResponse = await api.nextWord(currentFileId)
+      const newIndex = nextWordResponse.new_index
+      
+      // 获取词汇表长度
+      const vocabResponse = await api.getVocab(currentFileId)
+      const vocabLength = vocabResponse.vocab.length
+      
+      // 检查是否学习完所有单词
+      const allWordsLearned = newIndex >= vocabLength
+      
+      if (allWordsLearned) {
+        // 检查是否可以生成句子翻译题
+        const coverageData = await api.checkCoverage(currentFileId)
+        if (coverageData.can_form_sentences) {
+          // 生成句子翻译题
+          const quizResponse = await api.generateSentenceQuiz(currentFileId)
+          setQuizData({
+            ...quizResponse,
+            unit_completed: coverageData.unit_completed
+          })
+          setLearningMode('sentence')
+          setStep('sentence-quiz')
+        } else {
+          // 单元已完成
+          alert('该单元学习已完成！')
+          setStep('progress')
+        }
+        return
+      }
+      
+      // 检查是否需要插入句子翻译题
+      const coverageData = await api.checkCoverage(currentFileId)
+      if (coverageData.can_form_sentences) {
+        // 生成句子翻译题
+        const quizResponse = await api.generateSentenceQuiz(currentFileId)
+        setQuizData({
+          ...quizResponse,
+          unit_completed: coverageData.unit_completed
+        })
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
+      } else if (coverageData.unit_completed) {
+        // 单元已完成
+        alert('该单元学习已完成！')
+        setStep('progress')
+      } else {
+        // 继续单词学习
+        const response = await api.getRandomWord(currentFileId)
+        setLearningData(response)
+        setShowWordCard(false)
+        setSelectedOption(null)
+        setIsCorrect(null)
+      }
     } catch (error) {
       console.error('获取下一个单词错误:', error)
       alert('无法获取下一个单词，请重试')
@@ -344,8 +334,8 @@ function App() {
     }
     
     try {
-      const response = await axios.get(`/api/word/${currentFileId}/${word}`)
-      setSelectedWord(response.data)
+      const response = await api.getWordDetails(currentFileId, word)
+      setSelectedWord(response)
     } catch (error) {
       console.error('获取单词详情错误:', error)
     }
@@ -357,6 +347,40 @@ function App() {
     setSelectedOption(null)
     setIsCorrect(null)
     setStep('learning')
+  }
+
+  const handleNextSentenceQuiz = async () => {
+    setLoading(true)
+    try {
+      // 检查是否还有可组成的句子
+      const coverageData = await api.checkCoverage(currentFileId)
+      if (coverageData.can_form_sentences) {
+        // 生成下一个句子翻译题
+        const quizResponse = await api.generateSentenceQuiz(currentFileId)
+        setQuizData({
+          ...quizResponse,
+          unit_completed: coverageData.unit_completed
+        })
+      } else if (coverageData.unit_completed) {
+        // 单元已完成
+        alert('该单元学习已完成！')
+        setStep('progress')
+      } else {
+        // 回到单词学习
+        const response = await api.getRandomWord(currentFileId)
+        setLearningData(response)
+        setShowWordCard(false)
+        setSelectedOption(null)
+        setIsCorrect(null)
+        setLearningMode('word')
+        setStep('learning')
+      }
+    } catch (error) {
+      console.error('获取下一个句子翻译题错误:', error)
+      alert('无法获取下一个句子翻译题，请重试')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -374,12 +398,18 @@ function App() {
               </div>
             </div>
             <AnimatePresence>
-              {step === 'dictionary' && (
+              {step !== 'input' && (
                 <motion.button
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
-                  onClick={() => setStep('input')}
+                  onClick={() => {
+                    if (step === 'learning' || step === 'sentence-quiz' || step === 'progress') {
+                      setStep('dictionary');
+                    } else {
+                      setStep('input');
+                    }
+                  }}
                   className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -429,6 +459,19 @@ function App() {
             />
           )}
           
+          {step === 'progress' && (
+            <ProgressStep
+              key="progress"
+              units={units}
+              currentUnit={currentUnit}
+              onUnitClick={handleUnitClick}
+              onBack={() => setStep('dictionary')}
+              loading={loading}
+              t={t}
+              allUnitsCompleted={allUnitsCompleted}
+            />
+          )}
+          
           {step === 'learning' && (
             <LearningStep
               key="learning"
@@ -443,728 +486,21 @@ function App() {
               t={t}
             />
           )}
+          
+          {step === 'sentence-quiz' && (
+            <SentenceQuizStep
+              key="sentence-quiz"
+              quizData={quizData}
+              onNextQuestion={handleNextSentenceQuiz}
+              onBack={() => setStep('dictionary')}
+              onComplete={() => setStep('progress')}
+              loading={loading}
+              t={t}
+            />
+          )}
         </AnimatePresence>
       </main>
     </div>
-  )
-}
-
-function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="max-w-3xl mx-auto"
-    >
-      <div className="text-center mb-12">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h2 className="text-4xl font-semibold text-slate-900 mb-4">
-            {t.startLearning}
-          </h2>
-          <p className="text-lg text-slate-600">
-            {t.inputHint}
-          </p>
-        </motion.div>
-      </div>
-
-      <div className="space-y-6">
-        <div className="flex gap-4">
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              {t.learnLang}
-            </label>
-            <select
-              value={sourceLang}
-              onChange={(e) => setSourceLang(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
-            >
-              <option value="zh">中文</option>
-              <option value="en">英语</option>
-              <option value="es">西班牙语</option>
-              <option value="de">德语</option>
-              <option value="fr">法语</option>
-              <option value="ja">日语</option>
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              {t.nativeLang}
-            </label>
-            <select
-              value={targetLang}
-              onChange={(e) => setTargetLang(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-200 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all"
-            >
-              <option value="zh">中文</option>
-              <option value="en">英语</option>
-              <option value="ja">日语</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            {t.inputText}
-          </label>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={t.placeholder}
-            className="w-full h-64 px-4 py-4 border border-slate-200 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all resize-none"
-          />
-        </div>
-
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          onClick={onProcess}
-          disabled={loading || !text.trim()}
-          className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              {t.processing}
-            </>
-          ) : (
-            <>
-              <Languages className="w-5 h-5" />
-              {t.generateMaterials}
-            </>
-          )}
-        </motion.button>
-      </div>
-    </motion.div>
-  )
-}
-
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onWordClick, onStartLearning, loading, t, onStudyWord }) {
-  // 安全检查，确保sentenceTranslations是数组
-  const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col gap-6"
-    >
-      {/* 处理进度条 */}
-      {processingInfo && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-          <div className="flex justify-between mb-2">
-            <span className="text-sm text-slate-600">{t.processing}: 句子 {processingInfo.current} / {processingInfo.total}</span>
-            <span className="text-sm text-slate-600">{progress}%</span>
-          </div>
-          <div className="w-full bg-slate-100 rounded-full h-2.5">
-            <div 
-              className="bg-black h-2.5 rounded-full transition-all duration-300" 
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-        </div>
-      )}
-
-      {/* 开始学习按钮 */}
-      {!processingInfo && vocab.length > 0 && (
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          onClick={onStartLearning}
-          disabled={loading}
-          className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              {t.preparing}
-            </>
-          ) : (
-            <>
-              <Shuffle className="w-5 h-5" />
-              {t.startRandomLearn}
-            </>
-          )}
-        </motion.button>
-      )}
-
-      {/* 句子列表 */}
-      {safeSentenceTranslations.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">{t.sentTranslation}</h2>
-          <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-            <div className="divide-y divide-slate-200">
-              {safeSentenceTranslations.map((item, index) => (
-                <div key={index}>
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.02 }}
-                    className="p-4 hover:bg-slate-50 cursor-pointer"
-                    onClick={() => onSentenceClick(index)}
-                  >
-                    <div className="font-medium text-slate-900 mb-2">{item.sentence}</div>
-                    {item.translation_result && item.translation_result.tokenized_translation && (
-                      <div className="text-slate-700">{item.translation_result.tokenized_translation}</div>
-                    )}
-                  </motion.div>
-                  {selectedSentence === index && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="border-t border-slate-200 p-4 bg-slate-50"
-                    >
-                      <SentenceDetail
-                        sentenceTranslation={safeSentenceTranslations[index]}
-                        t={t}
-                      />
-                    </motion.div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 单词表 - 高中课本附录格式 */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-slate-900">
-            {t.vocabList} ({vocab.length})
-          </h2>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onToggleSort}
-            className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
-          >
-            {sortOrder === 'asc' ? t.aToZ : t.zToA}
-          </motion.button>
-        </div>
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-          <div className="grid grid-cols-3 gap-1 p-4 bg-slate-50 border-b border-slate-200">
-            <div className="font-semibold text-slate-700">{t.wordLabel}</div>
-            <div className="font-semibold text-slate-700">{t.meaningLabel}</div>
-            <div className="font-semibold text-slate-700">{t.posLabel}</div>
-          </div>
-          <div className="divide-y divide-slate-200">
-            {vocab.map((word, index) => (
-              <div key={word.word || index}>
-                <motion.div
-                  initial={{ opacity: 0, y: -5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.02 }}
-                  className="grid grid-cols-3 gap-1 p-4 hover:bg-slate-50 cursor-pointer"
-                  onClick={() => onWordClick(word.word)}
-                >
-                  <div className="font-medium text-slate-900 hover:text-black transition-colors">{word.word}</div>
-                  <div className="text-slate-700">{word.context_meaning}</div>
-                  <div className="text-slate-600 font-mono">{word.morphology}</div>
-                </motion.div>
-                {selectedWord && selectedWord.word === word.word && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="border-t border-slate-200 p-4 bg-slate-50"
-                  >
-                    <WordDetail
-                      word={selectedWord}
-                      t={t}
-                      onStudyWord={onStudyWord}
-                    />
-                  </motion.div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-function WordDetail({ word, t, onStudyWord }) {
-  const [isPlaying, setIsPlaying] = useState(false)
-
-  const handlePlayAudio = () => {
-    setIsPlaying(true)
-    setTimeout(() => setIsPlaying(false), 1000)
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
-    >
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <motion.h2 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-4xl font-semibold text-slate-900 mb-2"
-          >
-            {word.word}
-          </motion.h2>
-          <div className="flex items-center gap-3">
-            {word.ipa && (
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-xl text-slate-500 ipa-font"
-              >
-                /{word.ipa}/
-              </motion.p>
-            )}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handlePlayAudio}
-              className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors"
-            >
-              <Volume2 className={`w-5 h-5 ${isPlaying ? 'animate-pulse' : ''}`} />
-            </motion.button>
-          </div>
-        </div>
-        {word.morphology && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-full text-sm font-medium"
-          >
-            {word.morphology}
-          </motion.span>
-        )}
-      </div>
-
-      {/* 学习按钮 */}
-      {word.options && word.options.length > 0 && onStudyWord && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6"
-        >
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={() => onStudyWord(word)}
-            className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-          >
-            <Brain className="w-5 h-5" />
-            {t.studyThisWord}
-          </motion.button>
-        </motion.div>
-      )}
-
-      <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            {t.definition}
-          </h3>
-          <p className="text-lg text-slate-700 leading-relaxed">
-            {word.meaning || word.context_meaning}
-          </p>
-        </motion.div>
-
-        {word.variants_detail && word.variants_detail.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              {t.variants}
-            </h3>
-            <div className="space-y-2">
-              {word.variants_detail.map((variant, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-sm font-medium">
-                    {variant.type}
-                  </span>
-                  <span className="text-slate-700">{variant.form}</span>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {word.examples && word.examples.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              {t.examples}
-            </h3>
-            <div className="space-y-4">
-              {word.examples.map((example, index) => (
-                <div key={index} className="border-l-4 border-slate-200 pl-4">
-                  <p className="text-slate-900 mb-1">{example.sentence}</p>
-                  <p className="text-slate-600 text-sm">{example.translation}</p>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {word.memory_hint && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              {t.memoryHint}
-            </h3>
-            <p className="text-lg text-slate-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-100">
-              {word.memory_hint}
-            </p>
-          </motion.div>
-        )}
-
-        {word.context_sentences && word.context_sentences.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-          >
-            <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-              {t.originalSent}
-            </h3>
-            <div className="space-y-2">
-              {word.context_sentences.map((sentence, index) => (
-                <p key={index} className="text-slate-700 italic">{sentence}</p>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </div>
-    </motion.div>
-  )
-}
-
-function SentenceDetail({ sentenceTranslation, t }) {
-  const sentence = sentenceTranslation?.sentence
-  const translationResult = sentenceTranslation?.translation_result
-  
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
-    >
-      <div className="flex items-center mb-8">
-        <motion.h2 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-2xl font-semibold text-slate-900"
-        >
-          {t.sentDetail}
-        </motion.h2>
-      </div>
-
-      <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            {t.original}
-          </h3>
-          <p className="text-lg text-slate-900 leading-relaxed">
-            {sentence}
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-            {t.translation}
-          </h3>
-          <p className="text-lg text-slate-700 leading-relaxed">
-            {translationResult?.tokenized_translation || t.loading}
-          </p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            {t.grammar}
-          </h3>
-          <p className="text-lg text-slate-700 leading-relaxed">
-            {translationResult?.grammar_explanation || t.loading}
-          </p>
-        </motion.div>
-      </div>
-    </motion.div>
-  )
-}
-
-function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, loading, t }) {
-  if (!learningData) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-3xl mx-auto"
-      >
-        <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" />
-          <p className="text-lg text-slate-600">{t.loading}</p>
-        </div>
-      </motion.div>
-    )
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="max-w-3xl mx-auto"
-    >
-      {/* 返回按钮 */}
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t.backToVocab}
-      </motion.button>
-
-      <AnimatePresence mode="wait">
-        {!showWordCard ? (
-          <motion.div
-            key="question"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
-          >
-            <div className="text-center mb-8">
-              <motion.h2 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-4xl font-semibold text-slate-900 mb-2"
-              >
-                {learningData.word}
-              </motion.h2>
-              {learningData.ipa && (
-                <motion.p 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.1 }}
-                  className="text-xl text-slate-500 ipa-font"
-                >
-                  /{learningData.ipa}/
-                </motion.p>
-              )}
-            </div>
-
-            <div className="space-y-4">
-              {learningData.options.map((option, index) => (
-                <motion.button
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => onOptionSelect(index)}
-                  disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-4 px-6 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800') : 'bg-white border border-slate-200 text-slate-900 hover:bg-slate-50'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    {selectedOption === index && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="w-5 h-5 rounded-full flex items-center justify-center"
-                      >
-                        {isCorrect ? (
-                          <CheckCircle2 className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-red-600" />
-                        )}
-                      </motion.div>
-                    )}
-                    <span className="text-lg">{option}</span>
-                  </div>
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            key="word-card"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
-          >
-            <div className="flex items-start justify-between mb-8">
-              <div>
-                <motion.h2 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="text-4xl font-semibold text-slate-900 mb-2"
-                >
-                  {learningData.word}
-                </motion.h2>
-                {learningData.ipa && (
-                  <motion.p 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-xl text-slate-500 ipa-font"
-                  >
-                    /{learningData.ipa}/
-                  </motion.p>
-                )}
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-              >
-                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  {t.definition}
-                </h3>
-                <p className="text-lg text-slate-700 leading-relaxed">
-                  {learningData.correct_meaning}
-                </p>
-              </motion.div>
-
-              {learningData.context && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    {t.context}
-                  </h3>
-                  <p className="text-lg text-slate-700 leading-relaxed italic">
-                    {learningData.context}
-                  </p>
-                </motion.div>
-              )}
-
-              {learningData.variants_detail && learningData.variants_detail.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.25 }}
-                >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    {t.variants}
-                  </h3>
-                  <div className="space-y-2">
-                    {learningData.variants_detail.map((variant, index) => (
-                      <div key={index} className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-sm font-medium">
-                          {variant.type}
-                        </span>
-                        <span className="text-slate-700">{variant.form}</span>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {learningData.examples && learningData.examples.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    {t.examples}
-                  </h3>
-                  <div className="space-y-4">
-                    {learningData.examples.map((example, index) => (
-                      <div key={index} className="border-l-4 border-slate-200 pl-4">
-                        <p className="text-slate-900 mb-1">{example.sentence}</p>
-                        <p className="text-slate-600 text-sm">{example.translation}</p>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-
-              {learningData.memory_hint && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.35 }}
-                >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
-                    {t.memoryHint}
-                  </h3>
-                  <p className="text-lg text-slate-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-100">
-                    {learningData.memory_hint}
-                  </p>
-                </motion.div>
-              )}
-            </div>
-
-            <motion.button
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              onClick={onNextWord}
-              disabled={loading}
-              className="mt-8 w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {t.loading}
-                </>
-              ) : (
-                <>
-                  {t.nextQuestion}
-                  <ChevronRight className="w-5 h-5" />
-                </>
-              )}
-            </motion.button>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
   )
 }
 
