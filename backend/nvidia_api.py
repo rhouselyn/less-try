@@ -228,17 +228,10 @@ TEXT_CONTENT
         response = await self.call_minimax(messages, [tool_def], temperature=0.0)
         
         try:
-            print("=== LLM Tool JSON Response ===")
-            print(json.dumps(response, indent=2, ensure_ascii=False))
-            print("======================")
-            
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    print("=== Parsed Tool Arguments ===")
-                    print(json.dumps(args, indent=2, ensure_ascii=False))
-                    print("======================")
                     return args
             return {}
         except Exception as e:
