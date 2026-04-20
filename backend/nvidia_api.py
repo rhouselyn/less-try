@@ -233,18 +233,9 @@ TEXT_CONTENT
                     print("=== Parsed Tool Arguments ===")
                     print(json.dumps(args, indent=2, ensure_ascii=False))
                     print("======================")
-                    # 强制将original字段设置为tokenized_translation，确保显示翻译后的文本
-                    print(f"[DEBUG] Before setting original: {args.get('original')}")
-                    print(f"[DEBUG] tokenized_translation: {args.get('tokenized_translation')}")
-                    if "tokenized_translation" in args:
-                        args["original"] = args["tokenized_translation"]
-                        print(f"[DEBUG] After setting original from tokenized_translation: {args['original']}")
-                    elif "original" not in args:
-                        # 如果tokenized_translation也不存在，使用输入文本
+                    # 确保original字段存在，如果不存在则使用输入文本
+                    if "original" not in args:
                         args["original"] = text
-                        print(f"[DEBUG] After setting original from input text: {args['original']}")
-                    else:
-                        print(f"[DEBUG] Keeping existing original: {args['original']}")
                     return args
             return {}
         except Exception as e:
