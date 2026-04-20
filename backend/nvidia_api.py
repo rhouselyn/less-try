@@ -144,7 +144,7 @@ For each word, provide:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "original": {"type": "string"},
+                        "original": {"type": "string", "description": "The original text or translated text to target language if needed"},
                         "translation": {
                             "type": "array",
                             "items": {
@@ -179,8 +179,9 @@ For each word, provide:
 
 【非常非常重要的说明！！！】
 1. 首先检查输入文本的语言：
-   - 如果输入文本不是 TEXT_LANG，必须先严格翻译成 TEXT_LANG，然后再进行后续处理
-   - original 字段应该填入翻译后的 TEXT_LANG 文本
+   - 如果输入文本的语言与 TARGET_LANG 一致，则不需要翻译，保持原样
+   - 如果输入文本的语言与 TEXT_LANG 一致，则 original 字段保持输入文本原样
+   - 如果输入文本的语言既不是 TEXT_LANG 也不是 TARGET_LANG，则先翻译成 TEXT_LANG，然后 original 字段填入翻译后的 TEXT_LANG 文本
 2. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
 3. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
 4. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
@@ -198,15 +199,17 @@ For each word, provide:
 7. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 
 按照以下结构处理文本：
-- original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）- 完全保留原始空格！！！
+- original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
-  - text: TEXT_LANG 原词/标记（不带标点）
+  - text: 原词/标记（不带标点）
   - translation: 这个词翻译成 TARGET_LANG
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）
+
+【强制要求】必须返回 original 字段，即使输入文本已经是 TARGET_LANG 或 TEXT_LANG。
 
 要处理的文本：
 TEXT_CONTENT

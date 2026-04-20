@@ -110,9 +110,8 @@ class TextProcessor:
         
         # 简单处理，保留LLM生成的自然结果
         if isinstance(result, dict):
-            # 移除重复的original字段（与sentence重复）
-            if 'original' in result:
-                del result['original']
+            # 保留original字段，因为它可能包含翻译后的文本
+            # 不再删除original字段
             
             # 简单过滤：只过滤掉纯标点符号的token
             if 'translation' in result:

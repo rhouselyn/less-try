@@ -31,7 +31,7 @@ function SentenceDetail({ sentenceTranslation, t }) {
             {t.original}
           </h3>
           <p className="text-lg text-slate-900 leading-relaxed">
-            {sentence}
+            {translationResult?.original || sentence}
           </p>
         </motion.div>
 
