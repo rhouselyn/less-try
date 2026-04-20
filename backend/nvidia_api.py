@@ -1,7 +1,6 @@
 import os
 import requests
 import json
-import random
 from typing import List, Dict, Any
 
 
@@ -132,14 +131,14 @@ class NvidiaAPI:
 
 请生成以下信息：
 
-1. enriched_meaning: 符合上下文的精准释义（只需要几个词，不需要完整句子）
+1. enriched_meaning: 符合上下文的精准释义
 2. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
 3. variants_detail: 词形变化列表，带类型说明（如过去式、复数等）
 4. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
 5. memory_hint: 记忆辅助（与用户母语的联想或对比）
 6. multiple_choice: 选择题，包含：
    - question: 可为空（默认为单词本身）
-   - correct_answer: 正确释义（只需要几个词，不需要完整句子）
+   - correct_answer: 正确释义
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
 
 要求：
@@ -147,8 +146,6 @@ class NvidiaAPI:
 - 例句要自然，符合上下文
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
-- 【重要】错误答案必须是该单词完全没有的意思，而不是只是在句子中未使用的意思
-- 【重要】单词意思部分只需要几个词即可，不需要用一句话进行解释
 - 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 """
 
@@ -161,15 +158,6 @@ class NvidiaAPI:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    # 随机打乱选项顺序
-                    if "multiple_choice" in args and "options" in args["multiple_choice"]:
-                        options = args["multiple_choice"]["options"]
-                        random.shuffle(options)
-                        # 重新确定正确答案索引
-                        for i, opt in enumerate(options):
-                            if opt["is_correct"]:
-                                args["correct_index"] = i
-                                break
                     return args
             # 构建默认响应
             default_response = {
@@ -361,7 +349,7 @@ class NvidiaAPI:
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
-- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。确保这些冗余词与正确答案的token组合时，不会形成另一种合理的翻译结果。
+- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）
 
 同时，为文本中出现的主要单词生成完整词典条目（dictionary_entries）：
 
