@@ -46,105 +46,31 @@ class NvidiaAPI:
             response.raise_for_status()
             return response.json()
 
-    async def generate_dictionary(self, words: List[str], context: str, source_lang: str, target_lang: str):
+    async def process_text_with_dictionary(self, text: str, source_lang: str, target_lang: str):
+        """
+        合并处理：同时对整段文本进行句子级拆解 + 为文本中主要单词生成完整词典条目
+        
+        返回结构（一个字典）：
+        - original
+        - tokenized_translation
+        - grammar_explanation
+        - translation（token数组，带词性、音标等）
+        - redundant_tokens
+        - dictionary_entries（单词列表的完整词典条目）
+        """
+        
         tool_def = {
             "type": "function",
             "function": {
-                "name": "generate_dictionary",
-                "description": "Generate dictionary entries for words with context",
+                "name": "process_text_with_dictionary",
+                "description": "同时处理文本拆解翻译和单词词典条目生成",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "words": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "word": {"type": "string"},
-                                    "ipa": {"type": "string"},
-                                    "context_meaning": {"type": "string"},
-                                    "variants": {"type": "array", "items": {"type": "object", "properties": {"type": {"type": "string"}, "form": {"type": "string"}}, "required": ["type", "form"]}},
-                                    "examples": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 2,
-                                        "maxItems": 2
-                                    },
-                                    "options": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 4,
-                                        "maxItems": 4
-                                    },
-                                    "grammar": {"type": "string"},
-                                    "translation": {"type": "string"},
-                                    "tokens": {"type": "array", "items": {"type": "string"}}
-                                },
-                                "required": ["word", "ipa", "context_meaning", "variants", "examples", "options", "grammar", "translation", "tokens"]
-                            }
-                        }
-                    },
-                    "required": ["words"]
-                }
-            }
-        }
-
-        # 构建prompt
-        prompt = """
-Generate dictionary entries for the following words in SOURCE_LANG.
-Use the context below to ensure meanings are accurate to the text.
-Translate meanings to TARGET_LANG.
-
-Words: WORDS_LIST
-
-Context:
-CONTEXT_CONTENT
-
-For each word, provide:
-1. word: The word itself
-2. ipa: International Phonetic Alphabet pronunciation
-3. context_meaning: Meaning in TARGET_LANG based on the context
-4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
-5. examples: 2 example sentences in SOURCE_LANG that match the context meaning
-6. options: 4 options for the meaning (1 correct, 3 incorrect)
-7. grammar: Grammar explanation for the word
-8. translation: Translation of the word to TARGET_LANG
-9. tokens: Split the word into tokens if applicable
-"""
-
-        # 替换占位符
-        prompt = prompt.replace("SOURCE_LANG", source_lang)
-        prompt = prompt.replace("TARGET_LANG", target_lang)
-        prompt = prompt.replace("WORDS_LIST", ', '.join(words))
-        prompt = prompt.replace("CONTEXT_CONTENT", context)
-
-        messages = [{"role": "user", "content": prompt}]
-        
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
-        
-        try:
-            # 查找包含 tool_calls 的 choice
-            for choice in response["choices"]:
-                if "tool_calls" in choice["message"]:
-                    tool_call = choice["message"]["tool_calls"][0]
-                    args = json.loads(tool_call["function"]["arguments"])
-                    return args["words"]
-            return []
-        except Exception as e:
-            print(f"Tool call failed: {e}")
-            print(f"Response: {response}")
-            return []
-
-    async def split_and_translate(self, text: str, source_lang: str, target_lang: str):
-        tool_def = {
-            "type": "function",
-            "function": {
-                "name": "split_and_translate",
-                "description": "Split text into tokens, translate each token, and provide sentence-level grammar explanation",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "original": {"type": "string", "description": "The original text or translated text to target language if needed"},
+                        "original": {
+                            "type": "string",
+                            "description": "原文文本（完全保留原始空格）"
+                        },
                         "translation": {
                             "type": "array",
                             "items": {
@@ -160,21 +86,71 @@ For each word, provide:
                         },
                         "tokenized_translation": {
                             "type": "string",
-                            "description": "The complete natural translation to target language, as a normal sentence without artificially added spaces between words"
+                            "description": "完整自然的 TARGET_LANG 翻译，正常句子格式"
                         },
-                        "grammar_explanation": {"type": "string"},
+                        "grammar_explanation": {
+                            "type": "string",
+                            "description": "整个文本的一个完整语法解释，用 TARGET_LANG"
+                        },
                         "redundant_tokens": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "4 reasonable redundant tokens related to the original text for quiz purposes"
+                            "description": "4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG"
+                        },
+                        "dictionary_entries": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "word": {"type": "string"},
+                                    "ipa": {"type": "string"},
+                                    "context_meaning": {"type": "string"},
+                                    "variants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "type": {"type": "string"},
+                                                "form": {"type": "string"}
+                                            },
+                                            "required": ["type", "form"]
+                                        }
+                                    },
+                                    "examples": {
+                                        "type": "array",
+                                        "items": {"type": "string"},
+                                        "minItems": 2,
+                                        "maxItems": 2
+                                    },
+                                    "options": {
+                                        "type": "array",
+                                        "items": {"type": "string"},
+                                        "minItems": 4,
+                                        "maxItems": 4
+                                    },
+                                    "grammar": {"type": "string"},
+                                    "translation": {"type": "string"},
+                                    "tokens": {
+                                        "type": "array",
+                                        "items": {"type": "string"}
+                                    }
+                                },
+                                "required": [
+                                    "word", "ipa", "context_meaning", "variants", 
+                                    "examples", "options", "grammar", "translation", "tokens"
+                                ]
+                            }
                         }
                     },
-                    "required": ["original", "translation", "tokenized_translation", "grammar_explanation", "redundant_tokens"]
+                    "required": [
+                        "original", "translation", "tokenized_translation", 
+                        "grammar_explanation", "redundant_tokens", "dictionary_entries"
+                    ]
                 }
             }
         }
 
-        # 构建prompt
+        # 构建 prompt
         prompt = """处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
 
 【非常非常重要的说明！！！】
@@ -195,8 +171,7 @@ For each word, provide:
    - interj (感叹词)
    - det (限定词)
 5. morphology 字段必须只包含缩写，不要有其他内容！
-6. morphology 字段里不要加任何额外的解释！
-7. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
+6. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 
 按照以下结构处理文本：
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
@@ -209,10 +184,23 @@ For each word, provide:
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）
 
-【强制要求】必须返回 original 字段，即使输入文本已经是 TARGET_LANG 或 TEXT_LANG。
+同时，为文本中出现的主要单词生成完整词典条目（dictionary_entries）：
+
+为每个主要单词提供：
+1. word: The word itself
+2. ipa: International Phonetic Alphabet pronunciation
+3. context_meaning: Meaning in TARGET_LANG based on the context
+4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
+5. examples: 2 example sentences in SOURCE_LANG that match the context meaning
+6. options: 4 options for the meaning (1 correct, 3 incorrect)
+7. grammar: Grammar explanation for the word
+8. translation: Translation of the word to TARGET_LANG
+9. tokens: Split the word into tokens if applicable
 
 要处理的文本：
 TEXT_CONTENT
+
+请严格按照 tool 定义的 JSON 结构返回所有字段，不要遗漏任何 required 字段。
 """
 
         # 替换占位符
@@ -225,7 +213,7 @@ TEXT_CONTENT
         response = await self.call_minimax(messages, [tool_def], temperature=0.0)
         
         try:
-            print("=== LLM Tool JSON Response ===")
+            print("=== LLM Tool JSON Response (Merged) ===")
             print(json.dumps(response, indent=2, ensure_ascii=False))
             print("======================")
             
@@ -233,7 +221,7 @@ TEXT_CONTENT
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    print("=== Parsed Tool Arguments ===")
+                    print("=== Parsed Tool Arguments (Merged) ===")
                     print(json.dumps(args, indent=2, ensure_ascii=False))
                     print("======================")
                     return args
@@ -403,4 +391,3 @@ TEXT_CONTENT
                 }
             }
             return error_response
-

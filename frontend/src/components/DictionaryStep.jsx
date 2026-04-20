@@ -68,9 +68,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                     className="p-4 hover:bg-slate-50 cursor-pointer"
                     onClick={() => onSentenceClick(index)}
                   >
-                    <div className="font-medium text-slate-900 mb-2">{item.sentence}</div>
-                    {item.translation_result && item.translation_result.tokenized_translation && (
-                      <div className="text-slate-700">{item.translation_result.tokenized_translation}</div>
+                    <div className="font-medium text-slate-900 mb-2">{item.translation_result?.tokenized_translation || item.sentence}</div>
+                    {item.translation_result && item.translation_result.original && (
+                      <div className="text-slate-700">{item.translation_result.original}</div>
                     )}
                   </motion.div>
                   {selectedSentence === index && (
