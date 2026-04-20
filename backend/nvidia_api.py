@@ -296,11 +296,15 @@ class NvidiaAPI:
                                     "tokens": {
                                         "type": "array",
                                         "items": {"type": "string"}
+                                    },
+                                    "morphology": {
+                                        "type": "string",
+                                        "description": "词性缩写，如 n, v, adj 等"
                                     }
                                 },
                                 "required": [
                                     "word", "ipa", "context_meaning", "variants", 
-                                    "examples", "options", "grammar", "translation", "tokens"
+                                    "examples", "options", "grammar", "translation", "tokens", "morphology"
                                 ]
                             }
                         }
@@ -359,6 +363,7 @@ class NvidiaAPI:
 7. grammar: Grammar explanation for the word
 8. translation: Translation of the word to TARGET_LANG
 9. tokens: Split the word into tokens if applicable
+10. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 要处理的文本：
 TEXT_CONTENT
