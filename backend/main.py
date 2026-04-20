@@ -77,40 +77,23 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 sentence_translations.append(sentence_data)
                 
                 # 提取词汇
-                if isinstance(translation_result, dict):
-                    # 优先使用dictionary_entries
-                    if "dictionary_entries" in translation_result:
-                        for entry in translation_result["dictionary_entries"]:
-                            if isinstance(entry, dict) and "word" in entry:
-                                word = entry["word"].lower()
-                                if word not in global_seen_words:
-                                    global_seen_words.add(word)
-                                    vocab_entry = {
-                                        "word": entry["word"],
-                                        "ipa": entry.get("ipa", ""),
-                                        "context_meaning": entry.get("context_meaning", ""),
-                                        "morphology": entry.get("morphology", ""),
-                                        "sentence_index": i
-                                    }
-                                    all_vocab.append(vocab_entry)
-                    # 回退到旧的translation字段
-                    elif "translation" in translation_result:
-                        for token in translation_result["translation"]:
-                            if isinstance(token, dict) and "text" in token:
-                                word = token["text"].lower()
-                                if word not in global_seen_words:
-                                    global_seen_words.add(word)
-                                    # 直接使用API返回的形态学缩写
-                                    morphology = token.get("morphology", "")
-                                    
-                                    vocab_entry = {
-                                        "word": token["text"],
-                                        "ipa": token.get("phonetic", ""),
-                                        "context_meaning": token.get("translation", ""),
-                                        "morphology": morphology,
-                                        "sentence_index": i
-                                    }
-                                    all_vocab.append(vocab_entry)
+                if isinstance(translation_result, dict) and "translation" in translation_result:
+                    for token in translation_result["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            word = token["text"].lower()
+                            if word not in global_seen_words:
+                                global_seen_words.add(word)
+                                # 直接使用API返回的形态学缩写
+                                morphology = token.get("morphology", "")
+                                
+                                vocab_entry = {
+                                    "word": token["text"],
+                                    "ipa": token.get("phonetic", ""),
+                                    "context_meaning": token.get("translation", ""),
+                                    "morphology": morphology,
+                                    "sentence_index": i
+                                }
+                                all_vocab.append(vocab_entry)
                 
                 # 立即按字母表排序词汇表（确保每次都正确排序）
                 all_vocab.sort(key=lambda x: x["word"].lower())
@@ -854,12 +837,19 @@ async def generate_sentence_quiz(file_id: str):
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
-        # 生成正确答案的token列表（使用母语/翻译后的文字）
+        # 生成正确答案的token列表
         correct_tokens = []
         if "translation" in translation_result:
             for token in translation_result["translation"]:
-                if isinstance(token, dict) and "translation" in token:
-                    text = token["translation"]
+                if isinstance(token, dict):
+                    # 对于中文，使用translation字段
+                    if target_lang == "zh" and "translation" in token:
+                        text = token["translation"]
+                    # 对于其他语言，使用text字段
+                    elif "text" in token:
+                        text = token["text"]
+                    else:
+                        continue
                     cleaned_text = clean_token(text)
                     if cleaned_text:
                         correct_tokens.append(cleaned_text)
@@ -883,7 +873,7 @@ async def generate_sentence_quiz(file_id: str):
         correct_translation = clean_token(tokenized_translation)
         
         return {
-            "original_sentence": tokenized_translation,  # 使用母语（翻译后的文字）而不是原文
+            "original_sentence": original_sentence,
             "correct_translation": correct_translation,
             "correct_tokens": correct_tokens,
             "tokens": all_tokens

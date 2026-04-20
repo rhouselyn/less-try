@@ -106,7 +106,7 @@ class TextProcessor:
 
     async def process_translation(self, text: str, source_lang: str, target_lang: str, nvidia_api):
         # 对整个文本进行翻译
-        result = await nvidia_api.process_text_with_dictionary(text, source_lang, target_lang)
+        result = await nvidia_api.split_and_translate(text, source_lang, target_lang)
         
         # 简单处理，保留LLM生成的自然结果
         if isinstance(result, dict):
