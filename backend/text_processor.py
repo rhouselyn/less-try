@@ -223,3 +223,116 @@ class TextProcessor:
         for i in range(0, len(sentences), unit_size):
             units.append(sentences[i:i+unit_size])
         return units
+    
+    def get_fallback_distractors(self, count: int, exclude_words: List[str] = None) -> List[str]:
+        """获取备选干扰词"""
+        if exclude_words is None:
+            exclude_words = []
+        
+        # 常用英语单词词库
+        common_words = [
+            "apple", "banana", "cat", "dog", "elephant", "fish", "grape", "house",
+            "ice", "jacket", "king", "lion", "mouse", "notebook", "orange", "pen",
+            "queen", "rabbit", "sun", "tree", "umbrella", "violin", "water", "xylophone",
+            "yellow", "zebra", "book", "chair", "desk", "flower", "garden", "hat",
+            "island", "juice", "kite", "lamp", "mountain", "night", "ocean", "piano"
+        ]
+        
+        exclude_lower = [w.lower() for w in exclude_words]
+        distractors = []
+        
+        for word in common_words:
+            if word.lower() not in exclude_lower and len(distractors) < count:
+                distractors.append(word)
+        
+        # 如果不够，添加一些常见动词
+        common_verbs = ["run", "jump", "walk", "talk", "sing", "dance", "write", "read"]
+        for verb in common_verbs:
+            if verb.lower() not in exclude_lower and len(distractors) < count:
+                distractors.append(verb)
+        
+        return distractors
+    
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None) -> Dict[str, Any]:
+        """
+        生成蒙版填空练习
+        - 支持任意长度句子（<8个token时掩码1个）
+        - 使用翻译token而非自动分词
+        - 集成备选词库
+        """
+        # 使用翻译token或自动分词
+        if translation_tokens:
+            words = translation_tokens
+        else:
+            words = self.tokenize_sentence(sentence)
+        
+        word_count = len(words)
+        
+        # 计算要蒙版的数量
+        if word_count < 8:
+            num_masks = 1
+        else:
+            num_masks = 1 + (word_count - 8) // 8
+        
+        if num_masks > word_count // 2:
+            num_masks = word_count // 2  # 最多蒙一半
+        
+        import random
+        # 随机选择要蒙版的单词索引
+        mask_indices = random.sample(range(word_count), num_masks)
+        
+        # 构建蒙版后的句子 - 保留原始结构
+        import re
+        tokens_with_punc = re.findall(r'\w+|[^\w\s]', sentence)
+        # 映射单词位置到token位置
+        current_word_idx = 0
+        masked_tokens = []
+        answer_words = []
+        for token in tokens_with_punc:
+            if token.isalpha() and current_word_idx < len(words):
+                if current_word_idx in mask_indices:
+                    masked_tokens.append("___")
+                    answer_words.append(token)
+                else:
+                    masked_tokens.append(token)
+                current_word_idx += 1
+            else:
+                masked_tokens.append(token)
+        
+        # 生成选项：正确答案 + 干扰项
+        options = answer_words.copy()
+        # 从词汇表中找干扰项
+        distractors = []
+        vocab_words = [v["word"] for v in vocab]
+        answer_lower = [w.lower() for w in answer_words]
+        random.shuffle(vocab_words)
+        for vw in vocab_words:
+            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+                distractors.append(vw)
+        
+        # 如果词汇表不够，使用备选词库
+        if len(distractors) < 3 * num_masks:
+            fallback_needed = 3 * num_masks - len(distractors)
+            fallback_distractors = self.get_fallback_distractors(fallback_needed, answer_words + distractors)
+            distractors.extend(fallback_distractors)
+        
+        # 打乱干扰项
+        random.shuffle(distractors)
+        options += distractors[:3 * num_masks]
+        
+        # 打乱所有选项
+        random.shuffle(options)
+        
+        return {
+            "original_sentence": sentence,
+            "masked_sentence": "".join(
+                [
+                    " " + token if token not in [".", ",", "!", "?", ":", ";"] and i > 0 else token 
+                    for i, token in enumerate(masked_tokens)
+                ]
+            ),
+            "answer_words": answer_words,
+            "mask_indices": mask_indices,
+            "options": options,
+            "word_count": word_count
+        }

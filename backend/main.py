@@ -976,22 +976,27 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         if phase_number == 2:
             if exercise_type == 0:
                 # 练习1：蒙版填空
-                masked_exercise = text_processor.generate_masked_sentence(current_sentence, vocab)
-                if masked_exercise:
-                    return {
-                        "exercise_type": "masked_sentence",
-                        "exercise_index": exercise_index,
-                        "data": masked_exercise,
-                        "unit_id": unit_id
-                    }
-                else:
-                    # 如果句子太短，跳过到下一个练习
-                    new_exercise_index = exercise_index + 1
-                    if new_exercise_index >= len(unit_sentences) * 2:
-                        return {"unit_complete": True}
-                    # 临时保存新进度
-                    storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index)
-                    return await get_phase_unit_exercise(file_id, phase_number, unit_id)
+                # 获取翻译tokens
+                translation_result = current_sentence_data.get("translation_result", {})
+                translation_tokens = []
+                if "translation" in translation_result:
+                    for token in translation_result["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            translation_tokens.append(token["text"])
+                
+                # 生成蒙版练习（支持任意长度句子）
+                masked_exercise = text_processor.generate_masked_sentence(
+                    current_sentence, 
+                    vocab, 
+                    translation_tokens if translation_tokens else None
+                )
+                
+                return {
+                    "exercise_type": "masked_sentence",
+                    "exercise_index": exercise_index,
+                    "data": masked_exercise,
+                    "unit_id": unit_id
+                }
             else:
                 # 练习2：翻译还原（从母语到原文）
                 translation_result = current_sentence_data.get("translation_result", {})
