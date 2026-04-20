@@ -10,8 +10,17 @@ import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
 import ProgressStep from './components/ProgressStep'
 import SentenceQuizStep from './components/SentenceQuizStep'
+import { MainPage } from './components/MainPage'
+import { LanguagePage } from './components/LanguagePage'
+import { AddArticlePage } from './components/AddArticlePage'
 
 function App() {
+  // 新页面状态
+  const [currentPage, setCurrentPage] = useState('main') // 'main', 'language', 'add-article', 'learning'
+  const [selectedLangCode, setSelectedLangCode] = useState(null)
+  const [selectedArticle, setSelectedArticle] = useState(null)
+  
+  // 原有学习流程状态
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('en')
@@ -383,123 +392,208 @@ function App() {
     }
   }
 
+  // 新页面事件处理
+  const handleSelectLanguage = (langCode) => {
+    setSelectedLangCode(langCode)
+    setCurrentPage('language')
+  }
+
+  const handleAddArticle = () => {
+    setCurrentPage('add-article')
+  }
+
+  const handleArticleCreated = async (result) => {
+    // 设置语言和文件ID，进入学习流程
+    setSourceLang('zh')
+    setTargetLang(selectedLangCode)
+    setFileId(result.file_id)
+    setCurrentFileId(result.file_id)
+    setStep('dictionary')
+    setCurrentPage('learning')
+    // 开始轮询状态
+  }
+
+  const handleSelectArticle = async (article) => {
+    if (article.file_id) {
+      // 获取文章详情，设置文件ID，进入学习流程
+      const articleData = await api.getArticle(selectedLangCode, article.id)
+      setSourceLang('zh')
+      setTargetLang(selectedLangCode)
+      setFileId(articleData.file_id)
+      setCurrentFileId(articleData.file_id)
+      setSelectedArticle(article)
+      // 立即加载词汇表和句子
+      try {
+        const vocabData = await api.getVocab(articleData.file_id)
+        setVocab(vocabData.vocab)
+        const sentencesData = await api.getSentences(articleData.file_id)
+        setSentenceTranslations(sentencesData.sentences)
+      } catch (e) {
+        console.error('Error loading article data:', e)
+      }
+      setStep('dictionary')
+      setCurrentPage('learning')
+    }
+  }
+
+  const handleBackToMain = () => {
+    setCurrentPage('main')
+    setSelectedLangCode(null)
+    setSelectedArticle(null)
+    // 重置学习状态
+    setStep('input')
+    setFileId(null)
+    setCurrentFileId(null)
+  }
+
+  const handleBackToLanguage = () => {
+    setCurrentPage('language')
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
-                <p className="text-sm text-slate-500">{t.subtitle || 'Lesslingo'}</p>
+    <AnimatePresence mode="wait">
+      {currentPage === 'main' && (
+        <MainPage key="main" onSelectLanguage={handleSelectLanguage} />
+      )}
+
+      {currentPage === 'language' && (
+        <LanguagePage
+          key="language"
+          langCode={selectedLangCode}
+          onBack={handleBackToMain}
+          onAddArticle={handleAddArticle}
+          onSelectArticle={handleSelectArticle}
+        />
+      )}
+
+      {currentPage === 'add-article' && (
+        <AddArticlePage
+          key="add-article"
+          langCode={selectedLangCode}
+          onBack={handleBackToLanguage}
+          onCreated={handleArticleCreated}
+        />
+      )}
+
+      {currentPage === 'learning' && (
+        <div key="learning" className="min-h-screen bg-slate-50">
+          <header className="bg-white border-b border-slate-200 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
+                    <p className="text-sm text-slate-500">{t.subtitle || 'Lesslingo'}</p>
+                  </div>
+                </div>
+                <AnimatePresence>
+                  <motion.button
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    onClick={() => {
+                      if (step === 'input') {
+                        handleBackToLanguage()
+                      } else if (step === 'learning' || step === 'sentence-quiz' || step === 'progress') {
+                        setStep('dictionary');
+                      } else {
+                        setStep('input');
+                      }
+                    }}
+                    className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    {step === 'input' ? '返回' : t.back}
+                  </motion.button>
+                </AnimatePresence>
               </div>
             </div>
-            <AnimatePresence>
-              {step !== 'input' && (
-                <motion.button
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  onClick={() => {
-                    if (step === 'learning' || step === 'sentence-quiz' || step === 'progress') {
-                      setStep('dictionary');
-                    } else {
-                      setStep('input');
-                    }
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  {t.back}
-                </motion.button>
+          </header>
+
+          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <AnimatePresence mode="wait">
+              {step === 'input' && (
+                <InputStep
+                  key="input"
+                  text={text}
+                  setText={setText}
+                  sourceLang={sourceLang}
+                  setSourceLang={setSourceLang}
+                  targetLang={targetLang}
+                  setTargetLang={setTargetLang}
+                  loading={loading}
+                  onProcess={handleProcess}
+                  t={t}
+                />
+              )}
+              
+              {step === 'dictionary' && (
+                <DictionaryStep
+                  key="dictionary"
+                  vocab={displayVocab}
+                  onToggleSort={toggleSortOrder}
+                  sortOrder={sortOrder}
+                  progress={progress}
+                  processingInfo={processingInfo}
+                  sentenceTranslations={sentenceTranslations}
+                  selectedSentence={selectedSentence}
+                  selectedWord={selectedWord}
+                  onSentenceClick={handleSentenceClick}
+                  onCloseSentenceDetail={handleCloseSentenceDetail}
+                  onWordClick={getWordDetails}
+                  onStartLearning={startLearning}
+                  loading={loading}
+                  t={t}
+                />
+              )}
+              
+              {step === 'progress' && (
+                <ProgressStep
+                  key="progress"
+                  units={units}
+                  currentUnit={currentUnit}
+                  onUnitClick={handleUnitClick}
+                  onBack={() => setStep('dictionary')}
+                  loading={loading}
+                  t={t}
+                  allUnitsCompleted={allUnitsCompleted}
+                />
+              )}
+              
+              {step === 'learning' && (
+                <LearningStep
+                  key="learning"
+                  learningData={learningData}
+                  showWordCard={showWordCard}
+                  selectedOption={selectedOption}
+                  isCorrect={isCorrect}
+                  onOptionSelect={handleOptionSelect}
+                  onNextWord={getNextWord}
+                  onBack={() => setStep('dictionary')}
+                  loading={loading}
+                  t={t}
+                />
+              )}
+              
+              {step === 'sentence-quiz' && (
+                <SentenceQuizStep
+                  key="sentence-quiz"
+                  quizData={quizData}
+                  onNextQuestion={handleNextSentenceQuiz}
+                  onBack={() => setStep('dictionary')}
+                  onComplete={() => setStep('progress')}
+                  loading={loading}
+                  t={t}
+                />
               )}
             </AnimatePresence>
-          </div>
+          </main>
         </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <AnimatePresence mode="wait">
-          {step === 'input' && (
-            <InputStep
-              key="input"
-              text={text}
-              setText={setText}
-              sourceLang={sourceLang}
-              setSourceLang={setSourceLang}
-              targetLang={targetLang}
-              setTargetLang={setTargetLang}
-              loading={loading}
-              onProcess={handleProcess}
-              t={t}
-            />
-          )}
-          
-          {step === 'dictionary' && (
-            <DictionaryStep
-              key="dictionary"
-              vocab={displayVocab}
-              onToggleSort={toggleSortOrder}
-              sortOrder={sortOrder}
-              progress={progress}
-              processingInfo={processingInfo}
-              sentenceTranslations={sentenceTranslations}
-              selectedSentence={selectedSentence}
-              selectedWord={selectedWord}
-              onSentenceClick={handleSentenceClick}
-              onCloseSentenceDetail={handleCloseSentenceDetail}
-              onWordClick={getWordDetails}
-              onStartLearning={startLearning}
-              loading={loading}
-              t={t}
-            />
-          )}
-          
-          {step === 'progress' && (
-            <ProgressStep
-              key="progress"
-              units={units}
-              currentUnit={currentUnit}
-              onUnitClick={handleUnitClick}
-              onBack={() => setStep('dictionary')}
-              loading={loading}
-              t={t}
-              allUnitsCompleted={allUnitsCompleted}
-            />
-          )}
-          
-          {step === 'learning' && (
-            <LearningStep
-              key="learning"
-              learningData={learningData}
-              showWordCard={showWordCard}
-              selectedOption={selectedOption}
-              isCorrect={isCorrect}
-              onOptionSelect={handleOptionSelect}
-              onNextWord={getNextWord}
-              onBack={() => setStep('dictionary')}
-              loading={loading}
-              t={t}
-            />
-          )}
-          
-          {step === 'sentence-quiz' && (
-            <SentenceQuizStep
-              key="sentence-quiz"
-              quizData={quizData}
-              onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('dictionary')}
-              onComplete={() => setStep('progress')}
-              loading={loading}
-              t={t}
-            />
-          )}
-        </AnimatePresence>
-      </main>
-    </div>
+      )}
+    </AnimatePresence>
   )
 }
 

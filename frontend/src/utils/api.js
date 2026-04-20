@@ -85,5 +85,45 @@ export const api = {
       index: index,
     });
     return response.data;
+  },
+
+  // 获取所有语言
+  getLanguages: async () => {
+    const response = await axios.get(`${baseUrl}/api/languages`);
+    return response.data;
+  },
+
+  // 获取特定语言信息
+  getLanguage: async (langCode) => {
+    const response = await axios.get(`${baseUrl}/api/languages/${langCode}`);
+    return response.data;
+  },
+
+  // 获取某语言的所有文章
+  getArticles: async (langCode) => {
+    const response = await axios.get(`${baseUrl}/api/languages/${langCode}/articles`);
+    return response.data;
+  },
+
+  // 创建新文章
+  createArticle: async (langCode, text, title, sourceLang = 'zh') => {
+    const response = await axios.post(`${baseUrl}/api/languages/${langCode}/articles`, {
+      text: text,
+      title: title,
+      source_lang: sourceLang
+    });
+    return response.data;
+  },
+
+  // 获取文章详情
+  getArticle: async (langCode, articleId) => {
+    const response = await axios.get(`${baseUrl}/api/languages/${langCode}/articles/${articleId}`);
+    return response.data;
+  },
+
+  // 删除文章
+  deleteArticle: async (langCode, articleId) => {
+    const response = await axios.delete(`${baseUrl}/api/languages/${langCode}/articles/${articleId}`);
+    return response.data;
   }
 };

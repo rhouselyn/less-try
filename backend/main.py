@@ -861,6 +861,108 @@ async def generate_sentence_quiz(file_id: str):
         raise HTTPException(status_code=500, detail=f"Error generating sentence quiz: {str(e)}")
 
 
+# New API endpoints for languages and articles
+@app.get("/api/languages")
+async def get_languages():
+    """获取所有语言列表"""
+    try:
+        languages = storage.get_languages()
+        return {"languages": languages}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting languages: {str(e)}")
+
+
+@app.get("/api/languages/{lang_code}")
+async def get_language(lang_code: str):
+    """获取特定语言的介绍信息"""
+    try:
+        intro = storage.get_language_intro(lang_code)
+        if not intro:
+            raise HTTPException(status_code=404, detail="Language not found")
+        return intro
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting language: {str(e)}")
+
+
+@app.get("/api/languages/{lang_code}/articles")
+async def get_articles(lang_code: str):
+    """获取某语言的所有文章"""
+    try:
+        articles = storage.get_articles(lang_code)
+        return {"articles": articles}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting articles: {str(e)}")
+
+
+@app.post("/api/languages/{lang_code}/articles")
+async def create_article(lang_code: str, request: dict, background_tasks: BackgroundTasks):
+    """添加新文章"""
+    try:
+        text = request.get("text", "")
+        title = request.get("title", "Untitled")
+        source_lang = request.get("source_lang", "zh")  # 母语默认为中文
+        target_lang = lang_code
+        
+        if not text:
+            raise HTTPException(status_code=400, detail="Text is required")
+        
+        # First, save the article
+        article_id = storage.save_article(lang_code, {
+            "title": title,
+            "text": text
+        })
+        
+        # Then, start processing the text (using existing process)
+        import datetime
+        now = datetime.datetime.now()
+        file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
+        
+        # Save language settings
+        storage.save_language_settings(file_id, source_lang, target_lang)
+        
+        # Link article to file_id
+        storage.link_article_to_file(lang_code, article_id, file_id)
+        
+        # Start background processing
+        background_tasks.add_task(process_text_background, file_id, text, source_lang, target_lang)
+        
+        return {
+            "article_id": article_id,
+            "file_id": file_id,
+            "status": "processing"
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating article: {str(e)}")
+
+
+@app.get("/api/languages/{lang_code}/articles/{article_id}")
+async def get_article(lang_code: str, article_id: str):
+    """获取文章详情"""
+    try:
+        article = storage.get_article(lang_code, article_id)
+        if not article:
+            raise HTTPException(status_code=404, detail="Article not found")
+        return article
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error getting article: {str(e)}")
+
+
+@app.delete("/api/languages/{lang_code}/articles/{article_id}")
+async def delete_article(lang_code: str, article_id: str):
+    """删除文章"""
+    try:
+        storage.delete_article(lang_code, article_id)
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error deleting article: {str(e)}")
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, timeout_keep_alive=600)
