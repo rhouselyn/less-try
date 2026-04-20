@@ -3,7 +3,7 @@ import { Shuffle, Loader2 } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, onStudyWord }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t }) {
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
@@ -45,9 +45,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               {t.preparing}
             </>
           ) : (
-            <>
+            <>            
               <Shuffle className="w-5 h-5" />
-              {t.startRandomLearn}
+              开始学习
             </>
           )}
         </motion.button>
@@ -138,7 +138,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                     <WordDetail
                       word={selectedWord}
                       t={t}
-                      onStudyWord={onStudyWord}
                     />
                   </motion.div>
                 )}

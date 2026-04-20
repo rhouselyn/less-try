@@ -455,7 +455,6 @@ function App() {
               onStartLearning={startLearning}
               loading={loading}
               t={t}
-              onStudyWord={handleStudyWord}
             />
           )}
           

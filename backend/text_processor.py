@@ -105,13 +105,12 @@ class TextProcessor:
         return sorted_phonetics[0][0]
 
     async def process_translation(self, text: str, source_lang: str, target_lang: str, nvidia_api):
-        # 对整个文本进行翻译
-        result = await nvidia_api.split_and_translate(text, source_lang, target_lang)
+        # 使用新的合并方法处理文本和词典
+        result = await nvidia_api.process_text_with_dictionary(text, source_lang, target_lang)
         
         # 简单处理，保留LLM生成的自然结果
         if isinstance(result, dict):
             # 保留original字段，因为它可能包含翻译后的文本
-            # 不再删除original字段
             
             # 简单过滤：只过滤掉纯标点符号的token
             if 'translation' in result:
