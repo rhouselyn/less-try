@@ -195,13 +195,7 @@ For each word, provide:
    - det (限定词)
 5. morphology 字段必须只包含缩写，不要有其他内容！
 6. morphology 字段里不要加任何额外的解释！
-7. 【超级重要！！！】tokenized_translation 必须是自然的、正常的翻译：
-   - 如果是英文翻译：单词之间必须用空格分隔！！！
-   - 如果是中文翻译：词语之间绝对不要有空格！！！
-   - 保持自然的句子格式
-8. 【举例！！！】比如英文 "AI models generate responses." 翻译成中文时，应该是 "人工智能模型生成响应。"，绝对不能是 "人工智能 模型 生成 响应。"！
-   - 【反过来！！！】如果是中文翻译成英文，必须是 "Artificial intelligence models generate responses."，绝对不能是 "Artificialintelligencemodelsgenerateresponses."！
-9. 【绝对不要！！！】不要修改 original 字段中的空格，不要去掉任何空格！！！
+7. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 
 按照以下结构处理文本：
 - original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）- 完全保留原始空格！！！
@@ -344,6 +338,7 @@ TEXT_CONTENT
 - 例句要自然，符合上下文
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
+- 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 """
 
         messages = [{"role": "user", "content": prompt}]
