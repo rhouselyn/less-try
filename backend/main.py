@@ -964,6 +964,15 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         current_sentence_data = unit_sentences[sentence_idx]
         current_sentence = current_sentence_data["sentence"]
         
+        # 安全检查：防止无限递归
+        import time
+        last_exercise_time = getattr(get_phase_unit_exercise, "last_exercise_time", 0)
+        current_time = time.time()
+        if current_time - last_exercise_time < 0.5:
+            # 短时间内多次调用，可能是无限递归
+            return {"error": "无法生成练习，请尝试其他单元"}
+        get_phase_unit_exercise.last_exercise_time = current_time
+        
         if phase_number == 2:
             if exercise_type == 0:
                 # 练习1：蒙版填空
@@ -977,6 +986,11 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     }
                 else:
                     # 如果句子太短，跳过到下一个练习
+                    new_exercise_index = exercise_index + 1
+                    if new_exercise_index >= len(unit_sentences) * 2:
+                        return {"unit_complete": True}
+                    # 临时保存新进度
+                    storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index)
                     return await get_phase_unit_exercise(file_id, phase_number, unit_id)
             else:
                 # 练习2：翻译还原（从母语到原文）
