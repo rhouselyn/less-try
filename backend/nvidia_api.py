@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import random
 from typing import List, Dict, Any
 
 
@@ -160,6 +161,15 @@ class NvidiaAPI:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
+                    # 随机打乱选项顺序
+                    if "multiple_choice" in args and "options" in args["multiple_choice"]:
+                        options = args["multiple_choice"]["options"]
+                        random.shuffle(options)
+                        # 重新确定正确答案索引
+                        for i, opt in enumerate(options):
+                            if opt["is_correct"]:
+                                args["correct_index"] = i
+                                break
                     return args
             # 构建默认响应
             default_response = {
@@ -351,7 +361,7 @@ class NvidiaAPI:
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
-- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）
+- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。确保这些冗余词与正确答案的token组合时，不会形成另一种合理的翻译结果。
 
 同时，为文本中出现的主要单词生成完整词典条目（dictionary_entries）：
 

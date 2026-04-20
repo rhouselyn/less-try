@@ -828,11 +828,8 @@ async def generate_sentence_quiz(file_id: str):
         if "translation" in translation_result:
             for token in translation_result["translation"]:
                 if isinstance(token, dict):
-                    # 对于中文，使用translation字段
-                    if target_lang == "zh" and "translation" in token:
-                        text = token["translation"]
-                    # 对于其他语言，使用text字段
-                    elif "text" in token:
+                    # 对于所有语言，都使用原文的text字段作为token
+                    if "text" in token:
                         text = token["text"]
                     else:
                         continue
