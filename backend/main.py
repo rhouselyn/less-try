@@ -456,13 +456,11 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         print(f"[DEBUG] 后台预生成单词信息: {word}")
         
         # 调用generate_multiple_choice获取丰富的单词信息
-        source_lang = language_settings["source_lang"]
         options_result = await nvidia_api.generate_multiple_choice(
             word,
             correct_meaning,
             context,
-            target_lang,
-            source_lang
+            target_lang
         )
         
         # 构建缓存数据
@@ -552,13 +550,11 @@ async def get_word_details(file_id: str, word: str):
                 correct_meaning = word_data["meaning"]
 
         # 调用generate_multiple_choice获取丰富的单词信息
-        source_lang = language_settings["source_lang"]
         options_result = await nvidia_api.generate_multiple_choice(
             word_data["word"],
             correct_meaning,
             context,
-            target_lang,
-            source_lang
+            target_lang
         )
         
         # 提取选项和正确索引
@@ -692,13 +688,11 @@ async def get_unit_words(file_id: str, unit_id: int):
                     correct_meaning = word_data["meaning"]
             
             # 调用generate_multiple_choice获取丰富的单词信息
-            source_lang = language_settings["source_lang"]
             options_result = await nvidia_api.generate_multiple_choice(
                 word_data["word"],
                 correct_meaning,
                 context,
-                target_lang,
-                source_lang
+                target_lang
             )
             
             # 提取选项和正确索引
@@ -752,10 +746,6 @@ async def check_coverage(file_id: str):
         words_in_unit = min(unit_size, len(vocab) - current_unit * unit_size)
         unit_completed = current_index >= (current_unit * unit_size + words_in_unit)
         
-        # 加载语言设置
-        language_settings = storage.load_language_settings(file_id)
-        target_lang = language_settings["target_lang"]
-        
         # 检查是否已经学习完所有单词
         all_words_learned = current_index >= len(vocab)
         
@@ -784,25 +774,14 @@ async def check_coverage(file_id: str):
         # 检查是否有句子可以用已学单词组成
         can_form = False
         for sentence_data in sentences:
-            if "sentence" in sentence_data and "translation_result" in sentence_data and "original" in sentence_data["translation_result"]:
-                # 使用翻译后的句子来检查
-                sentence = sentence_data["translation_result"]["original"]
-                # 对于中文等没有空格的语言，使用词汇表中的单词来检查
-                if target_lang == "zh":
-                    # 检查句子是否包含至少两个已学单词
-                    word_count = 0
-                    for word in vocab:
-                        if word["word"] in sentence:
-                            word_count += 1
-                    if word_count >= 2:
-                        can_form = True
-                        break
-                else:
-                    # 对于有空格的语言，按空格分词
-                    words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
-                    if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
-                        can_form = True
-                        break
+            if "sentence" in sentence_data:
+                sentence = sentence_data["sentence"]
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                # 检查是否所有单词都在已学单词中
+                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
+                    can_form = True
+                    break
         
         return {"can_form_sentences": can_form, "unit_completed": unit_completed}
     except Exception as e:
