@@ -90,8 +90,7 @@ class NvidiaAPI:
         }
 
         # 构建prompt
-        prompt = """
-Generate dictionary entries for the following words in SOURCE_LANG.
+        prompt = """Generate dictionary entries for the following words in SOURCE_LANG.
 Use the context below to ensure meanings are accurate to the text.
 Translate meanings to TARGET_LANG.
 
@@ -99,6 +98,8 @@ Words: WORDS_LIST
 
 Context:
 CONTEXT_CONTENT
+
+【重要约束！！！】只调用提供的工具，不要输出任何其他文本或解释，直接调用工具返回结果！
 
 For each word, provide:
 1. word: The word itself
@@ -195,13 +196,14 @@ For each word, provide:
    - det (限定词)
 5. morphology 字段必须只包含缩写，不要有其他内容！
 6. morphology 字段里不要加任何额外的解释！
-7. 【超级重要！！！】tokenized_translation 必须是自然的、正常的翻译：
-   - 如果是英文翻译：单词之间必须用空格分隔！！！
-   - 如果是中文翻译：词语之间绝对不要有空格！！！
+7. tokenized_translation 必须是自然的、正常的翻译：
+   - 如果是英文翻译：单词之间必须用空格分隔！
+   - 如果是中文翻译：词语之间绝对不要有空格！
    - 保持自然的句子格式
-8. 【举例！！！】比如英文 "AI models generate responses." 翻译成中文时，应该是 "人工智能模型生成响应。"，绝对不能是 "人工智能 模型 生成 响应。"！
-   - 【反过来！！！】如果是中文翻译成英文，必须是 "Artificial intelligence models generate responses."，绝对不能是 "Artificialintelligencemodelsgenerateresponses."！
-9. 【绝对不要！！！】不要修改 original 字段中的空格，不要去掉任何空格！！！
+8. 比如英文 "AI models generate responses." 翻译成中文时，应该是 "人工智能模型生成响应。"，绝对不能是 "人工智能 模型 生成 响应。"！
+   - 如果是中文翻译成英文，必须是 "Artificial intelligence models generate responses."，绝对不能是 "Artificialintelligencemodelsgenerateresponses."！
+9. 不要修改 original 字段中的空格，不要去掉任何空格！
+10. 【重要约束！！！】只调用提供的工具，不要输出任何其他文本或解释，直接调用工具返回结果！
 
 按照以下结构处理文本：
 - original: TEXT_LANG 文本（如果输入不是 TEXT_LANG，先翻译成 TEXT_LANG）- 完全保留原始空格！！！
