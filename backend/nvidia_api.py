@@ -146,6 +146,7 @@ class NvidiaAPI:
 - 例句要自然，符合上下文
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
+- 【重要】错误答案必须是该单词所没有的意思，而不是非句子中的意思
 - 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 """
 
@@ -356,14 +357,20 @@ class NvidiaAPI:
 为每个主要单词提供：
 1. word: The word itself
 2. ipa: International Phonetic Alphabet pronunciation
-3. context_meaning: Meaning in TARGET_LANG based on the context
+3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
 5. examples: 2 example sentences in SOURCE_LANG that match the context meaning
-6. options: 4 options for the meaning (1 correct, 3 incorrect)
+6. options: 4 options for the meaning (1 correct, 3 incorrect) - 错误答案必须是该单词所没有的意思，而不是非句子中的意思
 7. grammar: Grammar explanation for the word
 8. translation: Translation of the word to TARGET_LANG
 9. tokens: Split the word into tokens if applicable
 10. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
+
+【重要要求】
+- 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
+- 生成冗余词时要注意：
+  1. 必须使用TARGET_LANG（目标语言）生成冗余词
+  2. 确保使用错误的答案组成的意思不是合理的，而不是另一种合理的翻译结果
 
 要处理的文本：
 TEXT_CONTENT
