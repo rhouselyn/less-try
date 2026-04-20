@@ -958,8 +958,22 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             return {"unit_complete": True}
         
         # 确定练习类型（0: 蒙版填空, 1: 翻译还原）
+        # 为每个句子生成随机练习顺序
+        import random
+        # 使用固定种子确保每次访问同一单元时顺序一致
+        random.seed(unit_id * 1000 + exercise_index)
+        
         sentence_idx = exercise_index // 2
-        exercise_type = exercise_index % 2
+        # 随机选择练习类型
+        if exercise_index % 2 == 0:
+            # 为每个句子随机决定练习顺序
+            exercise_type = random.randint(0, 1)
+        else:
+            # 第二个练习使用相反类型
+            exercise_type = 1 if progress.get("last_exercise_type", 0) == 0 else 0
+        
+        # 保存当前练习类型
+        progress["last_exercise_type"] = exercise_type
         
         current_sentence_data = unit_sentences[sentence_idx]
         current_sentence = current_sentence_data["sentence"]
@@ -976,7 +990,14 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         if phase_number == 2:
             if exercise_type == 0:
                 # 练习1：蒙版填空
-                masked_exercise = text_processor.generate_masked_sentence(current_sentence, vocab)
+                # 获取翻译tokens
+                translation_tokens = []
+                if "translation_result" in current_sentence_data:
+                    translation_result = current_sentence_data["translation_result"]
+                    if "translation" in translation_result:
+                        translation_tokens = translation_result["translation"]
+                
+                masked_exercise = text_processor.generate_masked_sentence(current_sentence, vocab, translation_tokens)
                 if masked_exercise:
                     return {
                         "exercise_type": "masked_sentence",
@@ -990,7 +1011,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     if new_exercise_index >= len(unit_sentences) * 2:
                         return {"unit_complete": True}
                     # 临时保存新进度
-                    storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index)
+                    storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, progress)
                     return await get_phase_unit_exercise(file_id, phase_number, unit_id)
             else:
                 # 练习2：翻译还原（从母语到原文）
@@ -1064,6 +1085,8 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
             storage.save_phase_progress(file_id, phase_number, new_unit_id, 0)
             return {"success": True, "unit_complete": True, "new_unit": new_unit_id}
         else:
+            # 保存更新后的进度
+            progress = storage.load_phase_progress(file_id, phase_number)
             storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index)
             return {"success": True, "new_exercise_index": new_exercise_index}
     except Exception as e:
