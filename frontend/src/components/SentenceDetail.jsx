@@ -31,7 +31,7 @@ function SentenceDetail({ sentenceTranslation, t }) {
             {t.original}
           </h3>
           <p className="text-lg text-slate-900 leading-relaxed">
-            {translationResult?.tokenized_translation || translationResult?.original || sentence}
+            {translationResult?.original || sentence}
           </p>
         </motion.div>
 
@@ -44,7 +44,7 @@ function SentenceDetail({ sentenceTranslation, t }) {
             {t.translation}
           </h3>
           <p className="text-lg text-slate-700 leading-relaxed">
-            {translationResult?.original || sentence}
+            {translationResult?.tokenized_translation || translationResult?.original || sentence}
           </p>
         </motion.div>
 

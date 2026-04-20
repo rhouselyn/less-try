@@ -854,19 +854,12 @@ async def generate_sentence_quiz(file_id: str):
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
-        # 生成正确答案的token列表
+        # 生成正确答案的token列表（使用母语/翻译后的文字）
         correct_tokens = []
         if "translation" in translation_result:
             for token in translation_result["translation"]:
-                if isinstance(token, dict):
-                    # 对于中文，使用translation字段
-                    if target_lang == "zh" and "translation" in token:
-                        text = token["translation"]
-                    # 对于其他语言，使用text字段
-                    elif "text" in token:
-                        text = token["text"]
-                    else:
-                        continue
+                if isinstance(token, dict) and "translation" in token:
+                    text = token["translation"]
                     cleaned_text = clean_token(text)
                     if cleaned_text:
                         correct_tokens.append(cleaned_text)
@@ -890,7 +883,7 @@ async def generate_sentence_quiz(file_id: str):
         correct_translation = clean_token(tokenized_translation)
         
         return {
-            "original_sentence": original_sentence,
+            "original_sentence": tokenized_translation,  # 使用母语（翻译后的文字）而不是原文
             "correct_translation": correct_translation,
             "correct_tokens": correct_tokens,
             "tokens": all_tokens
