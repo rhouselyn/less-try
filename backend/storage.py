@@ -130,3 +130,59 @@ class Storage:
                 data = json.load(f)
                 return data.get("shuffled_indices")
         return None
+    
+    def save_phase_progress(self, file_id: str, phase: int, unit_id: int, exercise_index: int):
+        """保存阶段学习进度"""
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / f"phase{phase}_progress.json"
+        with open(progress_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "current_unit": unit_id,
+                "current_exercise": exercise_index
+            }, f, ensure_ascii=False, indent=2)
+    
+    def load_phase_progress(self, file_id: str, phase: int):
+        """加载阶段学习进度"""
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / f"phase{phase}_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data
+        return {"current_unit": 0, "current_exercise": 0}
+    
+    def save_sentence_order(self, file_id: str, phase: int, shuffled_indices: List[int]):
+        """保存句子的随机顺序"""
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / f"phase{phase}_sentence_order.json"
+        with open(order_path, 'w', encoding='utf-8') as f:
+            json.dump({"shuffled_indices": shuffled_indices}, f, ensure_ascii=False, indent=2)
+    
+    def load_sentence_order(self, file_id: str, phase: int):
+        """加载句子的随机顺序"""
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / f"phase{phase}_sentence_order.json"
+        if order_path.exists():
+            with open(order_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("shuffled_indices")
+        return None
+    
+    def save_phase2_exercise_cache(self, file_id: str, exercise_id: str, cache_data: Dict):
+        """缓存阶段2练习数据"""
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "phase2_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file = cache_dir / f"{exercise_id}.json"
+        with open(cache_file, 'w', encoding='utf-8') as f:
+            json.dump(cache_data, f, ensure_ascii=False, indent=2)
+    
+    def load_phase2_exercise_cache(self, file_id: str, exercise_id: str):
+        """加载阶段2练习缓存"""
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "phase2_cache"
+        cache_file = cache_dir / f"{exercise_id}.json"
+        if cache_file.exists():
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None

@@ -125,3 +125,101 @@ class TextProcessor:
         
         # 返回处理后的结果，保留LLM生成的自然翻译
         return result
+    
+    def tokenize_sentence(self, sentence: str) -> List[str]:
+        """简单句子分词，按空格和标点分割，保留单词"""
+        # 先去除标点，再按空格分割
+        import re
+        # 保留单词，去除纯标点
+        words = re.findall(r"\b\w+\b", sentence)
+        return words
+    
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict]) -> Dict[str, Any]:
+        """
+        生成蒙版填空练习
+        - 大于8个词的句子才生成
+        - 每8个词多蒙一个
+        """
+        words = self.tokenize_sentence(sentence)
+        word_count = len(words)
+        
+        if word_count < 8:
+            return None
+        
+        # 计算要蒙版的数量
+        num_masks = 1 + (word_count - 8) // 8
+        if num_masks < 1:
+            num_masks = 1
+        if num_masks > word_count // 2:
+            num_masks = word_count // 2  # 最多蒙一半
+        
+        import random
+        # 随机选择要蒙版的单词索引
+        mask_indices = random.sample(range(word_count), num_masks)
+        
+        # 构建蒙版后的句子 - we need to preserve original structure
+        # First, let's split into tokens with punctuation
+        import re
+        tokens_with_punc = re.findall(r'\w+|[^\w\s]', sentence)
+        # Now, let's map word positions to token positions
+        current_word_idx = 0
+        masked_tokens = []
+        answer_words = []
+        for token in tokens_with_punc:
+            if token.isalpha() and current_word_idx < len(words):
+                if current_word_idx in mask_indices:
+                    masked_tokens.append("___")
+                    answer_words.append(token)
+                else:
+                    masked_tokens.append(token)
+                current_word_idx += 1
+            else:
+                masked_tokens.append(token)
+        
+        # 生成选项：正确答案 + 干扰项（来自vocab的其他单词）
+        options = answer_words.copy()
+        # 从词汇表中找干扰项
+        distractors = []
+        vocab_words = [v["word"] for v in vocab]
+        answer_lower = [w.lower() for w in answer_words]
+        random.shuffle(vocab_words)
+        for vw in vocab_words:
+            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+                distractors.append(vw)
+        
+        # 如果词汇表不够，添加一些常见的英语干扰词
+        backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish", "grape", "house"]
+        idx = 0
+        while len(distractors) < 3 * num_masks:
+            bd = backup_distractors[idx % len(backup_distractors)]
+            if bd.lower() not in answer_lower and bd not in distractors:
+                distractors.append(bd)
+            idx += 1
+        
+        # 打乱干扰项
+        random.shuffle(distractors)
+        options += distractors[:3 * num_masks]
+        
+        # 打乱所有选项
+        random.shuffle(options)
+        
+        return {
+            "original_sentence": sentence,
+            "masked_sentence": "".join(
+                [
+                    " " + token if token not in [".", ",", "!", "?", ":", ";"] and i > 0 else token 
+                    for i, token in enumerate(masked_tokens)
+                ]
+            ),
+            "answer_words": answer_words,
+            "mask_indices": mask_indices,
+            "options": options,
+            "word_count": word_count
+        }
+    
+    def group_sentences_into_units(self, sentences: List[str], unit_size: int = 8) -> List[List[str]]:
+        """将句子分组为单元"""
+        units = []
+        for i in range(0, len(sentences), unit_size):
+            units.append(sentences[i:i+unit_size])
+        return units

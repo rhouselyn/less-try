@@ -48,7 +48,16 @@ export const translations = {
     checkAnswer: "检查答案",
     correct: "正确！",
     incorrect: "错误，正确答案是：",
-    continue: "继续"
+    continue: "继续",
+    selectPhase: "选择学习阶段",
+    phase1: "阶段一：单词学习",
+    phase2: "阶段二：句子练习",
+    maskedSentenceTitle: "填空练习",
+    fillBlanks: "填入正确的单词",
+    translationReconstructionTitle: "翻译还原",
+    reconstructSentence: "根据母语翻译还原原文句子",
+    selectWords: "选择单词",
+    yourAnswer: "你的答案"
   },
   en: {
     title: "Lesslingo",
@@ -98,6 +107,15 @@ export const translations = {
     checkAnswer: "Check Answer",
     correct: "Correct!",
     incorrect: "Incorrect, the correct answer is:",
-    continue: "Continue"
+    continue: "Continue",
+    selectPhase: "Select Learning Phase",
+    phase1: "Phase 1: Word Learning",
+    phase2: "Phase 2: Sentence Practice",
+    maskedSentenceTitle: "Fill in the Blanks",
+    fillBlanks: "Fill in the correct words",
+    translationReconstructionTitle: "Translation Reconstruction",
+    reconstructSentence: "Reconstruct the original sentence from the native translation",
+    selectWords: "Select Words",
+    yourAnswer: "Your Answer"
   }
 };

@@ -85,5 +85,36 @@ export const api = {
       index: index,
     });
     return response.data;
+  },
+
+  // --- 新的学习阶段 API ---
+  // 获取所有阶段列表
+  getPhases: async (fileId) => {
+    const response = await axios.get(`${baseUrl}/api/${fileId}/phases`);
+    return response.data;
+  },
+  
+  // 获取指定阶段的单元列表
+  getPhaseUnits: async (fileId, phaseNumber) => {
+    const response = await axios.get(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/units`);
+    return response.data;
+  },
+  
+  // 获取指定单元的当前练习
+  getPhaseUnitExercise: async (fileId, phaseNumber, unitId) => {
+    const response = await axios.get(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/unit/${unitId}`);
+    return response.data;
+  },
+  
+  // 进入下一个练习
+  nextPhaseExercise: async (fileId, phaseNumber, unitId) => {
+    const response = await axios.post(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/unit/${unitId}/next`);
+    return response.data;
+  },
+  
+  // 标记单元为完成
+  completePhaseUnit: async (fileId, phaseNumber, unitId) => {
+    const response = await axios.post(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/unit/${unitId}/complete`);
+    return response.data;
   }
 };

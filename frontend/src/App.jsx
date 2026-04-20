@@ -10,6 +10,10 @@ import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
 import ProgressStep from './components/ProgressStep'
 import SentenceQuizStep from './components/SentenceQuizStep'
+import PhaseSelectorStep from './components/PhaseSelectorStep'
+import PhaseProgressStep from './components/PhaseProgressStep'
+import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
+import TranslationReconstructionStep from './components/TranslationReconstructionStep'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -37,6 +41,14 @@ function App() {
   const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
   const [quizData, setQuizData] = useState(null)
   const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
+  
+  // New states for phases
+  const [phases, setPhases] = useState([])
+  const [currentPhase, setCurrentPhase] = useState(null)
+  const [phaseUnits, setPhaseUnits] = useState([])
+  const [currentPhaseUnit, setCurrentPhaseUnit] = useState(0)
+  const [currentExerciseData, setCurrentExerciseData] = useState(null)
+  const [exerciseType, setExerciseType] = useState(null)
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -220,6 +232,107 @@ function App() {
     } catch (error) {
       console.error('开始学习错误:', error)
       alert('无法开始学习，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const startLearningPhases = async () => {
+    if (!currentFileId) return
+    
+    setLoading(true)
+    try {
+      const phasesData = await api.getPhases(currentFileId)
+      setPhases(phasesData.phases)
+      setStep('phase-selector')
+    } catch (error) {
+      console.error('获取阶段错误:', error)
+      alert('无法获取学习阶段，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePhaseSelect = async (phaseNumber) => {
+    if (!currentFileId) return
+    
+    setLoading(true)
+    try {
+      setCurrentPhase(phaseNumber)
+      if (phaseNumber === 1) {
+        // Phase1 is original word learning
+        const progressData = await api.getLearningProgress(currentFileId)
+        setUnits(progressData.units)
+        setCurrentUnit(progressData.current_unit)
+        setTotalUnits(progressData.total_units)
+        setAllUnitsCompleted(progressData.all_units_completed)
+        setStep('progress')
+      } else {
+        const phaseUnitsData = await api.getPhaseUnits(currentFileId, phaseNumber)
+        setPhaseUnits(phaseUnitsData.units)
+        setCurrentPhaseUnit(phaseUnitsData.current_unit)
+        setStep('phase-progress')
+      }
+    } catch (error) {
+      console.error('选择阶段错误:', error)
+      alert('无法选择阶段，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePhaseUnitClick = async (unitId) => {
+    if (!currentFileId || !currentPhase) return
+    
+    setLoading(true)
+    try {
+      setCurrentPhaseUnit(unitId)
+      const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, unitId)
+      if (exerciseData.unit_complete) {
+        alert('该单元已完成！')
+        setStep('phase-progress')
+      } else if (exerciseData.redirect_to_phase1) {
+        setStep('progress')
+      } else {
+        setExerciseType(exerciseData.exercise_type)
+        setCurrentExerciseData(exerciseData.data)
+        setStep('phase-exercise')
+      }
+    } catch (error) {
+      console.error('获取单元练习错误:', error)
+      alert('无法获取练习，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleNextPhaseExercise = async () => {
+    if (!currentFileId || !currentPhase) return
+    
+    setLoading(true)
+    try {
+      const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
+      if (nextRes.unit_complete) {
+        alert('该单元已完成！')
+        // Refresh phase units
+        const phaseUnitsData = await api.getPhaseUnits(currentFileId, currentPhase)
+        setPhaseUnits(phaseUnitsData.units)
+        setCurrentPhaseUnit(phaseUnitsData.current_unit)
+        setStep('phase-progress')
+      } else {
+        // Get next exercise
+        const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
+        if (exerciseData.unit_complete) {
+          alert('该单元已完成！')
+          setStep('phase-progress')
+        } else {
+          setExerciseType(exerciseData.exercise_type)
+          setCurrentExerciseData(exerciseData.data)
+        }
+      }
+    } catch (error) {
+      console.error('下一个练习错误:', error)
+      alert('无法获取下一个练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -452,7 +565,7 @@ function App() {
               onSentenceClick={handleSentenceClick}
               onCloseSentenceDetail={handleCloseSentenceDetail}
               onWordClick={getWordDetails}
-              onStartLearning={startLearning}
+              onStartLearning={startLearningPhases}
               loading={loading}
               t={t}
             />
@@ -493,6 +606,53 @@ function App() {
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => setStep('dictionary')}
               onComplete={() => setStep('progress')}
+              loading={loading}
+              t={t}
+            />
+          )}
+          
+          {step === 'phase-selector' && (
+            <PhaseSelectorStep
+              key="phase-selector"
+              phases={phases}
+              currentFileId={currentFileId}
+              onPhaseSelect={handlePhaseSelect}
+              onBack={() => setStep('dictionary')}
+              loading={loading}
+              t={t}
+            />
+          )}
+          
+          {step === 'phase-progress' && (
+            <PhaseProgressStep
+              key="phase-progress"
+              units={phaseUnits}
+              currentUnit={currentPhaseUnit}
+              phaseNumber={currentPhase}
+              onUnitClick={handlePhaseUnitClick}
+              onBack={() => setStep('phase-selector')}
+              loading={loading}
+              t={t}
+            />
+          )}
+          
+          {step === 'phase-exercise' && exerciseType === 'masked_sentence' && (
+            <MaskedSentenceExerciseStep
+              key="masked-exercise"
+              data={currentExerciseData}
+              onNext={handleNextPhaseExercise}
+              onBack={() => setStep('phase-progress')}
+              loading={loading}
+              t={t}
+            />
+          )}
+          
+          {step === 'phase-exercise' && exerciseType === 'translation_reconstruction' && (
+            <TranslationReconstructionStep
+              key="reconstruction-exercise"
+              data={currentExerciseData}
+              onNext={handleNextPhaseExercise}
+              onBack={() => setStep('phase-progress')}
               loading={loading}
               t={t}
             />

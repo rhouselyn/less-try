@@ -861,6 +861,210 @@ async def generate_sentence_quiz(file_id: str):
         raise HTTPException(status_code=500, detail=f"Error generating sentence quiz: {str(e)}")
 
 
+# --- 新的学习阶段 API ---
+@app.get("/api/{file_id}/phases")
+async def get_phases(file_id: str):
+    """获取所有阶段列表和进度"""
+    try:
+        # 加载句子数据
+        sentences = storage.load_pipeline_data(file_id)
+        if not sentences:
+            raise HTTPException(status_code=404, detail="No sentences found")
+        
+        # 提取句子列表
+        sentence_list = [s["sentence"] for s in sentences if "sentence" in s]
+        
+        # 分组为单元（8句/单元）
+        units = text_processor.group_sentences_into_units(sentence_list, 8)
+        
+        # 获取各阶段进度
+        phase1_progress = storage.load_phase_progress(file_id, 1)
+        phase2_progress = storage.load_phase_progress(file_id, 2)
+        
+        return {
+            "phases": [
+                {
+                    "phase_number": 1,
+                    "name": "阶段一：单词学习",
+                    "units_count": len(units),
+                    "progress": phase1_progress
+                },
+                {
+                    "phase_number": 2,
+                    "name": "阶段二：句子练习",
+                    "units_count": len(units),
+                    "progress": phase2_progress
+                }
+            ],
+            "total_units": len(units)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/{file_id}/phase/{phase_number}/units")
+async def get_phase_units(file_id: str, phase_number: int):
+    """获取指定阶段的单元列表"""
+    try:
+        sentences = storage.load_pipeline_data(file_id)
+        if not sentences:
+            raise HTTPException(status_code=404, detail="No sentences found")
+        
+        sentence_list = [s["sentence"] for s in sentences if "sentence" in s]
+        units = text_processor.group_sentences_into_units(sentence_list, 8)
+        
+        # 加载进度
+        progress = storage.load_phase_progress(file_id, phase_number)
+        
+        return {
+            "phase_number": phase_number,
+            "units": [
+                {
+                    "unit_id": i,
+                    "sentences_count": len(unit),
+                    "completed": i < progress["current_unit"]
+                }
+                for i, unit in enumerate(units)
+            ],
+            "current_unit": progress["current_unit"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/{file_id}/phase/{phase_number}/unit/{unit_id}")
+async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int):
+    """获取指定单元的当前练习"""
+    try:
+        # 加载数据
+        sentences = storage.load_pipeline_data(file_id)
+        vocab = storage.load_vocab(file_id)
+        if not sentences:
+            raise HTTPException(status_code=404, detail="No sentences found")
+        
+        # 获取该单元的句子
+        sentence_list = [s for s in sentences if "sentence" in s]
+        units = text_processor.group_sentences_into_units(sentence_list, 8)
+        
+        if unit_id >= len(units):
+            raise HTTPException(status_code=404, detail="Unit not found")
+        
+        unit_sentences = units[unit_id]
+        
+        # 加载进度
+        progress = storage.load_phase_progress(file_id, phase_number)
+        
+        exercise_index = progress["current_exercise"]
+        
+        if exercise_index >= len(unit_sentences) * 2:  # 每个句子两个练习
+            return {"unit_complete": True}
+        
+        # 确定练习类型（0: 蒙版填空, 1: 翻译还原）
+        sentence_idx = exercise_index // 2
+        exercise_type = exercise_index % 2
+        
+        current_sentence_data = unit_sentences[sentence_idx]
+        current_sentence = current_sentence_data["sentence"]
+        
+        if phase_number == 2:
+            if exercise_type == 0:
+                # 练习1：蒙版填空
+                masked_exercise = text_processor.generate_masked_sentence(current_sentence, vocab)
+                if masked_exercise:
+                    return {
+                        "exercise_type": "masked_sentence",
+                        "exercise_index": exercise_index,
+                        "data": masked_exercise,
+                        "unit_id": unit_id
+                    }
+                else:
+                    # 如果句子太短，跳过到下一个练习
+                    return await get_phase_unit_exercise(file_id, phase_number, unit_id)
+            else:
+                # 练习2：翻译还原（从母语到原文）
+                translation_result = current_sentence_data.get("translation_result", {})
+                tokenized_translation = translation_result.get("tokenized_translation", "")
+                original_tokens = text_processor.tokenize_sentence(current_sentence)
+                
+                # Get English distractors from vocab
+                import random
+                distractors = []
+                vocab_words = [v["word"] for v in vocab]
+                original_lower = [t.lower() for t in original_tokens]
+                random.shuffle(vocab_words)
+                for vw in vocab_words:
+                    if vw.lower() not in original_lower and len(distractors) < 4:
+                        distractors.append(vw)
+                
+                # Backup distractors
+                backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish"]
+                idx = 0
+                while len(distractors) < 4:
+                    bd = backup_distractors[idx % len(backup_distractors)]
+                    if bd.lower() not in original_lower and bd not in distractors:
+                        distractors.append(bd)
+                    idx += 1
+                
+                # Prepare options
+                all_tokens = original_tokens + distractors
+                random.shuffle(all_tokens)
+                
+                return {
+                    "exercise_type": "translation_reconstruction",
+                    "exercise_index": exercise_index,
+                    "data": {
+                        "native_translation": tokenized_translation,
+                        "original_tokens": original_tokens,
+                        "options": all_tokens
+                    },
+                    "unit_id": unit_id
+                }
+        
+        # 阶段1：返回单词学习（复用现有逻辑）
+        # 这里我们暂时返回第一阶段的进度入口
+        return {"redirect_to_phase1": True}
+        
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/{file_id}/phase/{phase_number}/unit/{unit_id}/next")
+async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
+    """进入下一个练习"""
+    try:
+        progress = storage.load_phase_progress(file_id, phase_number)
+        new_exercise_index = progress["current_exercise"] + 1
+        
+        # 检查单元是否完成
+        sentences = storage.load_pipeline_data(file_id)
+        sentence_list = [s for s in sentences if "sentence" in s]
+        units = text_processor.group_sentences_into_units(sentence_list, 8)
+        
+        if unit_id >= len(units):
+            return {"success": False, "error": "Unit not found"}
+        
+        max_exercises = len(units[unit_id]) * 2
+        
+        if new_exercise_index >= max_exercises:
+            # 单元完成，进入下一个单元
+            new_unit_id = unit_id + 1
+            storage.save_phase_progress(file_id, phase_number, new_unit_id, 0)
+            return {"success": True, "unit_complete": True, "new_unit": new_unit_id}
+        else:
+            storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index)
+            return {"success": True, "new_exercise_index": new_exercise_index}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/{file_id}/phase/{phase_number}/unit/{unit_id}/complete")
+async def complete_phase_unit(file_id: str, phase_number: int, unit_id: int):
+    """标记单元为完成"""
+    try:
+        storage.save_phase_progress(file_id, phase_number, unit_id + 1, 0)
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, timeout_keep_alive=600)
