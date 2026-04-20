@@ -361,8 +361,8 @@ TEXT_CONTENT
                 "ipa": "",
                 "variants_detail": [],
                 "examples": [
-                    {"sentence": f"This is a sentence with {word}.", "translation": f"这是包含{word}的句子。"},
-                    {"sentence": f"I can use {word} in a sentence.", "translation": f"我可以在句子中使用{word}。"}
+                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
+                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang}."}
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
@@ -370,9 +370,9 @@ TEXT_CONTENT
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
-                        {"text": "选项1", "is_correct": False},
-                        {"text": "选项2", "is_correct": False},
-                        {"text": "选项3", "is_correct": False}
+                        {"text": f"Option 1 in {target_lang}", "is_correct": False},
+                        {"text": f"Option 2 in {target_lang}", "is_correct": False},
+                        {"text": f"Option 3 in {target_lang}", "is_correct": False}
                     ]
                 }
             }
@@ -387,8 +387,8 @@ TEXT_CONTENT
                 "ipa": "",
                 "variants_detail": [],
                 "examples": [
-                    {"sentence": f"This is a sentence with {word}.", "translation": f"这是包含{word}的句子。"},
-                    {"sentence": f"I can use {word} in a sentence.", "translation": f"我可以在句子中使用{word}。"}
+                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
+                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang}."}
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
@@ -396,9 +396,9 @@ TEXT_CONTENT
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
-                        {"text": "选项1", "is_correct": False},
-                        {"text": "选项2", "is_correct": False},
-                        {"text": "选项3", "is_correct": False}
+                        {"text": f"Option 1 in {target_lang}", "is_correct": False},
+                        {"text": f"Option 2 in {target_lang}", "is_correct": False},
+                        {"text": f"Option 3 in {target_lang}", "is_correct": False}
                     ]
                 }
             }
