@@ -144,7 +144,7 @@ For each word, provide:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "original": {"type": "string", "description": "The text translated to target language. If the input text is already in target language, keep it unchanged."},
+                        "original": {"type": "string", "description": "The text translated to target language"},
                         "translation": {
                             "type": "array",
                             "items": {
