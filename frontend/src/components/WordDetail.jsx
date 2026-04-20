@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Volume2, Brain } from 'lucide-react'
 
-function WordDetail({ word, t, onStudyWord }) {
+function WordDetail({ word, t }) {
   const [isPlaying, setIsPlaying] = useState(false)
 
   const handlePlayAudio = () => {
@@ -58,25 +58,7 @@ function WordDetail({ word, t, onStudyWord }) {
         )}
       </div>
 
-      {/* 学习按钮 */}
-      {word.options && word.options.length > 0 && onStudyWord && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mb-6"
-        >
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={() => onStudyWord(word)}
-            className="w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 transition-colors flex items-center justify-center gap-2"
-          >
-            <Brain className="w-5 h-5" />
-            {t.studyThisWord}
-          </motion.button>
-        </motion.div>
-      )}
+
 
       <div className="space-y-6">
         <motion.div
