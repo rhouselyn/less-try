@@ -134,30 +134,22 @@ class TextProcessor:
         words = re.findall(r"\b\w+\b", sentence)
         return words
     
-    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens=None) -> Dict[str, Any]:
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict]) -> Dict[str, Any]:
         """
         生成蒙版填空练习
-        - 任何长度的句子都可以生成
-        - 8个token以下的蒙版一个
-        - 使用翻译token作为蒙版单词来源
+        - 大于8个词的句子才生成
+        - 每8个词多蒙一个
         """
-        # 使用翻译tokens或自动分词
-        if translation_tokens:
-            words = [token['text'] for token in translation_tokens if token['text'].isalpha()]
-        else:
-            words = self.tokenize_sentence(sentence)
-        
+        words = self.tokenize_sentence(sentence)
         word_count = len(words)
         
-        if word_count < 1:
+        if word_count < 8:
             return None
         
         # 计算要蒙版的数量
-        if word_count < 8:
+        num_masks = 1 + (word_count - 8) // 8
+        if num_masks < 1:
             num_masks = 1
-        else:
-            num_masks = 1 + (word_count - 8) // 8
-        
         if num_masks > word_count // 2:
             num_masks = word_count // 2  # 最多蒙一半
         
@@ -177,9 +169,9 @@ class TextProcessor:
             if token.isalpha() and current_word_idx < len(words):
                 if current_word_idx in mask_indices:
                     masked_tokens.append("___")
-                    answer_words.append(words[current_word_idx])
+                    answer_words.append(token)
                 else:
-                    masked_tokens.append(words[current_word_idx])
+                    masked_tokens.append(token)
                 current_word_idx += 1
             else:
                 masked_tokens.append(token)
@@ -196,7 +188,7 @@ class TextProcessor:
                 distractors.append(vw)
         
         # 如果词汇表不够，添加一些常见的英语干扰词
-        backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish", "grape", "house", "car", "tree", "book", "table"]
+        backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish", "grape", "house"]
         idx = 0
         while len(distractors) < 3 * num_masks:
             bd = backup_distractors[idx % len(backup_distractors)]

@@ -131,18 +131,15 @@ class Storage:
                 return data.get("shuffled_indices")
         return None
     
-    def save_phase_progress(self, file_id: str, phase: int, unit_id: int, exercise_index: int, additional_data=None):
+    def save_phase_progress(self, file_id: str, phase: int, unit_id: int, exercise_index: int):
         """保存阶段学习进度"""
         file_dir = self.get_file_dir(file_id)
         progress_path = file_dir / f"phase{phase}_progress.json"
-        progress_data = {
-            "current_unit": unit_id,
-            "current_exercise": exercise_index
-        }
-        if additional_data:
-            progress_data.update(additional_data)
         with open(progress_path, 'w', encoding='utf-8') as f:
-            json.dump(progress_data, f, ensure_ascii=False, indent=2)
+            json.dump({
+                "current_unit": unit_id,
+                "current_exercise": exercise_index
+            }, f, ensure_ascii=False, indent=2)
     
     def load_phase_progress(self, file_id: str, phase: int):
         """加载阶段学习进度"""
@@ -152,7 +149,7 @@ class Storage:
             with open(progress_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return data
-        return {"current_unit": 0, "current_exercise": 0, "last_exercise_type": 0}
+        return {"current_unit": 0, "current_exercise": 0}
     
     def save_sentence_order(self, file_id: str, phase: int, shuffled_indices: List[int]):
         """保存句子的随机顺序"""
