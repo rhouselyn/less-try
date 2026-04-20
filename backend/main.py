@@ -70,8 +70,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 print(f"[DEBUG] 句子 {i+1} 处理完成")
                 
                 # 确保翻译结果的结构
+                # 使用翻译后的文本作为sentence字段
+                translated_sentence = translation_result.get("tokenized_translation", sentence)
                 sentence_data = {
-                    "sentence": sentence,
+                    "sentence": translated_sentence,
                     "translation_result": translation_result
                 }
                 sentence_translations.append(sentence_data)
@@ -749,13 +751,10 @@ async def check_coverage(file_id: str):
         # 检查是否已经学习完所有单词
         all_words_learned = current_index >= len(vocab)
         
-        # 对于短文本，学习完所有单词后就可以开始句子翻译
-        if len(vocab) <= 5:
-            if not all_words_learned:
-                return {"can_form_sentences": False, "unit_completed": unit_completed}
-        else:
-            # 至少要学够5个单词后才可能出现句子翻译题
-            if current_index < 4:
+        # 学习完所有单词后，只要有2个或以上单词，就可以开始句子翻译
+        if not all_words_learned:
+            # 对于长文本，至少要学够5个单词后才可能出现句子翻译题
+            if len(vocab) > 5 and current_index < 4:
                 return {"can_form_sentences": False, "unit_completed": unit_completed}
         
         # 学习完所有单词后，所有单词都算已学
