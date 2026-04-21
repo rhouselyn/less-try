@@ -362,6 +362,11 @@ class NvidiaAPI:
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）
 
+【极其重要！！！固定搭配处理规则！！！
+- 对于固定搭配（如 what's up, live in, how are you, look forward to 等），请将整个固定搭配作为一个整体处理，不要拆分！！！
+- 固定搭配的text字段应该包含整个短语，如 "what's up" 而不是分开的 "what's" 和 "up"
+- 对于缩写形式（如 what's, don't, he's 等）也要作为一个整体处理，不要拆分！！！
+
 同时，为文本中出现的所有单词生成完整词典条目（dictionary_entries）：
 
 为每个单词提供：
