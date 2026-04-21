@@ -491,6 +491,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
 @app.get("/api/word/{file_id}/{word}")
 async def get_word_details(file_id: str, word: str):
     try:
+        print(f"[DEBUG] 获取单词详情: {word}")
         # 先检查缓存
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
@@ -510,11 +511,14 @@ async def get_word_details(file_id: str, word: str):
         # 查找单词
         word_data = None
         for entry in vocab:
+            print(f"[DEBUG] 检查词汇表条目: {entry['word']}")
             if entry["word"].lower() == word.lower():
                 word_data = entry
+                print(f"[DEBUG] 找到单词: {word}")
                 break
 
         if not word_data:
+            print(f"[DEBUG] 未找到单词: {word}")
             raise HTTPException(status_code=404, detail="Word not found")
 
         # 构建上下文（包含翻译）
@@ -546,9 +550,9 @@ async def get_word_details(file_id: str, word: str):
                     if "sentence" in sentence_data:
                         # 更智能的匹配方式，考虑大小写和缩写形式
                         sentence = sentence_data["sentence"]
-                        word = word_data["word"]
+                        current_word = word_data["word"]
                         # 检查单词是否在句子中（不区分大小写）
-                        if word.lower() in sentence.lower():
+                        if current_word.lower() in sentence.lower():
                             # 避免重复添加同一个句子
                             if sentence not in [ctx["sentence"] for ctx in context_sentences_with_translations]:
                                 context_sentences.append(sentence)
@@ -828,6 +832,19 @@ async def check_coverage(file_id: str):
                 if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     can_form = True
                     break
+                
+                # 尝试第三种方式：只要句子中包含至少2个已学单词，就认为可以生成句子
+                # 这对于短文本更有效
+                matched_words = 0
+                for word in learned_words:
+                    word_lower = word["word"].lower()
+                    if word_lower in sentence_lower:
+                        matched_words += 1
+                        if matched_words >= 2:
+                            can_form = True
+                            break
+                if can_form:
+                    break
         
         return {"can_form_sentences": can_form, "unit_completed": unit_completed}
     except Exception as e:
@@ -837,6 +854,7 @@ async def check_coverage(file_id: str):
 @app.get("/api/learn/{file_id}/sentence-quiz")
 async def generate_sentence_quiz(file_id: str):
     try:
+        print(f"[DEBUG] 生成句子翻译题: {file_id}")
         vocab = storage.load_vocab(file_id)
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
@@ -849,6 +867,7 @@ async def generate_sentence_quiz(file_id: str):
         current_index = storage.load_learning_progress(file_id)
         learned_words = vocab[:current_index + 1]
         learned_word_set = set(word["word"].lower() for word in learned_words)
+        print(f"[DEBUG] 已学单词: {[word['word'] for word in learned_words]}")
         
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
@@ -860,11 +879,14 @@ async def generate_sentence_quiz(file_id: str):
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
+                print(f"[DEBUG] 检查句子: {sentence}")
                 # 简单分词（按空格）
                 words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                print(f"[DEBUG] 句子中的单词: {words_in_sentence}")
                 # 检查是否所有单词都在已学单词中，且至少2个单词
                 if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     eligible_sentences.append(sentence_data)
+                    print(f"[DEBUG] 句子符合条件: {sentence}")
         
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")
@@ -873,13 +895,19 @@ async def generate_sentence_quiz(file_id: str):
         import random
         selected_sentence = random.choice(eligible_sentences)
         original_sentence = selected_sentence["sentence"]
+        print(f"[DEBUG] 选择句子: {original_sentence}")
         
         # 直接使用LLM生成的数据
+        if "translation_result" not in selected_sentence:
+            raise HTTPException(status_code=404, detail="Translation result not found")
+        
         translation_result = selected_sentence["translation_result"]
         tokenized_translation = translation_result.get("tokenized_translation", "")
         redundant_tokens = translation_result.get("redundant_tokens", [])
+        print(f"[DEBUG] 翻译结果: {tokenized_translation}")
         
         # 过滤掉标点符号，只保留文字
+        import re
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
@@ -887,11 +915,18 @@ async def generate_sentence_quiz(file_id: str):
         correct_tokens = []
         if "translation" in translation_result:
             for token in translation_result["translation"]:
-                if isinstance(token, dict) and "translation" in token:
-                    text = token["translation"]
+                if isinstance(token, dict):
+                    # 优先使用translation字段，如果没有则使用text字段
+                    if "translation" in token:
+                        text = token["translation"]
+                    elif "text" in token:
+                        text = token["text"]
+                    else:
+                        continue
                     cleaned_text = clean_token(text)
                     if cleaned_text:
                         correct_tokens.append(cleaned_text)
+        print(f"[DEBUG] 正确tokens: {correct_tokens}")
         
         # 清理冗余词
         cleaned_redundant_tokens = []
@@ -899,17 +934,21 @@ async def generate_sentence_quiz(file_id: str):
             cleaned_text = clean_token(token)
             if cleaned_text and cleaned_text not in correct_tokens:
                 cleaned_redundant_tokens.append(cleaned_text)
+        print(f"[DEBUG] 清理后的冗余词: {cleaned_redundant_tokens}")
         
         # 过滤掉重复的冗余词，只保留不超过3个
         unique_redundant = list(set(cleaned_redundant_tokens))
         selected_distractors = unique_redundant[:3]
+        print(f"[DEBUG] 选择的干扰词: {selected_distractors}")
         
         # 合并正确tokens和干扰词，然后打乱
         all_tokens = correct_tokens + selected_distractors
         random.shuffle(all_tokens)
+        print(f"[DEBUG] 所有tokens: {all_tokens}")
         
         # 清理正确翻译，移除标点符号
         correct_translation = clean_token(tokenized_translation)
+        print(f"[DEBUG] 清理后的翻译: {correct_translation}")
         
         return {
             "original_sentence": original_sentence,
@@ -918,6 +957,9 @@ async def generate_sentence_quiz(file_id: str):
             "tokens": all_tokens
         }
     except Exception as e:
+        print(f"[ERROR] 生成句子翻译题错误: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error generating sentence quiz: {str(e)}")
 
 
@@ -1045,10 +1087,11 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                             translation_tokens.append(token["text"])
                 
                 # 生成蒙版练习（支持任意长度句子）
+                # 确保使用LLM生成的tokens
                 masked_exercise = text_processor.generate_masked_sentence(
                     current_sentence, 
                     vocab, 
-                    translation_tokens if translation_tokens else None
+                    translation_tokens  # 强制使用LLM生成的tokens
                 )
                 
                 return {

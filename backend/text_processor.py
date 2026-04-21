@@ -146,13 +146,17 @@ class TextProcessor:
         words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
         return words
     
-    def generate_masked_sentence(self, sentence: str, vocab: List[Dict]) -> Dict[str, Any]:
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None) -> Dict[str, Any]:
         """
         生成蒙版填空练习
         - 大于8个词的句子才生成
         - 每8个词多蒙一个
         """
-        words = self.tokenize_sentence(sentence)
+        # 使用翻译token或自动分词
+        if translation_tokens:
+            words = translation_tokens
+        else:
+            words = self.tokenize_sentence(sentence)
         word_count = len(words)
         
         if word_count < 8:
@@ -172,24 +176,36 @@ class TextProcessor:
         # 随机选择要蒙版的单词索引
         mask_indices = random.sample(range(word_count), num_masks)
         
-        # 构建蒙版后的句子 - we need to preserve original structure
-        # First, let's split into tokens with punctuation
-        import re
-        tokens_with_punc = re.findall(r'\w+|[^\w\s]', sentence)
-        # Now, let's map word positions to token positions
-        current_word_idx = 0
+        # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []
         answer_words = []
-        for token in tokens_with_punc:
-            if token.isalpha() and current_word_idx < len(words):
-                if current_word_idx in mask_indices:
+        
+        # 如果提供了translation_tokens，使用它们来构建蒙版句子
+        if translation_tokens:
+            for i, token in enumerate(translation_tokens):
+                if i in mask_indices:
                     masked_tokens.append("___")
                     answer_words.append(token)
                 else:
                     masked_tokens.append(token)
-                current_word_idx += 1
-            else:
-                masked_tokens.append(token)
+        else:
+            # 回退到自动分词
+            import re
+            # 正确处理缩写形式，如 I'm, don't 等
+            tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
+            # 映射单词位置到token位置
+            current_word_idx = 0
+            for token in tokens_with_punc:
+                # 检查是否是单词（包括缩写形式）
+                if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
+                    if current_word_idx in mask_indices:
+                        masked_tokens.append("___")
+                        answer_words.append(token)
+                    else:
+                        masked_tokens.append(token)
+                    current_word_idx += 1
+                else:
+                    masked_tokens.append(token)
         
         # 生成选项：正确答案 + 干扰项（来自vocab的其他单词）
         options = answer_words.copy()
@@ -218,14 +234,22 @@ class TextProcessor:
         # 打乱所有选项
         random.shuffle(options)
         
-        return {
-            "original_sentence": sentence,
-            "masked_sentence": "".join(
+        # 构建蒙版句子，保持原始句子的格式
+        if translation_tokens:
+            # 当使用LLM生成的tokens时，简单地用空格连接
+            masked_sentence = " ".join(masked_tokens)
+        else:
+            # 当使用自动分词时，保持原始格式
+            masked_sentence = "".join(
                 [
-                    " " + token if token not in [".", ",", "!", "?", ":", ";"] and i > 0 else token 
+                    " " + token if token not in [".", ",", "!", "?", ":", ";", ")"] and i > 0 else token 
                     for i, token in enumerate(masked_tokens)
                 ]
-            ),
+            )
+        
+        return {
+            "original_sentence": sentence,
+            "masked_sentence": masked_sentence,
             "answer_words": answer_words,
             "mask_indices": mask_indices,
             "options": options,
@@ -299,25 +323,36 @@ class TextProcessor:
         # 随机选择要蒙版的单词索引
         mask_indices = random.sample(range(word_count), num_masks)
         
-        # 构建蒙版后的句子 - 保留原始结构
-        import re
-        # 正确处理缩写形式，如 I'm, don't 等
-        tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
-        # 映射单词位置到token位置
-        current_word_idx = 0
+        # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []
         answer_words = []
-        for token in tokens_with_punc:
-            # 检查是否是单词（包括缩写形式）
-            if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
-                if current_word_idx in mask_indices:
+        
+        # 如果提供了translation_tokens，使用它们来构建蒙版句子
+        if translation_tokens:
+            for i, token in enumerate(translation_tokens):
+                if i in mask_indices:
                     masked_tokens.append("___")
                     answer_words.append(token)
                 else:
                     masked_tokens.append(token)
-                current_word_idx += 1
-            else:
-                masked_tokens.append(token)
+        else:
+            # 回退到自动分词
+            import re
+            # 正确处理缩写形式，如 I'm, don't 等
+            tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
+            # 映射单词位置到token位置
+            current_word_idx = 0
+            for token in tokens_with_punc:
+                # 检查是否是单词（包括缩写形式）
+                if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
+                    if current_word_idx in mask_indices:
+                        masked_tokens.append("___")
+                        answer_words.append(token)
+                    else:
+                        masked_tokens.append(token)
+                    current_word_idx += 1
+                else:
+                    masked_tokens.append(token)
         
         # 生成选项：正确答案 + 干扰项
         options = answer_words.copy()
@@ -343,14 +378,22 @@ class TextProcessor:
         # 打乱所有选项
         random.shuffle(options)
         
-        return {
-            "original_sentence": sentence,
-            "masked_sentence": "".join(
+        # 构建蒙版句子，保持原始句子的格式
+        if translation_tokens:
+            # 当使用LLM生成的tokens时，简单地用空格连接
+            masked_sentence = " ".join(masked_tokens)
+        else:
+            # 当使用自动分词时，保持原始格式
+            masked_sentence = "".join(
                 [
-                    " " + token if token not in [".", ",", "!", "?", ":", ";"] and i > 0 else token 
+                    " " + token if token not in [".", ",", "!", "?", ":", ";", ")"] and i > 0 else token 
                     for i, token in enumerate(masked_tokens)
                 ]
-            ),
+            )
+        
+        return {
+            "original_sentence": sentence,
+            "masked_sentence": masked_sentence,
             "answer_words": answer_words,
             "mask_indices": mask_indices,
             "options": options,
