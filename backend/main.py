@@ -753,8 +753,8 @@ async def check_coverage(file_id: str):
             if not all_words_learned:
                 return {"can_form_sentences": False, "unit_completed": unit_completed}
         else:
-            # 至少要学够5个单词后才可能出现句子翻译题
-            if current_index < 4:
+            # 至少要学够3个单词后才可能出现句子翻译题
+            if current_index < 2:
                 return {"can_form_sentences": False, "unit_completed": unit_completed}
         
         # 学习完所有单词后，所有单词都算已学

@@ -283,13 +283,14 @@ class TextProcessor:
         
         # 构建蒙版后的句子 - 保留原始结构
         import re
-        tokens_with_punc = re.findall(r'\w+|[^\w\s]', sentence)
+        # 匹配单词、缩写和标点
+        tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
         # 映射单词位置到token位置
         current_word_idx = 0
         masked_tokens = []
         answer_words = []
         for token in tokens_with_punc:
-            if token.isalpha() and current_word_idx < len(words):
+            if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
                 if current_word_idx in mask_indices:
                     masked_tokens.append("___")
                     answer_words.append(token)
