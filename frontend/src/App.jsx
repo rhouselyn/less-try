@@ -114,8 +114,7 @@ function App() {
           }
         } else if (status.status === 'error') {
           console.error('处理错误:', status.error)
-          // 改为状态管理，在页面显示错误信息
-          setProcessingInfo({ error: `处理失败: ${status.error}` })
+          alert(`处理失败: ${status.error}`)
           setLoading(false)
           // 停止轮询
           if (pollingInterval) {
@@ -123,8 +122,7 @@ function App() {
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
-          // 改为状态管理，在页面显示错误信息
-          setProcessingInfo({ error: '处理超时，请重试' })
+          alert('处理超时，请重试')
           setLoading(false)
           // 停止轮询
           if (pollingInterval) {
@@ -207,13 +205,13 @@ function App() {
       console.error('处理文本错误:', error)
       if (error.response && error.response.status === 504) {
         // 504错误表示网关超时，可能是网络延迟或后端处理时间过长
-        setProcessingInfo({ error: '网络连接超时，请检查网络连接后重试' })
+        alert('网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
         // 处理超时错误
-        setProcessingInfo({ error: '处理超时，请稍后重试' })
+        alert('处理超时，请稍后重试')
       } else {
         // 其他错误
-        setProcessingInfo({ error: '处理失败，请重试' })
+        alert('处理失败，请重试')
       }
       setLoading(false)
     }
@@ -233,8 +231,7 @@ function App() {
       setStep('progress')
     } catch (error) {
       console.error('开始学习错误:', error)
-      // 改为状态管理，在页面显示错误信息
-      setProcessingInfo({ error: '无法开始学习，请重试' })
+      alert('无法开始学习，请重试')
     } finally {
       setLoading(false)
     }
@@ -250,8 +247,7 @@ function App() {
       setStep('phase-selector')
     } catch (error) {
       console.error('获取阶段错误:', error)
-      // 改为状态管理，在页面显示错误信息
-      setProcessingInfo({ error: '无法获取学习阶段，请重试' })
+      alert('无法获取学习阶段，请重试')
     } finally {
       setLoading(false)
     }
@@ -279,8 +275,7 @@ function App() {
       }
     } catch (error) {
       console.error('选择阶段错误:', error)
-      // 改为状态管理，在页面显示错误信息
-      setProcessingInfo({ error: '无法选择阶段，请重试' })
+      alert('无法选择阶段，请重试')
     } finally {
       setLoading(false)
     }
@@ -294,8 +289,7 @@ function App() {
       setCurrentPhaseUnit(unitId)
       const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, unitId)
       if (exerciseData.unit_complete) {
-        // 改为状态管理，在页面显示完成信息
-        setProcessingInfo({ message: '该单元已完成！' })
+        alert('该单元已完成！')
         setStep('phase-progress')
       } else if (exerciseData.redirect_to_phase1) {
         setStep('progress')
@@ -306,8 +300,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取单元练习错误:', error)
-      // 改为状态管理，在页面显示错误信息
-      setProcessingInfo({ error: '无法获取练习，请重试' })
+      alert('无法获取练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -320,8 +313,7 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       if (nextRes.unit_complete) {
-        // 改为状态管理，在页面显示完成信息
-        setProcessingInfo({ message: '该单元已完成！' })
+        alert('该单元已完成！')
         // Refresh phase units
         const phaseUnitsData = await api.getPhaseUnits(currentFileId, currentPhase)
         setPhaseUnits(phaseUnitsData.units)
@@ -331,8 +323,7 @@ function App() {
         // Get next exercise
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
-          // 改为状态管理，在页面显示完成信息
-          setProcessingInfo({ message: '该单元已完成！' })
+          alert('该单元已完成！')
           setStep('phase-progress')
         } else {
           setExerciseType(exerciseData.exercise_type)
@@ -341,8 +332,7 @@ function App() {
       }
     } catch (error) {
       console.error('下一个练习错误:', error)
-      // 改为状态管理，在页面显示错误信息
-      setProcessingInfo({ error: '无法获取下一个练习，请重试' })
+      alert('无法获取下一个练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -365,8 +355,7 @@ function App() {
       setStep('learning')
     } catch (error) {
       console.error('获取单元单词错误:', error)
-      // 改为状态管理，在页面显示错误信息
-      setProcessingInfo({ error: '无法获取单元单词，请重试' })
+      alert('无法获取单元单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -411,8 +400,7 @@ function App() {
           setStep('sentence-quiz')
         } else {
           // 单元已完成
-          // 改为状态管理，在页面显示完成信息
-          setProcessingInfo({ message: '该单元学习已完成！' })
+          alert('该单元学习已完成！')
           setStep('progress')
         }
         return
@@ -431,8 +419,7 @@ function App() {
         setStep('sentence-quiz')
       } else if (coverageData.unit_completed) {
         // 单元已完成
-        // 改为状态管理，在页面显示完成信息
-        setProcessingInfo({ message: '该单元学习已完成！' })
+        alert('该单元学习已完成！')
         setStep('progress')
       } else {
         // 继续单词学习
@@ -444,8 +431,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取下一个单词错误:', error)
-      // 改为状态管理，在页面显示错误信息
-      setProcessingInfo({ error: '无法获取下一个单词，请重试' })
+      alert('无法获取下一个单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -490,8 +476,7 @@ function App() {
         })
       } else if (coverageData.unit_completed) {
         // 单元已完成
-        // 改为状态管理，在页面显示完成信息
-        setProcessingInfo({ message: '该单元学习已完成！' })
+        alert('该单元学习已完成！')
         setStep('progress')
       } else {
         // 回到单词学习
@@ -505,8 +490,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取下一个句子翻译题错误:', error)
-      // 改为状态管理，在页面显示错误信息
-      setProcessingInfo({ error: '无法获取下一个句子翻译题，请重试' })
+      alert('无法获取下一个句子翻译题，请重试')
     } finally {
       setLoading(false)
     }

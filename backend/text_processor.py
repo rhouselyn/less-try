@@ -127,55 +127,12 @@ class TextProcessor:
         return result
     
     def tokenize_sentence(self, sentence: str) -> List[str]:
-        """简单句子分词，按空格和标点分割，保留单词，正确处理缩写形式和常见词组"""
+        """简单句子分词，按空格和标点分割，保留单词，正确处理缩写形式"""
+        # 保留单词和缩写形式，如 what's, don't 等
         import re
-        
-        # 常见词组列表
-        common_phrases = [
-            r"what's up",
-            r"how's it going",
-            r"I'm fine",
-            r"thank you",
-            r"you're welcome",
-            r"good morning",
-            r"good afternoon",
-            r"good evening",
-            r"good night",
-            r"see you"
-        ]
-        
-        # 先匹配常见词组
-        tokens = []
-        remaining_sentence = sentence
-        
-        # 按长度降序排序，优先匹配较长的词组
-        sorted_phrases = sorted(common_phrases, key=len, reverse=True)
-        
-        for phrase in sorted_phrases:
-            pattern = r"\b" + re.escape(phrase) + r"\b"
-            matches = re.finditer(pattern, remaining_sentence, re.IGNORECASE)
-            
-            for match in matches:
-                # 添加匹配前的内容
-                before_match = remaining_sentence[:match.start()]
-                if before_match:
-                    # 对匹配前的内容进行普通分词
-                    before_tokens = re.findall(r"\b\w+(?:'\w+)?\b", before_match)
-                    tokens.extend(before_tokens)
-                
-                # 添加匹配的词组
-                tokens.append(match.group(0))
-                
-                # 更新剩余句子
-                remaining_sentence = remaining_sentence[match.end():]
-                break
-        
-        # 对剩余部分进行普通分词
-        if remaining_sentence:
-            remaining_tokens = re.findall(r"\b\w+(?:'\w+)?\b", remaining_sentence)
-            tokens.extend(remaining_tokens)
-        
-        return tokens
+        # 匹配单词和缩写形式
+        words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
+        return words
     
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict]) -> Dict[str, Any]:
         """
@@ -326,14 +283,13 @@ class TextProcessor:
         
         # 构建蒙版后的句子 - 保留原始结构
         import re
-        # 匹配单词、缩写和标点
-        tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
+        tokens_with_punc = re.findall(r'\w+|[^\w\s]', sentence)
         # 映射单词位置到token位置
         current_word_idx = 0
         masked_tokens = []
         answer_words = []
         for token in tokens_with_punc:
-            if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
+            if token.isalpha() and current_word_idx < len(words):
                 if current_word_idx in mask_indices:
                     masked_tokens.append("___")
                     answer_words.append(token)
@@ -345,36 +301,14 @@ class TextProcessor:
         
         # 生成选项：正确答案 + 干扰项
         options = answer_words.copy()
-        # 从词汇表中找干扰项，优先使用其他句子的单词
+        # 从词汇表中找干扰项
         distractors = []
-        
-        # 分离当前句子的单词和其他句子的单词
-        current_sentence_words = set(w.lower() for w in answer_words)
-        other_sentence_words = []
-        all_vocab_words = []
-        
-        for v in vocab:
-            word = v["word"]
-            all_vocab_words.append(word)
-            # 假设vocab中的每个单词都有sentence_index字段
-            if "sentence_index" in v:
-                # 这里简化处理，实际应该根据当前句子的索引来判断
-                # 暂时使用所有不在当前句子中的单词
-                if word.lower() not in current_sentence_words:
-                    other_sentence_words.append(word)
-        
-        # 首先从其他句子的单词中选择干扰词
-        random.shuffle(other_sentence_words)
-        for vw in other_sentence_words:
-            if vw.lower() not in current_sentence_words and len(distractors) < 3 * num_masks:
+        vocab_words = [v["word"] for v in vocab]
+        answer_lower = [w.lower() for w in answer_words]
+        random.shuffle(vocab_words)
+        for vw in vocab_words:
+            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
                 distractors.append(vw)
-        
-        # 如果其他句子的单词不够，从所有词汇中选择
-        if len(distractors) < 3 * num_masks:
-            random.shuffle(all_vocab_words)
-            for vw in all_vocab_words:
-                if vw.lower() not in current_sentence_words and len(distractors) < 3 * num_masks:
-                    distractors.append(vw)
         
         # 如果词汇表不够，使用备选词库
         if len(distractors) < 3 * num_masks:

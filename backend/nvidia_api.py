@@ -271,12 +271,6 @@ class NvidiaAPI:
                                     "word": {"type": "string"},
                                     "ipa": {"type": "string"},
                                     "context_meaning": {"type": "string"},
-                                    "common_meanings": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    },
                                     "variants": {
                                         "type": "array",
                                         "items": {
@@ -366,14 +360,13 @@ class NvidiaAPI:
 1. word: The word itself
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
-4. common_meanings: List of common meanings in TARGET_LANG - 常用释义列表
-5. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
-6. examples: 2 example sentences in SOURCE_LANG that match the context meaning
-7. options: 4 options for the meaning (1 correct, 3 incorrect) - 错误答案必须是该单词所没有的意思，而不是非句子中的意思
-8. grammar: Grammar explanation for the word
-9. translation: Translation of the word to TARGET_LANG
-10. tokens: Split the word into tokens if applicable
-11. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
+4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
+5. examples: 2 example sentences in SOURCE_LANG that match the context meaning
+6. options: 4 options for the meaning (1 correct, 3 incorrect) - 错误答案必须是该单词所没有的意思，而不是非句子中的意思
+7. grammar: Grammar explanation for the word
+8. translation: Translation of the word to TARGET_LANG
+9. tokens: Split the word into tokens if applicable
+10. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
