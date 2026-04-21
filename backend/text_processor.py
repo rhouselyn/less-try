@@ -207,15 +207,21 @@ class TextProcessor:
                 else:
                     masked_tokens.append(token)
         
-        # 生成选项：正确答案 + 干扰项（来自vocab的其他单词）
-        options = answer_words.copy()
-        # 从词汇表中找干扰项
+        # 生成选项：只使用干扰项，不包含正确答案
+        # 从词汇表中找干扰项，确保不包含当前句子的单词
+        options = []
         distractors = []
         vocab_words = [v["word"] for v in vocab]
-        answer_lower = [w.lower() for w in answer_words]
+        # 获取当前句子中的所有单词（用于排除）
+        current_sentence_words = set()
+        for word in words:
+            current_sentence_words.add(word.lower())
+        # 打乱词汇表
         random.shuffle(vocab_words)
         for vw in vocab_words:
-            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+            vw_lower = vw.lower()
+            # 确保干扰项不在当前句子中
+            if vw_lower not in current_sentence_words and len(distractors) < 3 * num_masks:
                 distractors.append(vw)
         
         # 如果词汇表不够，添加一些常见的英语干扰词
@@ -354,15 +360,21 @@ class TextProcessor:
                 else:
                     masked_tokens.append(token)
         
-        # 生成选项：正确答案 + 干扰项
-        options = answer_words.copy()
-        # 从词汇表中找干扰项
+        # 生成选项：只使用干扰项，不包含正确答案
+        # 从词汇表中找干扰项，确保不包含当前句子的单词
+        options = []
         distractors = []
         vocab_words = [v["word"] for v in vocab]
-        answer_lower = [w.lower() for w in answer_words]
+        # 获取当前句子中的所有单词（用于排除）
+        current_sentence_words = set()
+        for word in words:
+            current_sentence_words.add(word.lower())
+        # 打乱词汇表
         random.shuffle(vocab_words)
         for vw in vocab_words:
-            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+            vw_lower = vw.lower()
+            # 确保干扰项不在当前句子中
+            if vw_lower not in current_sentence_words and len(distractors) < 3 * num_masks:
                 distractors.append(vw)
         
         # 如果词汇表不够，使用备选词库

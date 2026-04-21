@@ -510,12 +510,21 @@ async def get_word_details(file_id: str, word: str):
 
         # 查找单词
         word_data = None
+        # 首先尝试精确匹配
         for entry in vocab:
             print(f"[DEBUG] 检查词汇表条目: {entry['word']}")
             if entry["word"].lower() == word.lower():
                 word_data = entry
                 print(f"[DEBUG] 找到单词: {word}")
                 break
+        
+        # 如果精确匹配失败，尝试包含匹配
+        if not word_data:
+            for entry in vocab:
+                if word.lower() in entry["word"].lower():
+                    word_data = entry
+                    print(f"[DEBUG] 找到包含单词的条目: {entry['word']}")
+                    break
 
         if not word_data:
             print(f"[DEBUG] 未找到单词: {word}")
