@@ -525,14 +525,18 @@ async def get_word_details(file_id: str, word: str):
         if sentences:
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
-                    if word_data["word"] in sentence_data["sentence"]:
-                        context_sentences.append(sentence_data["sentence"])
+                    # 更智能的匹配方式，考虑大小写和缩写形式
+                    sentence = sentence_data["sentence"]
+                    word = word_data["word"]
+                    # 检查单词是否在句子中（不区分大小写）
+                    if word.lower() in sentence.lower():
+                        context_sentences.append(sentence)
                         # 获取翻译
                         translation = ""
                         if "translation_result" in sentence_data:
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
                         context_sentences_with_translations.append({
-                            "sentence": sentence_data["sentence"],
+                            "sentence": sentence,
                             "translation": translation
                         })
             if not context and sentences:
@@ -754,9 +758,9 @@ async def check_coverage(file_id: str):
         # 检查是否已经学习完所有单词
         all_words_learned = current_index >= len(vocab)
         
-        # 对于短文本，学完所有单词后就可以开始句子翻译
-        # 对于长文本，至少要学够5个单词后才可能出现句子翻译题
-        if len(vocab) > 5 and current_index < 4:
+        # 只要学完至少2个单词，就可以开始句子翻译题
+        # 确保不管文本多长都能出现翻译题
+        if current_index < 2:
             return {"can_form_sentences": False, "unit_completed": unit_completed}
         
         # 学习完所有单词后，所有单词都算已学

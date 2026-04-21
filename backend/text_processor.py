@@ -166,6 +166,9 @@ class TextProcessor:
             num_masks = word_count // 2  # 最多蒙一半
         
         import random
+        # 固定种子，确保每个单元的掩码位置一致
+        # 使用句子内容作为种子，确保相同句子有相同的掩码模式
+        random.seed(hash(sentence))
         # 随机选择要蒙版的单词索引
         mask_indices = random.sample(range(word_count), num_masks)
         
@@ -290,6 +293,9 @@ class TextProcessor:
             num_masks = word_count // 2  # 最多蒙一半
         
         import random
+        # 固定种子，确保每个单元的掩码位置一致
+        # 使用句子内容作为种子，确保相同句子有相同的掩码模式
+        random.seed(hash(sentence))
         # 随机选择要蒙版的单词索引
         mask_indices = random.sample(range(word_count), num_masks)
         
