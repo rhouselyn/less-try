@@ -72,8 +72,8 @@ def test_phase1_translation(file_id):
             print(f"获取单词错误: {response.text}")
         
         # 标记为已学
-        url = f"{BASE_URL}/api/learn/{file_id}/next"
-        response = requests.get(url)
+        url = f"{BASE_URL}/api/learn/{file_id}/next-word"
+        response = requests.post(url, json={})
         if response.status_code == 200:
             result = response.json()
             print(f"学习进度: {result.get('new_index')}")
@@ -126,7 +126,7 @@ def test_word_detail(file_id, word):
 def test_phase2_exercises(file_id):
     print("\n=== 测试6: 测试第二阶段填空练习 ===")
     # 获取阶段信息
-    url = f"{BASE_URL}/api/phases/{file_id}"
+    url = f"{BASE_URL}/api/{file_id}/phases"
     response = requests.get(url)
     print(f"获取阶段状态码: {response.status_code}")
     if response.status_code == 200:
@@ -134,7 +134,7 @@ def test_phase2_exercises(file_id):
         print(f"阶段数量: {len(phases_data.get('phases', []))}")
         
         # 获取第二阶段单元
-        url = f"{BASE_URL}/api/2/units/{file_id}"
+        url = f"{BASE_URL}/api/{file_id}/phase/2/units"
         response = requests.get(url)
         print(f"获取单元状态码: {response.status_code}")
         if response.status_code == 200:
@@ -181,7 +181,7 @@ def main():
         test_phase1_translation(file_id)
         
         # 测试5: 测试token卡片例句
-        for word in ['i', 'm', 'good', 'don', 't', 'worry']:
+        for word in ['don\'t', 'good', 'I\'m', 'worry']:
             test_word_detail(file_id, word)
         
         # 测试6: 测试第二阶段填空练习

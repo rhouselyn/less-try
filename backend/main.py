@@ -523,13 +523,13 @@ async def get_word_details(file_id: str, word: str):
         context_sentences = []
         context_sentences_with_translations = []
         if sentences:
-            for sentence_data in sentences:
-                if "sentence" in sentence_data:
-                    # 更智能的匹配方式，考虑大小写和缩写形式
-                    sentence = sentence_data["sentence"]
-                    word = word_data["word"]
-                    # 检查单词是否在句子中（不区分大小写）
-                    if word.lower() in sentence.lower():
+            # 优先使用sentence_index来找到包含该单词的句子
+            if "sentence_index" in word_data:
+                sentence_index = word_data["sentence_index"]
+                if sentence_index < len(sentences):
+                    sentence_data = sentences[sentence_index]
+                    if "sentence" in sentence_data:
+                        sentence = sentence_data["sentence"]
                         context_sentences.append(sentence)
                         # 获取翻译
                         translation = ""
@@ -539,6 +539,31 @@ async def get_word_details(file_id: str, word: str):
                             "sentence": sentence,
                             "translation": translation
                         })
+            
+            # 如果通过sentence_index没找到，或者没找到足够的句子，再使用字符串匹配
+            if len(context_sentences) < 2:
+                for sentence_data in sentences:
+                    if "sentence" in sentence_data:
+                        # 更智能的匹配方式，考虑大小写和缩写形式
+                        sentence = sentence_data["sentence"]
+                        word = word_data["word"]
+                        # 检查单词是否在句子中（不区分大小写）
+                        if word.lower() in sentence.lower():
+                            # 避免重复添加同一个句子
+                            if sentence not in [ctx["sentence"] for ctx in context_sentences_with_translations]:
+                                context_sentences.append(sentence)
+                                # 获取翻译
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                context_sentences_with_translations.append({
+                                    "sentence": sentence,
+                                    "translation": translation
+                                })
+                            # 最多添加2个句子
+                            if len(context_sentences) >= 2:
+                                break
+            
             if not context and sentences:
                 # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
@@ -781,9 +806,25 @@ async def check_coverage(file_id: str):
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
-                # 使用改进的分词函数，正确处理缩写形式
+                sentence_lower = sentence.lower()
+                
+                # 检查是否所有已学单词都在句子中
+                # 对于短语，检查整个短语是否在句子中
+                all_words_found = True
+                for word in learned_words:
+                    word_lower = word["word"].lower()
+                    if word_lower not in sentence_lower:
+                        all_words_found = False
+                        break
+                
+                # 如果所有已学单词都在句子中，并且句子长度足够
+                if all_words_found and len(learned_words) >= 2:
+                    can_form = True
+                    break
+                
+                # 如果上面的检查失败，尝试另一种方式：检查句子中的单词是否在已学单词中
+                # 这对于单个单词的情况更有效
                 words_in_sentence = set(word.lower() for word in text_processor.tokenize_sentence(sentence))
-                # 检查是否所有单词都在已学单词中
                 if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     can_form = True
                     break
