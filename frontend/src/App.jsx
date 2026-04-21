@@ -41,6 +41,7 @@ function App() {
   const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
   const [quizData, setQuizData] = useState(null)
   const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
+  const [errorMessage, setErrorMessage] = useState(null)
   
   // New states for phases
   const [phases, setPhases] = useState([])
@@ -114,7 +115,7 @@ function App() {
           }
         } else if (status.status === 'error') {
           console.error('处理错误:', status.error)
-          alert(`处理失败: ${status.error}`)
+          setErrorMessage(`处理失败: ${status.error}`)
           setLoading(false)
           // 停止轮询
           if (pollingInterval) {
@@ -122,7 +123,7 @@ function App() {
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
-          alert('处理超时，请重试')
+          setErrorMessage('处理超时，请重试')
           setLoading(false)
           // 停止轮询
           if (pollingInterval) {
@@ -132,7 +133,7 @@ function App() {
       } catch (error) {
         console.error('轮询错误:', error)
         if (pollCount >= maxPolls) {
-          alert('网络错误，请重试')
+          setErrorMessage('网络错误，请重试')
           setLoading(false)
           // 停止轮询
           if (pollingInterval) {
@@ -205,13 +206,13 @@ function App() {
       console.error('处理文本错误:', error)
       if (error.response && error.response.status === 504) {
         // 504错误表示网关超时，可能是网络延迟或后端处理时间过长
-        alert('网络连接超时，请检查网络连接后重试')
+        setErrorMessage('网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
         // 处理超时错误
-        alert('处理超时，请稍后重试')
+        setErrorMessage('处理超时，请稍后重试')
       } else {
         // 其他错误
-        alert('处理失败，请重试')
+        setErrorMessage('处理失败，请重试')
       }
       setLoading(false)
     }
@@ -231,7 +232,7 @@ function App() {
       setStep('progress')
     } catch (error) {
       console.error('开始学习错误:', error)
-      alert('无法开始学习，请重试')
+      setErrorMessage('无法开始学习，请重试')
     } finally {
       setLoading(false)
     }
@@ -247,7 +248,7 @@ function App() {
       setStep('phase-selector')
     } catch (error) {
       console.error('获取阶段错误:', error)
-      alert('无法获取学习阶段，请重试')
+      setErrorMessage('无法获取学习阶段，请重试')
     } finally {
       setLoading(false)
     }
@@ -275,7 +276,7 @@ function App() {
       }
     } catch (error) {
       console.error('选择阶段错误:', error)
-      alert('无法选择阶段，请重试')
+      setErrorMessage('无法选择阶段，请重试')
     } finally {
       setLoading(false)
     }
@@ -289,7 +290,7 @@ function App() {
       setCurrentPhaseUnit(unitId)
       const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, unitId)
       if (exerciseData.unit_complete) {
-        alert('该单元已完成！')
+        setErrorMessage('该单元已完成！')
         setStep('phase-progress')
       } else if (exerciseData.redirect_to_phase1) {
         setStep('progress')
@@ -300,7 +301,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取单元练习错误:', error)
-      alert('无法获取练习，请重试')
+      setErrorMessage('无法获取练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -313,7 +314,7 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       if (nextRes.unit_complete) {
-        alert('该单元已完成！')
+        setErrorMessage('该单元已完成！')
         // Refresh phase units
         const phaseUnitsData = await api.getPhaseUnits(currentFileId, currentPhase)
         setPhaseUnits(phaseUnitsData.units)
@@ -323,7 +324,7 @@ function App() {
         // Get next exercise
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
-          alert('该单元已完成！')
+          setErrorMessage('该单元已完成！')
           setStep('phase-progress')
         } else {
           setExerciseType(exerciseData.exercise_type)
@@ -332,7 +333,7 @@ function App() {
       }
     } catch (error) {
       console.error('下一个练习错误:', error)
-      alert('无法获取下一个练习，请重试')
+      setErrorMessage('无法获取下一个练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -355,7 +356,7 @@ function App() {
       setStep('learning')
     } catch (error) {
       console.error('获取单元单词错误:', error)
-      alert('无法获取单元单词，请重试')
+      setErrorMessage('无法获取单元单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -535,6 +536,17 @@ function App() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {errorMessage && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+            {errorMessage}
+            <button 
+              onClick={() => setErrorMessage(null)}
+              className="ml-4 text-red-500 hover:text-red-700"
+            >
+              ×
+            </button>
+          </div>
+        )}
         <AnimatePresence mode="wait">
           {step === 'input' && (
             <InputStep

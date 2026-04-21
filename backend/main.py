@@ -1014,7 +1014,17 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 # 练习2：翻译还原（从母语到原文）
                 translation_result = current_sentence_data.get("translation_result", {})
                 tokenized_translation = translation_result.get("tokenized_translation", "")
-                original_tokens = text_processor.tokenize_sentence(current_sentence)
+                
+                # 使用LLM的分词结果而不是程序分词
+                original_tokens = []
+                if "translation" in translation_result:
+                    for token in translation_result["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            original_tokens.append(token["text"])
+                
+                # 如果LLM没有分词结果，使用程序分词作为 fallback
+                if not original_tokens:
+                    original_tokens = text_processor.tokenize_sentence(current_sentence)
                 
                 # Get English distractors from vocab
                 import random

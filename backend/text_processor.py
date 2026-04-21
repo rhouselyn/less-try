@@ -15,10 +15,10 @@ class TextProcessor:
             if char.isalpha():
                 current_word += char
             else:
-                if current_word and len(current_word) > 1:
+                if current_word:
                     words.append(current_word.lower())
                 current_word = ""
-        if current_word and len(current_word) > 1:
+        if current_word:
             words.append(current_word.lower())
         
         # 去重
@@ -62,13 +62,25 @@ class TextProcessor:
         sentences = []
         current_sentence = ""
         
-        for char in text:
+        i = 0
+        while i < len(text):
+            char = text[i]
             current_sentence += char
+            
+            # 检查是否是句子结束符
             if char in sentence_endings:
+                # 跳过连续的句子结束符
+                j = i + 1
+                while j < len(text) and text[j] in sentence_endings:
+                    current_sentence += text[j]
+                    j += 1
+                i = j
+                
                 if current_sentence.strip():
-                    # 保留原始句子，只去掉首尾可能的多余空白，但保留句子内部的空格
                     sentences.append(current_sentence)
                 current_sentence = ""
+            else:
+                i += 1
         
         if current_sentence.strip():
             sentences.append(current_sentence)
