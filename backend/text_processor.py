@@ -301,13 +301,15 @@ class TextProcessor:
         
         # 构建蒙版后的句子 - 保留原始结构
         import re
-        tokens_with_punc = re.findall(r'\w+|[^\w\s]', sentence)
+        # 正确处理缩写形式，如 I'm, don't 等
+        tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
         # 映射单词位置到token位置
         current_word_idx = 0
         masked_tokens = []
         answer_words = []
         for token in tokens_with_punc:
-            if token.isalpha() and current_word_idx < len(words):
+            # 检查是否是单词（包括缩写形式）
+            if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
                 if current_word_idx in mask_indices:
                     masked_tokens.append("___")
                     answer_words.append(token)
