@@ -60,12 +60,16 @@ class NvidiaAPI:
                         "word": {"type": "string"},
                         "enriched_meaning": {
                             "type": "string",
-                            "description": "结合上下文的精确释义"
+                            "description": "单词的完整释义，包含多个母语单词的常见含义"
+                        },
+                        "context_meaning": {
+                            "type": "string",
+                            "description": "结合上下文的特定释义"
                         },
                         "ipa": {"type": "string"},
                         "variants_detail": {
                             "type": "array",
-                            "description": "词形变化 + 类型说明",
+                            "description": "词形变化 + 类型说明，只包含确实存在的词形变化",
                             "items": {
                                 "type": "object",
                                 "properties": {
@@ -99,7 +103,8 @@ class NvidiaAPI:
                                     "description": "题干（可为空，默认就是词）"
                                 },
                                 "correct_answer": {
-                                    "type": "string"
+                                    "type": "string",
+                                    "description": "单词的常见、正常释义，不是上下文特定释义"
                                 },
                                 "options": {
                                     "type": "array",
@@ -116,7 +121,7 @@ class NvidiaAPI:
                             }
                         }
                     },
-                    "required": ["word", "enriched_meaning", "ipa", "examples", "multiple_choice"]
+                    "required": ["word", "enriched_meaning", "context_meaning", "ipa", "examples", "multiple_choice"]
                 }
             }
         }
@@ -125,20 +130,21 @@ class NvidiaAPI:
         prompt = f"""
 为单词 '{word}' 生成丰富的信息，使用 {target_lang} 输出。
 
-正确释义：{correct_meaning}
+上下文释义：{correct_meaning}
 
 上下文：{context}
 
 请生成以下信息：
 
-1. enriched_meaning: 符合上下文的精准释义
-2. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
-3. variants_detail: 词形变化列表，带类型说明（如过去式、复数等）
-4. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
-5. memory_hint: 记忆辅助（与用户母语的联想或对比）
-6. multiple_choice: 选择题，包含：
+1. enriched_meaning: 单词的完整释义，包含多个母语单词的常见含义，用分号分隔
+2. context_meaning: 结合上下文的特定释义
+3. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
+4. variants_detail: 词形变化列表，带类型说明（如过去式、复数等），只包含确实存在的词形变化，如果没有则返回空数组
+5. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
+6. memory_hint: 记忆辅助（与用户母语的联想或对比）
+7. multiple_choice: 选择题，包含：
    - question: 可为空（默认为单词本身）
-   - correct_answer: 正确释义
+   - correct_answer: 单词的常见、正常释义，不是上下文特定释义
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
 
 要求：
@@ -146,9 +152,11 @@ class NvidiaAPI:
 - 例句要自然，符合上下文
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
+- 【重要】正确答案必须是单词的常见、正常释义，不是上下文特定释义
 - 【重要】错误答案必须是该单词所没有的意思，而不是非句子中的意思
 - 【重要】选项必须是纯单词或短语，不能是完整句子
 - 【重要】选项必须与单词本身的意思无关，不能包含单词的任何含义
+- 【重要】词形变化必须是确实存在的，不要硬加不存在的词形
 - 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 """
 

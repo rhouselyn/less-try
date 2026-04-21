@@ -318,13 +318,15 @@ async def get_random_word(file_id: str):
         response_data = {
             "word": options_result.get("word", word),
             "ipa": options_result.get("ipa", random_word.get("ipa", "")),
-            "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
+            "correct_meaning": options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning)),
             "options": options,
             "correct_index": correct_index,
             "context": context,
             "variants_detail": options_result.get("variants_detail", []),
             "examples": options_result.get("examples", []),
-            "memory_hint": options_result.get("memory_hint", "")
+            "memory_hint": options_result.get("memory_hint", ""),
+            "enriched_meaning": options_result.get("enriched_meaning", correct_meaning),
+            "context_meaning": options_result.get("context_meaning", correct_meaning)
         }
         
         # 构建缓存数据
@@ -332,6 +334,7 @@ async def get_random_word(file_id: str):
         cache_data["word"] = options_result.get("word", word)
         cache_data["ipa"] = options_result.get("ipa", random_word.get("ipa", ""))
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context_sentences"] = context_sentences
         cache_data["morphology"] = random_word.get("morphology", "")
@@ -467,6 +470,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         cache_data["word"] = options_result.get("word", word)
         cache_data["ipa"] = options_result.get("ipa", random_word.get("ipa", ""))
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context_sentences"] = context_sentences
         cache_data["morphology"] = random_word.get("morphology", "")
@@ -578,7 +582,9 @@ async def get_word_details(file_id: str, word: str):
         response_data["word"] = options_result.get("word", word_data["word"])
         response_data["ipa"] = options_result.get("ipa", word_data.get("ipa", ""))
         response_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        response_data["correct_meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        response_data["correct_meaning"] = options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning))
+        response_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        response_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
         response_data["examples"] = options_result.get("examples", [])
         response_data["context_sentences"] = context_sentences_with_translations
         response_data["context"] = context

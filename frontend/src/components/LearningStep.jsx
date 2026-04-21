@@ -137,9 +137,15 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
-                <p className="text-lg text-slate-700 leading-relaxed">
-                  {learningData.correct_meaning}
+                <p className="text-lg text-slate-700 leading-relaxed mb-4">
+                  {learningData.enriched_meaning || learningData.correct_meaning}
                 </p>
+                {learningData.context_meaning && learningData.context_meaning !== learningData.enriched_meaning && (
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <h4 className="text-sm font-medium text-blue-800 mb-2">上下文释义</h4>
+                    <p className="text-slate-700">{learningData.context_meaning}</p>
+                  </div>
+                )}
               </motion.div>
 
               {learningData.context && (
