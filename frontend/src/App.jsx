@@ -312,6 +312,8 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       if (nextRes.unit_complete) {
+        // 单元完成，显示提示
+        alert('单元已完成！')
         // Refresh phase units
         const phaseUnitsData = await api.getPhaseUnits(currentFileId, currentPhase)
         setPhaseUnits(phaseUnitsData.units)
@@ -321,6 +323,8 @@ function App() {
         // Get next exercise
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
+          // 单元完成，显示提示
+          alert('单元已完成！')
           setStep('phase-progress')
         } else {
           setExerciseType(exerciseData.exercise_type)

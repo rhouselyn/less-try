@@ -754,14 +754,10 @@ async def check_coverage(file_id: str):
         # 检查是否已经学习完所有单词
         all_words_learned = current_index >= len(vocab)
         
-        # 对于短文本，学习完所有单词后就可以开始句子翻译
-        if len(vocab) <= 5:
-            if not all_words_learned:
-                return {"can_form_sentences": False, "unit_completed": unit_completed}
-        else:
-            # 至少要学够5个单词后才可能出现句子翻译题
-            if current_index < 4:
-                return {"can_form_sentences": False, "unit_completed": unit_completed}
+        # 对于短文本，学完所有单词后就可以开始句子翻译
+        # 对于长文本，至少要学够5个单词后才可能出现句子翻译题
+        if len(vocab) > 5 and current_index < 4:
+            return {"can_form_sentences": False, "unit_completed": unit_completed}
         
         # 学习完所有单词后，所有单词都算已学
         if all_words_learned:
