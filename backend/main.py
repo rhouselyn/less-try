@@ -955,7 +955,22 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         
         # 获取该单元的句子
         sentence_list = [s for s in sentences if "sentence" in s]
-        units = text_processor.group_sentences_into_units(sentence_list, 8)
+        
+        # 加载或生成句子随机顺序
+        shuffled_indices = storage.load_sentence_order(file_id, phase_number)
+        if not shuffled_indices:
+            # 生成并保存随机顺序
+            import random
+            random.seed(42)  # 固定种子，确保每次顺序一致
+            shuffled_indices = list(range(len(sentence_list)))
+            random.shuffle(shuffled_indices)
+            storage.save_sentence_order(file_id, phase_number, shuffled_indices)
+        
+        # 应用随机顺序
+        shuffled_sentences = [sentence_list[i] for i in shuffled_indices]
+        
+        # 分组为单元
+        units = text_processor.group_sentences_into_units(shuffled_sentences, 8)
         
         if unit_id >= len(units):
             raise HTTPException(status_code=404, detail="Unit not found")
