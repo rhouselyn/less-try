@@ -55,24 +55,24 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         # 新的数据结构：每个句子单独一条数据
         sentence_translations = []
         
-        # 对整个文本进行处理，使用新的合并方法
-        print(f"[DEBUG] 正在处理整个文本")
-        translation_result = await text_processor.process_translation(
-            text,
-            source_lang,
-            target_lang,
-            nvidia_api
-        )
-        print(f"[DEBUG] 文本处理完成")
-        
         # 处理句子级别的数据
         for i, sentence in enumerate(sentences):
             print(f"[DEBUG] 正在处理第 {i+1}/{total_sentences} 个句子: {repr(sentence)}")
             if sentence.strip():
+                # 对每个句子单独进行翻译
+                print(f"[DEBUG] 正在翻译句子: {repr(sentence)}")
+                sentence_translation_result = await text_processor.process_translation(
+                    sentence,
+                    source_lang,
+                    target_lang,
+                    nvidia_api
+                )
+                print(f"[DEBUG] 句子翻译完成")
+                
                 # 构建句子数据
                 sentence_data = {
                     "sentence": sentence,
-                    "translation_result": translation_result
+                    "translation_result": sentence_translation_result
                 }
                 sentence_translations.append(sentence_data)
             
@@ -86,16 +86,29 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             }
             print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(sentence_translations)} 个句子")
         
-        # 从翻译结果中提取词典条目
-        if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
-            print(f"[DEBUG] 从翻译结果中提取词典条目，共 {len(translation_result['dictionary_entries'])} 个单词")
-            all_vocab = translation_result["dictionary_entries"]
-            # 为每个词条添加句子索引
-            for dict_entry in all_vocab:
-                dict_entry["sentence_index"] = 0
-            # 按字母表排序词汇表
-            all_vocab.sort(key=lambda x: x["word"].lower())
-            print(f"[DEBUG] 排序后词表: {[word['word'] for word in all_vocab]}")
+        # 从所有句子的翻译结果中提取词典条目
+        all_vocab = []
+        for i, sentence_data in enumerate(sentence_translations):
+            translation_result = sentence_data.get("translation_result", {})
+            if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
+                for dict_entry in translation_result["dictionary_entries"]:
+                    # 为每个词条添加句子索引
+                    dict_entry["sentence_index"] = i
+                    all_vocab.append(dict_entry)
+        
+        # 去重
+        seen = set()
+        unique_vocab = []
+        for entry in all_vocab:
+            word = entry.get("word", "").lower()
+            if word not in seen and word:
+                seen.add(word)
+                unique_vocab.append(entry)
+        all_vocab = unique_vocab
+        
+        # 按字母表排序词汇表
+        all_vocab.sort(key=lambda x: x["word"].lower())
+        print(f"[DEBUG] 从所有句子中提取词典条目，共 {len(all_vocab)} 个单词: {[word['word'] for word in all_vocab]}")
         
         # 保存新的结构：每个句子单独一条数据
         storage.save_pipeline_data(file_id, sentence_translations)
@@ -762,8 +775,8 @@ async def check_coverage(file_id: str):
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
-                # 简单分词（按空格）
-                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                # 使用改进的分词函数，正确处理缩写形式
+                words_in_sentence = set(word.lower() for word in text_processor.tokenize_sentence(sentence))
                 # 检查是否所有单词都在已学单词中
                 if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     can_form = True

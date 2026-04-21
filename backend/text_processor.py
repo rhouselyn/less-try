@@ -127,11 +127,11 @@ class TextProcessor:
         return result
     
     def tokenize_sentence(self, sentence: str) -> List[str]:
-        """简单句子分词，按空格和标点分割，保留单词"""
-        # 先去除标点，再按空格分割
+        """简单句子分词，按空格和标点分割，保留单词，正确处理缩写形式"""
+        # 保留单词和缩写形式，如 what's, don't 等
         import re
-        # 保留单词，去除纯标点
-        words = re.findall(r"\b\w+\b", sentence)
+        # 匹配单词和缩写形式
+        words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
         return words
     
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict]) -> Dict[str, Any]:

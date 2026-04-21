@@ -354,9 +354,9 @@ class NvidiaAPI:
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）
 
-同时，为文本中出现的主要单词生成完整词典条目（dictionary_entries）：
+同时，为文本中出现的所有单词生成完整词典条目（dictionary_entries）：
 
-为每个主要单词提供：
+为每个单词提供：
 1. word: The word itself
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
