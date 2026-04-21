@@ -41,7 +41,6 @@ function App() {
   const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
   const [quizData, setQuizData] = useState(null)
   const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
-  const [errorMessage, setErrorMessage] = useState(null)
   
   // New states for phases
   const [phases, setPhases] = useState([])
