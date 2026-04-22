@@ -121,7 +121,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, loading, t, onOpenVo
                 {t.correctAnswer}: <span className="font-medium">{data.answer_words.join(' ')}</span>
               </p>
             )}
-            {isCorrect && data.unit_completed && (
+            {isCorrect && (data.unit_completed || data.unit_complete) && (
               <p className="font-medium mt-3 text-lg text-green-700">
                 🎉 该单元学习已完成！
               </p>
@@ -177,7 +177,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, loading, t, onOpenVo
                 <Loader2 className="w-5 h-5 animate-spin" />
                 {t.loading}
               </>
-            ) : data.unit_completed ? (
+            ) : (data.unit_completed || data.unit_complete) ? (
               '完成'
             ) : (
               <>
