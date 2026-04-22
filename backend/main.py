@@ -771,12 +771,14 @@ async def get_unit_words(file_id: str, unit_id: int):
 @app.get("/api/learn/{file_id}/check-coverage")
 async def check_coverage(file_id: str):
     try:
+        print(f"[DEBUG] 检查覆盖度: {file_id}")
         vocab = storage.load_vocab(file_id)
         if not vocab:
             return {"can_form_sentences": False, "unit_completed": False}
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
+        print(f"[DEBUG] 当前学习进度: {current_index}")
         
         # 检查是否完成了当前单元
         unit_size = 10
@@ -790,15 +792,19 @@ async def check_coverage(file_id: str):
         # 只要学完至少2个单词，就可以开始句子翻译题
         # 确保不管文本多长都能出现翻译题
         if current_index < 2:
+            print(f"[DEBUG] 学习的单词不足2个，不能生成句子")
             return {"can_form_sentences": False, "unit_completed": unit_completed}
         
         # 学习完所有单词后，所有单词都算已学
         if all_words_learned:
             learned_word_set = set(word["word"].lower() for word in vocab)
+            learned_words = vocab
         else:
             # 否则只算到current_index-1的单词（因为current_index是下一个要学的单词）
             learned_words = vocab[:current_index]
             learned_word_set = set(word["word"].lower() for word in learned_words)
+        
+        print(f"[DEBUG] 已学单词: {[word['word'] for word in learned_words]}")
         
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
@@ -810,29 +816,54 @@ async def check_coverage(file_id: str):
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
+                print(f"[DEBUG] 检查句子: {sentence}")
                 # 获取该句子的LLM tokens
                 sentence_tokens = []
                 if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                     for token in sentence_data["translation_result"]["translation"]:
                         if isinstance(token, dict) and "text" in token:
                             sentence_tokens.append(token["text"].lower())
+                print(f"[DEBUG] 句子的LLM tokens: {sentence_tokens}")
                 
-                # 使用LLM的tokens进行匹配
-                # 检查是否有至少2个已学tokens在当前句子中
+                # 使用新的匹配逻辑：检查已学单词的tokens是否与句子的tokens有重叠
                 matched_count = 0
+                matched_tokens = []
+                
                 for learned_word in learned_words:
-                    learned_token = learned_word["word"].lower()
-                    if learned_token in sentence_tokens:
-                        matched_count += 1
-                        if matched_count >= 2:
-                            can_form = True
+                    # 获取已学单词的所有tokens
+                    learned_word_tokens = []
+                    if 'tokens' in learned_word:
+                        learned_word_tokens = [t.lower() for t in learned_word['tokens']]
+                    else:
+                        learned_word_tokens = [learned_word["word"].lower()]
+                    
+                    print(f"[DEBUG] 检查已学单词: {learned_word['word']}, 其tokens: {learned_word_tokens}")
+                    
+                    # 检查这些tokens是否在句子的tokens中
+                    for lt in learned_word_tokens:
+                        for st in sentence_tokens:
+                            if lt in st or st in lt:
+                                matched_count += 1
+                                matched_tokens.append((lt, st))
+                                print(f"[DEBUG] 匹配成功: {lt} <-> {st}")
+                                if matched_count >= 2:
+                                    can_form = True
+                                    break
+                        if can_form:
                             break
+                    if can_form:
+                        break
                 
                 if can_form:
+                    print(f"[DEBUG] 可以生成句子！匹配的token对: {matched_tokens}")
                     break
         
+        print(f"[DEBUG] 最终结果: can_form={can_form}")
         return {"can_form_sentences": can_form, "unit_completed": unit_completed}
     except Exception as e:
+        print(f"[ERROR] 检查覆盖度错误: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=f"Error checking coverage: {str(e)}")
 
 
@@ -873,16 +904,29 @@ async def generate_sentence_quiz(file_id: str):
                         if isinstance(token, dict) and "text" in token:
                             sentence_tokens.append(token["text"].lower())
                 
-                # 检查是否有至少2个已学tokens在当前句子中
+                # 使用新的匹配逻辑：检查是否有至少2个已学tokens与当前句子匹配
                 matched_count = 0
                 for learned_word in learned_words:
-                    learned_token = learned_word["word"].lower()
-                    if learned_token in sentence_tokens:
-                        matched_count += 1
+                    # 获取已学单词的所有tokens
+                    learned_word_tokens = []
+                    if 'tokens' in learned_word:
+                        learned_word_tokens = [t.lower() for t in learned_word['tokens']]
+                    else:
+                        learned_word_tokens = [learned_word["word"].lower()]
+                    
+                    # 检查这些tokens是否在句子的tokens中
+                    for lt in learned_word_tokens:
+                        for st in sentence_tokens:
+                            if lt in st or st in lt:
+                                matched_count += 1
+                                if matched_count >= 2:
+                                    eligible_sentences.append(sentence_data)
+                                    print(f"[DEBUG] 句子符合条件: {sentence}")
+                                    break
                         if matched_count >= 2:
-                            eligible_sentences.append(sentence_data)
-                            print(f"[DEBUG] 句子符合条件: {sentence}")
                             break
+                    if matched_count >= 2:
+                        break
         
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")

@@ -94,7 +94,10 @@ def test_phase1_translation(file_id):
             print(f"生成翻译题状态码: {response.status_code}")
             if response.status_code == 200:
                 quiz_data = response.json()
-                print(f"翻译题生成成功: {quiz_data.get('sentence')}")
+                print(f"翻译题生成成功: {quiz_data.get('original_sentence')}")
+                print(f"正确翻译: {quiz_data.get('correct_translation')}")
+                print(f"正确tokens: {quiz_data.get('correct_tokens')}")
+                print(f"所有选项: {quiz_data.get('tokens')}")
             else:
                 print(f"生成翻译题错误: {response.text}")
 
@@ -180,8 +183,8 @@ def main():
         # 测试4: 测试第一阶段翻译题
         test_phase1_translation(file_id)
         
-        # 测试5: 测试token卡片例句
-        for word in ['don\'t', 'good', 'I\'m', 'worry']:
+        # 测试5: 测试token卡片例句 - 只测试实际存在的单词
+        for word in ['don\'t worry', 'good', 'I\'m']:
             test_word_detail(file_id, word)
         
         # 测试6: 测试第二阶段填空练习
