@@ -134,16 +134,6 @@ class TextProcessor:
                         if text and not all(char in '.,;:!?' for char in text):
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
-        else:
-            # 如果 result 不是字典，返回一个默认的字典
-            result = {
-                "original": text,
-                "translation": [],
-                "tokenized_translation": "",
-                "grammar_explanation": "",
-                "redundant_tokens": [],
-                "dictionary_entries": []
-            }
         
         # 返回处理后的结果，保留LLM生成的自然翻译
         return result
@@ -156,7 +146,115 @@ class TextProcessor:
         words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
         return words
     
-
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None) -> Dict[str, Any]:
+        """
+        生成蒙版填空练习
+        - 大于8个词的句子才生成
+        - 每8个词多蒙一个
+        """
+        # 使用翻译token或自动分词
+        if translation_tokens:
+            words = translation_tokens
+        else:
+            words = self.tokenize_sentence(sentence)
+        word_count = len(words)
+        
+        if word_count < 8:
+            return None
+        
+        # 计算要蒙版的数量
+        num_masks = 1 + (word_count - 8) // 8
+        if num_masks < 1:
+            num_masks = 1
+        if num_masks > word_count // 2:
+            num_masks = word_count // 2  # 最多蒙一半
+        
+        import random
+        # 固定种子，确保每个单元的掩码位置一致
+        # 使用句子内容作为种子，确保相同句子有相同的掩码模式
+        random.seed(hash(sentence))
+        # 随机选择要蒙版的单词索引
+        mask_indices = random.sample(range(word_count), num_masks)
+        
+        # 构建蒙版后的句子 - 使用LLM生成的tokens
+        masked_tokens = []
+        answer_words = []
+        
+        # 如果提供了translation_tokens，使用它们来构建蒙版句子
+        if translation_tokens:
+            for i, token in enumerate(translation_tokens):
+                if i in mask_indices:
+                    masked_tokens.append("___")
+                    answer_words.append(token)
+                else:
+                    masked_tokens.append(token)
+        else:
+            # 回退到自动分词
+            import re
+            # 正确处理缩写形式，如 I'm, don't 等
+            tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
+            # 映射单词位置到token位置
+            current_word_idx = 0
+            for token in tokens_with_punc:
+                # 检查是否是单词（包括缩写形式）
+                if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
+                    if current_word_idx in mask_indices:
+                        masked_tokens.append("___")
+                        answer_words.append(token)
+                    else:
+                        masked_tokens.append(token)
+                    current_word_idx += 1
+                else:
+                    masked_tokens.append(token)
+        
+        # 生成选项：正确答案 + 干扰项（来自vocab的其他单词）
+        options = answer_words.copy()
+        # 从词汇表中找干扰项
+        distractors = []
+        vocab_words = [v["word"] for v in vocab]
+        answer_lower = [w.lower() for w in answer_words]
+        random.shuffle(vocab_words)
+        for vw in vocab_words:
+            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+                distractors.append(vw)
+        
+        # 如果词汇表不够，添加一些常见的英语干扰词
+        backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish", "grape", "house"]
+        idx = 0
+        while len(distractors) < 3 * num_masks:
+            bd = backup_distractors[idx % len(backup_distractors)]
+            if bd.lower() not in answer_lower and bd not in distractors:
+                distractors.append(bd)
+            idx += 1
+        
+        # 打乱干扰项
+        random.shuffle(distractors)
+        options += distractors[:3 * num_masks]
+        
+        # 打乱所有选项
+        random.shuffle(options)
+        
+        # 构建蒙版句子，保持原始句子的格式
+        if translation_tokens:
+            # 当使用LLM生成的tokens时，简单地用空格连接
+            masked_sentence = " ".join(masked_tokens)
+        else:
+            # 当使用自动分词时，保持原始格式
+            masked_sentence = "".join(
+                [
+                    " " + token if token not in [".", ",", "!", "?", ":", ";", ")"] and i > 0 else token 
+                    for i, token in enumerate(masked_tokens)
+                ]
+            )
+        
+        return {
+            "original_sentence": sentence,
+            "masked_sentence": masked_sentence,
+            "answer_words": answer_words,
+            "mask_indices": mask_indices,
+            "options": options,
+            "word_count": word_count
+        }
     
     def group_sentences_into_units(self, sentences: List[str], unit_size: int = 8) -> List[List[str]]:
         """将句子分组为单元"""
@@ -165,7 +263,7 @@ class TextProcessor:
             units.append(sentences[i:i+unit_size])
         return units
     
-    def get_fallback_distractors(self, count: int, exclude_words: List[str] = None, current_sentence: str = None) -> List[str]:
+    def get_fallback_distractors(self, count: int, exclude_words: List[str] = None) -> List[str]:
         """获取备选干扰词"""
         if exclude_words is None:
             exclude_words = []
@@ -180,25 +278,6 @@ class TextProcessor:
         ]
         
         exclude_lower = [w.lower() for w in exclude_words]
-        
-        # 排除当前句子中的单词
-        if current_sentence:
-            import re
-            # 提取当前句子中的所有单词（包括缩写）
-            sentence_words = set()
-            # 尝试不同的分词方式
-            regex_words = re.findall(r"\b\w+(?:'\w+)?\b", current_sentence)
-            if regex_words:
-                sentence_words = set(word.lower() for word in regex_words)
-            else:
-                # 简单按空格分割，然后清理标点符号
-                for word in current_sentence.split():
-                    cleaned_word = re.sub(r'[^\w\']', '', word)
-                    if cleaned_word:
-                        sentence_words.add(cleaned_word.lower())
-            # 将句子中的单词添加到排除列表
-            exclude_lower.extend(sentence_words)
-        
         distractors = []
         
         for word in common_words:
@@ -237,21 +316,12 @@ class TextProcessor:
         if num_masks > word_count // 2:
             num_masks = word_count // 2  # 最多蒙一半
         
-        # 确保至少有一个掩码
-        if word_count > 0:
-            num_masks = max(1, num_masks)
-        else:
-            num_masks = 0
-        
         import random
         # 固定种子，确保每个单元的掩码位置一致
         # 使用句子内容作为种子，确保相同句子有相同的掩码模式
         random.seed(hash(sentence))
         # 随机选择要蒙版的单词索引
-        if word_count > 0:
-            mask_indices = random.sample(range(word_count), min(num_masks, word_count))
-        else:
-            mask_indices = []
+        mask_indices = random.sample(range(word_count), num_masks)
         
         # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []
@@ -284,133 +354,29 @@ class TextProcessor:
                 else:
                     masked_tokens.append(token)
         
-        # 确保至少有一个正确答案
-        if not answer_words and words:
-            # 如果没有蒙版任何单词，随机蒙版一个
-            random.seed(hash(sentence))
-            mask_idx = random.randint(0, len(words) - 1)
-            # 重新构建蒙版句子
-            masked_tokens = []
-            answer_words = []
-            if translation_tokens:
-                for i, token in enumerate(translation_tokens):
-                    if i == mask_idx:
-                        masked_tokens.append("___")
-                        answer_words.append(token)
-                    else:
-                        masked_tokens.append(token)
-            else:
-                import re
-                tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
-                current_word_idx = 0
-                for token in tokens_with_punc:
-                    if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
-                        if current_word_idx == mask_idx:
-                            masked_tokens.append("___")
-                            answer_words.append(token)
-                        else:
-                            masked_tokens.append(token)
-                        current_word_idx += 1
-                    else:
-                        masked_tokens.append(token)
-        
         # 生成选项：正确答案 + 干扰项
-        # 1. 准备排除列表
-        answer_lower = [w.lower() for w in answer_words]
-        
-        # 获取当前句子中的所有单词（用于排除）
-        current_sentence_words = set()
-        # 从原始句子中提取单词（包括缩写）
-        import re
-        regex_words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
-        if regex_words:
-            current_sentence_words = set(word.lower() for word in regex_words)
-        else:
-            # 简单按空格分割，然后清理标点符号
-            for word in sentence.split():
-                cleaned_word = re.sub(r'[^\w\']', '', word)
-                if cleaned_word:
-                    current_sentence_words.add(cleaned_word.lower())
-        
-        # 扩展排除的单词，包括当前句子中的所有可能的单词形式
-        extended_exclude = set(answer_lower)
-        extended_exclude.update(current_sentence_words)
-        
-        # 2. 从词汇表中找干扰项
+        options = answer_words.copy()
+        # 从词汇表中找干扰项
         distractors = []
         vocab_words = [v["word"] for v in vocab]
+        answer_lower = [w.lower() for w in answer_words]
         random.shuffle(vocab_words)
-        
         for vw in vocab_words:
-            vw_lower = vw.lower()
-            # 确保干扰项不在当前句子中，也不是正确答案
-            if vw_lower not in extended_exclude and len(distractors) < 3 * num_masks:
-                # 检查干扰项是否是正确答案的一部分
-                is_part_of_answer = False
-                for answer in answer_words:
-                    if vw_lower in answer.lower():
-                        is_part_of_answer = True
-                        break
-                if not is_part_of_answer:
-                    distractors.append(vw)
+            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+                distractors.append(vw)
         
-        # 3. 如果词汇表中找不到足够的干扰项，使用备选词库
+        # 如果词汇表不够，使用备选词库
         if len(distractors) < 3 * num_masks:
             fallback_needed = 3 * num_masks - len(distractors)
-            # 传递排除列表，确保备选词库也不使用当前句子的单词
-            fallback_distractors = self.get_fallback_distractors(fallback_needed, list(extended_exclude), sentence)
+            fallback_distractors = self.get_fallback_distractors(fallback_needed, answer_words + distractors)
             distractors.extend(fallback_distractors)
         
-        # 4. 构建最终选项
-        options = answer_words.copy()
-        options.extend(distractors[:3 * num_masks])
+        # 打乱干扰项
+        random.shuffle(distractors)
+        options += distractors[:3 * num_masks]
         
-        # 5. 确保选项不包含当前句子的单词
-        filtered_options = []
-        for option in options:
-            option_lower = option.lower()
-            # 检查选项是否在当前句子中
-            is_in_sentence = False
-            for word in current_sentence_words:
-                if word == option_lower:
-                    is_in_sentence = True
-                    break
-            # 检查选项是否是正确答案的一部分
-            is_part_of_answer = False
-            for answer in answer_words:
-                if option_lower == answer.lower():
-                    is_part_of_answer = True
-                    break
-            # 只保留正确答案和不在当前句子中的干扰项
-            if is_part_of_answer or not is_in_sentence:
-                filtered_options.append(option)
-        
-        # 6. 如果过滤后选项不够，添加更多备选词
-        while len(filtered_options) < 4:
-            # 从备选词库中添加更多单词
-            fallback_distractors = self.get_fallback_distractors(1, list(extended_exclude), sentence)
-            if fallback_distractors:
-                # 确保新添加的单词不在当前句子中
-                new_word = fallback_distractors[0]
-                new_word_lower = new_word.lower()
-                if new_word_lower not in current_sentence_words:
-                    filtered_options.append(new_word)
-                    # 更新排除列表
-                    extended_exclude.add(new_word_lower)
-            else:
-                # 如果备选词库也没有更多单词，使用一些默认单词
-                default_words = ["apple", "banana", "cat", "dog", "fish", "house", "tree", "book"]
-                for word in default_words:
-                    if word.lower() not in extended_exclude and word.lower() not in current_sentence_words:
-                        filtered_options.append(word)
-                        extended_exclude.add(word.lower())
-                        if len(filtered_options) >= 4:
-                            break
-                break
-        
-        # 7. 打乱所有选项
-        random.shuffle(filtered_options)
-        options = filtered_options
+        # 打乱所有选项
+        random.shuffle(options)
         
         # 构建蒙版句子，保持原始句子的格式
         if translation_tokens:

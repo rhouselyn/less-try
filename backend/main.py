@@ -92,11 +92,9 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             translation_result = sentence_data.get("translation_result", {})
             if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
                 for dict_entry in translation_result["dictionary_entries"]:
-                    # 确保 dict_entry 是字典
-                    if isinstance(dict_entry, dict):
-                        # 为每个词条添加句子索引
-                        dict_entry["sentence_index"] = i
-                        all_vocab.append(dict_entry)
+                    # 为每个词条添加句子索引
+                    dict_entry["sentence_index"] = i
+                    all_vocab.append(dict_entry)
         
         # 去重
         seen = set()
@@ -512,81 +510,13 @@ async def get_word_details(file_id: str, word: str):
 
         # 查找单词
         word_data = None
-        
-        # 首先尝试从词汇表中查找精确匹配的单词
         for entry in vocab:
             print(f"[DEBUG] 检查词汇表条目: {entry['word']}")
             if entry["word"].lower() == word.lower():
                 word_data = entry
                 print(f"[DEBUG] 找到单词: {word}")
                 break
-        
-        # 如果找不到精确匹配，尝试从LLM生成的token中查找
-        if not word_data:
-            print(f"[DEBUG] 尝试从LLM生成的token中查找: {word}")
-            sentences = storage.load_pipeline_data(file_id)
-            for sentence_data in sentences:
-                if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                    for token in sentence_data["translation_result"]["translation"]:
-                        if isinstance(token, dict) and "text" in token:
-                            token_text = token["text"]
-                            if token_text.lower() == word.lower():
-                                # 为这个token创建临时的word_data
-                                word_data = {
-                                    "word": token_text,
-                                    "translation": token.get("translation", ""),
-                                    "sentence_index": sentences.index(sentence_data)
-                                }
-                                print(f"[DEBUG] 从LLM token中找到单词: {word}")
-                                break
-                    if word_data:
-                        break
-        
-        # 如果仍然找不到，尝试处理缩写形式
-        if not word_data and "'" in word:
-            print(f"[DEBUG] 尝试处理缩写形式: {word}")
-            # 对于I'm这样的缩写，尝试查找I和am
-            if word.lower() == "i'm":
-                # 查找I
-                for entry in vocab:
-                    if entry["word"].lower() == "i":
-                        word_data = entry
-                        # 更新单词为I'm
-                        word_data["word"] = "I'm"
-                        print(f"[DEBUG] 找到I并转换为I'm")
-                        break
-            elif word.lower() == "don't":
-                # 查找do
-                for entry in vocab:
-                    if entry["word"].lower() == "do":
-                        word_data = entry
-                        # 更新单词为don't
-                        word_data["word"] = "don't"
-                        print(f"[DEBUG] 找到do并转换为don't")
-                        break
-        
-        # 如果仍然找不到，尝试从LLM生成的完整token中查找
-        if not word_data:
-            print(f"[DEBUG] 尝试从LLM生成的完整token中查找: {word}")
-            sentences = storage.load_pipeline_data(file_id)
-            for sentence_data in sentences:
-                if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                    for token in sentence_data["translation_result"]["translation"]:
-                        if isinstance(token, dict) and "text" in token:
-                            token_text = token["text"]
-                            # 检查token是否包含查询单词（作为子字符串）
-                            if word.lower() in token_text.lower():
-                                # 为这个token创建临时的word_data
-                                word_data = {
-                                    "word": word,  # 使用查询的单词作为word
-                                    "translation": token.get("translation", ""),
-                                    "sentence_index": sentences.index(sentence_data)
-                                }
-                                print(f"[DEBUG] 从LLM token中找到包含单词: {word}")
-                                break
-                    if word_data:
-                        break
-        
+
         if not word_data:
             print(f"[DEBUG] 未找到单词: {word}")
             raise HTTPException(status_code=404, detail="Word not found")
@@ -847,23 +777,15 @@ async def check_coverage(file_id: str):
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
-        print(f"[DEBUG] current_index: {current_index}")
         
         # 检查是否完成了当前单元
         unit_size = 10
         current_unit = current_index // unit_size
         words_in_unit = min(unit_size, len(vocab) - current_unit * unit_size)
         unit_completed = current_index >= (current_unit * unit_size + words_in_unit)
-        print(f"[DEBUG] unit_completed: {unit_completed}")
         
         # 检查是否已经学习完所有单词
         all_words_learned = current_index >= len(vocab)
-        print(f"[DEBUG] all_words_learned: {all_words_learned}")
-        
-        # 初始化变量
-        learned_words = []
-        learned_word_set = set()
-        print(f"[DEBUG] 初始化 learned_words: {learned_words}")
         
         # 只要学完至少2个单词，就可以开始句子翻译题
         # 确保不管文本多长都能出现翻译题
@@ -872,14 +794,11 @@ async def check_coverage(file_id: str):
         
         # 学习完所有单词后，所有单词都算已学
         if all_words_learned:
-            learned_words = vocab
             learned_word_set = set(word["word"].lower() for word in vocab)
-            print(f"[DEBUG] 学习完所有单词: {[word['word'] for word in learned_words]}")
         else:
             # 否则只算到current_index-1的单词（因为current_index是下一个要学的单词）
             learned_words = vocab[:current_index]
             learned_word_set = set(word["word"].lower() for word in learned_words)
-            print(f"[DEBUG] 学习部分单词: {[word['word'] for word in learned_words]}")
         
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
@@ -961,31 +880,13 @@ async def generate_sentence_quiz(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
-                # 智能分词，正确处理缩写形式和标点符号
-                import re
-                # 尝试不同的分词方式
-                words_in_sentence = set()
-                # 方式1：使用正则表达式匹配单词和缩写
-                regex_words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
-                if regex_words:
-                    words_in_sentence = set(word.lower() for word in regex_words)
-                else:
-                    # 方式2：简单按空格分割，然后清理标点符号
-                    for word in sentence.split():
-                        # 清理标点符号
-                        cleaned_word = re.sub(r'[^\w\']', '', word)
-                        if cleaned_word:
-                            words_in_sentence.add(cleaned_word.lower())
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
                 print(f"[DEBUG] 句子中的单词: {words_in_sentence}")
-                # 检查是否至少包含2个已学单词
-                matched_words = 0
-                for word in words_in_sentence:
-                    if word in learned_word_set:
-                        matched_words += 1
-                        if matched_words >= 2:
-                            eligible_sentences.append(sentence_data)
-                            print(f"[DEBUG] 句子符合条件: {sentence}")
-                            break
+                # 检查是否所有单词都在已学单词中，且至少2个单词
+                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
+                    eligible_sentences.append(sentence_data)
+                    print(f"[DEBUG] 句子符合条件: {sentence}")
         
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")
