@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X } from 'lucide-react'
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, onOpenVocabList, loading, t }) {
   const [selectedTokens, setSelectedTokens] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
@@ -59,17 +59,27 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
       exit={{ opacity: 0, y: -20 }}
       className="max-w-3xl mx-auto"
     >
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100 mb-8"
-        whileHover={{ scale: 1.05, x: -2 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t.backToVocab}
-      </motion.button>
+      <div className="flex justify-between items-center mb-8">
+        <motion.button
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+          whileHover={{ scale: 1.05, x: -2 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {t.back}
+        </motion.button>
+        <motion.button
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={onOpenVocabList}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+        >
+          {t.vocabularyList}
+        </motion.button>
+      </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
         <div className="text-center mb-8">
