@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 function TranslationReconstructionStep({ data, onNext, onBack, loading, t }) {
@@ -128,21 +128,37 @@ function TranslationReconstructionStep({ data, onNext, onBack, loading, t }) {
         </div>
       </div>
 
-      <div className="flex justify-center">
+      <div>
         {!answerChecked ? (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
+            whileTap={{ scale: 0.97, y: 0 }}
             onClick={checkAnswer}
-            className="px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+            disabled={selectedTokens.length === 0}
+            className="w-full py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {t.checkAnswer}
-          </button>
+          </motion.button>
         ) : (
-          <button
+          <motion.button
+            whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
+            whileTap={{ scale: 0.97, y: 0 }}
             onClick={handleNext}
-            className="px-6 py-3 bg-black text-white font-medium rounded-lg hover:bg-slate-800 transition-colors"
+            disabled={loading}
+            className="w-full py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {t.continue}
-          </button>
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {t.loading}
+              </>
+            ) : (
+              <>
+                {t.continue}
+                <ChevronRight className="w-5 h-5" />
+              </>
+            )}
+          </motion.button>
         )}
       </div>
     </motion.div>
