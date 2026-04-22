@@ -810,39 +810,24 @@ async def check_coverage(file_id: str):
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
-                sentence_lower = sentence.lower()
+                # 获取该句子的LLM tokens
+                sentence_tokens = []
+                if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                    for token in sentence_data["translation_result"]["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            sentence_tokens.append(token["text"].lower())
                 
-                # 检查是否所有已学单词都在句子中
-                # 对于短语，检查整个短语是否在句子中
-                all_words_found = True
-                for word in learned_words:
-                    word_lower = word["word"].lower()
-                    if word_lower not in sentence_lower:
-                        all_words_found = False
-                        break
-                
-                # 如果所有已学单词都在句子中，并且句子长度足够
-                if all_words_found and len(learned_words) >= 2:
-                    can_form = True
-                    break
-                
-                # 如果上面的检查失败，尝试另一种方式：检查句子中的单词是否在已学单词中
-                # 这对于单个单词的情况更有效
-                words_in_sentence = set(word.lower() for word in text_processor.tokenize_sentence(sentence))
-                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
-                    can_form = True
-                    break
-                
-                # 尝试第三种方式：只要句子中包含至少2个已学单词，就认为可以生成句子
-                # 这对于短文本更有效
-                matched_words = 0
-                for word in learned_words:
-                    word_lower = word["word"].lower()
-                    if word_lower in sentence_lower:
-                        matched_words += 1
-                        if matched_words >= 2:
+                # 使用LLM的tokens进行匹配
+                # 检查是否有至少2个已学tokens在当前句子中
+                matched_count = 0
+                for learned_word in learned_words:
+                    learned_token = learned_word["word"].lower()
+                    if learned_token in sentence_tokens:
+                        matched_count += 1
+                        if matched_count >= 2:
                             can_form = True
                             break
+                
                 if can_form:
                     break
         
@@ -880,13 +865,24 @@ async def generate_sentence_quiz(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
-                # 简单分词（按空格）
-                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
-                print(f"[DEBUG] 句子中的单词: {words_in_sentence}")
-                # 检查是否所有单词都在已学单词中，且至少2个单词
-                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
-                    eligible_sentences.append(sentence_data)
-                    print(f"[DEBUG] 句子符合条件: {sentence}")
+                
+                # 获取该句子的LLM tokens
+                sentence_tokens = []
+                if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                    for token in sentence_data["translation_result"]["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            sentence_tokens.append(token["text"].lower())
+                
+                # 检查是否有至少2个已学tokens在当前句子中
+                matched_count = 0
+                for learned_word in learned_words:
+                    learned_token = learned_word["word"].lower()
+                    if learned_token in sentence_tokens:
+                        matched_count += 1
+                        if matched_count >= 2:
+                            eligible_sentences.append(sentence_data)
+                            print(f"[DEBUG] 句子符合条件: {sentence}")
+                            break
         
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")
@@ -1091,7 +1087,8 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 masked_exercise = text_processor.generate_masked_sentence(
                     current_sentence, 
                     vocab, 
-                    translation_tokens  # 强制使用LLM生成的tokens
+                    translation_tokens,  # 强制使用LLM生成的tokens
+                    sentences  # 传递所有句子用于获取干扰词
                 )
                 
                 return {
