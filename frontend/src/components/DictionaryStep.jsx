@@ -7,6 +7,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   // 安全检查，确保sentenceTranslations是数组
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
 
+  // 确保processingInfo是对象
+  const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -18,7 +21,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       {processingInfo && (
         <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-slate-600">{t.processing}: 句子 {processingInfo.current} / {processingInfo.total}</span>
+            <span className="text-sm text-slate-600">{t.processing}: 句子 {safeProcessingInfo.current} / {safeProcessingInfo.total}</span>
             <span className="text-sm text-slate-600">{progress}%</span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2.5">

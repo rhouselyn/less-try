@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain } from 'lucide-react'
 
-function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, loading, t }) {
+function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t }) {
   if (!learningData) {
     return (
       <motion.div
@@ -24,16 +24,29 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
       exit={{ opacity: 0, y: -20 }}
       className="max-w-3xl mx-auto"
     >
-      {/* 返回按钮 */}
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t.backToVocab}
-      </motion.button>
+      {/* 顶部按钮栏 */}
+      <div className="flex items-center justify-between mb-8">
+        <motion.button
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {t.backToVocab}
+        </motion.button>
+        {onOpenVocabList && (
+          <motion.button
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={onOpenVocabList}
+            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+          >
+            <BookOpen className="w-4 h-4" />
+            单词表
+          </motion.button>
+        )}
+      </div>
 
       <AnimatePresence mode="wait">
         {!showWordCard ? (

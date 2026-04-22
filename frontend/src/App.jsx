@@ -15,6 +15,7 @@ import PhaseProgressStep from './components/PhaseProgressStep'
 import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
 import TranslationReconstructionStep from './components/TranslationReconstructionStep'
 import AllUnitsStep from './components/AllUnitsStep'
+import VocabListStep from './components/VocabListStep'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -55,6 +56,8 @@ function App() {
   const [phase2Units, setPhase2Units] = useState([])
   const [currentPhase1Unit, setCurrentPhase1Unit] = useState(0)
   const [currentPhase2Unit, setCurrentPhase2Unit] = useState(0)
+  // State for vocab list
+  const [previousStep, setPreviousStep] = useState(null)
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -137,7 +140,10 @@ function App() {
         }
       } catch (error) {
         console.error('轮询错误:', error)
-        if (pollCount >= maxPolls) {
+        // 404错误可能是因为后端还没有开始处理，继续轮询
+        if (error.response && error.response.status === 404) {
+          console.log('后端还未开始处理，继续轮询...')
+        } else if (pollCount >= maxPolls) {
           alert('网络错误，请重试')
           setLoading(false)
           // 停止轮询
@@ -150,8 +156,8 @@ function App() {
 
     // 立即执行一次轮询
     pollStatus()
-    // 设置轮询间隔
-    pollingInterval = setInterval(pollStatus, 500)
+    // 设置轮询间隔为2秒，减少服务器负担
+    pollingInterval = setInterval(pollStatus, 2000)
 
     // 清理函数
     return () => {
@@ -571,6 +577,11 @@ function App() {
     setStep('learning')
   }
 
+  const handleOpenVocabList = () => {
+    setPreviousStep(step)
+    setStep('vocab-list')
+  }
+
   const handleNextSentenceQuiz = async () => {
     setLoading(true)
     try {
@@ -590,6 +601,8 @@ function App() {
               ...quizResponse,
               unit_completed: coverageData.unit_completed
             })
+            setLearningMode('sentence')
+            setStep('sentence-quiz')
           }
         } catch (quizError) {
           if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
@@ -718,7 +731,8 @@ function App() {
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
               onNextWord={getNextWord}
-              onBack={() => setStep('dictionary')}
+              onBack={() => setStep('all-units')}
+              onOpenVocabList={handleOpenVocabList}
               loading={loading}
               t={t}
             />
@@ -729,10 +743,11 @@ function App() {
               key="sentence-quiz"
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('dictionary')}
-              onComplete={() => setStep('progress')}
+              onBack={() => setStep('all-units')}
+              onComplete={() => setStep('all-units')}
               loading={loading}
               t={t}
+              onOpenVocabList={handleOpenVocabList}
             />
           )}
           
@@ -770,7 +785,7 @@ function App() {
               currentUnit={currentPhaseUnit}
               phaseNumber={currentPhase}
               onUnitClick={handlePhaseUnitClick}
-              onBack={() => setStep('phase-selector')}
+              onBack={() => setStep('all-units')}
               loading={loading}
               t={t}
             />
@@ -781,9 +796,10 @@ function App() {
               key="masked-exercise"
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('phase-progress')}
+              onBack={() => setStep('all-units')}
               loading={loading}
               t={t}
+              onOpenVocabList={handleOpenVocabList}
             />
           )}
           
@@ -792,7 +808,18 @@ function App() {
               key="reconstruction-exercise"
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('phase-progress')}
+              onBack={() => setStep('all-units')}
+              loading={loading}
+              t={t}
+              onOpenVocabList={handleOpenVocabList}
+            />
+          )}
+          
+          {step === 'vocab-list' && (
+            <VocabListStep
+              key="vocab-list"
+              vocab={vocab}
+              onBack={() => setStep(previousStep || 'all-units')}
               loading={loading}
               t={t}
             />
