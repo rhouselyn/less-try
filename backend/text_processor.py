@@ -237,12 +237,21 @@ class TextProcessor:
         if num_masks > word_count // 2:
             num_masks = word_count // 2  # 最多蒙一半
         
+        # 确保至少有一个掩码
+        if word_count > 0:
+            num_masks = max(1, num_masks)
+        else:
+            num_masks = 0
+        
         import random
         # 固定种子，确保每个单元的掩码位置一致
         # 使用句子内容作为种子，确保相同句子有相同的掩码模式
         random.seed(hash(sentence))
         # 随机选择要蒙版的单词索引
-        mask_indices = random.sample(range(word_count), num_masks)
+        if word_count > 0:
+            mask_indices = random.sample(range(word_count), min(num_masks, word_count))
+        else:
+            mask_indices = []
         
         # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []
@@ -274,6 +283,36 @@ class TextProcessor:
                     current_word_idx += 1
                 else:
                     masked_tokens.append(token)
+        
+        # 确保至少有一个正确答案
+        if not answer_words and words:
+            # 如果没有蒙版任何单词，随机蒙版一个
+            random.seed(hash(sentence))
+            mask_idx = random.randint(0, len(words) - 1)
+            # 重新构建蒙版句子
+            masked_tokens = []
+            answer_words = []
+            if translation_tokens:
+                for i, token in enumerate(translation_tokens):
+                    if i == mask_idx:
+                        masked_tokens.append("___")
+                        answer_words.append(token)
+                    else:
+                        masked_tokens.append(token)
+            else:
+                import re
+                tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
+                current_word_idx = 0
+                for token in tokens_with_punc:
+                    if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
+                        if current_word_idx == mask_idx:
+                            masked_tokens.append("___")
+                            answer_words.append(token)
+                        else:
+                            masked_tokens.append(token)
+                        current_word_idx += 1
+                    else:
+                        masked_tokens.append(token)
         
         # 生成选项：正确答案 + 干扰项
         # 1. 准备排除列表
@@ -359,6 +398,14 @@ class TextProcessor:
                     # 更新排除列表
                     extended_exclude.add(new_word_lower)
             else:
+                # 如果备选词库也没有更多单词，使用一些默认单词
+                default_words = ["apple", "banana", "cat", "dog", "fish", "house", "tree", "book"]
+                for word in default_words:
+                    if word.lower() not in extended_exclude and word.lower() not in current_sentence_words:
+                        filtered_options.append(word)
+                        extended_exclude.add(word.lower())
+                        if len(filtered_options) >= 4:
+                            break
                 break
         
         # 7. 打乱所有选项

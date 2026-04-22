@@ -847,15 +847,23 @@ async def check_coverage(file_id: str):
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
+        print(f"[DEBUG] current_index: {current_index}")
         
         # 检查是否完成了当前单元
         unit_size = 10
         current_unit = current_index // unit_size
         words_in_unit = min(unit_size, len(vocab) - current_unit * unit_size)
         unit_completed = current_index >= (current_unit * unit_size + words_in_unit)
+        print(f"[DEBUG] unit_completed: {unit_completed}")
         
         # 检查是否已经学习完所有单词
         all_words_learned = current_index >= len(vocab)
+        print(f"[DEBUG] all_words_learned: {all_words_learned}")
+        
+        # 初始化变量
+        learned_words = []
+        learned_word_set = set()
+        print(f"[DEBUG] 初始化 learned_words: {learned_words}")
         
         # 只要学完至少2个单词，就可以开始句子翻译题
         # 确保不管文本多长都能出现翻译题
@@ -864,11 +872,14 @@ async def check_coverage(file_id: str):
         
         # 学习完所有单词后，所有单词都算已学
         if all_words_learned:
+            learned_words = vocab
             learned_word_set = set(word["word"].lower() for word in vocab)
+            print(f"[DEBUG] 学习完所有单词: {[word['word'] for word in learned_words]}")
         else:
             # 否则只算到current_index-1的单词（因为current_index是下一个要学的单词）
             learned_words = vocab[:current_index]
             learned_word_set = set(word["word"].lower() for word in learned_words)
+            print(f"[DEBUG] 学习部分单词: {[word['word'] for word in learned_words]}")
         
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
