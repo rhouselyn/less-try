@@ -41,7 +41,7 @@ async def root():
 async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str):
     try:
         print(f"[DEBUG] 开始处理文件 {file_id}")
-        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0}
+        processing_status[file_id] = {"status": "processing", "progress": 0}
         
         # 保存语言设置
         storage.save_language_settings(file_id, source_lang, target_lang)
@@ -51,29 +51,13 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         total_sentences = len(sentences)
         print(f"[DEBUG] 分割为 {total_sentences} 个句子: {sentences}")
         
-        # 立即更新总句子数
-        processing_status[file_id] = {
-            "status": "processing",
-            "progress": 0,
-            "current_sentence": 0,
-            "total_sentences": total_sentences
-        }
-        
         all_vocab = []
         # 新的数据结构：每个句子单独一条数据
         sentence_translations = []
         
         # 处理句子级别的数据
         for i, sentence in enumerate(sentences):
-            # 先更新当前处理的句子索引
-            processing_status[file_id] = {
-                "status": "processing",
-                "progress": int((i) / total_sentences * 100),
-                "current_sentence": i + 1,
-                "total_sentences": total_sentences
-            }
             print(f"[DEBUG] 正在处理第 {i+1}/{total_sentences} 个句子: {repr(sentence)}")
-            
             if sentence.strip():
                 # 对每个句子单独进行翻译
                 print(f"[DEBUG] 正在翻译句子: {repr(sentence)}")

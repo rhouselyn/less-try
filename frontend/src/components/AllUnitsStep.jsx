@@ -10,7 +10,6 @@ function AllUnitsStep({
   onPhase1UnitClick, 
   onPhase2UnitClick, 
   onBack, 
-  onOpenVocabList, 
   loading, 
   t 
 }) {
@@ -21,25 +20,15 @@ function AllUnitsStep({
       exit={{ opacity: 0, y: -20 }}
       className="max-w-5xl mx-auto"
     >
-      <div className="flex justify-between items-center mb-8">
-        <motion.button
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.back}
-        </motion.button>
-        <motion.button
-          initial={{ opacity: 0, x: 10 }}
-          animate={{ opacity: 1, x: 0 }}
-          onClick={onOpenVocabList}
-          className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
-        >
-          {t.vocabularyList}
-        </motion.button>
-      </div>
+      <motion.button
+        initial={{ opacity: 0, x: -10 }}
+        animate={{ opacity: 1, x: 0 }}
+        onClick={onBack}
+        className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100 mb-8"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        {t.back}
+      </motion.button>
 
       <div className="text-center mb-10">
         <motion.h2

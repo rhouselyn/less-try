@@ -15,7 +15,6 @@ import PhaseProgressStep from './components/PhaseProgressStep'
 import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
 import TranslationReconstructionStep from './components/TranslationReconstructionStep'
 import AllUnitsStep from './components/AllUnitsStep'
-import VocabListStep from './components/VocabListStep'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -56,8 +55,6 @@ function App() {
   const [phase2Units, setPhase2Units] = useState([])
   const [currentPhase1Unit, setCurrentPhase1Unit] = useState(0)
   const [currentPhase2Unit, setCurrentPhase2Unit] = useState(0)
-  // State for previous step
-  const [previousStep, setPreviousStep] = useState(null)
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -86,7 +83,17 @@ function App() {
         const status = await api.getStatus(currentFileId)
         console.log('状态响应:', status)
 
-        // 先更新进度和处理信息，确保实时显示
+        // 强制更新词汇表和句子翻译，确保实时显示
+        if (status.vocab) {
+          console.log('更新词汇表，长度:', status.vocab.length)
+          setVocab([...status.vocab]) // 使用展开运算符强制更新
+        }
+
+        if (status.sentence_translations) {
+          console.log('更新句子翻译，数量:', status.sentence_translations.length)
+          setSentenceTranslations([...status.sentence_translations]) // 使用展开运算符强制更新
+        }
+
         // 更新进度
         if (status.progress !== undefined) {
           setProgress(status.progress)
@@ -98,17 +105,6 @@ function App() {
             current: status.current_sentence,
             total: status.total_sentences
           })
-        }
-
-        // 强制更新词汇表和句子翻译，确保实时显示
-        if (status.vocab) {
-          console.log('更新词汇表，长度:', status.vocab.length)
-          setVocab([...status.vocab]) // 使用展开运算符强制更新
-        }
-
-        if (status.sentence_translations) {
-          console.log('更新句子翻译，数量:', status.sentence_translations.length)
-          setSentenceTranslations([...status.sentence_translations]) // 使用展开运算符强制更新
         }
 
         if (status.status === 'completed') {
@@ -567,11 +563,6 @@ function App() {
     }
   }
 
-  const openVocabList = () => {
-    setPreviousStep(step)
-    setStep('vocab-list')
-  }
-
   const handleStudyWord = (wordData) => {
     setLearningData(wordData)
     setShowWordCard(false)
@@ -738,8 +729,8 @@ function App() {
               key="sentence-quiz"
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('all-units')}
-              onComplete={() => setStep('all-units')}
+              onBack={() => setStep('dictionary')}
+              onComplete={() => setStep('progress')}
               loading={loading}
               t={t}
             />
@@ -755,17 +746,7 @@ function App() {
               onPhase1UnitClick={handlePhase1UnitClick}
               onPhase2UnitClick={handlePhase2UnitClick}
               onBack={() => setStep('dictionary')}
-              onOpenVocabList={openVocabList}
               loading={loading}
-              t={t}
-            />
-          )}
-          
-          {step === 'vocab-list' && (
-            <VocabListStep
-              key="vocab-list"
-              vocab={vocab}
-              onBack={() => setStep(previousStep || 'all-units')}
               t={t}
             />
           )}
@@ -800,10 +781,9 @@ function App() {
               key="masked-exercise"
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('all-units')}
+              onBack={() => setStep('phase-progress')}
               loading={loading}
               t={t}
-              onOpenVocabList={() => openVocabList()}
             />
           )}
           
@@ -812,10 +792,9 @@ function App() {
               key="reconstruction-exercise"
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('all-units')}
+              onBack={() => setStep('phase-progress')}
               loading={loading}
               t={t}
-              onOpenVocabList={() => openVocabList()}
             />
           )}
         </AnimatePresence>
