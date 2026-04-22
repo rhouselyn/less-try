@@ -880,13 +880,20 @@ async def generate_sentence_quiz(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
-                # 简单分词（按空格）
-                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                # 正确分词，处理缩写形式
+                import re
+                words_in_sentence = set(word.lower() for word in re.findall(r"\b\w+(?:'\w+)?\b", sentence))
                 print(f"[DEBUG] 句子中的单词: {words_in_sentence}")
-                # 检查是否所有单词都在已学单词中，且至少2个单词
-                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
-                    eligible_sentences.append(sentence_data)
-                    print(f"[DEBUG] 句子符合条件: {sentence}")
+                # 检查是否至少有2个已学单词在句子中
+                matched_words = 0
+                for word in learned_words:
+                    word_lower = word["word"].lower()
+                    if word_lower in words_in_sentence:
+                        matched_words += 1
+                        if matched_words >= 2:
+                            eligible_sentences.append(sentence_data)
+                            print(f"[DEBUG] 句子符合条件: {sentence}")
+                            break
         
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")

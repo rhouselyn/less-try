@@ -356,20 +356,36 @@ class TextProcessor:
         
         # 生成选项：正确答案 + 干扰项
         options = answer_words.copy()
-        # 从词汇表中找干扰项
+        # 从词汇表中找干扰项，确保不是当前句子的单词
         distractors = []
         vocab_words = [v["word"] for v in vocab]
         answer_lower = [w.lower() for w in answer_words]
+        # 获取当前句子中的所有单词（用于排除）
+        current_sentence_words = set()
+        # 从translation_tokens中提取所有单词
+        if translation_tokens:
+            for token in translation_tokens:
+                current_sentence_words.add(token.lower())
+        # 从原句中提取所有单词
+        import re
+        sentence_words = set(word.lower() for word in re.findall(r"\b\w+(?:'\w+)?\b", sentence))
+        current_sentence_words.update(sentence_words)
+        # 打乱词汇表
         random.shuffle(vocab_words)
         for vw in vocab_words:
-            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+            vw_lower = vw.lower()
+            if vw_lower not in answer_lower and vw_lower not in current_sentence_words and len(distractors) < 3 * num_masks:
                 distractors.append(vw)
-        
-        # 如果词汇表不够，使用备选词库
+        # 如果词汇表不够，使用备选词库，确保不是当前句子的单词
         if len(distractors) < 3 * num_masks:
             fallback_needed = 3 * num_masks - len(distractors)
             fallback_distractors = self.get_fallback_distractors(fallback_needed, answer_words + distractors)
-            distractors.extend(fallback_distractors)
+            # 过滤掉当前句子的单词
+            filtered_fallback = []
+            for fb in fallback_distractors:
+                if fb.lower() not in current_sentence_words:
+                    filtered_fallback.append(fb)
+            distractors.extend(filtered_fallback)
         
         # 打乱干扰项
         random.shuffle(distractors)
