@@ -86,15 +86,54 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             }
             print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(sentence_translations)} 个句子")
         
-        # 从所有句子的翻译结果中提取词典条目
+        # 从所有句子的翻译结果中提取token级别信息
         all_vocab = []
         for i, sentence_data in enumerate(sentence_translations):
             translation_result = sentence_data.get("translation_result", {})
-            if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
+            print(f"[DEBUG] 处理句子: {sentence_data.get('sentence')}")
+            print(f"[DEBUG] translation_result keys: {list(translation_result.keys())}")
+            # 优先从translation字段提取token级别信息
+            if isinstance(translation_result, dict) and "translation" in translation_result:
+                print(f"[DEBUG] translation字段存在，长度: {len(translation_result['translation'])}")
+                for token in translation_result["translation"]:
+                    print(f"[DEBUG] token: {token}")
+                    if isinstance(token, dict) and "text" in token:
+                        # 构建token级别的词汇条目
+                        token_entry = {
+                            "word": token["text"],
+                            "translation": token.get("translation", ""),
+                            "ipa": token.get("phonetic", ""),
+                            "morphology": token.get("morphology", ""),
+                            "sentence_index": i
+                        }
+                        all_vocab.append(token_entry)
+                        print(f"[DEBUG] 添加token: {token['text']}")
+                        
+                        # 对短语进行进一步分词，分解为单个token
+                        import re
+                        phrase_words = re.findall(r"\b\w+(?:'\w+)?\b", token["text"])
+                        if len(phrase_words) > 1:
+                            for phrase_word in phrase_words:
+                                # 检查是否已经添加过这个单词
+                                if not any(entry.get("word", "").lower() == phrase_word.lower() for entry in all_vocab):
+                                    # 构建单个单词的词汇条目
+                                    word_entry = {
+                                        "word": phrase_word,
+                                        "translation": token.get("translation", ""),
+                                        "ipa": "",
+                                        "morphology": "",
+                                        "sentence_index": i
+                                    }
+                                    all_vocab.append(word_entry)
+                                    print(f"[DEBUG] 添加短语分词: {phrase_word}")
+            # 如果没有translation字段，回退到dictionary_entries
+            elif isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
+                print(f"[DEBUG] dictionary_entries字段存在，长度: {len(translation_result['dictionary_entries'])}")
                 for dict_entry in translation_result["dictionary_entries"]:
                     # 为每个词条添加句子索引
                     dict_entry["sentence_index"] = i
                     all_vocab.append(dict_entry)
+                    print(f"[DEBUG] 添加dictionary_entry: {dict_entry['word']}")
         
         # 去重
         seen = set()
@@ -105,6 +144,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 seen.add(word)
                 unique_vocab.append(entry)
         all_vocab = unique_vocab
+        print(f"[DEBUG] 去重后词汇表: {[word['word'] for word in all_vocab]}")
         
         # 按字母表排序词汇表
         all_vocab.sort(key=lambda x: x["word"].lower())
@@ -866,8 +906,16 @@ async def generate_sentence_quiz(file_id: str):
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
         learned_words = vocab[:current_index + 1]
-        learned_word_set = set(word["word"].lower() for word in learned_words)
-        print(f"[DEBUG] 已学单词: {[word['word'] for word in learned_words]}")
+        learned_word_set = set()
+        for word in learned_words:
+            # 添加单词本身的小写形式
+            learned_word_set.add(word["word"].lower())
+            # 对于短语，也添加其组成单词的小写形式
+            import re
+            phrase_words = re.findall(r"\b\w+(?:'\w+)?\b", word["word"])
+            for phrase_word in phrase_words:
+                learned_word_set.add(phrase_word.lower())
+        print(f"[DEBUG] 已学单词集合: {learned_word_set}")
         
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
@@ -880,13 +928,19 @@ async def generate_sentence_quiz(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
-                # 简单分词（按空格）
-                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
+                # 正确分词，处理缩写形式
+                import re
+                words_in_sentence = set(word.lower() for word in re.findall(r"\b\w+(?:'\w+)?\b", sentence))
                 print(f"[DEBUG] 句子中的单词: {words_in_sentence}")
-                # 检查是否所有单词都在已学单词中，且至少2个单词
-                if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
-                    eligible_sentences.append(sentence_data)
-                    print(f"[DEBUG] 句子符合条件: {sentence}")
+                # 检查是否至少有2个单词在已学单词中
+                matched_words = 0
+                for word in words_in_sentence:
+                    if word in learned_word_set:
+                        matched_words += 1
+                        if matched_words >= 2:
+                            eligible_sentences.append(sentence_data)
+                            print(f"[DEBUG] 句子符合条件: {sentence}")
+                            break
         
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")
@@ -1088,10 +1142,16 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 
                 # 生成蒙版练习（支持任意长度句子）
                 # 确保使用LLM生成的tokens
+                # 提取当前句子中的所有单词作为排除项
+                sentence_words = []
+                if translation_tokens:
+                    sentence_words = translation_tokens
+                
                 masked_exercise = text_processor.generate_masked_sentence(
                     current_sentence, 
                     vocab, 
-                    translation_tokens  # 强制使用LLM生成的tokens
+                    translation_tokens,  # 强制使用LLM生成的tokens
+                    sentence_words  # 传入当前句子中的单词，用于排除干扰项
                 )
                 
                 return {
