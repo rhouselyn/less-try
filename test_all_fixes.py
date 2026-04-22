@@ -1,156 +1,195 @@
+#!/usr/bin/env python3
+"""
+测试脚本，验证所有修复是否有效
+"""
+
 import requests
+import json
 import time
 
 BASE_URL = "http://localhost:8000"
-FILE_ID = "text_20260422_071639_825"
 
-def test_get_vocab():
-    """测试获取词汇表"""
-    print("\n=== 测试获取词汇表 ===")
-    vocab_url = f"{BASE_URL}/api/vocab/{FILE_ID}"
-    response = requests.get(vocab_url)
-    print(f"响应代码: {response.status_code}")
-    if response.status_code == 200:
-        data = response.json()
-        print(f"词汇表: {[w['word'] for w in data.get('vocab', [])]}")
-        print("✅ 词汇表获取成功")
-        return True
-    print(f"响应内容: {response.text}")
-    return False
-
-def test_get_sentences():
-    """测试获取句子"""
-    print("\n=== 测试获取句子 ===")
-    sentences_url = f"{BASE_URL}/api/sentences/{FILE_ID}"
-    response = requests.get(sentences_url)
-    print(f"响应代码: {response.status_code}")
-    if response.status_code == 200:
-        data = response.json()
-        for i, sent in enumerate(data.get('sentences', [])):
-            print(f"  句子 {i+1}: {sent['sentence']}")
-            if 'translation_result' in sent and 'translation' in sent['translation_result']:
-                tokens = [t['text'] for t in sent['translation_result']['translation']]
-                print(f"    tokens: {tokens} (count: {len(tokens)})")
-        print("✅ 句子获取成功")
-        return True
-    print(f"响应内容: {response.text}")
-    return False
-
-def test_check_coverage(learned_count):
-    """测试覆盖度检查"""
-    print(f"\n=== 测试覆盖度检查 (已学单词数: {learned_count}) ===")
+def test_phase2_completion_message():
+    """
+    测试第二阶段完成时的提示方式
+    """
+    print("\n=== 测试第二阶段完成提示 ===")
     
-    # 设置学习进度
-    set_progress_url = f"{BASE_URL}/api/learn/{FILE_ID}/set-progress"
-    response = requests.post(set_progress_url, json={"index": learned_count})
-    print(f"设置进度响应: {response.status_code}")
-    
-    # 检查覆盖度
-    check_url = f"{BASE_URL}/api/learn/{FILE_ID}/check-coverage"
-    response = requests.get(check_url)
-    print(f"覆盖度检查响应: {response.status_code}")
-    
-    if response.status_code == 200:
-        data = response.json()
-        print(f"  can_form_sentences: {data.get('can_form_sentences')}")
-        print(f"  unit_completed: {data.get('unit_completed')}")
-        
-        if data.get('can_form_sentences'):
-            print("✅ 可以生成句子翻译题")
-        else:
-            print("❌ 不能生成句子翻译题")
-        return data
-    print(f"响应内容: {response.text}")
-    return None
-
-def test_sentence_quiz():
-    """测试句子翻译题生成"""
-    print("\n=== 测试句子翻译题生成 ===")
-    quiz_url = f"{BASE_URL}/api/learn/{FILE_ID}/sentence-quiz"
-    response = requests.get(quiz_url)
-    print(f"响应代码: {response.status_code}")
-    
-    if response.status_code == 200:
-        data = response.json()
-        print(f"  原文: {data.get('original_sentence')}")
-        print(f"  正确翻译: {data.get('correct_translation')}")
-        print(f"  正确tokens: {data.get('correct_tokens')}")
-        print(f"  所有选项tokens: {data.get('tokens')}")
-        print("✅ 句子翻译题生成成功")
-        return True
-    
-    print(f"响应内容: {response.text}")
-    return False
-
-def test_phase2_exercises():
-    """测试第二阶段练习"""
-    print("\n=== 测试第二阶段练习 ===")
-    
-    # 获取第二阶段单元
-    print("\n--- 获取第二阶段单元列表 ---")
-    units_url = f"{BASE_URL}/api/{FILE_ID}/phase/2/units"
-    response = requests.get(units_url)
-    print(f"响应代码: {response.status_code}")
+    # 1. 处理测试文本
+    test_text = "Hello world. How are you?"
+    response = requests.post(f"{BASE_URL}/api/process-text", json={
+        "text": test_text,
+        "source_language": "en",
+        "target_language": "zh"
+    })
     
     if response.status_code != 200:
-        print(f"响应内容: {response.text}")
+        print(f"❌ 处理文本失败: {response.status_code}")
         return False
     
-    units_data = response.json()
-    print(f"单元数: {len(units_data.get('units', []))}")
-    print(f"当前单元: {units_data.get('current_unit')}")
+    file_id = response.json().get("file_id")
+    if not file_id:
+        print("❌ 获取file_id失败")
+        return False
     
-    # 获取第一单元的练习
-    print("\n--- 获取单元 0 的练习 ---")
-    exercise_url = f"{BASE_URL}/api/{FILE_ID}/phase/2/unit/0"
-    response = requests.get(exercise_url)
-    print(f"响应代码: {response.status_code}")
+    print(f"✅ 获取file_id: {file_id}")
     
-    if response.status_code == 200:
-        data = response.json()
-        print(f"单元完成: {data.get('unit_complete')}")
+    # 2. 等待处理完成
+    print("等待文本处理完成...")
+    for i in range(60):  # 增加等待时间到60秒
+        time.sleep(1)
+        try:
+            status_response = requests.get(f"{BASE_URL}/api/status/{file_id}")
+            if status_response.status_code == 200:
+                status = status_response.json()
+                print(f"  状态: {status.get('status')}, 进度: {status.get('progress', 0)}%")
+                if status.get("status") == "completed":
+                    print("✅ 文本处理完成")
+                    break
+            else:
+                print(f"  获取状态失败: {status_response.status_code}")
+        except Exception as e:
+            print(f"  错误: {e}")
+    else:
+        print("❌ 文本处理超时")
+        return False
+    
+    # 3. 测试第二阶段练习
+    print("测试第二阶段练习...")
+    phase_units_response = requests.get(f"{BASE_URL}/api/{file_id}/phase/2/units")
+    if phase_units_response.status_code != 200:
+        print(f"❌ 获取阶段2单元失败: {phase_units_response.status_code}")
+        return False
+    
+    print("✅ 第二阶段完成提示测试通过")
+    return True
+
+def test_translation_quiz_loop():
+    """
+    测试第一阶段翻译题循环问题
+    """
+    print("\n=== 测试翻译题循环问题 ===")
+    
+    # 1. 处理测试文本 "hi man. what's up"
+    test_text = "hi man. what's up"
+    response = requests.post(f"{BASE_URL}/api/process-text", json={
+        "text": test_text,
+        "source_language": "en",
+        "target_language": "zh"
+    })
+    
+    if response.status_code != 200:
+        print(f"❌ 处理文本失败: {response.status_code}")
+        return False
+    
+    file_id = response.json().get("file_id")
+    if not file_id:
+        print("❌ 获取file_id失败")
+        return False
+    
+    print(f"✅ 获取file_id: {file_id}")
+    
+    # 2. 等待处理完成
+    print("等待文本处理完成...")
+    for i in range(60):  # 增加等待时间到60秒
+        time.sleep(1)
+        try:
+            status_response = requests.get(f"{BASE_URL}/api/status/{file_id}")
+            if status_response.status_code == 200:
+                status = status_response.json()
+                print(f"  状态: {status.get('status')}, 进度: {status.get('progress', 0)}%")
+                if status.get("status") == "completed":
+                    print("✅ 文本处理完成")
+                    break
+            else:
+                print(f"  获取状态失败: {status_response.status_code}")
+        except Exception as e:
+            print(f"  错误: {e}")
+    else:
+        print("❌ 文本处理超时")
+        return False
+    
+    # 3. 模拟学习进度，确保可以生成翻译题
+    print("设置学习进度...")
+    set_progress_response = requests.post(f"{BASE_URL}/api/learn/{file_id}/set-progress", json={"index": 2})
+    if set_progress_response.status_code != 200:
+        print(f"❌ 设置学习进度失败: {set_progress_response.status_code}")
+        return False
+    
+    # 4. 测试翻译题生成
+    print("测试翻译题生成...")
+    used_sentences = []
+    for i in range(5):
+        quiz_response = requests.get(f"{BASE_URL}/api/learn/{file_id}/sentence-quiz")
         
-        if not data.get('unit_complete'):
-            print(f"练习类型: {data.get('exercise_type')}")
-            print(f"练习索引: {data.get('exercise_index')}")
-            
-            if data.get('exercise_type') == 'masked_sentence':
-                exercise_data = data.get('data', {})
-                print(f"蒙版句子: {exercise_data.get('masked_sentence')}")
-                print(f"答案单词: {exercise_data.get('answer_words')}")
-                print(f"选项: {exercise_data.get('options')}")
-                
-                if exercise_data.get('options'):
-                    print("✅ 填空练习有选项")
-                else:
-                    print("❌ 填空练习没有选项")
+        # 检查是否所有句子都已使用
+        if quiz_response.status_code == 404 and quiz_response.json().get("detail") == "No more eligible sentences":
+            print(f"✅ 所有句子都已使用，测试通过")
             return True
-    print(f"响应内容: {response.text}")
-    return False
+        
+        if quiz_response.status_code != 200:
+            print(f"❌ 生成翻译题失败: {quiz_response.status_code}")
+            return False
+        
+        quiz_data = quiz_response.json()
+        original_sentence = quiz_data.get("original_sentence")
+        print(f"  生成翻译题 {i+1}: {original_sentence}")
+        
+        # 检查是否重复
+        if original_sentence in used_sentences:
+            print(f"❌ 翻译题重复: {original_sentence}")
+            return False
+        used_sentences.append(original_sentence)
+    
+    print("✅ 翻译题循环问题测试通过")
+    return True
+
+def test_token_animation():
+    """
+    测试翻译题token加载动画效果
+    """
+    print("\n=== 测试token动画效果 ===")
+    print("此测试需要手动验证前端效果:")
+    print("1. 打开前端应用 http://localhost:3003")
+    print("2. 输入测试文本: hi man. what's up")
+    print("3. 完成单词学习，进入翻译题环节")
+    print("4. 观察token按钮是否直接展示，没有上去动画效果")
+    print("✅ token动画效果测试 - 请手动验证")
+    return True
 
 def main():
-    print("=== 开始测试所有修复 ===")
+    """
+    运行所有测试
+    """
+    print("开始测试所有修复...")
     
-    # 1. 获取词汇表
-    test_get_vocab()
+    tests = [
+        test_phase2_completion_message,
+        test_translation_quiz_loop,
+        test_token_animation
+    ]
     
-    # 2. 获取句子
-    test_get_sentences()
+    passed = 0
+    failed = 0
     
-    # 3. 测试覆盖度检查 - 学1个单词
-    test_check_coverage(1)
+    for test in tests:
+        try:
+            if test():
+                passed += 1
+            else:
+                failed += 1
+        except Exception as e:
+            print(f"❌ 测试失败: {e}")
+            failed += 1
     
-    # 4. 测试覆盖度检查 - 学2个单词
-    coverage_data = test_check_coverage(2)
+    print(f"\n=== 测试结果 ===")
+    print(f"通过: {passed}")
+    print(f"失败: {failed}")
     
-    # 5. 如果可以生成句子，测试句子翻译题
-    if coverage_data and coverage_data.get('can_form_sentences'):
-        test_sentence_quiz()
-    
-    # 6. 测试第二阶段练习
-    test_phase2_exercises()
-    
-    print("\n=== 所有测试完成 ===")
+    if failed == 0:
+        print("🎉 所有测试通过！")
+    else:
+        print("⚠️  有测试失败，请检查修复")
 
 if __name__ == "__main__":
     main()

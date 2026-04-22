@@ -186,3 +186,20 @@ class Storage:
             with open(cache_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return None
+    
+    def save_used_sentences(self, file_id: str, used_sentences: List[str]):
+        """保存已使用的句子"""
+        file_dir = self.get_file_dir(file_id)
+        used_path = file_dir / "used_sentences.json"
+        with open(used_path, 'w', encoding='utf-8') as f:
+            json.dump({"used_sentences": used_sentences}, f, ensure_ascii=False, indent=2)
+    
+    def load_used_sentences(self, file_id: str) -> Optional[List[str]]:
+        """加载已使用的句子"""
+        file_dir = self.get_file_dir(file_id)
+        used_path = file_dir / "used_sentences.json"
+        if used_path.exists():
+            with open(used_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("used_sentences", [])
+        return None

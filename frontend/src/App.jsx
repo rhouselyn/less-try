@@ -391,14 +391,30 @@ function App() {
         // 检查是否可以生成句子翻译题
         const coverageData = await api.checkCoverage(currentFileId)
         if (coverageData.can_form_sentences) {
-          // 生成句子翻译题
-          const quizResponse = await api.generateSentenceQuiz(currentFileId)
-          setQuizData({
-            ...quizResponse,
-            unit_completed: coverageData.unit_completed
-          })
-          setLearningMode('sentence')
-          setStep('sentence-quiz')
+          try {
+            // 生成句子翻译题
+            const quizResponse = await api.generateSentenceQuiz(currentFileId)
+            
+            // 检查是否所有句子都已使用
+            if (quizResponse.unit_completed) {
+              // 单元已完成
+              setStep('progress')
+            } else {
+              setQuizData({
+                ...quizResponse,
+                unit_completed: coverageData.unit_completed
+              })
+              setLearningMode('sentence')
+              setStep('sentence-quiz')
+            }
+          } catch (quizError) {
+            if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
+              // 所有句子都已使用，单元已完成
+              setStep('progress')
+            } else {
+              throw quizError
+            }
+          }
         } else {
           // 单元已完成
           setStep('progress')
@@ -409,14 +425,30 @@ function App() {
       // 检查是否需要插入句子翻译题
       const coverageData = await api.checkCoverage(currentFileId)
       if (coverageData.can_form_sentences) {
-        // 生成句子翻译题
-        const quizResponse = await api.generateSentenceQuiz(currentFileId)
-        setQuizData({
-          ...quizResponse,
-          unit_completed: coverageData.unit_completed
-        })
-        setLearningMode('sentence')
-        setStep('sentence-quiz')
+        try {
+          // 生成句子翻译题
+          const quizResponse = await api.generateSentenceQuiz(currentFileId)
+          
+          // 检查是否所有句子都已使用
+          if (quizResponse.unit_completed) {
+            // 单元已完成
+            setStep('progress')
+          } else {
+            setQuizData({
+              ...quizResponse,
+              unit_completed: coverageData.unit_completed
+            })
+            setLearningMode('sentence')
+            setStep('sentence-quiz')
+          }
+        } catch (quizError) {
+          if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
+            // 所有句子都已使用，单元已完成
+            setStep('progress')
+          } else {
+            throw quizError
+          }
+        }
       } else if (coverageData.unit_completed) {
         // 单元已完成
         setStep('progress')
@@ -467,12 +499,28 @@ function App() {
       // 检查是否还有可组成的句子
       const coverageData = await api.checkCoverage(currentFileId)
       if (coverageData.can_form_sentences) {
-        // 生成下一个句子翻译题
-        const quizResponse = await api.generateSentenceQuiz(currentFileId)
-        setQuizData({
-          ...quizResponse,
-          unit_completed: coverageData.unit_completed
-        })
+        try {
+          // 生成下一个句子翻译题
+          const quizResponse = await api.generateSentenceQuiz(currentFileId)
+          
+          // 检查是否所有句子都已使用
+          if (quizResponse.unit_completed) {
+            // 单元已完成
+            setStep('progress')
+          } else {
+            setQuizData({
+              ...quizResponse,
+              unit_completed: coverageData.unit_completed
+            })
+          }
+        } catch (quizError) {
+          if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
+            // 所有句子都已使用，单元已完成
+            setStep('progress')
+          } else {
+            throw quizError
+          }
+        }
       } else if (coverageData.unit_completed) {
         // 单元已完成
         setStep('progress')

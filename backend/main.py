@@ -91,10 +91,20 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         for i, sentence_data in enumerate(sentence_translations):
             translation_result = sentence_data.get("translation_result", {})
             if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
-                for dict_entry in translation_result["dictionary_entries"]:
-                    # 为每个词条添加句子索引
-                    dict_entry["sentence_index"] = i
-                    all_vocab.append(dict_entry)
+                dictionary_entries = translation_result["dictionary_entries"]
+                # 处理dictionary_entries可能是字符串的情况
+                if isinstance(dictionary_entries, str):
+                    try:
+                        import json
+                        dictionary_entries = json.loads(dictionary_entries)
+                    except:
+                        continue
+                if isinstance(dictionary_entries, list):
+                    for dict_entry in dictionary_entries:
+                        # 为每个词条添加句子索引
+                        if isinstance(dict_entry, dict):
+                            dict_entry["sentence_index"] = i
+                            all_vocab.append(dict_entry)
         
         # 去重
         seen = set()
@@ -882,6 +892,9 @@ async def check_coverage(file_id: str):
 
 @app.get("/api/learn/{file_id}/sentence-quiz")
 async def generate_sentence_quiz(file_id: str):
+    # 加载已使用的句子
+    used_sentences = storage.load_used_sentences(file_id) or []
+    
     try:
         print(f"[DEBUG] 生成句子翻译题: {file_id}")
         vocab = storage.load_vocab(file_id)
@@ -953,14 +966,31 @@ async def generate_sentence_quiz(file_id: str):
                     if matched_count >= 2:
                         break
         
+        # 打印eligible_sentences
+        print(f"[DEBUG] eligible_sentences: {[s.get('sentence') for s in eligible_sentences]}")
+        
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")
         
+        # 过滤掉已使用的句子，并且确保句子数据包含"sentence"键
+        available_sentences = [s for s in eligible_sentences if s.get("sentence") and s.get("sentence") not in used_sentences]
+        
+        # 如果所有句子都已使用，返回单元完成的响应
+        if not available_sentences:
+            print(f"[DEBUG] 所有句子都已使用，返回单元完成")
+            storage.save_used_sentences(file_id, [])
+            # 这里我们模拟unit_completed为True
+            raise HTTPException(status_code=404, detail="No more eligible sentences")
+        
         # 随机选择一个句子
         import random
-        selected_sentence = random.choice(eligible_sentences)
+        selected_sentence = random.choice(available_sentences)
         original_sentence = selected_sentence["sentence"]
         print(f"[DEBUG] 选择句子: {original_sentence}")
+        
+        # 记录已使用的句子
+        used_sentences.append(original_sentence)
+        storage.save_used_sentences(file_id, used_sentences)
         
         # 直接使用LLM生成的数据
         if "translation_result" not in selected_sentence:
@@ -1021,6 +1051,9 @@ async def generate_sentence_quiz(file_id: str):
             "correct_tokens": correct_tokens,
             "tokens": all_tokens
         }
+    except HTTPException:
+        # 重新抛出HTTPException，不被捕获为500错误
+        raise
     except Exception as e:
         print(f"[ERROR] 生成句子翻译题错误: {str(e)}")
         import traceback

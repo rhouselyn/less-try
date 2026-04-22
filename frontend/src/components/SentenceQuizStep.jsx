@@ -139,9 +139,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             {quizData.tokens.map((token, index) => (
               <motion.button
                 key={index}
-                initial={{ opacity: 0, y: 30, scale: 0.8 }}
+                initial={{ opacity: 1, y: 0, scale: 1 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: index * 0.05, type: 'spring', stiffness: 400, damping: 15 }}
                 whileHover={{ scale: 1.15, y: -8, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
                 whileTap={{ scale: 0.9, y: 2 }}
                 onClick={() => handleTokenClick(token)}
