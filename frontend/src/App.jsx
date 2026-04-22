@@ -14,6 +14,7 @@ import PhaseSelectorStep from './components/PhaseSelectorStep'
 import PhaseProgressStep from './components/PhaseProgressStep'
 import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
 import TranslationReconstructionStep from './components/TranslationReconstructionStep'
+import AllUnitsStep from './components/AllUnitsStep'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -49,6 +50,11 @@ function App() {
   const [currentPhaseUnit, setCurrentPhaseUnit] = useState(0)
   const [currentExerciseData, setCurrentExerciseData] = useState(null)
   const [exerciseType, setExerciseType] = useState(null)
+  // New state for all units
+  const [phase1Units, setPhase1Units] = useState([])
+  const [phase2Units, setPhase2Units] = useState([])
+  const [currentPhase1Unit, setCurrentPhase1Unit] = useState(0)
+  const [currentPhase2Unit, setCurrentPhase2Unit] = useState(0)
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -242,12 +248,20 @@ function App() {
     
     setLoading(true)
     try {
-      const phasesData = await api.getPhases(currentFileId)
-      setPhases(phasesData.phases)
-      setStep('phase-selector')
+      // 同时获取两个阶段的单元
+      const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+        api.getPhaseUnits(currentFileId, 1),
+        api.getPhaseUnits(currentFileId, 2)
+      ])
+      
+      setPhase1Units(phase1UnitsData.units)
+      setPhase2Units(phase2UnitsData.units)
+      setCurrentPhase1Unit(phase1UnitsData.current_unit)
+      setCurrentPhase2Unit(phase2UnitsData.current_unit)
+      setStep('all-units')
     } catch (error) {
-      console.error('获取阶段错误:', error)
-      alert('无法获取学习阶段，请重试')
+      console.error('获取单元错误:', error)
+      alert('无法获取学习单元，请重试')
     } finally {
       setLoading(false)
     }
@@ -276,6 +290,60 @@ function App() {
     } catch (error) {
       console.error('选择阶段错误:', error)
       alert('无法选择阶段，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePhase1UnitClick = async (unitId) => {
+    if (!currentFileId) return
+    
+    setLoading(true)
+    try {
+      // 阶段1直接进入单词学习
+      await api.setProgress(currentFileId, unitId * 10)
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setLearningMode('word')
+      setStep('learning')
+    } catch (error) {
+      console.error('获取单元单词错误:', error)
+      alert('无法获取单元单词，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handlePhase2UnitClick = async (unitId) => {
+    if (!currentFileId) return
+    
+    setLoading(true)
+    try {
+      setCurrentPhase(2)
+      setCurrentPhaseUnit(unitId)
+      const exerciseData = await api.getPhaseUnitExercise(currentFileId, 2, unitId)
+      if (exerciseData.unit_complete) {
+        // 单元完成，重新加载所有单元
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
+      } else {
+        setExerciseType(exerciseData.exercise_type)
+        setCurrentExerciseData(exerciseData.data)
+        setStep('phase-exercise')
+      }
+    } catch (error) {
+      console.error('获取单元练习错误:', error)
+      alert('无法获取练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -312,20 +380,30 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       if (nextRes.unit_complete) {
-        // 单元完成，显示提示
-        alert('单元已完成！')
-        // Refresh phase units
-        const phaseUnitsData = await api.getPhaseUnits(currentFileId, currentPhase)
-        setPhaseUnits(phaseUnitsData.units)
-        setCurrentPhaseUnit(phaseUnitsData.current_unit)
-        setStep('phase-progress')
+        // 单元完成，不弹出提示，直接回到all-units页面
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
       } else {
         // Get next exercise
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
-          // 单元完成，显示提示
-          alert('单元已完成！')
-          setStep('phase-progress')
+          // 单元完成，不弹出提示，直接回到all-units页面
+          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+            api.getPhaseUnits(currentFileId, 1),
+            api.getPhaseUnits(currentFileId, 2)
+          ])
+          setPhase1Units(phase1UnitsData.units)
+          setPhase2Units(phase2UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          setStep('all-units')
         } else {
           setExerciseType(exerciseData.exercise_type)
           setCurrentExerciseData(exerciseData.data)
@@ -653,6 +731,21 @@ function App() {
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => setStep('dictionary')}
               onComplete={() => setStep('progress')}
+              loading={loading}
+              t={t}
+            />
+          )}
+          
+          {step === 'all-units' && (
+            <AllUnitsStep
+              key="all-units"
+              phase1Units={phase1Units}
+              phase2Units={phase2Units}
+              currentPhase1Unit={currentPhase1Unit}
+              currentPhase2Unit={currentPhase2Unit}
+              onPhase1UnitClick={handlePhase1UnitClick}
+              onPhase2UnitClick={handlePhase2UnitClick}
+              onBack={() => setStep('dictionary')}
               loading={loading}
               t={t}
             />

@@ -145,45 +145,27 @@ function TranslationReconstructionStep({ data, onNext, onBack, loading, t }) {
             {t.checkAnswer}
           </motion.button>
         ) : (
-          <>
-            {!data.unit_completed && (
-              <motion.button
-                whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-                whileTap={{ scale: 0.97, y: 0 }}
-                onClick={handleNext}
-                disabled={loading}
-                className="flex-1 py-4 bg-slate-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {t.loading}
-                  </>
-                ) : (
-                  <>
-                    {t.continue}
-                    <ChevronRight className="w-5 h-5" />
-                  </>
-                )}
-              </motion.button>
+          <motion.button
+            whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
+            whileTap={{ scale: 0.97, y: 0 }}
+            onClick={handleNext}
+            disabled={loading}
+            className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {t.loading}
+              </>
+            ) : data.unit_completed ? (
+              '完成'
+            ) : (
+              <>
+                下一题
+                <ChevronRight className="w-5 h-5" />
+              </>
             )}
-            <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
-              onClick={handleNext}
-              disabled={loading}
-              className={`flex-1 py-4 font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${data.unit_completed ? 'bg-black text-white' : 'bg-slate-200 text-slate-800'}`}
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {t.loading}
-                </>
-              ) : (
-                data.unit_completed ? '完成' : '下一题'
-              )}
-            </motion.button>
-          </>
+          </motion.button>
         )}
       </div>
     </motion.div>
