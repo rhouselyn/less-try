@@ -510,21 +510,12 @@ async def get_word_details(file_id: str, word: str):
 
         # 查找单词
         word_data = None
-        # 首先尝试精确匹配
         for entry in vocab:
             print(f"[DEBUG] 检查词汇表条目: {entry['word']}")
             if entry["word"].lower() == word.lower():
                 word_data = entry
                 print(f"[DEBUG] 找到单词: {word}")
                 break
-        
-        # 如果精确匹配失败，尝试包含匹配
-        if not word_data:
-            for entry in vocab:
-                if word.lower() in entry["word"].lower():
-                    word_data = entry
-                    print(f"[DEBUG] 找到包含单词的条目: {entry['word']}")
-                    break
 
         if not word_data:
             print(f"[DEBUG] 未找到单词: {word}")
@@ -889,24 +880,13 @@ async def generate_sentence_quiz(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
-                # 使用text_processor的tokenize_sentence函数进行分词，正确处理缩写形式
-                words_in_sentence = set(word.lower() for word in text_processor.tokenize_sentence(sentence))
+                # 简单分词（按空格）
+                words_in_sentence = set(word.lower() for word in sentence.split() if word.isalpha())
                 print(f"[DEBUG] 句子中的单词: {words_in_sentence}")
-                
                 # 检查是否所有单词都在已学单词中，且至少2个单词
                 if words_in_sentence.issubset(learned_word_set) and len(words_in_sentence) >= 2:
                     eligible_sentences.append(sentence_data)
-                    print(f"[DEBUG] 句子符合条件 (所有单词都在已学集合中): {sentence}")
-                else:
-                    # 检查是否至少有2个已学单词在句子中
-                    matched_words = 0
-                    for word in learned_word_set:
-                        if word in words_in_sentence:
-                            matched_words += 1
-                            if matched_words >= 2:
-                                eligible_sentences.append(sentence_data)
-                                print(f"[DEBUG] 句子符合条件 (至少2个已学单词): {sentence}")
-                                break
+                    print(f"[DEBUG] 句子符合条件: {sentence}")
         
         if not eligible_sentences:
             raise HTTPException(status_code=404, detail="No eligible sentences found")
@@ -971,7 +951,6 @@ async def generate_sentence_quiz(file_id: str):
         print(f"[DEBUG] 清理后的翻译: {correct_translation}")
         
         return {
-            "sentence": original_sentence,
             "original_sentence": original_sentence,
             "correct_translation": correct_translation,
             "correct_tokens": correct_tokens,

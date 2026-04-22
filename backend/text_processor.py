@@ -207,42 +207,16 @@ class TextProcessor:
                 else:
                     masked_tokens.append(token)
         
-        # 生成选项：只使用干扰项，不包含正确答案
-        # 从词汇表中找干扰项，确保不包含当前句子的单词
-        options = []
+        # 生成选项：正确答案 + 干扰项（来自vocab的其他单词）
+        options = answer_words.copy()
+        # 从词汇表中找干扰项
         distractors = []
         vocab_words = [v["word"] for v in vocab]
-        # 获取当前句子中的所有单词（用于排除）
-        current_sentence_words = set()
-        for word in words:
-            current_sentence_words.add(word.lower())
-        # 扩展排除列表，包括当前句子中单词的变体
-        for word in list(current_sentence_words):
-            # 排除单词的不同形式
-            if word.endswith("'s"):
-                current_sentence_words.add(word[:-2])
-            elif word.endswith("'t"):
-                current_sentence_words.add(word[:-2])
-            # 排除单词的部分形式
-            parts = word.split()
-            for part in parts:
-                current_sentence_words.add(part)
-        # 打乱词汇表
+        answer_lower = [w.lower() for w in answer_words]
         random.shuffle(vocab_words)
         for vw in vocab_words:
-            vw_lower = vw.lower()
-            # 确保干扰项不在当前句子中
-            if vw_lower not in current_sentence_words and len(distractors) < 3 * num_masks:
-                # 也确保干扰项的任何部分都不在当前句子中
-                vw_parts = vw_lower.split()
-                if not any(part in current_sentence_words for part in vw_parts):
-                    distractors.append(vw)
-        
-        # 如果词汇表中没有足够的干扰项，使用备选词库
-        if len(distractors) < 3 * num_masks:
-            fallback_needed = 3 * num_masks - len(distractors)
-            fallback_distractors = self.get_fallback_distractors(fallback_needed, list(current_sentence_words))
-            distractors.extend(fallback_distractors)
+            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+                distractors.append(vw)
         
         # 如果词汇表不够，添加一些常见的英语干扰词
         backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish", "grape", "house"]
@@ -380,42 +354,16 @@ class TextProcessor:
                 else:
                     masked_tokens.append(token)
         
-        # 生成选项：只使用干扰项，不包含正确答案
-        # 从词汇表中找干扰项，确保不包含当前句子的单词
-        options = []
+        # 生成选项：正确答案 + 干扰项
+        options = answer_words.copy()
+        # 从词汇表中找干扰项
         distractors = []
         vocab_words = [v["word"] for v in vocab]
-        # 获取当前句子中的所有单词（用于排除）
-        current_sentence_words = set()
-        for word in words:
-            current_sentence_words.add(word.lower())
-        # 扩展排除列表，包括当前句子中单词的变体
-        for word in list(current_sentence_words):
-            # 排除单词的不同形式
-            if word.endswith("'s"):
-                current_sentence_words.add(word[:-2])
-            elif word.endswith("'t"):
-                current_sentence_words.add(word[:-2])
-            # 排除单词的部分形式
-            parts = word.split()
-            for part in parts:
-                current_sentence_words.add(part)
-        # 打乱词汇表
+        answer_lower = [w.lower() for w in answer_words]
         random.shuffle(vocab_words)
         for vw in vocab_words:
-            vw_lower = vw.lower()
-            # 确保干扰项不在当前句子中
-            if vw_lower not in current_sentence_words and len(distractors) < 3 * num_masks:
-                # 也确保干扰项的任何部分都不在当前句子中
-                vw_parts = vw_lower.split()
-                if not any(part in current_sentence_words for part in vw_parts):
-                    distractors.append(vw)
-        
-        # 如果词汇表中没有足够的干扰项，使用备选词库
-        if len(distractors) < 3 * num_masks:
-            fallback_needed = 3 * num_masks - len(distractors)
-            fallback_distractors = self.get_fallback_distractors(fallback_needed, list(current_sentence_words))
-            distractors.extend(fallback_distractors)
+            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
+                distractors.append(vw)
         
         # 如果词汇表不够，使用备选词库
         if len(distractors) < 3 * num_masks:
