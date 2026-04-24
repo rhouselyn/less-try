@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-function MaskedSentenceExerciseStep({ data, onNext, onBack, loading, t, onOpenVocabList }) {
+function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList }) {
   const [selectedWords, setSelectedWords] = useState([]);
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -168,7 +168,14 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, loading, t, onOpenVo
           <motion.button
             whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
             whileTap={{ scale: 0.97, y: 0 }}
-            onClick={handleNext}
+            onClick={() => {
+              if (data.unit_completed || data.unit_complete) {
+                // 单元完成，回到all-units页面
+                onComplete();
+              } else {
+                handleNext();
+              }
+            }}
             disabled={loading}
             className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >

@@ -81,7 +81,7 @@ function AllUnitsStep({
                     )}
                   </div>
                   <p className="text-sm text-slate-600">
-                    {unit.sentences_count} 个句子
+                    {unit.word_count || unit.sentences_count} {unit.word_count ? '个单词' : '个句子'}
                   </p>
                 </motion.button>
               ))}

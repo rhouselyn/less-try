@@ -386,30 +386,23 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       if (nextRes.unit_complete) {
-        // 单元完成，不弹出提示，直接回到all-units页面
-        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
-          api.getPhaseUnits(currentFileId, 2)
-        ])
-        setPhase1Units(phase1UnitsData.units)
-        setPhase2Units(phase2UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
+        // 单元完成，更新当前练习数据，显示结束信息
+        const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
+        setExerciseType(exerciseData.exercise_type || 'masked_sentence')
+        setCurrentExerciseData({
+          ...exerciseData.data,
+          unit_complete: true
+        })
       } else {
         // Get next exercise
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
-          // 单元完成，不弹出提示，直接回到all-units页面
-          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-            api.getPhaseUnits(currentFileId, 1),
-            api.getPhaseUnits(currentFileId, 2)
-          ])
-          setPhase1Units(phase1UnitsData.units)
-          setPhase2Units(phase2UnitsData.units)
-          setCurrentPhase1Unit(phase1UnitsData.current_unit)
-          setCurrentPhase2Unit(phase2UnitsData.current_unit)
-          setStep('all-units')
+          // 单元完成，更新当前练习数据，显示结束信息
+          setExerciseType(exerciseData.exercise_type || 'masked_sentence')
+          setCurrentExerciseData({
+            ...exerciseData.data,
+            unit_complete: true
+          })
         } else {
           setExerciseType(exerciseData.exercise_type)
           setCurrentExerciseData(exerciseData.data)
@@ -797,6 +790,18 @@ function App() {
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
+              onComplete={async () => {
+                // 单元完成，更新所有单元的状态，然后回到all-units页面
+                const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+                  api.getPhaseUnits(currentFileId, 1),
+                  api.getPhaseUnits(currentFileId, 2)
+                ])
+                setPhase1Units(phase1UnitsData.units)
+                setPhase2Units(phase2UnitsData.units)
+                setCurrentPhase1Unit(phase1UnitsData.current_unit)
+                setCurrentPhase2Unit(phase2UnitsData.current_unit)
+                setStep('all-units')
+              }}
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
@@ -809,6 +814,18 @@ function App() {
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
+              onComplete={async () => {
+                // 单元完成，更新所有单元的状态，然后回到all-units页面
+                const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+                  api.getPhaseUnits(currentFileId, 1),
+                  api.getPhaseUnits(currentFileId, 2)
+                ])
+                setPhase1Units(phase1UnitsData.units)
+                setPhase2Units(phase2UnitsData.units)
+                setCurrentPhase1Unit(phase1UnitsData.current_unit)
+                setCurrentPhase2Unit(phase2UnitsData.current_unit)
+                setStep('all-units')
+              }}
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
