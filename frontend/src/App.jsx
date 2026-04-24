@@ -254,23 +254,15 @@ function App() {
     
     setLoading(true)
     try {
-      // 阶段1使用getLearningProgress获取基于单词数量的单元信息
-      // 阶段2使用getPhaseUnits获取基于句子数量的单元信息
-      const [phase1ProgressData, phase2UnitsData] = await Promise.all([
-        api.getLearningProgress(currentFileId),
+      // 同时获取两个阶段的单元
+      const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+        api.getPhaseUnits(currentFileId, 1),
         api.getPhaseUnits(currentFileId, 2)
       ])
       
-      // 转换phase1ProgressData为与phase2UnitsData相同的格式
-      const phase1Units = phase1ProgressData.units.map((unit, index) => ({
-        unit_id: index,
-        sentences_count: unit.word_count, // 这里保持字段名一致，但显示时会根据阶段不同而显示不同的文本
-        completed: unit.completed
-      }))
-      
-      setPhase1Units(phase1Units)
+      setPhase1Units(phase1UnitsData.units)
       setPhase2Units(phase2UnitsData.units)
-      setCurrentPhase1Unit(phase1ProgressData.current_unit)
+      setCurrentPhase1Unit(phase1UnitsData.current_unit)
       setCurrentPhase2Unit(phase2UnitsData.current_unit)
       setStep('all-units')
     } catch (error) {
@@ -394,28 +386,30 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       if (nextRes.unit_complete) {
-        // 单元完成，获取最后一个练习的信息，显示结束提示
-        const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
-        // 将unit_complete信息添加到data中，这样前端组件就能显示结束提示
-        if (exerciseData.data) {
-          exerciseData.data.unit_complete = true
-        } else {
-          exerciseData.data = { unit_complete: true }
-        }
-        setExerciseType(exerciseData.exercise_type || 'masked_sentence')
-        setCurrentExerciseData(exerciseData.data)
+        // 单元完成，不弹出提示，直接回到all-units页面
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
       } else {
         // Get next exercise
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
-          // 单元完成，将unit_complete信息添加到data中
-          if (exerciseData.data) {
-            exerciseData.data.unit_complete = true
-          } else {
-            exerciseData.data = { unit_complete: true }
-          }
-          setExerciseType(exerciseData.exercise_type || 'masked_sentence')
-          setCurrentExerciseData(exerciseData.data)
+          // 单元完成，不弹出提示，直接回到all-units页面
+          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+            api.getPhaseUnits(currentFileId, 1),
+            api.getPhaseUnits(currentFileId, 2)
+          ])
+          setPhase1Units(phase1UnitsData.units)
+          setPhase2Units(phase2UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          setStep('all-units')
         } else {
           setExerciseType(exerciseData.exercise_type)
           setCurrentExerciseData(exerciseData.data)

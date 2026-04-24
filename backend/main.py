@@ -1178,11 +1178,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             exercise_index += 1
         
         if exercise_index >= len(unit_sentences) * 2:
-            return {
-                "exercise_type": "masked_sentence",
-                "data": {"unit_complete": True},
-                "unit_complete": True
-            }
+            return {"unit_complete": True}
         
         # 确定练习类型
         sentence_idx = exercise_index // 2
