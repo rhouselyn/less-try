@@ -81,7 +81,7 @@ function AllUnitsStep({
                     )}
                   </div>
                   <p className="text-sm text-slate-600">
-                    {unit.word_count ? `${unit.word_count} 个单词` : `${unit.sentences_count} 个句子`}
+                    {unit.sentences_count} 个句子
                   </p>
                 </motion.button>
               ))}
@@ -122,7 +122,7 @@ function AllUnitsStep({
                     )}
                   </div>
                   <p className="text-sm text-slate-600">
-                    {unit.word_count ? `${unit.word_count} 个单词` : `${unit.sentences_count} 个句子`}
+                    {unit.sentences_count} 个句子
                   </p>
                 </motion.button>
               ))}
