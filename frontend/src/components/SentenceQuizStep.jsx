@@ -230,54 +230,36 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             </motion.button>
           )}
           {isChecked && (
-            <>
-              {!quizData.unit_completed && (
-                <motion.button
-                  whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-                  whileTap={{ scale: 0.97, y: 0 }}
-                  onClick={handleNextQuestion}
-                  disabled={loading}
-                  className="flex-1 py-4 bg-gray-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      {t.loading}
-                    </>
-                  ) : (
-                    <>
-                      {t.continue}
-                      <ChevronRight className="w-5 h-5" />
-                    </>
-                  )}
-                </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
+              whileTap={{ scale: 0.97, y: 0 }}
+              onClick={() => {
+                setSelectedTokens([]);
+                setIsChecked(false);
+                setIsCorrect(false);
+                if (quizData.unit_completed || quizData.unit_complete) {
+                  onComplete();
+                } else {
+                  handleNextQuestion();
+                }
+              }}
+              disabled={loading}
+              className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {t.loading}
+                </>
+              ) : (quizData.unit_completed || quizData.unit_complete) ? (
+                '完成'
+              ) : (
+                <>
+                  下一题
+                  <ChevronRight className="w-5 h-5" />
+                </>
               )}
-              <motion.button
-                whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-                whileTap={{ scale: 0.97, y: 0 }}
-                onClick={() => {
-                  setSelectedTokens([]);
-                  setIsChecked(false);
-                  setIsCorrect(false);
-                  if (quizData.unit_completed) {
-                    onComplete();
-                  } else {
-                    handleNextQuestion();
-                  }
-                }}
-                disabled={loading}
-                className={`flex-1 py-4 font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${quizData.unit_completed ? 'bg-black text-white' : 'bg-gray-200 text-gray-800'}`}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {t.loading}
-                  </>
-                ) : (
-                  quizData.unit_completed ? '完成' : '下一题'
-                )}
-              </motion.button>
-            </>
+            </motion.button>
           )}
         </div>
       </div>

@@ -116,5 +116,14 @@ export const api = {
   completePhaseUnit: async (fileId, phaseNumber, unitId) => {
     const response = await axios.post(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/unit/${unitId}/complete`);
     return response.data;
+  },
+  
+  // 设置阶段进度
+  setPhaseProgress: async (fileId, phaseNumber, unitId = 0, exerciseIndex = 0) => {
+    const response = await axios.post(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/set-progress`, {
+      unit_id: unitId,
+      exercise_index: exerciseIndex,
+    });
+    return response.data;
   }
 };

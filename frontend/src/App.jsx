@@ -737,7 +737,17 @@ function App() {
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => setStep('all-units')}
-              onComplete={() => setStep('all-units')}
+              onComplete={async () => {
+                // 单元完成，更新阶段一的进度
+                if (currentFileId && currentPhase) {
+                  // 计算下一个单元
+                  const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+                  const nextUnit = phase1UnitsData.current_unit + 1
+                  // 更新阶段一的进度
+                  await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
+                }
+                setStep('all-units')
+              }}
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
