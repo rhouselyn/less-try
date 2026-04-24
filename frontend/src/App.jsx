@@ -254,15 +254,21 @@ function App() {
     
     setLoading(true)
     try {
-      // 同时获取两个阶段的单元
-      const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-        api.getPhaseUnits(currentFileId, 1),
-        api.getPhaseUnits(currentFileId, 2)
-      ])
+      // 获取第一阶段（单词学习）的进度
+      const phase1ProgressData = await api.getLearningProgress(currentFileId)
+      // 获取第二阶段（句子练习）的单元
+      const phase2UnitsData = await api.getPhaseUnits(currentFileId, 2)
       
-      setPhase1Units(phase1UnitsData.units)
+      // 转换第一阶段的单元数据格式，使其与第二阶段一致
+      const phase1Units = phase1ProgressData.units.map((unit, index) => ({
+        unit_id: index,
+        word_count: unit.word_count,
+        completed: unit.completed
+      }))
+      
+      setPhase1Units(phase1Units)
       setPhase2Units(phase2UnitsData.units)
-      setCurrentPhase1Unit(phase1UnitsData.current_unit)
+      setCurrentPhase1Unit(phase1ProgressData.current_unit)
       setCurrentPhase2Unit(phase2UnitsData.current_unit)
       setStep('all-units')
     } catch (error) {
@@ -333,13 +339,19 @@ function App() {
       const exerciseData = await api.getPhaseUnitExercise(currentFileId, 2, unitId)
       if (exerciseData.unit_complete) {
         // 单元完成，重新加载所有单元
-        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
-          api.getPhaseUnits(currentFileId, 2)
-        ])
-        setPhase1Units(phase1UnitsData.units)
+        const phase1ProgressData = await api.getLearningProgress(currentFileId)
+        const phase2UnitsData = await api.getPhaseUnits(currentFileId, 2)
+        
+        // 转换第一阶段的单元数据格式
+        const phase1Units = phase1ProgressData.units.map((unit, index) => ({
+          unit_id: index,
+          word_count: unit.word_count,
+          completed: unit.completed
+        }))
+        
+        setPhase1Units(phase1Units)
         setPhase2Units(phase2UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase1Unit(phase1ProgressData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setStep('all-units')
       } else {
@@ -386,29 +398,47 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       if (nextRes.unit_complete) {
-        // 单元完成，不弹出提示，直接回到all-units页面
-        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
-          api.getPhaseUnits(currentFileId, 2)
-        ])
-        setPhase1Units(phase1UnitsData.units)
+        // 获取更新后的单元数据
+        const phase1ProgressData = await api.getLearningProgress(currentFileId)
+        const phase2UnitsData = await api.getPhaseUnits(currentFileId, 2)
+        
+        // 转换第一阶段的单元数据格式
+        const phase1Units = phase1ProgressData.units.map((unit, index) => ({
+          unit_id: index,
+          word_count: unit.word_count,
+          completed: unit.completed
+        }))
+        
+        setPhase1Units(phase1Units)
         setPhase2Units(phase2UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase1Unit(phase1ProgressData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        
+        // 显示单元完成提示
+        alert('🎉 该单元学习已完成！')
         setStep('all-units')
       } else {
         // Get next exercise
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
-          // 单元完成，不弹出提示，直接回到all-units页面
-          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-            api.getPhaseUnits(currentFileId, 1),
-            api.getPhaseUnits(currentFileId, 2)
-          ])
-          setPhase1Units(phase1UnitsData.units)
+          // 获取更新后的单元数据
+          const phase1ProgressData = await api.getLearningProgress(currentFileId)
+          const phase2UnitsData = await api.getPhaseUnits(currentFileId, 2)
+          
+          // 转换第一阶段的单元数据格式
+          const phase1Units = phase1ProgressData.units.map((unit, index) => ({
+            unit_id: index,
+            word_count: unit.word_count,
+            completed: unit.completed
+          }))
+          
+          setPhase1Units(phase1Units)
           setPhase2Units(phase2UnitsData.units)
-          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase1Unit(phase1ProgressData.current_unit)
           setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          
+          // 显示单元完成提示
+          alert('🎉 该单元学习已完成！')
           setStep('all-units')
         } else {
           setExerciseType(exerciseData.exercise_type)
