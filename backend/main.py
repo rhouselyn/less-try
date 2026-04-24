@@ -941,8 +941,9 @@ async def generate_sentence_quiz(file_id: str):
                     for token in sentence_data["translation_result"]["translation"]:
                         if isinstance(token, dict) and "text" in token:
                             sentence_tokens.append(token["text"].lower())
+                print(f"[DEBUG] 句子 '{sentence}' 的tokens: {sentence_tokens}")
                 
-                # 使用新的匹配逻辑：检查是否有至少2个已学tokens与当前句子匹配
+                # 使用新的匹配逻辑：检查是否有至少1个已学tokens与当前句子匹配
                 matched_count = 0
                 for learned_word in learned_words:
                     # 获取已学单词的所有tokens
@@ -951,19 +952,22 @@ async def generate_sentence_quiz(file_id: str):
                         learned_word_tokens = [t.lower() for t in learned_word['tokens']]
                     else:
                         learned_word_tokens = [learned_word["word"].lower()]
+                    print(f"[DEBUG] 已学单词 '{learned_word['word']}' 的tokens: {learned_word_tokens}")
                     
                     # 检查这些tokens是否在句子的tokens中
                     for lt in learned_word_tokens:
                         for st in sentence_tokens:
+                            print(f"[DEBUG] 检查 '{lt}' 是否在 '{st}' 中")
                             if lt in st or st in lt:
                                 matched_count += 1
-                                if matched_count >= 2:
+                                print(f"[DEBUG] 找到匹配: {lt} 在 {st} 中")
+                                if matched_count >= 1:
                                     eligible_sentences.append(sentence_data)
                                     print(f"[DEBUG] 句子符合条件: {sentence}")
                                     break
-                        if matched_count >= 2:
+                        if matched_count >= 1:
                             break
-                    if matched_count >= 2:
+                    if matched_count >= 1:
                         break
         
         # 打印eligible_sentences
