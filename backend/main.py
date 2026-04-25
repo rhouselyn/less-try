@@ -671,34 +671,12 @@ async def get_learning_progress(file_id: str):
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
-        
-        # 计算当前单元
         current_unit = current_index // group_size
         
         # 标记已完成的单元
         for i in range(current_unit):
             if i < len(units):
                 units[i]["completed"] = True
-        
-        # 检查当前单元是否已完成
-        if current_index > 0:
-            # 计算当前单元的起始和结束索引
-            # 对于第一个单元，current_unit 是 0，所以我们需要特殊处理
-            if current_unit > 0:
-                # 不是第一个单元
-                current_unit_start = (current_unit - 1) * group_size
-                current_unit_end = current_unit_start + group_size
-                
-                # 如果当前进度已经超过了当前单元的结束索引，标记当前单元为已完成
-                if current_index >= current_unit_end and current_unit - 1 < len(units):
-                    units[current_unit - 1]["completed"] = True
-            else:
-                # 是第一个单元
-                current_unit_end = group_size
-                
-                # 如果当前进度已经超过了当前单元的结束索引，或者已经学完了所有单词，标记当前单元为已完成
-                if (current_index >= current_unit_end or current_index >= len(vocab)) and 0 < len(units):
-                    units[0]["completed"] = True
         
         total_units = len(units)
         all_units_completed = current_unit >= total_units
@@ -875,51 +853,34 @@ async def check_coverage(file_id: str):
                             sentence_tokens.append(token["text"].lower())
                 print(f"[DEBUG] 句子的LLM tokens: {sentence_tokens}")
                 
-                # 使用新的匹配逻辑：检查已学单词是否与句子匹配
+                # 使用新的匹配逻辑：检查已学单词的tokens是否与句子的tokens有重叠
                 matched_count = 0
                 matched_tokens = []
                 
                 for learned_word in learned_words:
-                    # 获取已学单词的单词形式
-                    learned_word_text = learned_word["word"].lower()
+                    # 获取已学单词的所有tokens
+                    learned_word_tokens = []
+                    if 'tokens' in learned_word:
+                        learned_word_tokens = [t.lower() for t in learned_word['tokens']]
+                    else:
+                        learned_word_tokens = [learned_word["word"].lower()]
                     
-                    print(f"[DEBUG] 检查已学单词: {learned_word['word']}")
+                    print(f"[DEBUG] 检查已学单词: {learned_word['word']}, 其tokens: {learned_word_tokens}")
                     
-                    # 检查单词是否在句子中
-                    if learned_word_text in sentence.lower():
-                        matched_count += 1
-                        matched_tokens.append(learned_word_text)
-                        print(f"[DEBUG] 匹配成功: {learned_word_text}")
-                        if matched_count >= 2:
-                            can_form = True
-                            break
-                
-                if not can_form:
-                    # 如果直接匹配失败，尝试使用tokens匹配
-                    for learned_word in learned_words:
-                        # 获取已学单词的所有tokens
-                        learned_word_tokens = []
-                        if 'tokens' in learned_word:
-                            learned_word_tokens = [t.lower() for t in learned_word['tokens']]
-                        else:
-                            learned_word_tokens = [learned_word["word"].lower()]
-                        
-                        print(f"[DEBUG] 检查已学单词tokens: {learned_word['word']}, 其tokens: {learned_word_tokens}")
-                        
-                        # 检查这些tokens是否在句子的tokens中
-                        for lt in learned_word_tokens:
-                            for st in sentence_tokens:
-                                if lt in st or st in lt:
-                                    matched_count += 1
-                                    matched_tokens.append((lt, st))
-                                    print(f"[DEBUG] 匹配成功: {lt} <-> {st}")
-                                    if matched_count >= 2:
-                                        can_form = True
-                                        break
-                            if can_form:
-                                break
+                    # 检查这些tokens是否在句子的tokens中
+                    for lt in learned_word_tokens:
+                        for st in sentence_tokens:
+                            if lt in st or st in lt:
+                                matched_count += 1
+                                matched_tokens.append((lt, st))
+                                print(f"[DEBUG] 匹配成功: {lt} <-> {st}")
+                                if matched_count >= 2:
+                                    can_form = True
+                                    break
                         if can_form:
                             break
+                    if can_form:
+                        break
                 
                 if can_form:
                     print(f"[DEBUG] 可以生成句子！匹配的token对: {matched_tokens}")
@@ -986,45 +947,29 @@ async def generate_sentence_quiz(file_id: str):
                         if isinstance(token, dict) and "text" in token:
                             sentence_tokens.append(token["text"].lower())
                 
-                # 使用新的匹配逻辑：检查是否有至少2个已学单词与当前句子匹配
+                # 使用新的匹配逻辑：检查是否有至少2个已学tokens与当前句子匹配
                 matched_count = 0
-                
-                # 先尝试直接匹配单词
                 for learned_word in learned_words:
-                    # 获取已学单词的单词形式
-                    learned_word_text = learned_word["word"].lower()
+                    # 获取已学单词的所有tokens
+                    learned_word_tokens = []
+                    if 'tokens' in learned_word:
+                        learned_word_tokens = [t.lower() for t in learned_word['tokens']]
+                    else:
+                        learned_word_tokens = [learned_word["word"].lower()]
                     
-                    # 检查单词是否在句子中
-                    if learned_word_text in sentence.lower():
-                        matched_count += 1
-                        if matched_count >= 2:
-                            eligible_sentences.append(sentence_data)
-                            print(f"[DEBUG] 句子符合条件: {sentence}")
-                            break
-                
-                # 如果直接匹配失败，尝试使用tokens匹配
-                if matched_count < 2:
-                    for learned_word in learned_words:
-                        # 获取已学单词的所有tokens
-                        learned_word_tokens = []
-                        if 'tokens' in learned_word:
-                            learned_word_tokens = [t.lower() for t in learned_word['tokens']]
-                        else:
-                            learned_word_tokens = [learned_word["word"].lower()]
-                        
-                        # 检查这些tokens是否在句子的tokens中
-                        for lt in learned_word_tokens:
-                            for st in sentence_tokens:
-                                if lt in st or st in lt:
-                                    matched_count += 1
-                                    if matched_count >= 2:
-                                        eligible_sentences.append(sentence_data)
-                                        print(f"[DEBUG] 句子符合条件: {sentence}")
-                                        break
-                            if matched_count >= 2:
-                                break
+                    # 检查这些tokens是否在句子的tokens中
+                    for lt in learned_word_tokens:
+                        for st in sentence_tokens:
+                            if lt in st or st in lt:
+                                matched_count += 1
+                                if matched_count >= 2:
+                                    eligible_sentences.append(sentence_data)
+                                    print(f"[DEBUG] 句子符合条件: {sentence}")
+                                    break
                         if matched_count >= 2:
                             break
+                    if matched_count >= 2:
+                        break
         
         # 打印eligible_sentences
         print(f"[DEBUG] eligible_sentences: {[s.get('sentence') for s in eligible_sentences]}")
@@ -1184,27 +1129,9 @@ async def get_phase_units(file_id: str, phase_number: int):
             phase1_units = []
             for i in range(0, len(vocab), group_size):
                 unit_words = vocab[i:i+group_size]
-                unit_index = i // group_size
-                # 检查该单元是否已完成
-                completed = False
-                if unit_index < current_unit:
-                    # 该单元在当前单元之前，已完成
-                    completed = True
-                elif current_unit == 0:
-                    # 是第一个单元
-                    unit_end = group_size
-                    if current_index >= unit_end or current_index >= len(vocab):
-                        # 已学完第一个单元的所有单词，或者已学完所有单词
-                        completed = True
-                else:
-                    # 不是第一个单元
-                    unit_end = (current_unit - 1) * group_size + group_size
-                    if unit_index == current_unit - 1 and (current_index >= unit_end or current_index >= len(vocab)):
-                        # 已学完当前单元的所有单词，或者已学完所有单词
-                        completed = True
                 phase1_units.append({
                     "word_count": len(unit_words),
-                    "completed": completed
+                    "completed": (i // group_size) < current_unit
                 })
             
             return {
@@ -1289,9 +1216,6 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         
         if exercise_index >= len(unit_sentences):
             return {"unit_complete": True}
-        
-        # 更新进度为找到的有效练习索引
-        storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index)
         
         # 确定练习类型
         sentence_idx = exercise_index
