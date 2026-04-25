@@ -1120,10 +1120,10 @@ async def get_phase_units(file_id: str, phase_number: int):
         
         # 加载进度
         if phase_number == 1:
-            # 阶段一使用单词学习进度
+            # 阶段一使用阶段进度
             group_size = 10
-            current_index = storage.load_learning_progress(file_id)
-            current_unit = current_index // group_size
+            progress = storage.load_phase_progress(file_id, phase_number)
+            current_unit = progress["current_unit"]
             
             # 生成阶段一的单元列表
             phase1_units = []
@@ -1223,6 +1223,9 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         
         current_sentence_data = unit_sentences[sentence_idx]
         current_sentence = current_sentence_data["sentence"]
+        
+        # 更新进度到找到的有效练习
+        storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index)
         
         # 安全检查：防止无限递归
         import time
