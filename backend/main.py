@@ -1199,16 +1199,16 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         # 找到下一个有效练习，跳过只有单个token的句子
         while exercise_index < len(unit_sentences):
             sentence_idx = exercise_index
-            # 随机选择练习类型
-            import random
-            exercise_type = random.randint(0, 1)
+            # 为每个句子固定一个练习类型，避免重复
+            # 使用句子的哈希值来确定练习类型，确保相同句子总是使用相同的练习类型
+            exercise_type = hash(unit_sentences[sentence_idx]["sentence"]) % 2
             
             current_sentence_data = unit_sentences[sentence_idx]
             current_sentence = current_sentence_data["sentence"]
             
             # 检查是否有多个token
             if has_multiple_tokens(current_sentence_data):
-                print(f"[DEBUG] 找到有效练习，句子: {current_sentence}")
+                print(f"[DEBUG] 找到有效练习，句子: {current_sentence}, 练习类型: {exercise_type}")
                 break
             
             print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence}")
@@ -1219,7 +1219,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         
         # 确定练习类型
         sentence_idx = exercise_index
-        # 保持之前随机选择的练习类型
+        # 使用之前确定的固定练习类型
         
         current_sentence_data = unit_sentences[sentence_idx]
         current_sentence = current_sentence_data["sentence"]

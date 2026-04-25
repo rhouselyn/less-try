@@ -586,9 +586,20 @@ function App() {
           const quizResponse = await api.generateSentenceQuiz(currentFileId)
           
           // 检查是否所有句子都已使用
-          if (quizResponse.unit_completed) {
-            // 单元已完成
-            setStep('progress')
+          if (quizResponse.unit_completed || coverageData.unit_completed) {
+            // 单元已完成，更新阶段一的进度
+            if (currentFileId) {
+              // 计算下一个单元
+              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+              const nextUnit = phase1UnitsData.current_unit + 1
+              // 更新阶段一的进度
+              await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
+              // 重新加载阶段一的单元数据
+              const updatedPhase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+              setPhase1Units(updatedPhase1UnitsData.units)
+              setCurrentPhase1Unit(updatedPhase1UnitsData.current_unit)
+            }
+            setStep('all-units')
           } else {
             setQuizData({
               ...quizResponse,
@@ -600,14 +611,36 @@ function App() {
         } catch (quizError) {
           if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
             // 所有句子都已使用，单元已完成
-            setStep('progress')
+            if (currentFileId) {
+              // 计算下一个单元
+              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+              const nextUnit = phase1UnitsData.current_unit + 1
+              // 更新阶段一的进度
+              await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
+              // 重新加载阶段一的单元数据
+              const updatedPhase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+              setPhase1Units(updatedPhase1UnitsData.units)
+              setCurrentPhase1Unit(updatedPhase1UnitsData.current_unit)
+            }
+            setStep('all-units')
           } else {
             throw quizError
           }
         }
       } else if (coverageData.unit_completed) {
         // 单元已完成
-        setStep('progress')
+        if (currentFileId) {
+          // 计算下一个单元
+          const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+          const nextUnit = phase1UnitsData.current_unit + 1
+          // 更新阶段一的进度
+          await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
+          // 重新加载阶段一的单元数据
+          const updatedPhase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+          setPhase1Units(updatedPhase1UnitsData.units)
+          setCurrentPhase1Unit(updatedPhase1UnitsData.current_unit)
+        }
+        setStep('all-units')
       } else {
         // 回到单词学习
         const response = await api.getRandomWord(currentFileId)
