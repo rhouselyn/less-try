@@ -1120,18 +1120,29 @@ async def get_phase_units(file_id: str, phase_number: int):
         
         # 加载进度
         if phase_number == 1:
-            # 阶段一使用单词学习进度
+            # 阶段一同时检查单词学习进度和阶段进度
             group_size = 10
             current_index = storage.load_learning_progress(file_id)
-            current_unit = current_index // group_size
+            learning_current_unit = current_index // group_size
+            
+            # 加载阶段一的进度
+            phase_progress = storage.load_phase_progress(file_id, phase_number)
+            phase_current_unit = phase_progress["current_unit"]
+            
+            # 取较大的那个作为当前单元，确保进度正确
+            current_unit = max(learning_current_unit, phase_current_unit)
+            
+            print(f"[DEBUG] 阶段一单元进度: learning={learning_current_unit}, phase={phase_current_unit}, current={current_unit}")
             
             # 生成阶段一的单元列表
             phase1_units = []
             for i in range(0, len(vocab), group_size):
                 unit_words = vocab[i:i+group_size]
+                # 如果单元索引小于current_unit，则标记为完成
+                is_completed = (i // group_size) < current_unit
                 phase1_units.append({
                     "word_count": len(unit_words),
-                    "completed": (i // group_size) < current_unit
+                    "completed": is_completed
                 })
             
             return {
@@ -1197,29 +1208,29 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         exercise_index = progress["current_exercise"]
         
         # 找到下一个有效练习，跳过只有单个token的句子
-        while exercise_index < len(unit_sentences):
-            sentence_idx = exercise_index
-            # 随机选择练习类型
-            import random
-            exercise_type = random.randint(0, 1)
-            
+        # 每个句子有两种练习类型，exercise_index % 2 决定练习类型
+        sentence_idx = exercise_index // 2
+        exercise_type = exercise_index % 2
+        
+        # 首先找到有效的sentence_idx
+        while sentence_idx < len(unit_sentences):
             current_sentence_data = unit_sentences[sentence_idx]
             current_sentence = current_sentence_data["sentence"]
             
             # 检查是否有多个token
             if has_multiple_tokens(current_sentence_data):
-                print(f"[DEBUG] 找到有效练习，句子: {current_sentence}")
+                print(f"[DEBUG] 找到有效练习，句子: {current_sentence}, 练习类型: {exercise_type}")
                 break
             
             print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence}")
-            exercise_index += 1
+            sentence_idx += 1
+            exercise_type = 0  # 从练习类型0开始
         
-        if exercise_index >= len(unit_sentences):
+        if sentence_idx >= len(unit_sentences):
             return {"unit_complete": True}
         
-        # 确定练习类型
-        sentence_idx = exercise_index
-        # 保持之前随机选择的练习类型
+        # 确定最终的exercise_index
+        exercise_index = sentence_idx * 2 + exercise_type
         
         current_sentence_data = unit_sentences[sentence_idx]
         current_sentence = current_sentence_data["sentence"]
@@ -1341,11 +1352,15 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
             return {"success": False, "error": "Unit not found"}
         
         unit_sentences = units[unit_id]
-        max_exercises = len(unit_sentences)
+        # 每个句子有两种练习类型
+        max_exercises = len(unit_sentences) * 2
         
         # 找到下一个有效练习，跳过只有单个token的句子
+        # 每个句子有两种练习类型
         while new_exercise_index < max_exercises:
-            sentence_idx = new_exercise_index
+            sentence_idx = new_exercise_index // 2
+            exercise_type = new_exercise_index % 2
+            
             current_sentence_data = unit_sentences[sentence_idx]
             
             if has_multiple_tokens(current_sentence_data):
@@ -1353,6 +1368,9 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
             
             print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence_data['sentence']}")
             new_exercise_index += 1
+            # 确保新的exercise_index从下一个句子的练习类型0开始
+            if new_exercise_index % 2 == 1:
+                new_exercise_index += 1
         
         if new_exercise_index >= max_exercises:
             # 单元完成，进入下一个单元

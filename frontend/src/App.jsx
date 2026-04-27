@@ -739,12 +739,34 @@ function App() {
               onBack={() => setStep('all-units')}
               onComplete={async () => {
                 // 单元完成，更新阶段一的进度
-                if (currentFileId && currentPhase) {
-                  // 计算下一个单元
-                  const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-                  const nextUnit = phase1UnitsData.current_unit + 1
-                  // 更新阶段一的进度
-                  await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
+                if (currentFileId) {
+                  try {
+                    // 先获取阶段一的单元信息
+                    const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+                    const currentUnit = phase1UnitsData.current_unit
+                    const nextUnit = currentUnit + 1
+                    
+                    console.log('[DEBUG] 第一阶段单元完成:', {
+                      currentUnit,
+                      nextUnit,
+                      totalUnits: phase1UnitsData.units.length
+                    })
+                    
+                    // 更新阶段一的进度
+                    await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
+                    
+                    // 重新获取单元信息，确保界面显示正确的完成状态
+                    const [phase1Data, phase2Data] = await Promise.all([
+                      api.getPhaseUnits(currentFileId, 1),
+                      api.getPhaseUnits(currentFileId, 2)
+                    ])
+                    setPhase1Units(phase1Data.units)
+                    setCurrentPhase1Unit(phase1Data.current_unit)
+                    setPhase2Units(phase2Data.units)
+                    setCurrentPhase2Unit(phase2Data.current_unit)
+                  } catch (error) {
+                    console.error('[ERROR] 更新第一阶段进度失败:', error)
+                  }
                 }
                 setStep('all-units')
               }}
