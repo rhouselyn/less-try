@@ -474,18 +474,7 @@ function App() {
             
             // 检查是否所有句子都已使用
             if (quizResponse.unit_completed) {
-              // 单元已完成，更新阶段一的进度
-              try {
-                // 计算当前单元
-                const vocabResponse = await api.getVocab(currentFileId)
-                const vocabLength = vocabResponse.vocab.length
-                const groupSize = 10
-                const currentUnit = Math.floor(vocabLength / groupSize)
-                // 更新阶段一的进度
-                await api.setPhaseProgress(currentFileId, 1, currentUnit + 1, 0)
-              } catch (error) {
-                console.error('更新阶段一进度错误:', error)
-              }
+              // 单元已完成
               setStep('progress')
             } else {
               setQuizData({
@@ -497,36 +486,14 @@ function App() {
             }
           } catch (quizError) {
             if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-              // 所有句子都已使用，单元已完成，更新阶段一的进度
-              try {
-                // 计算当前单元
-                const vocabResponse = await api.getVocab(currentFileId)
-                const vocabLength = vocabResponse.vocab.length
-                const groupSize = 10
-                const currentUnit = Math.floor(vocabLength / groupSize)
-                // 更新阶段一的进度
-                await api.setPhaseProgress(currentFileId, 1, currentUnit + 1, 0)
-              } catch (error) {
-                console.error('更新阶段一进度错误:', error)
-              }
+              // 所有句子都已使用，单元已完成
               setStep('progress')
             } else {
               throw quizError
             }
           }
         } else {
-          // 单元已完成，更新阶段一的进度
-          try {
-            // 计算当前单元
-            const vocabResponse = await api.getVocab(currentFileId)
-            const vocabLength = vocabResponse.vocab.length
-            const groupSize = 10
-            const currentUnit = Math.floor(vocabLength / groupSize)
-            // 更新阶段一的进度
-            await api.setPhaseProgress(currentFileId, 1, currentUnit + 1, 0)
-          } catch (error) {
-            console.error('更新阶段一进度错误:', error)
-          }
+          // 单元已完成
           setStep('progress')
         }
         return
@@ -541,18 +508,7 @@ function App() {
           
           // 检查是否所有句子都已使用
           if (quizResponse.unit_completed) {
-            // 单元已完成，更新阶段一的进度
-            try {
-              // 计算当前单元
-              const vocabResponse = await api.getVocab(currentFileId)
-              const vocabLength = vocabResponse.vocab.length
-              const groupSize = 10
-              const currentUnit = Math.floor(vocabLength / groupSize)
-              // 更新阶段一的进度
-              await api.setPhaseProgress(currentFileId, 1, currentUnit + 1, 0)
-            } catch (error) {
-              console.error('更新阶段一进度错误:', error)
-            }
+            // 单元已完成
             setStep('progress')
           } else {
             setQuizData({
@@ -564,36 +520,14 @@ function App() {
           }
         } catch (quizError) {
           if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元已完成，更新阶段一的进度
-            try {
-              // 计算当前单元
-              const vocabResponse = await api.getVocab(currentFileId)
-              const vocabLength = vocabResponse.vocab.length
-              const groupSize = 10
-              const currentUnit = Math.floor(vocabLength / groupSize)
-              // 更新阶段一的进度
-              await api.setPhaseProgress(currentFileId, 1, currentUnit + 1, 0)
-            } catch (error) {
-              console.error('更新阶段一进度错误:', error)
-            }
+            // 所有句子都已使用，单元已完成
             setStep('progress')
           } else {
             throw quizError
           }
         }
       } else if (coverageData.unit_completed) {
-        // 单元已完成，更新阶段一的进度
-        try {
-          // 计算当前单元
-          const vocabResponse = await api.getVocab(currentFileId)
-          const vocabLength = vocabResponse.vocab.length
-          const groupSize = 10
-          const currentUnit = Math.floor(vocabLength / groupSize)
-          // 更新阶段一的进度
-          await api.setPhaseProgress(currentFileId, 1, currentUnit + 1, 0)
-        } catch (error) {
-          console.error('更新阶段一进度错误:', error)
-        }
+        // 单元已完成
         setStep('progress')
       } else {
         // 继续单词学习
