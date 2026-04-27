@@ -103,6 +103,9 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     for dict_entry in dictionary_entries:
                         # 为每个词条添加句子索引
                         if isinstance(dict_entry, dict):
+                            # 移除冗余的 translation 字段
+                            if "translation" in dict_entry:
+                                del dict_entry["translation"]
                             dict_entry["sentence_index"] = i
                             all_vocab.append(dict_entry)
         
@@ -830,7 +833,12 @@ async def check_coverage(file_id: str):
         def has_multiple_tokens(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                # 检查token数量
+                if len(tokens) > 1:
+                    return True
+                # 如果只有一个token，检查token的text是否包含空格（可能是短语）
+                elif len(tokens) == 1 and isinstance(tokens[0], dict) and "text" in tokens[0]:
+                    return " " in tokens[0]["text"]
             return False
         
         # 检查是否有句子可以用已学单词组成
@@ -927,7 +935,12 @@ async def generate_sentence_quiz(file_id: str):
         def has_multiple_tokens(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                # 检查token数量
+                if len(tokens) > 1:
+                    return True
+                # 如果只有一个token，检查token的text是否包含空格（可能是短语）
+                elif len(tokens) == 1 and isinstance(tokens[0], dict) and "text" in tokens[0]:
+                    return " " in tokens[0]["text"]
             return False
         
         for sentence_data in sentences:
@@ -1193,7 +1206,12 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         def has_multiple_tokens(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                # 检查token数量
+                if len(tokens) > 1:
+                    return True
+                # 如果只有一个token，检查token的text是否包含空格（可能是短语）
+                elif len(tokens) == 1 and isinstance(tokens[0], dict) and "text" in tokens[0]:
+                    return " " in tokens[0]["text"]
             return False
         
         # 加载进度
@@ -1320,7 +1338,12 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
         def has_multiple_tokens(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                # 检查token数量
+                if len(tokens) > 1:
+                    return True
+                # 如果只有一个token，检查token的text是否包含空格（可能是短语）
+                elif len(tokens) == 1 and isinstance(tokens[0], dict) and "text" in tokens[0]:
+                    return " " in tokens[0]["text"]
             return False
         
         progress = storage.load_phase_progress(file_id, phase_number)

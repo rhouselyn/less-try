@@ -277,8 +277,10 @@ class NvidiaAPI:
                                 "type": "object",
                                 "properties": {
                                     "word": {"type": "string"},
-                                    "ipa": {"type": "string"},
-                                    "context_meaning": {"type": "string"},
+                                    "tokens": {
+                                        "type": "array",
+                                        "items": {"type": "string"}
+                                    },
                                     "variants": {
                                         "type": "array",
                                         "items": {
@@ -290,6 +292,8 @@ class NvidiaAPI:
                                             "required": ["type", "form"]
                                         }
                                     },
+                                    "ipa": {"type": "string"},
+                                    "context_meaning": {"type": "string"},
                                     "examples": {
                                         "type": "array",
                                         "items": {"type": "string"},
@@ -303,19 +307,14 @@ class NvidiaAPI:
                                         "maxItems": 4
                                     },
                                     "grammar": {"type": "string"},
-                                    "translation": {"type": "string"},
-                                    "tokens": {
-                                        "type": "array",
-                                        "items": {"type": "string"}
-                                    },
                                     "morphology": {
                                         "type": "string",
                                         "description": "词性缩写，如 n, v, adj 等"
                                     }
                                 },
                                 "required": [
-                                    "word", "ipa", "context_meaning", "variants", 
-                                    "examples", "options", "grammar", "translation", "tokens", "morphology"
+                                    "word", "tokens", "variants", "ipa", "context_meaning", 
+                                    "examples", "options", "grammar", "morphology"
                                 ]
                             }
                         }
@@ -350,15 +349,19 @@ class NvidiaAPI:
    - det (限定词)
 5. morphology 字段必须只包含缩写，不要有其他内容！
 6. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
+7. 【翻译格式要求】：
+   - tokenized_translation 必须是一个完整的 TARGET_LANG 句子，不要使用 / 分隔多个翻译
+   - tokenized_translation 应该根据 translation 数组的中文进行分词，每个词之间用空格分隔
+   - 例如：如果 translation 是 ["神圣的", "该死的", "上帝"]，那么 tokenized_translation 应该是 "神圣的 该死的 上帝"
 
 按照以下结构处理文本：
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
   - text: 原词/标记（不带标点）
-  - translation: 这个词翻译成 TARGET_LANG
+  - translation: 这个词翻译成 TARGET_LANG（只需要一个翻译，不要使用 / 分隔多个翻译）
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
-- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
+- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式，根据 translation 数组的中文进行分词，每个词之间用空格分隔
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）
 
@@ -371,15 +374,14 @@ class NvidiaAPI:
 
 为每个单词提供：
 1. word: The word itself
-2. ipa: International Phonetic Alphabet pronunciation
-3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
-4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
-5. examples: 2 example sentences in SOURCE_LANG that match the context meaning
-6. options: 4 options for the meaning (1 correct, 3 incorrect) - 错误答案必须是该单词所没有的意思，而不是非句子中的意思
-7. grammar: Grammar explanation for the word
-8. translation: Translation of the word to TARGET_LANG
-9. tokens: Split the word into tokens if applicable
-10. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
+2. tokens: Split the word into tokens if applicable
+3. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
+4. ipa: International Phonetic Alphabet pronunciation
+5. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
+6. examples: 2 example sentences in SOURCE_LANG that match the context meaning
+7. options: 4 options for the meaning (1 correct, 3 incorrect) - 错误答案必须是该单词所没有的意思，而不是非句子中的意思
+8. grammar: Grammar explanation for the word
+9. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
