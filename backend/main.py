@@ -1200,20 +1200,17 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         progress = storage.load_phase_progress(file_id, phase_number)
         
         exercise_index = progress["current_exercise"]
+        exercise_type_index = progress.get("current_exercise_type_index", 0)
         
         # 找到下一个有效练习，跳过只有单个token的句子
         while exercise_index < len(unit_sentences):
             sentence_idx = exercise_index
-            # 随机选择练习类型
-            import random
-            exercise_type = random.randint(0, 1)
-            
             current_sentence_data = unit_sentences[sentence_idx]
             current_sentence = current_sentence_data["sentence"]
             
             # 检查是否有多个token
             if has_multiple_tokens(current_sentence_data):
-                print(f"[DEBUG] 找到有效练习，句子: {current_sentence}")
+                print(f"[DEBUG] 找到有效练习，句子: {current_sentence}, 练习类型索引: {exercise_type_index}")
                 break
             
             print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence}")
@@ -1222,24 +1219,14 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         if exercise_index >= len(unit_sentences):
             return {"unit_complete": True}
         
-        # 确定练习类型
-        sentence_idx = exercise_index
-        # 保持之前随机选择的练习类型
-        
-        current_sentence_data = unit_sentences[sentence_idx]
-        current_sentence = current_sentence_data["sentence"]
-        
-        # 安全检查：防止无限递归
-        import time
-        last_exercise_time = getattr(get_phase_unit_exercise, "last_exercise_time", 0)
-        current_time = time.time()
-        if current_time - last_exercise_time < 0.5:
-            # 短时间内多次调用，可能是无限递归
-            return {"error": "无法生成练习，请尝试其他单元"}
-        get_phase_unit_exercise.last_exercise_time = current_time
-        
         if phase_number == 2:
-            if exercise_type == 0:
+            # 根据exercise_type_index确定练习类型
+            # 0表示masked_sentence，1表示translation_reconstruction
+            sentence_idx = exercise_index
+            current_sentence_data = unit_sentences[sentence_idx]
+            current_sentence = current_sentence_data["sentence"]
+            
+            if exercise_type_index == 0:
                 # 练习1：蒙版填空
                 # 获取翻译tokens
                 translation_result = current_sentence_data.get("translation_result", {})
@@ -1261,6 +1248,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 return {
                     "exercise_type": "masked_sentence",
                     "exercise_index": exercise_index,
+                    "exercise_type_index": exercise_type_index,
                     "data": masked_exercise,
                     "unit_id": unit_id
                 }
@@ -1306,6 +1294,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 return {
                     "exercise_type": "translation_reconstruction",
                     "exercise_index": exercise_index,
+                    "exercise_type_index": exercise_type_index,
                     "data": {
                         "native_translation": tokenized_translation,
                         "original_tokens": original_tokens,
@@ -1335,7 +1324,8 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
             return False
         
         progress = storage.load_phase_progress(file_id, phase_number)
-        new_exercise_index = progress["current_exercise"] + 1
+        current_exercise_index = progress["current_exercise"]
+        current_exercise_type_index = progress.get("current_exercise_type_index", 0)
         
         # 检查单元是否完成
         sentences = storage.load_pipeline_data(file_id)
@@ -1346,27 +1336,65 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
             return {"success": False, "error": "Unit not found"}
         
         unit_sentences = units[unit_id]
-        max_exercises = len(unit_sentences)
+        max_sentences = len(unit_sentences)
         
-        # 找到下一个有效练习，跳过只有单个token的句子
-        while new_exercise_index < max_exercises:
-            sentence_idx = new_exercise_index
-            current_sentence_data = unit_sentences[sentence_idx]
+        if phase_number == 2:
+            # 阶段二：每个句子有两种练习类型
+            if current_exercise_type_index == 0:
+                # 先尝试切换练习类型
+                new_exercise_type_index = 1
+                new_exercise_index = current_exercise_index
+                # 检查当前句子是否有效
+                if new_exercise_index < max_sentences and has_multiple_tokens(unit_sentences[new_exercise_index]):
+                    # 保存新进度
+                    storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
+                    return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
             
-            if has_multiple_tokens(current_sentence_data):
-                break
+            # 如果是第二种练习类型，或者当前句子无效，则进入下一个句子
+            new_exercise_type_index = 0
+            new_exercise_index = current_exercise_index + 1
             
-            print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence_data['sentence']}")
-            new_exercise_index += 1
-        
-        if new_exercise_index >= max_exercises:
-            # 单元完成，进入下一个单元
-            new_unit_id = unit_id + 1
-            storage.save_phase_progress(file_id, phase_number, new_unit_id, 0)
-            return {"success": True, "unit_complete": True, "new_unit": new_unit_id}
+            # 找到下一个有效练习，跳过只有单个token的句子
+            while new_exercise_index < max_sentences:
+                sentence_idx = new_exercise_index
+                current_sentence_data = unit_sentences[sentence_idx]
+                
+                if has_multiple_tokens(current_sentence_data):
+                    break
+                
+                print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence_data['sentence']}")
+                new_exercise_index += 1
+            
+            if new_exercise_index >= max_sentences:
+                # 单元完成，进入下一个单元
+                new_unit_id = unit_id + 1
+                storage.save_phase_progress(file_id, phase_number, new_unit_id, 0, 0)
+                return {"success": True, "unit_complete": True, "new_unit": new_unit_id}
+            else:
+                storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
+                return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
         else:
-            storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index)
-            return {"success": True, "new_exercise_index": new_exercise_index}
+            # 阶段一：保持原有逻辑
+            new_exercise_index = current_exercise_index + 1
+            max_exercises = max_sentences
+            
+            while new_exercise_index < max_exercises:
+                sentence_idx = new_exercise_index
+                current_sentence_data = unit_sentences[sentence_idx]
+                
+                if has_multiple_tokens(current_sentence_data):
+                    break
+                
+                print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence_data['sentence']}")
+                new_exercise_index += 1
+            
+            if new_exercise_index >= max_exercises:
+                new_unit_id = unit_id + 1
+                storage.save_phase_progress(file_id, phase_number, new_unit_id, 0, 0)
+                return {"success": True, "unit_complete": True, "new_unit": new_unit_id}
+            else:
+                storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, 0)
+                return {"success": True, "new_exercise_index": new_exercise_index}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -1374,7 +1402,7 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
 async def complete_phase_unit(file_id: str, phase_number: int, unit_id: int):
     """标记单元为完成"""
     try:
-        storage.save_phase_progress(file_id, phase_number, unit_id + 1, 0)
+        storage.save_phase_progress(file_id, phase_number, unit_id + 1, 0, 0)
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1385,7 +1413,8 @@ async def set_phase_progress(file_id: str, phase_number: int, request: dict):
     try:
         unit_id = request.get("unit_id", 0)
         exercise_index = request.get("exercise_index", 0)
-        storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index)
+        exercise_type_index = request.get("exercise_type_index", 0)
+        storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index, exercise_type_index)
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
