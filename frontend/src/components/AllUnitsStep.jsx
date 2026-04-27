@@ -1,4 +1,5 @@
 
+import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 
@@ -65,7 +66,7 @@ function AllUnitsStep({
                     index === currentPhase1Unit
                       ? 'border-blue-500 bg-blue-50 shadow-md'
                       : unit.completed
-                      ? 'border-green-300 bg-green-50 hover:border-green-500 hover:shadow-sm'
+                      ? 'border-green-500 bg-green-100 hover:shadow-sm'
                       : 'border-slate-200 bg-white hover:border-slate-400 hover:shadow-sm'
                   }`}
                 >
@@ -73,12 +74,11 @@ function AllUnitsStep({
                     <span className="text-lg font-semibold text-slate-900">
                       单元 {index + 1}
                     </span>
-                    {unit.completed && (
+                    {unit.completed ? (
                       <span className="text-green-600 text-xl">✓</span>
-                    )}
-                    {index === currentPhase1Unit && (
+                    ) : index === currentPhase1Unit ? (
                       <span className="text-blue-600 text-sm font-medium">当前</span>
-                    )}
+                    ) : null}
                   </div>
                   <p className="text-sm text-slate-600">
                     {unit.word_count || unit.sentences_count} {unit.word_count ? '个单词' : '个句子'}

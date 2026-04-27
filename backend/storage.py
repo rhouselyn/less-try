@@ -27,9 +27,11 @@ class Storage:
     def load_pipeline_data(self, file_id: str) -> Any:
         file_dir = self.get_file_dir(file_id)
         pipeline_path = file_dir / "pipeline_data.json"
-        with open(pipeline_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return data.get("data", {})
+        if pipeline_path.exists():
+            with open(pipeline_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("data", {})
+        return {}
 
     def save_vocab(self, file_id: str, vocab: List[Dict]):
         file_dir = self.get_file_dir(file_id)
@@ -40,9 +42,11 @@ class Storage:
     def load_vocab(self, file_id: str) -> List[Dict]:
         file_dir = self.get_file_dir(file_id)
         vocab_path = file_dir / "vocab.json"
-        with open(vocab_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return data.get("vocab", [])
+        if vocab_path.exists():
+            with open(vocab_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("vocab", [])
+        return []
 
     def save_text(self, file_id: str, text: str):
         file_dir = self.get_file_dir(file_id)

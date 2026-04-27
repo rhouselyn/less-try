@@ -1150,6 +1150,10 @@ async def get_phase_units(file_id: str, phase_number: int):
             # 阶段二使用句子练习进度
             progress = storage.load_phase_progress(file_id, phase_number)
             
+            # 提取句子字符串
+            sentence_list = [s["sentence"] for s in sentences if "sentence" in s]
+            units = text_processor.group_sentences_into_units(sentence_list, 8)
+            
             return {
                 "phase_number": phase_number,
                 "units": [
@@ -1163,6 +1167,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                 "current_unit": progress["current_unit"]
             }
     except Exception as e:
+        print(f"[ERROR] get_phase_units: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/{file_id}/phase/{phase_number}/unit/{unit_id}")
