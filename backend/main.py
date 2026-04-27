@@ -382,6 +382,16 @@ async def next_word(file_id: str):
         storage.save_learning_progress(file_id, new_index)
         print(f"[DEBUG] 保存学习进度: {new_index}")
         
+        # 检查是否完成了一个单元
+        group_size = 10
+        current_unit = new_index // group_size
+        # 如果刚好是一个单元的开始，说明前一个单元已经完成
+        if new_index % group_size == 0 and new_index > 0:
+            # 更新phase_progress，将current_unit设置为current_unit
+            # 这样前一个单元（current_unit - 1）就会被标记为已完成
+            storage.save_phase_progress(file_id, 1, current_unit, 0)
+            print(f"[DEBUG] 单元完成，更新phase_progress: unit {current_unit}")
+        
         # 启动后台任务预生成下一个单词
         asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
         
@@ -396,6 +406,12 @@ async def set_progress(file_id: str, request: dict):
         index = request.get("index", 0)
         storage.save_learning_progress(file_id, index)
         print(f"[DEBUG] 设置学习进度: {index}")
+        
+        # 同步更新phase_progress
+        group_size = 10
+        current_unit = index // group_size
+        storage.save_phase_progress(file_id, 1, current_unit, 0)
+        print(f"[DEBUG] 同步更新phase_progress: unit {current_unit}")
         
         # 预生成下一个单词
         vocab = storage.load_vocab(file_id)
@@ -1119,11 +1135,11 @@ async def get_phase_units(file_id: str, phase_number: int):
         units = text_processor.group_sentences_into_units(sentence_list, 8)
         
         # 加载进度
+        progress = storage.load_phase_progress(file_id, phase_number)
+        
         if phase_number == 1:
-            # 阶段一使用单词学习进度
+            # 阶段一使用phase_progress来管理单元
             group_size = 10
-            current_index = storage.load_learning_progress(file_id)
-            current_unit = current_index // group_size
             
             # 生成阶段一的单元列表
             phase1_units = []
@@ -1131,7 +1147,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                 unit_words = vocab[i:i+group_size]
                 phase1_units.append({
                     "word_count": len(unit_words),
-                    "completed": (i // group_size) < current_unit
+                    "completed": (i // group_size) < progress["current_unit"]
                 })
             
             return {
@@ -1144,11 +1160,10 @@ async def get_phase_units(file_id: str, phase_number: int):
                     }
                     for i, unit in enumerate(phase1_units)
                 ],
-                "current_unit": current_unit
+                "current_unit": progress["current_unit"]
             }
         else:
             # 阶段二使用句子练习进度
-            progress = storage.load_phase_progress(file_id, phase_number)
             
             return {
                 "phase_number": phase_number,
@@ -1199,9 +1214,8 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         # 找到下一个有效练习，跳过只有单个token的句子
         while exercise_index < len(unit_sentences):
             sentence_idx = exercise_index
-            # 随机选择练习类型
-            import random
-            exercise_type = random.randint(0, 1)
+            # 基于exercise_index的奇偶性固定练习类型
+            exercise_type = exercise_index % 2
             
             current_sentence_data = unit_sentences[sentence_idx]
             current_sentence = current_sentence_data["sentence"]
@@ -1219,7 +1233,8 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         
         # 确定练习类型
         sentence_idx = exercise_index
-        # 保持之前随机选择的练习类型
+        # 基于exercise_index的奇偶性固定练习类型
+        exercise_type = exercise_index % 2
         
         current_sentence_data = unit_sentences[sentence_idx]
         current_sentence = current_sentence_data["sentence"]

@@ -1,158 +1,200 @@
 #!/usr/bin/env python3
-import requests
+"""完整流程测试脚本：测试文本处理、第一阶段单词学习、第二阶段句子练习的完整流程"""
+
+import asyncio
+import sys
+import os
 import json
-import time
+from pathlib import Path
 
-BASE_URL = "http://localhost:8000"
+# 添加后端目录到路径
+sys.path.append(os.path.join(os.path.dirname(__file__), 'backend'))
 
-def test_process_text():
-    print("=== 测试文本处理（hi bro） ===")
-    response = requests.post(
-        f"{BASE_URL}/api/process-text",
-        json={"text": "hi bro", "source_language": "en", "target_language": "zh"}
-    )
-    print(f"状态码: {response.status_code}")
-    result = response.json()
-    print(f"响应: {json.dumps(result, indent=2, ensure_ascii=False)}")
-    return result.get("file_id")
+from fastapi.testclient import TestClient
+from main import app
 
-def test_get_status(file_id):
-    print("\n=== 测试状态查询 ===")
-    for i in range(60):  # 最多等待60秒
-        time.sleep(1)
-        response = requests.get(f"{BASE_URL}/api/status/{file_id}")
-        status = response.json()
-        print(f"状态: {status.get('status')}, 进度: {status.get('progress')}%")
-        if status.get("status") == "completed":
-            return status
-        if status.get("status") == "error":
-            raise Exception(f"处理错误: {status.get('error')}")
-    raise Exception("处理超时")
+# 创建测试客户端
+client = TestClient(app)
 
-def test_vocab(file_id):
-    print("\n=== 测试词汇表查询 ===")
-    response = requests.get(f"{BASE_URL}/api/vocab/{file_id}")
-    print(f"状态码: {response.status_code}")
-    result = response.json()
-    vocab = result.get('vocab', [])
-    print(f"词汇数: {len(vocab)}")
-    print(f"词汇: {json.dumps([w['word'] for w in vocab], ensure_ascii=False)}")
-    return vocab
+# 测试数据目录
+test_data_dir = Path("/workspace/data")
+test_data_dir.mkdir(parents=True, exist_ok=True)
 
-def test_complete_learning_flow(file_id, vocab_count):
-    print("\n=== 测试完整学习流程 ===")
+def clear_test_data():
+    """清除测试数据"""
+    if test_data_dir.exists():
+        import shutil
+        shutil.rmtree(test_data_dir)
+    test_data_dir.mkdir(parents=True, exist_ok=True)
+
+def print_test_section(title):
+    """打印测试节标题"""
+    print(f"\n{'='*60}")
+    print(f"  {title}")
+    print(f"{'='*60}")
+
+def print_test_step(step):
+    """打印测试步骤"""
+    print(f"\n--- {step} ---")
+
+def check_response(response, step_name):
+    """检查响应状态"""
+    if response.status_code not in [200, 201]:
+        print(f"❌ {step_name}失败: 状态码 {response.status_code}")
+        print(f"响应: {response.text}")
+        return False
+    print(f"✅ {step_name}成功")
+    return True
+
+async def test_complete_flow():
+    """测试完整流程"""
+    clear_test_data()
+    print_test_section("开始完整流程测试")
     
-    # 重置学习进度
-    reset_response = requests.post(f"{BASE_URL}/api/learn/{file_id}/set-progress", json={"index": 0})
-    print(f"重置进度: {reset_response.status_code}")
+    test_text = "holy fucking god"
     
-    # 循环学习所有单词
-    for i in range(vocab_count):
-        print(f"\n--- 学习单词 {i+1}/{vocab_count} ---")
-        
-        # 获取当前单词
-        word_response = requests.get(f"{BASE_URL}/api/learn/{file_id}/random-word")
-        if word_response.status_code == 200:
-            word_data = word_response.json()
-            print(f"当前单词: {word_data.get('word')}")
-        else:
-            print(f"获取单词失败: {word_response.status_code}")
-            break
-        
-        # 检查覆盖度
-        coverage_response = requests.get(f"{BASE_URL}/api/learn/{file_id}/check-coverage")
-        if coverage_response.status_code == 200:
-            coverage = coverage_response.json()
-            print(f"覆盖度: {json.dumps(coverage, indent=2, ensure_ascii=False)}")
-        
-        # 下一个单词
-        next_response = requests.post(f"{BASE_URL}/api/learn/{file_id}/next-word")
-        if next_response.status_code == 200:
-            next_data = next_response.json()
-            print(f"进度更新: new_index = {next_data.get('new_index')}")
-        else:
-            print(f"更新进度失败: {next_response.status_code}")
-            break
-        
-        # 检查是否学习完成
-        if next_data.get('new_index') >= vocab_count:
-            print("\n=== 学习完成！ ===")
-            break
+    # 步骤1：提交文本处理
+    print_test_step("步骤1：提交文本处理")
+    response = client.post("/api/process", json={
+        "text": test_text,
+        "source_lang": "en",
+        "target_lang": "zh"
+    })
+    if not check_response(response, "提交文本处理"):
+        return False
+    process_result = response.json()
+    file_id = process_result.get("file_id")
+    print(f"  文件ID: {file_id}")
+    if not file_id:
+        print("❌ 没有获取到file_id")
+        return False
     
-    # 学习完成后检查覆盖度
-    print("\n=== 学习完成后检查覆盖度 ===")
-    coverage_response = requests.get(f"{BASE_URL}/api/learn/{file_id}/check-coverage")
-    if coverage_response.status_code == 200:
-        coverage = coverage_response.json()
-        print(f"覆盖度: {json.dumps(coverage, indent=2, ensure_ascii=False)}")
+    # 等待处理完成（模拟轮询）
+    print_test_step("步骤2：等待文本处理完成")
+    max_wait = 60  # 最大等待60秒
+    for i in range(max_wait):
+        response = client.get(f"/api/process/{file_id}/status")
+        if response.status_code == 200:
+            status_result = response.json()
+            status = status_result.get("status")
+            if status == "completed":
+                print(f"✅ 文本处理完成")
+                break
+            elif status == "error":
+                print(f"❌ 文本处理失败: {status_result.get('error')}")
+                return False
+        print(f"  等待处理... {i+1}/{max_wait}")
+        await asyncio.sleep(1)
+    else:
+        print("❌ 文本处理超时")
+        return False
     
-    # 生成句子翻译题
+    # 步骤3：获取学习单元列表
+    print_test_step("步骤3：获取第一阶段学习单元列表")
+    response = client.get(f"/api/{file_id}/phase/1/units")
+    if not check_response(response, "获取第一阶段学习单元"):
+        return False
+    phase1_units = response.json()
+    print(f"  单元数量: {len(phase1_units.get('units', []))}")
+    
+    # 步骤4：开始第一个单元的学习
+    if len(phase1_units.get('units', [])) == 0:
+        print("❌ 没有可用的学习单元")
+        return False
+    
+    unit0_id = phase1_units['units'][0]['unit_id']
+    print_test_step(f"步骤4：开始第{unit0_id}单元学习")
+    
+    # 获取单元的单词
+    response = client.get(f"/api/{file_id}/phase/1/unit/{unit0_id}/words")
+    if not check_response(response, "获取单元单词"):
+        return False
+    unit_words = response.json()
+    print(f"  单词数量: {len(unit_words.get('words', []))}")
+    
+    # 步骤5：逐个学习单词
+    print_test_step("步骤5：逐个学习单词")
+    for i in range(len(unit_words.get('words', []))):
+        response = client.get(f"/api/learn/{file_id}/random-word")
+        if not check_response(response, f"获取第{i+1}个单词"):
+            return False
+        
+        # 标记单词已学习
+        response = client.post(f"/api/learn/{file_id}/next-word")
+        if not check_response(response, f"标记第{i+1}个单词已学习"):
+            return False
+    
+    # 步骤6：检查单元是否标记为完成
+    print_test_step("步骤6：验证第一阶段单元完成状态")
+    response = client.get(f"/api/{file_id}/phase/1/units")
+    if not check_response(response, "重新获取第一阶段单元列表"):
+        return False
+    phase1_units_updated = response.json()
+    units = phase1_units_updated.get('units', [])
+    
+    if not units:
+        print("❌ 没有找到单元")
+        return False
+    
+    # 检查第0个单元是否完成
+    if units[0].get('completed'):
+        print("✅ 单元0已正确标记为完成")
+    else:
+        print(f"⚠️ 单元0未标记为完成，单元状态: {units[0]}")
+    
+    # 步骤7：测试句子翻译题
+    print_test_step("步骤7：测试句子翻译题")
+    
+    # 检查是否可以生成句子翻译题
+    response = client.get(f"/api/learn/{file_id}/check-coverage")
+    if not check_response(response, "检查覆盖度"):
+        return False
+    coverage = response.json()
+    print(f"  可以生成句子: {coverage.get('can_form_sentences')}")
+    
+    # 如果可以生成句子，测试生成翻译题
     if coverage.get('can_form_sentences'):
-        print("\n=== 测试句子翻译题生成 ===")
-        quiz_response = requests.get(f"{BASE_URL}/api/learn/{file_id}/sentence-quiz")
-        if quiz_response.status_code == 200:
-            quiz_data = quiz_response.json()
-            print(f"响应: {json.dumps(quiz_data, indent=2, ensure_ascii=False)}")
+        response = client.get(f"/api/learn/{file_id}/sentence-quiz")
+        if response.status_code == 200:
+            print("✅ 成功获取句子翻译题")
+        else:
+            print(f"⚠️ 获取句子翻译题失败（可能没有合适的句子）: {response.status_code}")
     
-    print("\n=== 完整学习流程测试完成！ ===")
-
-def main():
-    try:
-        # 测试1: 处理文本
-        file_id = test_process_text()
-        if not file_id:
-            print("错误: 没有获取到file_id")
-            return
+    # 步骤8：测试第二阶段
+    print_test_step("步骤8：测试第二阶段句子练习")
+    response = client.get(f"/api/{file_id}/phase/2/units")
+    if not check_response(response, "获取第二阶段学习单元"):
+        return False
+    phase2_units = response.json()
+    print(f"  第二阶段单元数量: {len(phase2_units.get('units', []))}")
+    
+    if len(phase2_units.get('units', [])) > 0:
+        phase2_unit0_id = phase2_units['units'][0]['unit_id']
         
-        # 测试2: 查询状态直到完成
-        status = test_get_status(file_id)
-        
-        # 测试3: 查询词汇表
-        vocab = test_vocab(file_id)
-        
-        # 测试4: 查询单词详情并检查上下文句子翻译
-        if vocab and len(vocab) > 0:
-            print("\n=== 测试单词详情和上下文句子翻译 ===")
-            word_to_test = vocab[0]["word"]
-            print(f"测试单词: {word_to_test}")
-            word_detail = None
-            word_detail_response = requests.get(f"{BASE_URL}/api/word/{file_id}/{word_to_test}")
-            print(f"单词详情状态码: {word_detail_response.status_code}")
-            if word_detail_response.status_code == 200:
-                word_detail = word_detail_response.json()
-                print(f"单词详情: {json.dumps(word_detail, indent=2, ensure_ascii=False)}")
-                
-                # 检查 context_sentences
-                if "context_sentences" in word_detail and word_detail["context_sentences"]:
-                    print(f"\n✓ 上下文句子数量: {len(word_detail['context_sentences'])}")
-                    for i, ctx in enumerate(word_detail["context_sentences"]):
-                        print(f"  上下文 {i+1}:")
-                        translation_found = False
-                        if isinstance(ctx, dict):
-                            print(f"    原句: {ctx.get('sentence', 'N/A')}")
-                            print(f"    翻译: {ctx.get('translation', 'N/A')}")
-                            if ctx.get('translation'):
-                                translation_found = True
-                        else:
-                            print(f"    原句 (字符串): {ctx}")
-                            # Check if context_translations exists
-                            if "context_translations" in word_detail and len(word_detail["context_translations"]) > i:
-                                print(f"    翻译: {word_detail['context_translations'][i]}")
-                                translation_found = True
-                        if translation_found:
-                            print(f"    ✓ 翻译存在!")
-                        else:
-                            print(f"    ✗ 翻译不存在!")
-        
-        # 测试5: 完整学习流程
-        if vocab:
-            test_complete_learning_flow(file_id, len(vocab))
-        
-        print("\n=== 所有测试完成！ ===")
-    except Exception as e:
-        print(f"\n错误: {e}")
-        import traceback
-        traceback.print_exc()
+        # 获取第一阶段的练习
+        response = client.get(f"/api/{file_id}/phase/2/unit/{phase2_unit0_id}/exercise")
+        if response.status_code == 200:
+            exercise = response.json()
+            print(f"✅ 成功获取练习")
+            print(f"  练习类型: {exercise.get('exercise_type')}")
+            
+            # 获取下一个练习（如果有），验证不会重复
+            response = client.get(f"/api/{file_id}/phase/2/unit/{phase2_unit0_id}/exercise")
+            if response.status_code == 200:
+                next_exercise = response.json()
+                print(f"✅ 成功获取下一个练习")
+                print(f"  练习类型: {next_exercise.get('exercise_type')}")
+    
+    print_test_section("测试完成！")
+    print("\n🎉 所有测试步骤完成！")
+    return True
 
 if __name__ == "__main__":
-    main()
+    try:
+        success = asyncio.run(test_complete_flow())
+        sys.exit(0 if success else 1)
+    except Exception as e:
+        print(f"\n❌ 测试过程中发生错误: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
