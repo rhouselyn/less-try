@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, ChevronRight, BookOpen } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
 function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList }) {
@@ -61,8 +61,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           onClick={onOpenVocabList}
           className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
         >
-          <BookOpen className="w-4 h-4" />
-          单词表
+          📚 单词表
         </motion.button>
       </div>
 

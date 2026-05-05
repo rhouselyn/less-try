@@ -385,11 +385,6 @@ async def next_word(file_id: str):
         storage.save_learning_progress(file_id, new_index)
         print(f"[DEBUG] 保存学习进度: {new_index}")
         
-        # 同时也更新阶段1的进度
-        unit_id = new_index // 10
-        storage.save_phase_progress(file_id, 1, unit_id, 0, 0)
-        print(f"[DEBUG] 同步更新阶段1进度: unit_id = {unit_id}")
-        
         # 启动后台任务预生成下一个单词
         asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
         
@@ -404,11 +399,6 @@ async def set_progress(file_id: str, request: dict):
         index = request.get("index", 0)
         storage.save_learning_progress(file_id, index)
         print(f"[DEBUG] 设置学习进度: {index}")
-        
-        # 同时也更新阶段1的进度
-        unit_id = index // 10
-        storage.save_phase_progress(file_id, 1, unit_id, 0, 0)
-        print(f"[DEBUG] 同步更新阶段1进度: unit_id = {unit_id}")
         
         # 预生成下一个单词
         vocab = storage.load_vocab(file_id)

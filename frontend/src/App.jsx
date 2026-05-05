@@ -196,29 +196,6 @@ function App() {
     setProcessingInfo(null)
     setVocab([])
     setSentenceTranslations([])
-    setLearningData(null)
-    setShowWordCard(false)
-    setSelectedOption(null)
-    setIsCorrect(null)
-    setUnits([])
-    setCurrentUnit(0)
-    setTotalUnits(0)
-    setAllUnitsCompleted(false)
-    setQuizData(null)
-    setLearningMode('word')
-    setPhases([])
-    setCurrentPhase(null)
-    setPhaseUnits([])
-    setCurrentPhaseUnit(0)
-    setCurrentExerciseData(null)
-    setExerciseType(null)
-    setPhase1Units([])
-    setPhase2Units([])
-    setCurrentPhase1Unit(0)
-    setCurrentPhase2Unit(0)
-    setPreviousStep(null)
-    setSelectedWord(null)
-    setSelectedSentence(null)
     
     // 立即跳转到单词表页面，即使还没有收到响应
     setStep('dictionary')
@@ -487,23 +464,38 @@ function App() {
       // 检查是否学习完所有单词
       const allWordsLearned = newIndex >= vocabLength
       
-      // 检查是否完成了当前单元
-      const unitSize = 10
-      const currentUnit = Math.floor(newIndex / unitSize)
-      const wordsInUnit = Math.min(unitSize, vocabLength - currentUnit * unitSize)
-      const isCurrentUnitComplete = newIndex >= (currentUnit * unitSize + wordsInUnit)
-      
-      if (allWordsLearned || isCurrentUnitComplete) {
-        // 单元已完成，重新加载所有单元数据，然后回到 all-units
-        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
-          api.getPhaseUnits(currentFileId, 2)
-        ])
-        setPhase1Units(phase1UnitsData.units)
-        setPhase2Units(phase2UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
+      if (allWordsLearned) {
+        // 检查是否可以生成句子翻译题
+        const coverageData = await api.checkCoverage(currentFileId)
+        if (coverageData.can_form_sentences) {
+          try {
+            // 生成句子翻译题
+            const quizResponse = await api.generateSentenceQuiz(currentFileId)
+            
+            // 检查是否所有句子都已使用
+            if (quizResponse.unit_completed) {
+              // 单元已完成
+              setStep('progress')
+            } else {
+              setQuizData({
+                ...quizResponse,
+                unit_completed: coverageData.unit_completed
+              })
+              setLearningMode('sentence')
+              setStep('sentence-quiz')
+            }
+          } catch (quizError) {
+            if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
+              // 所有句子都已使用，单元已完成
+              setStep('progress')
+            } else {
+              throw quizError
+            }
+          }
+        } else {
+          // 单元已完成
+          setStep('progress')
+        }
         return
       }
       
@@ -516,16 +508,8 @@ function App() {
           
           // 检查是否所有句子都已使用
           if (quizResponse.unit_completed) {
-            // 单元已完成，重新加载数据
-            const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-              api.getPhaseUnits(currentFileId, 1),
-              api.getPhaseUnits(currentFileId, 2)
-            ])
-            setPhase1Units(phase1UnitsData.units)
-            setPhase2Units(phase2UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setCurrentPhase2Unit(phase2UnitsData.current_unit)
-            setStep('all-units')
+            // 单元已完成
+            setStep('progress')
           } else {
             setQuizData({
               ...quizResponse,
@@ -536,31 +520,15 @@ function App() {
           }
         } catch (quizError) {
           if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元已完成，重新加载数据
-            const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-              api.getPhaseUnits(currentFileId, 1),
-              api.getPhaseUnits(currentFileId, 2)
-            ])
-            setPhase1Units(phase1UnitsData.units)
-            setPhase2Units(phase2UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setCurrentPhase2Unit(phase2UnitsData.current_unit)
-            setStep('all-units')
+            // 所有句子都已使用，单元已完成
+            setStep('progress')
           } else {
             throw quizError
           }
         }
       } else if (coverageData.unit_completed) {
-        // 单元已完成，重新加载数据
-        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
-          api.getPhaseUnits(currentFileId, 2)
-        ])
-        setPhase1Units(phase1UnitsData.units)
-        setPhase2Units(phase2UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
+        // 单元已完成
+        setStep('progress')
       } else {
         // 继续单词学习
         const response = await api.getRandomWord(currentFileId)
@@ -756,20 +724,7 @@ function App() {
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
               onNextWord={getNextWord}
-              onBack={async () => {
-                // 从单词学习返回时，重新加载单元数据
-                if (currentFileId) {
-                  const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-                    api.getPhaseUnits(currentFileId, 1),
-                    api.getPhaseUnits(currentFileId, 2)
-                  ])
-                  setPhase1Units(phase1UnitsData.units)
-                  setPhase2Units(phase2UnitsData.units)
-                  setCurrentPhase1Unit(phase1UnitsData.current_unit)
-                  setCurrentPhase2Unit(phase2UnitsData.current_unit)
-                }
-                setStep('all-units')
-              }}
+              onBack={() => setStep('all-units')}
               onOpenVocabList={handleOpenVocabList}
               loading={loading}
               t={t}
@@ -781,31 +736,15 @@ function App() {
               key="sentence-quiz"
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={async () => {
-                // 从 sentence-quiz 返回时，重新加载单元数据
-                if (currentFileId) {
-                  const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-                    api.getPhaseUnits(currentFileId, 1),
-                    api.getPhaseUnits(currentFileId, 2)
-                  ])
-                  setPhase1Units(phase1UnitsData.units)
-                  setPhase2Units(phase2UnitsData.units)
-                  setCurrentPhase1Unit(phase1UnitsData.current_unit)
-                  setCurrentPhase2Unit(phase2UnitsData.current_unit)
-                }
-                setStep('all-units')
-              }}
+              onBack={() => setStep('all-units')}
               onComplete={async () => {
-                // 单元完成，重新加载所有单元数据
-                if (currentFileId) {
-                  const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-                    api.getPhaseUnits(currentFileId, 1),
-                    api.getPhaseUnits(currentFileId, 2)
-                  ])
-                  setPhase1Units(phase1UnitsData.units)
-                  setPhase2Units(phase2UnitsData.units)
-                  setCurrentPhase1Unit(phase1UnitsData.current_unit)
-                  setCurrentPhase2Unit(phase2UnitsData.current_unit)
+                // 单元完成，更新阶段一的进度
+                if (currentFileId && currentPhase) {
+                  // 计算下一个单元
+                  const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+                  const nextUnit = phase1UnitsData.current_unit + 1
+                  // 更新阶段一的进度
+                  await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
                 }
                 setStep('all-units')
               }}
