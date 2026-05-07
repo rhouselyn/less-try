@@ -79,8 +79,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           whileHover={{ scale: 1.05, x: 2 }}
           whileTap={{ scale: 0.95 }}
         >
-          <BookOpen className="w-4 h-4" />
-          单词表
+          📚 单词表
         </motion.button>
       </div>
 
