@@ -480,8 +480,8 @@ function App() {
             // 生成句子翻译题
             const quizResponse = await api.generateSentenceQuiz(currentFileId)
             
-            // 检查是否所有句子都已使用或单元已完成
-            if (quizResponse.unit_completed || coverageData.unit_completed) {
+            // 检查是否所有句子都已使用
+            if (quizResponse.unit_completed) {
               // 单元完成，更新阶段一进度并返回单元列表
               const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
               setPhase1Units(phase1UnitsData.units)
@@ -502,24 +502,12 @@ function App() {
               setPhase1Units(phase1UnitsData.units)
               setCurrentPhase1Unit(phase1UnitsData.current_unit)
               setStep('all-units')
-            } else if (coverageData.unit_completed) {
-              // 即使出错，如果单元已完成也返回单元列表
-              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-              setPhase1Units(phase1UnitsData.units)
-              setCurrentPhase1Unit(phase1UnitsData.current_unit)
-              setStep('all-units')
             } else {
               throw quizError
             }
           }
-        } else if (coverageData.unit_completed) {
-          // 单元完成，更新阶段一进度并返回单元列表
-          const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-          setPhase1Units(phase1UnitsData.units)
-          setCurrentPhase1Unit(phase1UnitsData.current_unit)
-          setStep('all-units')
         } else {
-          // 所有单词学完但不能组成句子，标记单元完成
+          // 单元完成，更新阶段一进度并返回单元列表
           const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
           setPhase1Units(phase1UnitsData.units)
           setCurrentPhase1Unit(phase1UnitsData.current_unit)
