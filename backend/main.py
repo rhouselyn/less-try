@@ -1192,11 +1192,11 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         
         unit_sentences = units[unit_id]
         
-        # 检查句子是否有多个token
-        def has_multiple_tokens(sentence_data):
+        # 检查句子是否有至少一个有效token（修改：原来是要求多个token）
+        def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                return len(tokens) >= 1
             return False
         
         # 加载进度
@@ -1205,18 +1205,18 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         exercise_index = progress["current_exercise"]
         exercise_type_index = progress.get("current_exercise_type_index", 0)
         
-        # 找到下一个有效练习，跳过只有单个token的句子
+        # 找到下一个有效练习，跳过没有有效token的句子
         while exercise_index < len(unit_sentences):
             sentence_idx = exercise_index
             current_sentence_data = unit_sentences[sentence_idx]
             current_sentence = current_sentence_data["sentence"]
             
-            # 检查是否有多个token
-            if has_multiple_tokens(current_sentence_data):
+            # 检查是否有有效token
+            if has_valid_token(current_sentence_data):
                 print(f"[DEBUG] 找到有效练习，句子: {current_sentence}, 练习类型索引: {exercise_type_index}")
                 break
             
-            print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence}")
+            print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence}")
             exercise_index += 1
         
         if exercise_index >= len(unit_sentences):
@@ -1319,11 +1319,11 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
 async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
     """进入下一个练习"""
     try:
-        # 检查句子是否有多个token
-        def has_multiple_tokens(sentence_data):
+        # 检查句子是否有至少一个有效token（修改：原来是要求多个token）
+        def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                return len(tokens) >= 1
             return False
         
         progress = storage.load_phase_progress(file_id, phase_number)
@@ -1348,7 +1348,7 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 new_exercise_type_index = 1
                 new_exercise_index = current_exercise_index
                 # 检查当前句子是否有效
-                if new_exercise_index < max_sentences and has_multiple_tokens(unit_sentences[new_exercise_index]):
+                if new_exercise_index < max_sentences and has_valid_token(unit_sentences[new_exercise_index]):
                     # 保存新进度
                     storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
                     return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
@@ -1357,15 +1357,15 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
             new_exercise_type_index = 0
             new_exercise_index = current_exercise_index + 1
             
-            # 找到下一个有效练习，跳过只有单个token的句子
+            # 找到下一个有效练习，跳过没有有效token的句子
             while new_exercise_index < max_sentences:
                 sentence_idx = new_exercise_index
                 current_sentence_data = unit_sentences[sentence_idx]
                 
-                if has_multiple_tokens(current_sentence_data):
+                if has_valid_token(current_sentence_data):
                     break
                 
-                print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence_data['sentence']}")
+                print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence_data['sentence']}")
                 new_exercise_index += 1
             
             if new_exercise_index >= max_sentences:
@@ -1385,10 +1385,10 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 sentence_idx = new_exercise_index
                 current_sentence_data = unit_sentences[sentence_idx]
                 
-                if has_multiple_tokens(current_sentence_data):
+                if has_valid_token(current_sentence_data):
                     break
                 
-                print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence_data['sentence']}")
+                print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence_data['sentence']}")
                 new_exercise_index += 1
             
             if new_exercise_index >= max_exercises:
