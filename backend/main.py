@@ -826,23 +826,23 @@ async def check_coverage(file_id: str):
         if not sentences:
             return {"can_form_sentences": False, "unit_completed": unit_completed}
         
-        # 检查句子是否有多个token
-        def has_multiple_tokens(sentence_data):
+        # 检查句子是否有至少一个有效token（原来是要求多个token）
+        def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                return len(tokens) >= 1
             return False
         
-        # 检查是否有句子可以用已学单词组成
+        # 检查是否有句子可以用已学单词组成（修改：只要有有效token就返回can_form=True）
         can_form = False
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
                 
-                # 检查是否有多个token
-                if not has_multiple_tokens(sentence_data):
-                    print(f"[DEBUG] 句子只有单个token，跳过: {sentence}")
+                # 只要有有效token就认为可以用（修改：去掉多个token的要求）
+                if not has_valid_token(sentence_data):
+                    print(f"[DEBUG] 句子没有有效token，跳过: {sentence}")
                     continue
                 
                 # 获取该句子的LLM tokens
@@ -854,6 +854,7 @@ async def check_coverage(file_id: str):
                 print(f"[DEBUG] 句子的LLM tokens: {sentence_tokens}")
                 
                 # 使用新的匹配逻辑：检查已学单词的tokens是否与句子的tokens有重叠
+                # 修改：只要有至少1个匹配就认为可以用（单个token的句子也生成翻译题）
                 matched_count = 0
                 matched_tokens = []
                 
@@ -874,7 +875,8 @@ async def check_coverage(file_id: str):
                                 matched_count += 1
                                 matched_tokens.append((lt, st))
                                 print(f"[DEBUG] 匹配成功: {lt} <-> {st}")
-                                if matched_count >= 2:
+                                # 修改：只要有至少1个匹配就认为可以用（原来是2个）
+                                if matched_count >= 1:
                                     can_form = True
                                     break
                         if can_form:
@@ -923,11 +925,11 @@ async def generate_sentence_quiz(file_id: str):
         
         # 找到可以用已学单词组成的句子
         eligible_sentences = []
-        # 检查句子是否有多个token
-        def has_multiple_tokens(sentence_data):
+        # 修改：检查句子是否有至少一个有效token（原来是要求多个token）
+        def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                return len(tokens) >= 1
             return False
         
         for sentence_data in sentences:
@@ -935,9 +937,9 @@ async def generate_sentence_quiz(file_id: str):
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
                 
-                # 检查是否有多个token
-                if not has_multiple_tokens(sentence_data):
-                    print(f"[DEBUG] 句子只有单个token，跳过: {sentence}")
+                # 修改：只要有有效token就认为可以用（去掉多个token的要求）
+                if not has_valid_token(sentence_data):
+                    print(f"[DEBUG] 句子没有有效token，跳过: {sentence}")
                     continue
                 
                 # 获取该句子的LLM tokens
@@ -947,7 +949,7 @@ async def generate_sentence_quiz(file_id: str):
                         if isinstance(token, dict) and "text" in token:
                             sentence_tokens.append(token["text"].lower())
                 
-                # 使用新的匹配逻辑：检查是否有至少2个已学tokens与当前句子匹配
+                # 修改：检查是否有至少1个已学tokens与当前句子匹配（原来是2个）
                 matched_count = 0
                 for learned_word in learned_words:
                     # 获取已学单词的所有tokens
@@ -962,13 +964,14 @@ async def generate_sentence_quiz(file_id: str):
                         for st in sentence_tokens:
                             if lt in st or st in lt:
                                 matched_count += 1
-                                if matched_count >= 2:
+                                # 修改：只要有至少1个匹配就认为可以用
+                                if matched_count >= 1:
                                     eligible_sentences.append(sentence_data)
                                     print(f"[DEBUG] 句子符合条件: {sentence}")
                                     break
-                        if matched_count >= 2:
+                        if matched_count >= 1:
                             break
-                    if matched_count >= 2:
+                    if matched_count >= 1:
                         break
         
         # 打印eligible_sentences
