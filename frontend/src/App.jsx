@@ -197,19 +197,6 @@ function App() {
     setVocab([])
     setSentenceTranslations([])
     
-    // 重置所有学习状态
-    setPhase1Units([])
-    setPhase2Units([])
-    setCurrentPhase1Unit(0)
-    setCurrentPhase2Unit(0)
-    setCurrentPhase(null)
-    setPhaseUnits([])
-    setCurrentPhaseUnit(0)
-    setCurrentExerciseData(null)
-    setExerciseType(null)
-    setLearningData(null)
-    setQuizData(null)
-    
     // 立即跳转到单词表页面，即使还没有收到响应
     setStep('dictionary')
     
@@ -316,11 +303,6 @@ function App() {
 
   const handlePhase1UnitClick = async (unitId) => {
     if (!currentFileId) return
-    
-    // 检查单元是否已完成
-    if (phase1Units[unitId]?.completed) {
-      return
-    }
     
     setLoading(true)
     try {
@@ -478,30 +460,6 @@ function App() {
       // 获取词汇表长度
       const vocabResponse = await api.getVocab(currentFileId)
       const vocabLength = vocabResponse.vocab.length
-      
-      // 检查是否学习完当前单元
-      const groupSize = 10
-      const currentUnitIndex = Math.floor((newIndex - 1) / groupSize)
-      const isEndOfUnit = newIndex % groupSize === 0 || newIndex >= vocabLength
-      
-      // 如果完成了当前单元，更新阶段一的进度
-      if (isEndOfUnit && newIndex > 0) {
-        // 更新阶段一的进度
-        await api.setPhaseProgress(currentFileId, 1, currentUnitIndex + 1, 0)
-        
-        // 重新获取单元状态
-        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
-          api.getPhaseUnits(currentFileId, 2)
-        ])
-        setPhase1Units(phase1UnitsData.units)
-        setPhase2Units(phase2UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
-        setLoading(false)
-        return
-      }
       
       // 检查是否学习完所有单词
       const allWordsLearned = newIndex >= vocabLength
@@ -806,7 +764,6 @@ function App() {
               onPhase1UnitClick={handlePhase1UnitClick}
               onPhase2UnitClick={handlePhase2UnitClick}
               onBack={() => setStep('dictionary')}
-              onOpenVocabList={handleOpenVocabList}
               loading={loading}
               t={t}
             />
