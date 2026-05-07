@@ -197,6 +197,19 @@ function App() {
     setVocab([])
     setSentenceTranslations([])
     
+    // 重置阶段相关状态
+    setPhase1Units([])
+    setPhase2Units([])
+    setCurrentPhase1Unit(0)
+    setCurrentPhase2Unit(0)
+    setCurrentPhase(null)
+    setCurrentPhaseUnit(0)
+    setPhaseUnits([])
+    setCurrentExerciseData(null)
+    setExerciseType(null)
+    setQuizData(null)
+    setLearningMode('word')
+    
     // 立即跳转到单词表页面，即使还没有收到响应
     setStep('dictionary')
     
@@ -474,8 +487,16 @@ function App() {
             
             // 检查是否所有句子都已使用
             if (quizResponse.unit_completed) {
-              // 单元已完成
-              setStep('progress')
+              // 单元已完成，刷新单元状态
+              const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+                api.getPhaseUnits(currentFileId, 1),
+                api.getPhaseUnits(currentFileId, 2)
+              ])
+              setPhase1Units(phase1UnitsData.units)
+              setPhase2Units(phase2UnitsData.units)
+              setCurrentPhase1Unit(phase1UnitsData.current_unit)
+              setCurrentPhase2Unit(phase2UnitsData.current_unit)
+              setStep('all-units')
             } else {
               setQuizData({
                 ...quizResponse,
@@ -486,15 +507,31 @@ function App() {
             }
           } catch (quizError) {
             if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-              // 所有句子都已使用，单元已完成
-              setStep('progress')
+              // 所有句子都已使用，单元已完成，刷新单元状态
+              const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+                api.getPhaseUnits(currentFileId, 1),
+                api.getPhaseUnits(currentFileId, 2)
+              ])
+              setPhase1Units(phase1UnitsData.units)
+              setPhase2Units(phase2UnitsData.units)
+              setCurrentPhase1Unit(phase1UnitsData.current_unit)
+              setCurrentPhase2Unit(phase2UnitsData.current_unit)
+              setStep('all-units')
             } else {
               throw quizError
             }
           }
         } else {
-          // 单元已完成
-          setStep('progress')
+          // 单元已完成，刷新单元状态
+          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+            api.getPhaseUnits(currentFileId, 1),
+            api.getPhaseUnits(currentFileId, 2)
+          ])
+          setPhase1Units(phase1UnitsData.units)
+          setPhase2Units(phase2UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          setStep('all-units')
         }
         return
       }
@@ -587,8 +624,16 @@ function App() {
           
           // 检查是否所有句子都已使用
           if (quizResponse.unit_completed) {
-            // 单元已完成
-            setStep('progress')
+            // 单元已完成，刷新单元状态
+            const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+              api.getPhaseUnits(currentFileId, 1),
+              api.getPhaseUnits(currentFileId, 2)
+            ])
+            setPhase1Units(phase1UnitsData.units)
+            setPhase2Units(phase2UnitsData.units)
+            setCurrentPhase1Unit(phase1UnitsData.current_unit)
+            setCurrentPhase2Unit(phase2UnitsData.current_unit)
+            setStep('all-units')
           } else {
             setQuizData({
               ...quizResponse,
@@ -599,15 +644,31 @@ function App() {
           }
         } catch (quizError) {
           if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元已完成
-            setStep('progress')
+            // 所有句子都已使用，单元已完成，刷新单元状态
+            const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+              api.getPhaseUnits(currentFileId, 1),
+              api.getPhaseUnits(currentFileId, 2)
+            ])
+            setPhase1Units(phase1UnitsData.units)
+            setPhase2Units(phase2UnitsData.units)
+            setCurrentPhase1Unit(phase1UnitsData.current_unit)
+            setCurrentPhase2Unit(phase2UnitsData.current_unit)
+            setStep('all-units')
           } else {
             throw quizError
           }
         }
       } else if (coverageData.unit_completed) {
-        // 单元已完成
-        setStep('progress')
+        // 单元已完成，刷新单元状态
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
       } else {
         // 回到单词学习
         const response = await api.getRandomWord(currentFileId)
