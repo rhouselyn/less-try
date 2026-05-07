@@ -1132,9 +1132,14 @@ async def get_phase_units(file_id: str, phase_number: int):
             phase1_units = []
             for i in range(0, len(vocab), group_size):
                 unit_words = vocab[i:i+group_size]
+                unit_index = i // group_size
+                # 计算单元结束索引
+                unit_end_index = min(i + group_size, len(vocab))
+                # 如果当前索引到达或超过单元结束索引，则该单元已完成
+                completed = current_index >= unit_end_index
                 phase1_units.append({
                     "word_count": len(unit_words),
-                    "completed": (i // group_size) < current_unit
+                    "completed": completed
                 })
             
             return {

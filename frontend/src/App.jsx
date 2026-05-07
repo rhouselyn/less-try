@@ -385,24 +385,32 @@ function App() {
     setLoading(true)
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
+      
       if (nextRes.unit_complete) {
-        // 单元完成，更新当前练习数据，显示结束信息
-        const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
-        setExerciseType(exerciseData.exercise_type || 'masked_sentence')
-        setCurrentExerciseData({
-          ...exerciseData.data,
-          unit_complete: true
-        })
+        // 单元完成，更新单元状态并返回列表
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
       } else {
-        // Get next exercise
+        // 获取下一个练习
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
-          // 单元完成，更新当前练习数据，显示结束信息
-          setExerciseType(exerciseData.exercise_type || 'masked_sentence')
-          setCurrentExerciseData({
-            ...exerciseData.data,
-            unit_complete: true
-          })
+          // 单元完成，更新单元状态并返回列表
+          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+            api.getPhaseUnits(currentFileId, 1),
+            api.getPhaseUnits(currentFileId, 2)
+          ])
+          setPhase1Units(phase1UnitsData.units)
+          setPhase2Units(phase2UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          setStep('all-units')
         } else {
           setExerciseType(exerciseData.exercise_type)
           setCurrentExerciseData(exerciseData.data)
