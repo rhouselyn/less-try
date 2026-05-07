@@ -27,9 +27,11 @@ class Storage:
     def load_pipeline_data(self, file_id: str) -> Any:
         file_dir = self.get_file_dir(file_id)
         pipeline_path = file_dir / "pipeline_data.json"
-        with open(pipeline_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return data.get("data", {})
+        if pipeline_path.exists():
+            with open(pipeline_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("data", {})
+        return {}
 
     def save_vocab(self, file_id: str, vocab: List[Dict]):
         file_dir = self.get_file_dir(file_id)
@@ -40,9 +42,11 @@ class Storage:
     def load_vocab(self, file_id: str) -> List[Dict]:
         file_dir = self.get_file_dir(file_id)
         vocab_path = file_dir / "vocab.json"
-        with open(vocab_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            return data.get("vocab", [])
+        if vocab_path.exists():
+            with open(vocab_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("vocab", [])
+        return []
 
     def save_text(self, file_id: str, text: str):
         file_dir = self.get_file_dir(file_id)
@@ -129,4 +133,84 @@ class Storage:
             with open(order_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return data.get("shuffled_indices")
+        return None
+    
+    def save_phase_progress(self, file_id: str, phase: int, unit_id: int, exercise_index: int, exercise_type_index: int = 0):
+        """保存阶段学习进度，支持每个句子两种练习类型
+        
+        exercise_type_index: 0表示masked_sentence，1表示translation_reconstruction
+        """
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / f"phase{phase}_progress.json"
+        with open(progress_path, 'w', encoding='utf-8') as f:
+            json.dump({
+                "current_unit": unit_id,
+                "current_exercise": exercise_index,
+                "current_exercise_type_index": exercise_type_index
+            }, f, ensure_ascii=False, indent=2)
+    
+    def load_phase_progress(self, file_id: str, phase: int):
+        """加载阶段学习进度"""
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / f"phase{phase}_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                # 兼容旧格式
+                if "current_exercise_type_index" not in data:
+                    data["current_exercise_type_index"] = 0
+                return data
+        return {"current_unit": 0, "current_exercise": 0, "current_exercise_type_index": 0}
+    
+    def save_sentence_order(self, file_id: str, phase: int, shuffled_indices: List[int]):
+        """保存句子的随机顺序"""
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / f"phase{phase}_sentence_order.json"
+        with open(order_path, 'w', encoding='utf-8') as f:
+            json.dump({"shuffled_indices": shuffled_indices}, f, ensure_ascii=False, indent=2)
+    
+    def load_sentence_order(self, file_id: str, phase: int):
+        """加载句子的随机顺序"""
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / f"phase{phase}_sentence_order.json"
+        if order_path.exists():
+            with open(order_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("shuffled_indices")
+        return None
+    
+    def save_phase2_exercise_cache(self, file_id: str, exercise_id: str, cache_data: Dict):
+        """缓存阶段2练习数据"""
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "phase2_cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        cache_file = cache_dir / f"{exercise_id}.json"
+        with open(cache_file, 'w', encoding='utf-8') as f:
+            json.dump(cache_data, f, ensure_ascii=False, indent=2)
+    
+    def load_phase2_exercise_cache(self, file_id: str, exercise_id: str):
+        """加载阶段2练习缓存"""
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "phase2_cache"
+        cache_file = cache_dir / f"{exercise_id}.json"
+        if cache_file.exists():
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return None
+    
+    def save_used_sentences(self, file_id: str, used_sentences: List[str]):
+        """保存已使用的句子"""
+        file_dir = self.get_file_dir(file_id)
+        used_path = file_dir / "used_sentences.json"
+        with open(used_path, 'w', encoding='utf-8') as f:
+            json.dump({"used_sentences": used_sentences}, f, ensure_ascii=False, indent=2)
+    
+    def load_used_sentences(self, file_id: str) -> Optional[List[str]]:
+        """加载已使用的句子"""
+        file_dir = self.get_file_dir(file_id)
+        used_path = file_dir / "used_sentences.json"
+        if used_path.exists():
+            with open(used_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("used_sentences", [])
         return None

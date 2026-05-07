@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X } from 'lucide-react'
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList }) {
   const [selectedTokens, setSelectedTokens] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
@@ -59,17 +59,29 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
       exit={{ opacity: 0, y: -20 }}
       className="max-w-3xl mx-auto"
     >
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100 mb-8"
-        whileHover={{ scale: 1.05, x: -2 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t.backToVocab}
-      </motion.button>
+      <div className="flex justify-between items-center mb-8">
+        <motion.button
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={onBack}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+          whileHover={{ scale: 1.05, x: -2 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {t.backToVocab}
+        </motion.button>
+        <motion.button
+          initial={{ opacity: 0, x: 10 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={onOpenVocabList}
+          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+          whileHover={{ scale: 1.05, x: 2 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          📚 单词表
+        </motion.button>
+      </div>
 
       <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
         <div className="text-center mb-8">
@@ -139,9 +151,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             {quizData.tokens.map((token, index) => (
               <motion.button
                 key={index}
-                initial={{ opacity: 0, y: 30, scale: 0.8 }}
+                initial={{ opacity: 1, y: 0, scale: 1 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ delay: index * 0.05, type: 'spring', stiffness: 400, damping: 15 }}
                 whileHover={{ scale: 1.15, y: -8, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
                 whileTap={{ scale: 0.9, y: 2 }}
                 onClick={() => handleTokenClick(token)}
@@ -219,54 +230,36 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             </motion.button>
           )}
           {isChecked && (
-            <>
-              {!quizData.unit_completed && (
-                <motion.button
-                  whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-                  whileTap={{ scale: 0.97, y: 0 }}
-                  onClick={handleNextQuestion}
-                  disabled={loading}
-                  className="flex-1 py-4 bg-gray-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      {t.loading}
-                    </>
-                  ) : (
-                    <>
-                      {t.continue}
-                      <ChevronRight className="w-5 h-5" />
-                    </>
-                  )}
-                </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
+              whileTap={{ scale: 0.97, y: 0 }}
+              onClick={() => {
+                setSelectedTokens([]);
+                setIsChecked(false);
+                setIsCorrect(false);
+                if (quizData.unit_completed || quizData.unit_complete) {
+                  onComplete();
+                } else {
+                  handleNextQuestion();
+                }
+              }}
+              disabled={loading}
+              className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {t.loading}
+                </>
+              ) : (quizData.unit_completed || quizData.unit_complete) ? (
+                '完成'
+              ) : (
+                <>
+                  下一题
+                  <ChevronRight className="w-5 h-5" />
+                </>
               )}
-              <motion.button
-                whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-                whileTap={{ scale: 0.97, y: 0 }}
-                onClick={() => {
-                  setSelectedTokens([]);
-                  setIsChecked(false);
-                  setIsCorrect(false);
-                  if (quizData.unit_completed) {
-                    onComplete();
-                  } else {
-                    handleNextQuestion();
-                  }
-                }}
-                disabled={loading}
-                className={`flex-1 py-4 font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${quizData.unit_completed ? 'bg-black text-white' : 'bg-gray-200 text-gray-800'}`}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    {t.loading}
-                  </>
-                ) : (
-                  quizData.unit_completed ? '完成' : '下一题'
-                )}
-              </motion.button>
-            </>
+            </motion.button>
           )}
         </div>
       </div>
