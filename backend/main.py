@@ -792,9 +792,9 @@ async def check_coverage(file_id: str):
         
         # 检查是否完成了当前单元
         unit_size = 10
-        current_unit_check = current_index // unit_size
-        words_in_unit = min(unit_size, len(vocab) - current_unit_check * unit_size)
-        unit_completed = current_index >= (current_unit_check * unit_size + words_in_unit)
+        current_unit = current_index // unit_size
+        words_in_unit = min(unit_size, len(vocab) - current_unit * unit_size)
+        unit_completed = current_index >= (current_unit * unit_size + words_in_unit)
         
         # 检查是否已经学习完所有单词
         all_words_learned = current_index >= len(vocab)
