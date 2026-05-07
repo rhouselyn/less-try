@@ -791,10 +791,14 @@ async def check_coverage(file_id: str):
         print(f"[DEBUG] 当前学习进度: {current_index}")
         
         # 检查是否完成了当前单元
+        # 阶段一的单元完成只依赖于单词学习进度，不依赖于阶段二
         unit_size = 10
         current_unit = current_index // unit_size
-        words_in_unit = min(unit_size, len(vocab) - current_unit * unit_size)
-        unit_completed = current_index >= (current_unit * unit_size + words_in_unit)
+        
+        # 计算当前单元是否完成
+        # 如果 current_index >= (current_unit * unit_size)，说明已经开始了下一个单元
+        # 或者已经学完了所有单词
+        unit_completed = (current_index > current_unit * unit_size) or (current_index >= len(vocab))
         
         # 检查是否已经学习完所有单词
         all_words_learned = current_index >= len(vocab)
