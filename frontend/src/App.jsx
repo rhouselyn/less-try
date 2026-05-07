@@ -474,8 +474,11 @@ function App() {
             
             // 检查是否所有句子都已使用
             if (quizResponse.unit_completed) {
-              // 单元已完成
-              setStep('progress')
+              // 单元完成，更新阶段一进度并返回单元列表
+              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+              setPhase1Units(phase1UnitsData.units)
+              setCurrentPhase1Unit(phase1UnitsData.current_unit)
+              setStep('all-units')
             } else {
               setQuizData({
                 ...quizResponse,
@@ -486,15 +489,21 @@ function App() {
             }
           } catch (quizError) {
             if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-              // 所有句子都已使用，单元已完成
-              setStep('progress')
+              // 所有句子都已使用，单元完成
+              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+              setPhase1Units(phase1UnitsData.units)
+              setCurrentPhase1Unit(phase1UnitsData.current_unit)
+              setStep('all-units')
             } else {
               throw quizError
             }
           }
         } else {
-          // 单元已完成
-          setStep('progress')
+          // 单元完成，更新阶段一进度并返回单元列表
+          const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+          setPhase1Units(phase1UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setStep('all-units')
         }
         return
       }
@@ -508,8 +517,11 @@ function App() {
           
           // 检查是否所有句子都已使用
           if (quizResponse.unit_completed) {
-            // 单元已完成
-            setStep('progress')
+            // 单元完成，更新阶段一进度并返回单元列表
+            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+            setPhase1Units(phase1UnitsData.units)
+            setCurrentPhase1Unit(phase1UnitsData.current_unit)
+            setStep('all-units')
           } else {
             setQuizData({
               ...quizResponse,
@@ -520,15 +532,21 @@ function App() {
           }
         } catch (quizError) {
           if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元已完成
-            setStep('progress')
+            // 所有句子都已使用，单元完成
+            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+            setPhase1Units(phase1UnitsData.units)
+            setCurrentPhase1Unit(phase1UnitsData.current_unit)
+            setStep('all-units')
           } else {
             throw quizError
           }
         }
       } else if (coverageData.unit_completed) {
-        // 单元已完成
-        setStep('progress')
+        // 单元完成，更新阶段一进度并返回单元列表
+        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+        setPhase1Units(phase1UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setStep('all-units')
       } else {
         // 继续单词学习
         const response = await api.getRandomWord(currentFileId)
@@ -587,8 +605,11 @@ function App() {
           
           // 检查是否所有句子都已使用
           if (quizResponse.unit_completed) {
-            // 单元已完成
-            setStep('progress')
+            // 单元完成，更新阶段一进度并返回单元列表
+            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+            setPhase1Units(phase1UnitsData.units)
+            setCurrentPhase1Unit(phase1UnitsData.current_unit)
+            setStep('all-units')
           } else {
             setQuizData({
               ...quizResponse,
@@ -599,15 +620,21 @@ function App() {
           }
         } catch (quizError) {
           if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元已完成
-            setStep('progress')
+            // 所有句子都已使用，单元完成
+            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+            setPhase1Units(phase1UnitsData.units)
+            setCurrentPhase1Unit(phase1UnitsData.current_unit)
+            setStep('all-units')
           } else {
             throw quizError
           }
         }
       } else if (coverageData.unit_completed) {
-        // 单元已完成
-        setStep('progress')
+        // 单元完成，更新阶段一进度并返回单元列表
+        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+        setPhase1Units(phase1UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setStep('all-units')
       } else {
         // 回到单词学习
         const response = await api.getRandomWord(currentFileId)

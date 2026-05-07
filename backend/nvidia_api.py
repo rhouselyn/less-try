@@ -269,7 +269,7 @@ class NvidiaAPI:
                         "redundant_tokens": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG"
+                            "description": "4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组"
                         },
                         "dictionary_entries": {
                             "type": "array",
@@ -360,7 +360,7 @@ class NvidiaAPI:
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
-- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）
+- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
 
 【极其重要！！！固定搭配处理规则！！！
 - 对于固定搭配（如 what's up, live in, how are you, look forward to 等），请将整个固定搭配作为一个整体处理，不要拆分！！！
@@ -385,9 +385,10 @@ class NvidiaAPI:
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
 - 生成冗余词时要注意：
   1. 必须使用TARGET_LANG（目标语言）生成冗余词
-  2. 冗余词的意思不能太相近，要避免多个冗余词都表达类似的含义
-  3. 确保使用错误的答案组成的意思不是合理的，也不能是与正确答案近似的意思
-  4. 冗余词应该是容易混淆但明显不同的概念
+  2. 【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组。例如：正确可以是"苹果"、"快乐"，错误的是"红色的苹果"、"非常快乐"
+  3. 冗余词的意思不能太相近，要避免多个冗余词都表达类似的含义
+  4. 确保使用错误的答案组成的意思不是合理的，也不能是与正确答案近似的意思
+  5. 冗余词应该是容易混淆但明显不同的概念
 
 要处理的文本：
 TEXT_CONTENT
