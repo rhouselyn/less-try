@@ -506,13 +506,19 @@ async def get_word_details(file_id: str, word: str):
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
-            # 如果是学习模式请求，需要补充 options 和 correct_index
-            if "multiple_choice" in cached_word and "options" in cached_word["multiple_choice"]:
-                # 已经包含完整数据，直接返回
-                return cached_word
-            else:
-                # 旧格式缓存，需要补充
-                pass
+            # 如果有 multiple_choice 但没有 options，需要从其中提取
+            if "multiple_choice" in cached_word and "options" not in cached_word:
+                options = []
+                correct_index = 0
+                if "options" in cached_word["multiple_choice"]:
+                    for i, opt in enumerate(cached_word["multiple_choice"]["options"]):
+                        options.append(opt["text"])
+                        if opt["is_correct"]:
+                            correct_index = i
+                    cached_word["options"] = options
+                    cached_word["correct_index"] = correct_index
+                    print(f"[DEBUG] 从 multiple_choice 提取 options: {options}")
+            return cached_word
 
         vocab = storage.load_vocab(file_id)
         if not vocab:
