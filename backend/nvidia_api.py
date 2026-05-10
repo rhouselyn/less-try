@@ -6,8 +6,9 @@ from typing import List, Dict, Any
 
 class NvidiaAPI:
     def __init__(self):
-        self.api_key = "sk-cp-_8A4FS-xzNygSSrcPqjaQJA0aJhxqYkYmNcrTrhpWRM"
-        self.base_url = "https://ai.irobotx.top/v1"
+        self.api_key = "sk-tszhvcglvfqiivwqqtqwkxmxsneyuymjjywtfxteofmfvkct"
+        self.base_url = "https://api.siliconflow.cn/v1"
+        self.model = "Qwen/Qwen3.6-27B"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -15,7 +16,7 @@ class NvidiaAPI:
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0):
         payload = {
-            "model": "claude-haiku-4.5",
+            "model": self.model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": 4096
