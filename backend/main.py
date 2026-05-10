@@ -793,7 +793,7 @@ async def check_coverage(file_id: str):
         # 检查是否完成了当前单元
         unit_size = 10
         current_unit = current_index // unit_size
-        words_in_unit = min(unit_size, len(vocab) - current_unit * unit_size)
+        words_in_unit = min(unit_size, max(0, len(vocab) - current_unit * unit_size))
         unit_completed = current_index >= (current_unit * unit_size + words_in_unit)
         
         # 检查是否已经学习完所有单词
@@ -803,7 +803,7 @@ async def check_coverage(file_id: str):
         # 确保学完当前单元的所有单词后才出现翻译题
         group_size = 10
         current_unit = current_index // group_size
-        words_in_current_unit = min(group_size, len(vocab) - current_unit * group_size)
+        words_in_current_unit = min(group_size, max(0, len(vocab) - current_unit * group_size))
         end_of_current_unit = current_unit * group_size + words_in_current_unit
         
         if current_index < end_of_current_unit:
@@ -914,9 +914,18 @@ async def generate_sentence_quiz(file_id: str):
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
+        
+        # 计算 unit_completed
+        group_size = 10
+        current_unit = current_index // group_size
+        words_in_current_unit = min(group_size, max(0, len(vocab) - current_unit * group_size))
+        end_of_current_unit = current_unit * group_size + words_in_current_unit
+        unit_completed = current_index >= end_of_current_unit
+        
         learned_words = vocab[:current_index + 1]
         learned_word_set = set(word["word"].lower() for word in learned_words)
         print(f"[DEBUG] 已学单词: {[word['word'] for word in learned_words]}")
+        print(f"[DEBUG] unit_completed: {unit_completed} (current_index={current_index}, end_of_current_unit={end_of_current_unit})")
         
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
@@ -1057,7 +1066,8 @@ async def generate_sentence_quiz(file_id: str):
             "original_sentence": original_sentence,
             "correct_translation": correct_translation,
             "correct_tokens": correct_tokens,
-            "tokens": all_tokens
+            "tokens": all_tokens,
+            "unit_completed": unit_completed
         }
     except HTTPException:
         # 重新抛出HTTPException，不被捕获为500错误
