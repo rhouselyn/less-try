@@ -8,7 +8,7 @@ class NvidiaAPI:
     def __init__(self):
         self.api_key = "sk-tszhvcglvfqiivwqqtqwkxmxsneyuymjjywtfxteofmfvkct"
         self.base_url = "https://api.siliconflow.cn/v1"
-        self.model = "Qwen/Qwen3.6-27B"
+        self.model = "deepseek-ai/DeepSeek-V4-Flash"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -19,8 +19,7 @@ class NvidiaAPI:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 4096,
-            "thinking": {"type": "disabled"}  # 禁用思考模式，直接获取答案
+            "max_tokens": 4096
         }
         
         if tools:

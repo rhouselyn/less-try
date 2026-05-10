@@ -314,8 +314,8 @@ class TextProcessor:
         else:
             num_masks = 1 + (word_count - 8) // 8
         
-        if num_masks > word_count // 2:
-            num_masks = word_count // 2  # 最多蒙一半
+        if num_masks > max(1, word_count // 2):
+            num_masks = max(1, word_count // 2)  # 至少保留1个蒙版，最多蒙一半
         
         import random
         # 固定种子，确保每个单元的掩码位置一致
