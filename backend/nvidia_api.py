@@ -19,7 +19,8 @@ class NvidiaAPI:
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 4096
+            "max_tokens": 4096,
+            "thinking": {"type": "disabled"}  # 禁用思考模式，直接获取答案
         }
         
         if tools:
@@ -34,7 +35,22 @@ class NvidiaAPI:
                 timeout=600  # 10分钟超时
             )
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            
+            # Qwen 模型返回的 content 可能是空的，内容在 reasoning_content 里
+            # 需要提取正确的响应内容
+            if "choices" in result and len(result["choices"]) > 0:
+                choice = result["choices"][0]
+                message = choice.get("message", {})
+                content = message.get("content", "")
+                reasoning_content = message.get("reasoning_content", "")
+                
+                # 如果 content 为空但有 reasoning_content，使用 reasoning_content
+                if not content and reasoning_content:
+                    message["content"] = reasoning_content
+                    result["choices"][0]["message"] = message
+            
+            return result
         except requests.exceptions.Timeout:
             print("API request timed out. Retrying...")
             # Retry once
@@ -45,7 +61,20 @@ class NvidiaAPI:
                 timeout=600  # 10分钟超时
             )
             response.raise_for_status()
-            return response.json()
+            result = response.json()
+            
+            # Qwen 模型返回的 content 可能是空的，内容在 reasoning_content 里
+            if "choices" in result and len(result["choices"]) > 0:
+                choice = result["choices"][0]
+                message = choice.get("message", {})
+                content = message.get("content", "")
+                reasoning_content = message.get("reasoning_content", "")
+                
+                if not content and reasoning_content:
+                    message["content"] = reasoning_content
+                    result["choices"][0]["message"] = message
+            
+            return result
 
 
 

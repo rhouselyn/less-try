@@ -1,113 +1,92 @@
+#!/usr/bin/env python3
+"""
+完整测试：API 修复后测试文本处理流程
+"""
+
 import requests
 import time
+import json
 
 BASE_URL = "http://localhost:8000"
-FILE_ID = "text_20260422_072122_331"
 
-def test_check_coverage():
-    """测试覆盖度检查API"""
-    print("\n=== 测试覆盖度检查 ===")
+def test_full_flow():
+    """测试完整流程"""
     
-    # 首先设置学习进度为2（已学2个单词）
-    set_progress_url = f"{BASE_URL}/api/learn/{FILE_ID}/set-progress"
-    response = requests.post(set_progress_url, json={"index": 2})
-    print(f"设置学习进度响应: {response.status_code}")
-    print(f"响应内容: {response.text}")
+    print("=" * 60)
+    print("测试完整流程（API 修复后）")
+    print("=" * 60)
     
-    # 等待一下
-    time.sleep(0.5)
+    # Step 1: 提交文本
+    print("\n1. 提交文本 'hello world'")
+    response = requests.post(
+        f"{BASE_URL}/api/process-text",
+        json={
+            "text": "hello world",
+            "source_language": "en",
+            "target_language": "zh"
+        }
+    )
+    result = response.json()
+    file_id = result.get("file_id")
+    print(f"文件ID: {file_id}")
     
-    # 测试覆盖度检查
-    check_url = f"{BASE_URL}/api/learn/{FILE_ID}/check-coverage"
-    response = requests.get(check_url)
-    print(f"覆盖度检查响应: {response.status_code}")
-    print(f"响应内容: {response.text}")
-    
-    if response.status_code == 200:
-        data = response.json()
-        print(f"can_form_sentences: {data.get('can_form_sentences')}")
-        print(f"unit_completed: {data.get('unit_completed')}")
+    # Step 2: 等待处理完成（增加超时）
+    print("\n2. 等待处理完成（最多等待60秒）")
+    max_wait = 60
+    for i in range(max_wait):
+        time.sleep(1)
+        response = requests.get(f"{BASE_URL}/api/status/{file_id}")
+        status = response.json()
+        current_status = status.get("status")
+        progress = status.get("progress")
+        print(f"  轮询 {i+1}/{max_wait}: status={current_status}, progress={progress}%")
         
-        if data.get('can_form_sentences'):
-            print("\n✅ 覆盖度检查成功！可以生成句子翻译题！")
-            return True
+        if current_status == "completed":
+            print("处理完成!")
+            break
+        elif current_status == "error":
+            print(f"处理错误: {status.get('error')}")
+            break
     
-    print("\n❌ 覆盖度检查失败！")
-    return False
-
-def test_sentence_quiz():
-    """测试句子翻译题生成API"""
-    print("\n=== 测试句子翻译题生成 ===")
+    # Step 3: 获取词汇表
+    print("\n3. 获取词汇表")
+    response = requests.get(f"{BASE_URL}/api/vocab/{file_id}")
+    vocab_data = response.json()
+    vocab = vocab_data.get("vocab", [])
+    print(f"词汇数量: {len(vocab)}")
     
-    quiz_url = f"{BASE_URL}/api/learn/{FILE_ID}/sentence-quiz"
-    response = requests.get(quiz_url)
-    print(f"句子翻译题响应: {response.status_code}")
+    for v in vocab:
+        print(f"  - {v.get('word')}: {v.get('translation', v.get('context_meaning', 'N/A'))}")
     
-    if response.status_code == 200:
-        data = response.json()
-        print(f"原文: {data.get('original_sentence')}")
-        print(f"正确翻译: {data.get('correct_translation')}")
-        print(f"正确tokens: {data.get('correct_tokens')}")
-        print(f"所有选项tokens: {data.get('tokens')}")
-        print("\n✅ 句子翻译题生成成功！")
-        return True
+    # Step 4: 获取句子数据
+    print("\n4. 获取句子数据")
+    response = requests.get(f"{BASE_URL}/api/sentences/{file_id}")
+    sentences_data = response.json()
+    sentences = sentences_data.get("sentences", [])
+    print(f"句子数量: {len(sentences)}")
     
-    print(f"响应内容: {response.text}")
-    print("\n❌ 句子翻译题生成失败！")
-    return False
-
-def test_get_vocab():
-    """测试获取词汇表API"""
-    print("\n=== 测试获取词汇表 ===")
+    for s in sentences:
+        sentence = s.get("sentence", "")
+        tr = s.get("translation_result", {})
+        if tr:
+            tokens = tr.get("translation", [])
+            print(f"  - '{sentence}': {len(tokens)} tokens")
+        else:
+            print(f"  - '{sentence}': 无翻译结果")
     
-    vocab_url = f"{BASE_URL}/api/vocab/{FILE_ID}"
-    response = requests.get(vocab_url)
-    print(f"词汇表响应: {response.status_code}")
+    # 总结
+    print("\n" + "=" * 60)
+    print("测试总结")
+    print("=" * 60)
     
-    if response.status_code == 200:
-        data = response.json()
-        print(f"词汇表长度: {len(data.get('vocab', []))}")
-        for i, word in enumerate(data.get('vocab', [])):
-            print(f"{i+1}. {word.get('word')}")
-        print("\n✅ 词汇表获取成功！")
-        return True
-    
-    print(f"响应内容: {response.text}")
-    print("\n❌ 词汇表获取失败！")
-    return False
-
-def test_get_sentences():
-    """测试获取句子API"""
-    print("\n=== 测试获取句子 ===")
-    
-    sentences_url = f"{BASE_URL}/api/sentences/{FILE_ID}"
-    response = requests.get(sentences_url)
-    print(f"句子响应: {response.status_code}")
-    
-    if response.status_code == 200:
-        data = response.json()
-        print(f"句子数量: {len(data.get('sentences', []))}")
-        for i, sent in enumerate(data.get('sentences', [])):
-            print(f"{i+1}. {sent.get('sentence')}")
-        print("\n✅ 句子获取成功！")
-        return True
-    
-    print(f"响应内容: {response.text}")
-    print("\n❌ 句子获取失败！")
-    return False
+    if len(vocab) > 0 and len(sentences) > 0:
+        print("\n✓ 文本处理成功!")
+        print(f"  - 词汇数量: {len(vocab)}")
+        print(f"  - 句子数量: {len(sentences)}")
+    else:
+        print("\n✗ 文本处理可能有问题")
+        print(f"  - 词汇数量: {len(vocab)}")
+        print(f"  - 句子数量: {len(sentences)}")
 
 if __name__ == "__main__":
-    print("=== 开始测试API修复 ===")
-    
-    # 测试获取词汇表
-    test_get_vocab()
-    
-    # 测试获取句子
-    test_get_sentences()
-    
-    # 测试覆盖度检查
-    if test_check_coverage():
-        # 测试句子翻译题生成
-        test_sentence_quiz()
-    
-    print("\n=== 测试完成 ===")
+    test_full_flow()
