@@ -149,65 +149,63 @@ class TextProcessor:
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None) -> Dict[str, Any]:
         """
         生成蒙版填空练习
-        - 如果句子单词数>=3才生成练习（排除2个单词的短语如 "what's up"）
+        - 大于8个词的句子才生成
         - 每8个词多蒙一个
         """
-        # 使用自动分词获取单词数量
-        import re
-        words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
+        # 使用翻译token或自动分词
+        if translation_tokens:
+            words = translation_tokens
+        else:
+            words = self.tokenize_sentence(sentence)
         word_count = len(words)
         
-        # 只生成3个或以上单词的句子的练习
-        if word_count < 3:
+        if word_count < 8:
             return None
         
-        # 如果提供了translation_tokens且数量>=2，使用它们
-        # 否则使用自动分词
-        if translation_tokens and len(translation_tokens) >= 2:
-            tokens = translation_tokens
-        else:
-            # 使用自动分词
-            tokens = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
-            # 如果自动分词结果也不足2个，返回None
-            if len(tokens) < 2:
-                return None
-        
-        actual_word_count = len(tokens)
-        
-        # 计算要蒙版的数量（至少蒙1个）
-        num_masks = 1 + (actual_word_count - 8) // 8 if actual_word_count >= 8 else 1
-        if num_masks > actual_word_count // 2:
-            num_masks = actual_word_count // 2
+        # 计算要蒙版的数量
+        num_masks = 1 + (word_count - 8) // 8
         if num_masks < 1:
             num_masks = 1
+        if num_masks > word_count // 2:
+            num_masks = word_count // 2  # 最多蒙一半
         
         import random
         # 固定种子，确保每个单元的掩码位置一致
         # 使用句子内容作为种子，确保相同句子有相同的掩码模式
         random.seed(hash(sentence))
         # 随机选择要蒙版的单词索引
-        mask_indices = random.sample(range(actual_word_count), num_masks)
+        mask_indices = random.sample(range(word_count), num_masks)
         
-        # 构建蒙版后的句子
+        # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []
         answer_words = []
         
-        # 使用自动分词结果来构建蒙版句子
-        import re
-        tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
-        # 映射单词位置到token位置
-        current_word_idx = 0
-        for token in tokens_with_punc:
-            # 检查是否是单词（包括缩写形式）
-            if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < actual_word_count:
-                if current_word_idx in mask_indices:
+        # 如果提供了translation_tokens，使用它们来构建蒙版句子
+        if translation_tokens:
+            for i, token in enumerate(translation_tokens):
+                if i in mask_indices:
                     masked_tokens.append("___")
                     answer_words.append(token)
                 else:
                     masked_tokens.append(token)
-                current_word_idx += 1
-            else:
-                masked_tokens.append(token)
+        else:
+            # 回退到自动分词
+            import re
+            # 正确处理缩写形式，如 I'm, don't 等
+            tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
+            # 映射单词位置到token位置
+            current_word_idx = 0
+            for token in tokens_with_punc:
+                # 检查是否是单词（包括缩写形式）
+                if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
+                    if current_word_idx in mask_indices:
+                        masked_tokens.append("___")
+                        answer_words.append(token)
+                    else:
+                        masked_tokens.append(token)
+                    current_word_idx += 1
+                else:
+                    masked_tokens.append(token)
         
         # 生成选项：正确答案 + 干扰项（来自vocab的其他单词）
         options = answer_words.copy()
@@ -236,13 +234,18 @@ class TextProcessor:
         # 打乱所有选项
         random.shuffle(options)
         
-        # 构建蒙版句子，保持原始格式
-        masked_sentence = "".join(
-            [
-                " " + token if token not in [".", ",", "!", "?", ":", ";", ")"] and i > 0 else token 
-                for i, token in enumerate(masked_tokens)
-            ]
-        )
+        # 构建蒙版句子，保持原始句子的格式
+        if translation_tokens:
+            # 当使用LLM生成的tokens时，简单地用空格连接
+            masked_sentence = " ".join(masked_tokens)
+        else:
+            # 当使用自动分词时，保持原始格式
+            masked_sentence = "".join(
+                [
+                    " " + token if token not in [".", ",", "!", "?", ":", ";", ")"] and i > 0 else token 
+                    for i, token in enumerate(masked_tokens)
+                ]
+            )
         
         return {
             "original_sentence": sentence,
@@ -250,7 +253,7 @@ class TextProcessor:
             "answer_words": answer_words,
             "mask_indices": mask_indices,
             "options": options,
-            "word_count": actual_word_count
+            "word_count": word_count
         }
     
     def group_sentences_into_units(self, sentences: List[str], unit_size: int = 8) -> List[List[str]]:
@@ -288,3 +291,126 @@ class TextProcessor:
                 distractors.append(verb)
         
         return distractors
+    
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None) -> Dict[str, Any]:
+        """
+        生成蒙版填空练习
+        - 支持任意长度句子（<8个token时掩码1个）
+        - 使用翻译token而非自动分词
+        - 集成备选词库
+        - 干扰词从其他句子或词库选择，不使用当前句子的单词
+        """
+        # 使用翻译token或自动分词
+        if translation_tokens:
+            words = translation_tokens
+        else:
+            words = self.tokenize_sentence(sentence)
+        
+        word_count = len(words)
+        
+        # 计算要蒙版的数量
+        if word_count < 8:
+            num_masks = 1
+        else:
+            num_masks = 1 + (word_count - 8) // 8
+        
+        if num_masks > word_count // 2:
+            num_masks = word_count // 2  # 最多蒙一半
+        
+        import random
+        # 固定种子，确保每个单元的掩码位置一致
+        # 使用句子内容作为种子，确保相同句子有相同的掩码模式
+        random.seed(hash(sentence))
+        # 随机选择要蒙版的单词索引
+        mask_indices = random.sample(range(word_count), num_masks)
+        
+        # 构建蒙版后的句子 - 使用LLM生成的tokens
+        masked_tokens = []
+        answer_words = []
+        
+        # 如果提供了translation_tokens，使用它们来构建蒙版句子
+        if translation_tokens:
+            for i, token in enumerate(translation_tokens):
+                if i in mask_indices:
+                    masked_tokens.append("___")
+                    answer_words.append(token)
+                else:
+                    masked_tokens.append(token)
+        else:
+            # 回退到自动分词
+            import re
+            # 正确处理缩写形式，如 I'm, don't 等
+            tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
+            # 映射单词位置到token位置
+            current_word_idx = 0
+            for token in tokens_with_punc:
+                # 检查是否是单词（包括缩写形式）
+                if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
+                    if current_word_idx in mask_indices:
+                        masked_tokens.append("___")
+                        answer_words.append(token)
+                    else:
+                        masked_tokens.append(token)
+                    current_word_idx += 1
+                else:
+                    masked_tokens.append(token)
+        
+        # 生成选项：正确答案 + 干扰项
+        options = answer_words.copy()
+        # 收集所有干扰词
+        distractors = []
+        answer_lower = [w.lower() for w in answer_words]
+        
+        # 首先从其他句子中获取干扰词
+        if all_sentences:
+            for sent_data in all_sentences:
+                if "sentence" in sent_data and sent_data["sentence"] != sentence:
+                    if "translation_result" in sent_data and "translation" in sent_data["translation_result"]:
+                        for token in sent_data["translation_result"]["translation"]:
+                            if isinstance(token, dict) and "text" in token:
+                                token_text = token["text"]
+                                if token_text.lower() not in answer_lower and token_text not in distractors and len(distractors) < 3 * num_masks:
+                                    distractors.append(token_text)
+        
+        # 然后从词汇表中找干扰词
+        if len(distractors) < 3 * num_masks:
+            vocab_words = [v["word"] for v in vocab]
+            random.shuffle(vocab_words)
+            for vw in vocab_words:
+                if vw.lower() not in answer_lower and vw not in distractors and len(distractors) < 3 * num_masks:
+                    distractors.append(vw)
+        
+        # 如果词汇表不够，使用备选词库
+        if len(distractors) < 3 * num_masks:
+            fallback_needed = 3 * num_masks - len(distractors)
+            fallback_distractors = self.get_fallback_distractors(fallback_needed, answer_words + distractors)
+            distractors.extend(fallback_distractors)
+        
+        # 打乱干扰项
+        random.shuffle(distractors)
+        options += distractors[:3 * num_masks]
+        
+        # 打乱所有选项
+        random.shuffle(options)
+        
+        # 构建蒙版句子，保持原始句子的格式
+        if translation_tokens:
+            # 当使用LLM生成的tokens时，简单地用空格连接
+            masked_sentence = " ".join(masked_tokens)
+        else:
+            # 当使用自动分词时，保持原始格式
+            masked_sentence = "".join(
+                [
+                    " " + token if token not in [".", ",", "!", "?", ":", ";", ")"] and i > 0 else token 
+                    for i, token in enumerate(masked_tokens)
+                ]
+            )
+        
+        return {
+            "original_sentence": sentence,
+            "masked_sentence": masked_sentence,
+            "answer_words": answer_words,
+            "mask_indices": mask_indices,
+            "options": options,
+            "word_count": word_count
+        }

@@ -1213,16 +1213,12 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         
         unit_sentences = units[unit_id]
         
-        # 检查句子是否有效用于第二阶段练习
-        # 条件：句子包含至少3个英文单词
-        def is_valid_for_phase2(sentence_data):
-            import re
-            sentence = sentence_data.get("sentence", "")
-            words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
-            word_count = len(words)
-            if word_count < 3:
-                return False
-            return True
+        # 检查句子是否有至少一个有效token（修改：原来是要求多个token）
+        def has_valid_token(sentence_data):
+            if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                tokens = sentence_data["translation_result"]["translation"]
+                return len(tokens) >= 1
+            return False
         
         # 加载进度
         progress = storage.load_phase_progress(file_id, phase_number)
@@ -1230,18 +1226,18 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         exercise_index = progress["current_exercise"]
         exercise_type_index = progress.get("current_exercise_type_index", 0)
         
-        # 找到下一个有效练习，跳过无效的句子
+        # 找到下一个有效练习，跳过没有有效token的句子
         while exercise_index < len(unit_sentences):
             sentence_idx = exercise_index
             current_sentence_data = unit_sentences[sentence_idx]
             current_sentence = current_sentence_data["sentence"]
             
-            # 检查是否有效
-            if is_valid_for_phase2(current_sentence_data):
+            # 检查是否有有效token
+            if has_valid_token(current_sentence_data):
                 print(f"[DEBUG] 找到有效练习，句子: {current_sentence}, 练习类型索引: {exercise_type_index}")
                 break
             
-            print(f"[DEBUG] 句子无效，跳过: {current_sentence}")
+            print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence}")
             exercise_index += 1
         
         if exercise_index >= len(unit_sentences):
@@ -1265,11 +1261,12 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                             translation_tokens.append(token["text"])
                 
                 # 生成蒙版练习（支持任意长度句子）
-                # 确保使用自动分词，当LLM token不足时fallback
+                # 确保使用LLM生成的tokens
                 masked_exercise = text_processor.generate_masked_sentence(
                     current_sentence, 
                     vocab, 
-                    translation_tokens  # 可能为空或只有1个token，会触发fallback到自动分词
+                    translation_tokens,  # 强制使用LLM生成的tokens
+                    sentences  # 传递所有句子用于获取干扰词
                 )
                 
                 return {
@@ -1343,18 +1340,12 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
 async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
     """进入下一个练习"""
     try:
-        # 检查句子是否有效用于第二阶段练习
-        # 条件：句子包含至少3个英文单词（排除2个单词的短语如 "what's up"）
-        # 方法：检查句子单词数量
-        def is_valid_for_phase2(sentence_data):
-            import re
-            sentence = sentence_data.get("sentence", "")
-            words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
-            word_count = len(words)
-            if word_count < 3:
-                print(f"[DEBUG] 句子单词数不足3个，跳过: '{sentence}' (单词数: {word_count})")
-                return False
-            return True
+        # 检查句子是否有至少一个有效token（修改：原来是要求多个token）
+        def has_valid_token(sentence_data):
+            if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                tokens = sentence_data["translation_result"]["translation"]
+                return len(tokens) >= 1
+            return False
         
         progress = storage.load_phase_progress(file_id, phase_number)
         current_exercise_index = progress["current_exercise"]
@@ -1378,7 +1369,7 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 new_exercise_type_index = 1
                 new_exercise_index = current_exercise_index
                 # 检查当前句子是否有效
-                if new_exercise_index < max_sentences and is_valid_for_phase2(unit_sentences[new_exercise_index]):
+                if new_exercise_index < max_sentences and has_valid_token(unit_sentences[new_exercise_index]):
                     # 保存新进度
                     storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
                     return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
@@ -1387,15 +1378,15 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
             new_exercise_type_index = 0
             new_exercise_index = current_exercise_index + 1
             
-            # 找到下一个有效练习，跳过无效的句子
+            # 找到下一个有效练习，跳过没有有效token的句子
             while new_exercise_index < max_sentences:
                 sentence_idx = new_exercise_index
                 current_sentence_data = unit_sentences[sentence_idx]
                 
-                if is_valid_for_phase2(current_sentence_data):
+                if has_valid_token(current_sentence_data):
                     break
                 
-                print(f"[DEBUG] 句子无效，跳过: {current_sentence_data['sentence']}")
+                print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence_data['sentence']}")
                 new_exercise_index += 1
             
             if new_exercise_index >= max_sentences:
@@ -1407,13 +1398,7 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
                 return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
         else:
-            # 阶段一：检查有效token即可（阶段一只学单词，不需要单词数量限制）
-            def has_valid_token_for_phase1(sentence_data):
-                if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                    tokens = sentence_data["translation_result"]["translation"]
-                    return len(tokens) >= 1
-                return False
-            
+            # 阶段一：保持原有逻辑
             new_exercise_index = current_exercise_index + 1
             max_exercises = max_sentences
             
@@ -1421,7 +1406,7 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 sentence_idx = new_exercise_index
                 current_sentence_data = unit_sentences[sentence_idx]
                 
-                if has_valid_token_for_phase1(current_sentence_data):
+                if has_valid_token(current_sentence_data):
                     break
                 
                 print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence_data['sentence']}")
