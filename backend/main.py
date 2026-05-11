@@ -17,6 +17,64 @@ load_dotenv()
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
+def fix_llm_options_result(result: dict) -> dict:
+    if not isinstance(result, dict):
+        return result
+    mc = result.get("multiple_choice")
+    if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+        return result
+    if isinstance(mc, str) and not mc.strip():
+        result.pop("multiple_choice", None)
+    if "options" in result:
+        raw_opts = result["options"]
+        if isinstance(raw_opts, str):
+            try:
+                raw_opts = json.loads(raw_opts)
+            except (json.JSONDecodeError, TypeError):
+                raw_opts = []
+        if isinstance(raw_opts, list):
+            correct_answer = result.get("correct_answer", "")
+            mc_options = []
+            for opt in raw_opts:
+                if isinstance(opt, dict) and "text" in opt:
+                    mc_options.append(opt)
+                elif isinstance(opt, str):
+                    is_correct = (opt == correct_answer)
+                    mc_options.append({"text": opt, "is_correct": is_correct})
+            if mc_options:
+                result["multiple_choice"] = {
+                    "question": result.get("question", ""),
+                    "correct_answer": correct_answer,
+                    "options": mc_options
+                }
+    if "multiple_choice" not in result or not isinstance(result.get("multiple_choice"), dict) or "options" not in result.get("multiple_choice", {}):
+        correct_meaning = result.get("enriched_meaning", result.get("context_meaning", ""))
+        result["multiple_choice"] = {
+            "question": "",
+            "correct_answer": correct_meaning,
+            "options": [
+                {"text": correct_meaning, "is_correct": True},
+                {"text": "其他释义A", "is_correct": False},
+                {"text": "其他释义B", "is_correct": False},
+                {"text": "其他释义C", "is_correct": False}
+            ]
+        }
+    return result
+
+def filter_eligible_sentences(sentences):
+    eligible = []
+    for s in sentences:
+        if "sentence" not in s:
+            continue
+        word_count = s.get("word_count", 0)
+        if word_count < 2:
+            if "translation_result" in s and "translation" in s["translation_result"]:
+                word_count = len(s["translation_result"]["translation"])
+            if word_count < 2:
+                continue
+        eligible.append(s)
+    return eligible
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -252,8 +310,7 @@ async def get_random_word(file_id: str):
                     if opt["is_correct"]:
                         correct_index = i
             else:
-                # 回退到旧格式
-                options = [cached_word.get("meaning", ""), "选项1", "选项2", "选项3"]
+                options = [cached_word.get("meaning", ""), "其他释义A", "其他释义B", "其他释义C"]
                 correct_index = 0
             
             # 启动后台任务预生成下一个单词
@@ -310,6 +367,7 @@ async def get_random_word(file_id: str):
             context,
             target_lang
         )
+        options_result = fix_llm_options_result(options_result)
         
         # 提取选项和正确索引
         options = []
@@ -320,8 +378,7 @@ async def get_random_word(file_id: str):
                 if opt["is_correct"]:
                     correct_index = i
         else:
-            # 回退到旧格式
-            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+            options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
             correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据
@@ -474,6 +531,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             context,
             target_lang
         )
+        options_result = fix_llm_options_result(options_result)
         
         # 构建缓存数据
         cache_data = dict(options_result)
@@ -506,13 +564,19 @@ async def get_word_details(file_id: str, word: str):
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
-            # 如果是学习模式请求，需要补充 options 和 correct_index
-            if "multiple_choice" in cached_word and "options" in cached_word["multiple_choice"]:
-                # 已经包含完整数据，直接返回
-                return cached_word
-            else:
-                # 旧格式缓存，需要补充
-                pass
+            # 如果有 multiple_choice 但没有 options，需要从其中提取
+            if "multiple_choice" in cached_word and "options" not in cached_word:
+                options = []
+                correct_index = 0
+                if "options" in cached_word["multiple_choice"]:
+                    for i, opt in enumerate(cached_word["multiple_choice"]["options"]):
+                        options.append(opt["text"])
+                        if opt["is_correct"]:
+                            correct_index = i
+                    cached_word["options"] = options
+                    cached_word["correct_index"] = correct_index
+                    print(f"[DEBUG] 从 multiple_choice 提取 options: {options}")
+            return cached_word
 
         vocab = storage.load_vocab(file_id)
         if not vocab:
@@ -602,6 +666,7 @@ async def get_word_details(file_id: str, word: str):
             context,
             target_lang
         )
+        options_result = fix_llm_options_result(options_result)
         
         # 提取选项和正确索引
         options = []
@@ -612,8 +677,7 @@ async def get_word_details(file_id: str, word: str):
                 if opt["is_correct"]:
                     correct_index = i
         else:
-            # 回退到旧格式
-            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+            options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
             correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据（同时支持单词详情和学习模式）
@@ -742,6 +806,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                 context,
                 target_lang
             )
+            options_result = fix_llm_options_result(options_result)
             
             # 提取选项和正确索引
             options = []
@@ -752,8 +817,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                     if opt["is_correct"]:
                         correct_index = i
             else:
-                # 回退到旧格式
-                options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+                options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
                 correct_index = options_result.get("correct_index", 0)
             
             # 构建学习数据
@@ -793,7 +857,7 @@ async def check_coverage(file_id: str):
         # 检查是否完成了当前单元
         unit_size = 10
         current_unit = current_index // unit_size
-        words_in_unit = min(unit_size, len(vocab) - current_unit * unit_size)
+        words_in_unit = min(unit_size, max(0, len(vocab) - current_unit * unit_size))
         unit_completed = current_index >= (current_unit * unit_size + words_in_unit)
         
         # 检查是否已经学习完所有单词
@@ -803,7 +867,7 @@ async def check_coverage(file_id: str):
         # 确保学完当前单元的所有单词后才出现翻译题
         group_size = 10
         current_unit = current_index // group_size
-        words_in_current_unit = min(group_size, len(vocab) - current_unit * group_size)
+        words_in_current_unit = min(group_size, max(0, len(vocab) - current_unit * group_size))
         end_of_current_unit = current_unit * group_size + words_in_current_unit
         
         if current_index < end_of_current_unit:
@@ -826,23 +890,33 @@ async def check_coverage(file_id: str):
         if not sentences:
             return {"can_form_sentences": False, "unit_completed": unit_completed}
         
-        # 检查句子是否有多个token
-        def has_multiple_tokens(sentence_data):
+        # 检查句子是否有至少一个有效token（原来是要求多个token）
+        def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                return len(tokens) >= 1
             return False
         
-        # 检查是否有句子可以用已学单词组成
+        # 检查是否有句子可以用已学单词组成（修改：只要有有效token就返回can_form=True）
         can_form = False
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
-                print(f"[DEBUG] 检查句子: {sentence}")
                 
-                # 检查是否有多个token
-                if not has_multiple_tokens(sentence_data):
-                    print(f"[DEBUG] 句子只有单个token，跳过: {sentence}")
+                # 检查句子单词数量，至少需要2个单词才参与句子练习
+                word_count = sentence_data.get("word_count", 0)
+                if word_count < 2:
+                    if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                        word_count = len(sentence_data["translation_result"]["translation"])
+                    if word_count < 2:
+                        print(f"[DEBUG] 句子单词数不足2，跳过: {sentence} (word_count={word_count})")
+                        continue
+                
+                print(f"[DEBUG] 检查句子: {sentence} (word_count={word_count})")
+                
+                # 只要有有效token就认为可以用（修改：去掉多个token的要求）
+                if not has_valid_token(sentence_data):
+                    print(f"[DEBUG] 句子没有有效token，跳过: {sentence}")
                     continue
                 
                 # 获取该句子的LLM tokens
@@ -854,6 +928,7 @@ async def check_coverage(file_id: str):
                 print(f"[DEBUG] 句子的LLM tokens: {sentence_tokens}")
                 
                 # 使用新的匹配逻辑：检查已学单词的tokens是否与句子的tokens有重叠
+                # 修改：只要有至少1个匹配就认为可以用（单个token的句子也生成翻译题）
                 matched_count = 0
                 matched_tokens = []
                 
@@ -874,7 +949,8 @@ async def check_coverage(file_id: str):
                                 matched_count += 1
                                 matched_tokens.append((lt, st))
                                 print(f"[DEBUG] 匹配成功: {lt} <-> {st}")
-                                if matched_count >= 2:
+                                # 修改：只要有至少1个匹配就认为可以用（原来是2个）
+                                if matched_count >= 1:
                                     can_form = True
                                     break
                         if can_form:
@@ -912,9 +988,18 @@ async def generate_sentence_quiz(file_id: str):
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
+        
+        # 计算 unit_completed
+        group_size = 10
+        current_unit = current_index // group_size
+        words_in_current_unit = min(group_size, max(0, len(vocab) - current_unit * group_size))
+        end_of_current_unit = current_unit * group_size + words_in_current_unit
+        unit_completed = current_index >= end_of_current_unit
+        
         learned_words = vocab[:current_index + 1]
         learned_word_set = set(word["word"].lower() for word in learned_words)
         print(f"[DEBUG] 已学单词: {[word['word'] for word in learned_words]}")
+        print(f"[DEBUG] unit_completed: {unit_completed} (current_index={current_index}, end_of_current_unit={end_of_current_unit})")
         
         # 加载句子
         sentences = storage.load_pipeline_data(file_id)
@@ -923,21 +1008,30 @@ async def generate_sentence_quiz(file_id: str):
         
         # 找到可以用已学单词组成的句子
         eligible_sentences = []
-        # 检查句子是否有多个token
-        def has_multiple_tokens(sentence_data):
+        # 修改：检查句子是否有至少一个有效token（原来是要求多个token）
+        def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                return len(tokens) >= 1
             return False
         
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
-                print(f"[DEBUG] 检查句子: {sentence}")
                 
-                # 检查是否有多个token
-                if not has_multiple_tokens(sentence_data):
-                    print(f"[DEBUG] 句子只有单个token，跳过: {sentence}")
+                # 检查句子单词数量，至少需要2个单词才参与句子练习
+                word_count = sentence_data.get("word_count", 0)
+                if word_count < 2:
+                    if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                        word_count = len(sentence_data["translation_result"]["translation"])
+                    if word_count < 2:
+                        print(f"[DEBUG] 句子单词数不足2，跳过: {sentence} (word_count={word_count})")
+                        continue
+                
+                print(f"[DEBUG] 检查句子: {sentence} (word_count={word_count})")
+                
+                if not has_valid_token(sentence_data):
+                    print(f"[DEBUG] 句子没有有效token，跳过: {sentence}")
                     continue
                 
                 # 获取该句子的LLM tokens
@@ -947,7 +1041,7 @@ async def generate_sentence_quiz(file_id: str):
                         if isinstance(token, dict) and "text" in token:
                             sentence_tokens.append(token["text"].lower())
                 
-                # 使用新的匹配逻辑：检查是否有至少2个已学tokens与当前句子匹配
+                # 修改：检查是否有至少1个已学tokens与当前句子匹配（原来是2个）
                 matched_count = 0
                 for learned_word in learned_words:
                     # 获取已学单词的所有tokens
@@ -962,13 +1056,14 @@ async def generate_sentence_quiz(file_id: str):
                         for st in sentence_tokens:
                             if lt in st or st in lt:
                                 matched_count += 1
-                                if matched_count >= 2:
+                                # 修改：只要有至少1个匹配就认为可以用
+                                if matched_count >= 1:
                                     eligible_sentences.append(sentence_data)
                                     print(f"[DEBUG] 句子符合条件: {sentence}")
                                     break
-                        if matched_count >= 2:
+                        if matched_count >= 1:
                             break
-                    if matched_count >= 2:
+                    if matched_count >= 1:
                         break
         
         # 打印eligible_sentences
@@ -1054,7 +1149,8 @@ async def generate_sentence_quiz(file_id: str):
             "original_sentence": original_sentence,
             "correct_translation": correct_translation,
             "correct_tokens": correct_tokens,
-            "tokens": all_tokens
+            "tokens": all_tokens,
+            "unit_completed": unit_completed
         }
     except HTTPException:
         # 重新抛出HTTPException，不被捕获为500错误
@@ -1129,9 +1225,14 @@ async def get_phase_units(file_id: str, phase_number: int):
             phase1_units = []
             for i in range(0, len(vocab), group_size):
                 unit_words = vocab[i:i+group_size]
+                unit_index = i // group_size
+                # 计算单元结束索引
+                unit_end_index = min(i + group_size, len(vocab))
+                # 如果当前索引到达或超过单元结束索引，则该单元已完成
+                completed = current_index >= unit_end_index
                 phase1_units.append({
                     "word_count": len(unit_words),
-                    "completed": (i // group_size) < current_unit
+                    "completed": completed
                 })
             
             return {
@@ -1150,9 +1251,23 @@ async def get_phase_units(file_id: str, phase_number: int):
             # 阶段二使用句子练习进度
             progress = storage.load_phase_progress(file_id, phase_number)
             
-            # 提取句子字符串
-            sentence_list = [s["sentence"] for s in sentences if "sentence" in s]
+            eligible_sentences = filter_eligible_sentences(sentences)
+            sentence_list = [s["sentence"] for s in eligible_sentences]
             units = text_processor.group_sentences_into_units(sentence_list, 8)
+            
+            if not units:
+                return {
+                    "phase_number": phase_number,
+                    "units": [
+                        {
+                            "unit_id": 0,
+                            "sentences_count": 0,
+                            "completed": True,
+                            "no_eligible_sentences": True
+                        }
+                    ],
+                    "current_unit": 0
+                }
             
             return {
                 "phase_number": phase_number,
@@ -1181,19 +1296,23 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             raise HTTPException(status_code=404, detail="No sentences found")
         
         # 获取该单元的句子
-        sentence_list = [s for s in sentences if "sentence" in s]
-        units = text_processor.group_sentences_into_units(sentence_list, 8)
+        eligible_sentences = filter_eligible_sentences(sentences)
+        
+        if not eligible_sentences:
+            return {"unit_complete": True, "no_eligible_sentences": True}
+        
+        units = text_processor.group_sentences_into_units(eligible_sentences, 8)
         
         if unit_id >= len(units):
             raise HTTPException(status_code=404, detail="Unit not found")
         
         unit_sentences = units[unit_id]
         
-        # 检查句子是否有多个token
-        def has_multiple_tokens(sentence_data):
+        # 检查句子是否有至少一个有效token（修改：原来是要求多个token）
+        def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                return len(tokens) >= 1
             return False
         
         # 加载进度
@@ -1202,18 +1321,18 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         exercise_index = progress["current_exercise"]
         exercise_type_index = progress.get("current_exercise_type_index", 0)
         
-        # 找到下一个有效练习，跳过只有单个token的句子
+        # 找到下一个有效练习，跳过没有有效token的句子
         while exercise_index < len(unit_sentences):
             sentence_idx = exercise_index
             current_sentence_data = unit_sentences[sentence_idx]
             current_sentence = current_sentence_data["sentence"]
             
-            # 检查是否有多个token
-            if has_multiple_tokens(current_sentence_data):
+            # 检查是否有有效token
+            if has_valid_token(current_sentence_data):
                 print(f"[DEBUG] 找到有效练习，句子: {current_sentence}, 练习类型索引: {exercise_type_index}")
                 break
             
-            print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence}")
+            print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence}")
             exercise_index += 1
         
         if exercise_index >= len(unit_sentences):
@@ -1316,11 +1435,11 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
 async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
     """进入下一个练习"""
     try:
-        # 检查句子是否有多个token
-        def has_multiple_tokens(sentence_data):
+        # 检查句子是否有至少一个有效token（修改：原来是要求多个token）
+        def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) > 1
+                return len(tokens) >= 1
             return False
         
         progress = storage.load_phase_progress(file_id, phase_number)
@@ -1345,7 +1464,7 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 new_exercise_type_index = 1
                 new_exercise_index = current_exercise_index
                 # 检查当前句子是否有效
-                if new_exercise_index < max_sentences and has_multiple_tokens(unit_sentences[new_exercise_index]):
+                if new_exercise_index < max_sentences and has_valid_token(unit_sentences[new_exercise_index]):
                     # 保存新进度
                     storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
                     return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
@@ -1354,15 +1473,15 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
             new_exercise_type_index = 0
             new_exercise_index = current_exercise_index + 1
             
-            # 找到下一个有效练习，跳过只有单个token的句子
+            # 找到下一个有效练习，跳过没有有效token的句子
             while new_exercise_index < max_sentences:
                 sentence_idx = new_exercise_index
                 current_sentence_data = unit_sentences[sentence_idx]
                 
-                if has_multiple_tokens(current_sentence_data):
+                if has_valid_token(current_sentence_data):
                     break
                 
-                print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence_data['sentence']}")
+                print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence_data['sentence']}")
                 new_exercise_index += 1
             
             if new_exercise_index >= max_sentences:
@@ -1382,10 +1501,10 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 sentence_idx = new_exercise_index
                 current_sentence_data = unit_sentences[sentence_idx]
                 
-                if has_multiple_tokens(current_sentence_data):
+                if has_valid_token(current_sentence_data):
                     break
                 
-                print(f"[DEBUG] 句子只有单个token，跳过: {current_sentence_data['sentence']}")
+                print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence_data['sentence']}")
                 new_exercise_index += 1
             
             if new_exercise_index >= max_exercises:

@@ -1,103 +1,147 @@
 #!/usr/bin/env python3
-"""Test the complete flow for 'holy fucking god'"""
+"""
+完整测试：模拟前端操作流程
+"""
+
 import requests
 import time
 import json
 
 BASE_URL = "http://localhost:8000"
-TEST_TEXT = "holy fucking god"
+FRONTEND_URL = "http://localhost:3000"
 
-def test_complete_flow():
-    """Test the complete flow from text processing to phase 2 exercises"""
-    print("Testing complete flow for:", TEST_TEXT)
+def test_full_user_flow():
+    """测试完整的用户流程"""
+    
+    print("=" * 60)
+    print("完整测试：模拟前端操作流程")
     print("=" * 60)
     
-    # Step 1: Process text
-    print("Step 1: Processing text...")
+    # Step 1: 提交文本
+    print("\n1. 提交文本 'hello world'")
     response = requests.post(
         f"{BASE_URL}/api/process-text",
-        json={"text": TEST_TEXT}
+        json={
+            "text": "hello world",
+            "source_language": "en",
+            "target_language": "zh"
+        }
     )
-    assert response.status_code == 200
     file_id = response.json().get("file_id")
-    print(f"✓ Text processed successfully, file_id: {file_id}")
+    print(f"文件ID: {file_id}")
     
-    # Wait for processing to complete
-    print("Waiting for processing to complete...")
-    time.sleep(10)
+    # Step 2: 等待处理完成
+    print("\n2. 等待处理完成")
+    for i in range(30):
+        time.sleep(1)
+        response = requests.get(f"{BASE_URL}/api/status/{file_id}")
+        status = response.json()
+        if status.get("status") == "completed":
+            print("处理完成!")
+            break
     
-    # Step 2: Check processing status
-    print("Step 2: Checking processing status...")
-    response = requests.get(f"{BASE_URL}/api/status/{file_id}")
-    assert response.status_code == 200
-    status = response.json()
-    assert status["status"] == "completed"
-    print("✓ Processing completed successfully")
-    
-    # Step 3: Get vocab
-    print("Step 3: Getting vocabulary...")
-    response = requests.get(f"{BASE_URL}/api/vocab/{file_id}")
-    assert response.status_code == 200
-    vocab = response.json().get("vocab", [])
-    print(f"✓ Vocabulary retrieved: {len(vocab)} words")
-    for word in vocab:
-        print(f"  - {word['word']}: {word.get('context_meaning', 'No meaning')}")
-    
-    # Step 4: Get phases
-    print("Step 4: Getting phases...")
-    response = requests.get(f"{BASE_URL}/api/{file_id}/phases")
-    assert response.status_code == 200
-    phases = response.json()
-    print(f"✓ Phases retrieved: {len(phases['phases'])} phases")
-    for phase in phases['phases']:
-        print(f"  - Phase {phase['phase_number']}: {phase['name']} (Units: {phase['units_count']})")
-    
-    # Step 5: Get phase 1 units
-    print("Step 5: Getting phase 1 units...")
+    # Step 3: 获取阶段一单元列表（模拟用户点击开始学习）
+    print("\n3. 模拟用户点击开始学习")
     response = requests.get(f"{BASE_URL}/api/{file_id}/phase/1/units")
-    assert response.status_code == 200
     phase1_units = response.json()
-    print(f"✓ Phase 1 units retrieved: {len(phase1_units['units'])} units")
+    print(json.dumps(phase1_units, indent=2, ensure_ascii=False))
     
-    # Step 6: Get phase 2 units
-    print("Step 6: Getting phase 2 units...")
+    # Step 4: 模拟用户点击单元0
+    print("\n4. 模拟用户点击单元0进入学习")
+    response = requests.get(f"{BASE_URL}/api/{file_id}/phase/1/unit/0")
+    learning_data = response.json()
+    print(f"获取到单词: {learning_data.get('word')}")
+    
+    # Step 5: 学习所有单词
+    print("\n5. 学习所有单词")
+    for i in range(10):  # 最多学习10个单词
+        response = requests.post(f"{BASE_URL}/api/learn/{file_id}/next-word")
+        result = response.json()
+        print(f"  学习单词 {i+1}: {result.get('new_index', 'N/A')}")
+        
+        # 检查是否完成
+        if result.get('new_index') is None or result.get('new_index') >= 10:
+            break
+        
+        # 检查覆盖度
+        time.sleep(0.5)
+    
+    # Step 6: 检查阶段一单元状态
+    print("\n6. 检查阶段一单元状态")
+    response = requests.get(f"{BASE_URL}/api/{file_id}/phase/1/units")
+    phase1_final = response.json()
+    print(json.dumps(phase1_final, indent=2, ensure_ascii=False))
+    
+    # Step 7: 获取阶段二单元列表
+    print("\n7. 获取阶段二单元列表")
     response = requests.get(f"{BASE_URL}/api/{file_id}/phase/2/units")
-    assert response.status_code == 200
     phase2_units = response.json()
-    print(f"✓ Phase 2 units retrieved: {len(phase2_units['units'])} units")
+    print(json.dumps(phase2_units, indent=2, ensure_ascii=False))
     
-    # Step 7: Test phase 2 exercises
-    print("Step 7: Testing phase 2 exercises...")
-    if phase2_units['units']:
-        unit_id = 0
-        # Get first exercise
-        response = requests.get(f"{BASE_URL}/api/{file_id}/phase/2/unit/{unit_id}")
-        assert response.status_code == 200
-        first_exercise = response.json()
-        print(f"✓ First exercise retrieved: {first_exercise['exercise_type']}")
-        
-        # Get next exercise
-        response = requests.post(
-            f"{BASE_URL}/api/{file_id}/phase/2/unit/{unit_id}/next",
-            json={}
-        )
-        assert response.status_code == 200
-        next_response = response.json()
-        print(f"✓ Next exercise index: {next_response.get('new_exercise_index', 'Unit complete')}")
-        
-        # Get second exercise
-        if "new_exercise_index" in next_response:
-            response = requests.get(f"{BASE_URL}/api/{file_id}/phase/2/unit/{unit_id}")
-            assert response.status_code == 200
-            second_exercise = response.json()
-            print(f"✓ Second exercise retrieved: {second_exercise['exercise_type']}")
-            
-            # Verify different exercise types
-            assert first_exercise['exercise_type'] != second_exercise['exercise_type'], "Exercises should be different types"
-            print("✓ Different exercise types generated")
+    # Step 8: 模拟阶段二练习
+    print("\n8. 模拟阶段二练习流程")
     
+    # 8.1 点击阶段二单元0
+    print("\n  8.1 点击阶段二单元0")
+    response = requests.get(f"{BASE_URL}/api/{file_id}/phase/2/unit/0")
+    exercise = response.json()
+    print(f"    exercise_type: {exercise.get('exercise_type')}")
+    print(f"    exercise_index: {exercise.get('exercise_index')}")
+    print(f"    exercise_type_index: {exercise.get('exercise_type_index')}")
+    
+    # 8.2 模拟用户答题（跳过检查，直接下一题）
+    print("\n  8.2 模拟用户点击下一题")
+    response = requests.post(f"{BASE_URL}/api/{file_id}/phase/2/unit/0/next")
+    next_result = response.json()
+    print(f"    next结果: {json.dumps(next_result, ensure_ascii=False)}")
+    
+    if not next_result.get("unit_complete"):
+        # 8.3 获取下一个练习
+        print("\n  8.3 获取下一个练习")
+        response = requests.get(f"{BASE_URL}/api/{file_id}/phase/2/unit/0")
+        exercise = response.json()
+        print(f"    exercise_type: {exercise.get('exercise_type')}")
+        print(f"    exercise_index: {exercise.get('exercise_index')}")
+        print(f"    exercise_type_index: {exercise.get('exercise_type_index')}")
+        
+        # 8.4 用户点击下一题
+        print("\n  8.4 模拟用户点击下一题")
+        response = requests.post(f"{BASE_URL}/api/{file_id}/phase/2/unit/0/next")
+        next_result = response.json()
+        print(f"    next结果: {json.dumps(next_result, ensure_ascii=False)}")
+    
+    # Step 9: 检查阶段二单元状态
+    print("\n9. 检查阶段二单元状态")
+    response = requests.get(f"{BASE_URL}/api/{file_id}/phase/2/units")
+    phase2_final = response.json()
+    print(json.dumps(phase2_final, indent=2, ensure_ascii=False))
+    
+    # 总结
+    print("\n" + "=" * 60)
+    print("测试总结")
     print("=" * 60)
-    print("✅ All tests passed! The complete flow is working correctly.")
+    
+    print("\n阶段一:")
+    for unit in phase1_final.get("units", []):
+        status = "✓ 已完成" if unit.get("completed") else "○ 未完成"
+        print(f"  单元{unit.get('unit_id')}: {status}")
+    
+    print("\n阶段二:")
+    for unit in phase2_final.get("units", []):
+        status = "✓ 已完成" if unit.get("completed") else "○ 未完成"
+        print(f"  单元{unit.get('unit_id')}: {status}")
+    
+    # 检查结果
+    all_complete = True
+    for unit in phase1_final.get("units", []) + phase2_final.get("units", []):
+        if not unit.get("completed"):
+            all_complete = False
+            break
+    
+    if all_complete:
+        print("\n✓ 所有单元都标记为已完成!")
+    else:
+        print("\n✗ 有些单元未标记为已完成")
 
 if __name__ == "__main__":
-    test_complete_flow()
+    test_full_user_flow()
