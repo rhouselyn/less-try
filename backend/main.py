@@ -952,12 +952,6 @@ async def generate_sentence_quiz(file_id: str):
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
                 
-                # 修改：过滤掉单词数少于2的句子
-                word_count = len(sentence.split())
-                if word_count < 2:
-                    print(f"[DEBUG] 句子单词数不足2个，跳过: {sentence} (单词数: {word_count})")
-                    continue
-                
                 # 修改：只要有有效token就认为可以用（去掉多个token的要求）
                 if not has_valid_token(sentence_data):
                     print(f"[DEBUG] 句子没有有效token，跳过: {sentence}")
