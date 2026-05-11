@@ -8,7 +8,7 @@ class NvidiaAPI:
     def __init__(self):
         self.api_key = "sk-tszhvcglvfqiivwqqtqwkxmxsneyuymjjywtfxteofmfvkct"
         self.base_url = "https://api.siliconflow.cn/v1"
-        self.model = "MiniMaxAI/MiniMax-M2.5"
+        self.model = "Qwen/Qwen3.6-27B"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
