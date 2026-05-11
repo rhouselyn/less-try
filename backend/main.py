@@ -69,14 +69,9 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 )
                 print(f"[DEBUG] 句子翻译完成")
                 
-                # 计算单词数
-                words = text_processor.tokenize_sentence(sentence)
-                word_count = len(words)
-                
                 # 构建句子数据
                 sentence_data = {
                     "sentence": sentence,
-                    "word_count": word_count,
                     "translation_result": sentence_translation_result
                 }
                 sentence_translations.append(sentence_data)
@@ -957,13 +952,7 @@ async def generate_sentence_quiz(file_id: str):
                 sentence = sentence_data["sentence"]
                 print(f"[DEBUG] 检查句子: {sentence}")
                 
-                # 检查 word_count，只有 word_count >= 2 的句子才参与第二阶段
-                word_count = sentence_data.get("word_count", 0)
-                if word_count < 2:
-                    print(f"[DEBUG] 句子单词数不足2个，跳过: {sentence} (word_count={word_count})")
-                    continue
-                
-                # 只要有有效token就认为可以用
+                # 修改：只要有有效token就认为可以用（去掉多个token的要求）
                 if not has_valid_token(sentence_data):
                     print(f"[DEBUG] 句子没有有效token，跳过: {sentence}")
                     continue
