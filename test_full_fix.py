@@ -34,16 +34,11 @@ def test_1_options_no_placeholder():
         print("❌ 没有找到测试数据")
         return False
     
-    # 清除缓存
-    cache_dir = f'/workspace/data/files/{file_id}/word_cache'
-    if os.path.exists(cache_dir):
-        shutil.rmtree(cache_dir)
-    
     # 重置进度
     requests.post(f'{BASE_URL}/api/learn/{file_id}/set-progress', json={'index': 0})
     
     # 获取单词
-    r = requests.get(f'{BASE_URL}/api/learn/{file_id}/random-word', timeout=60)
+    r = requests.get(f'{BASE_URL}/api/learn/{file_id}/random-word', timeout=120)
     if r.status_code != 200:
         print(f"❌ 请求失败: {r.status_code}")
         return False

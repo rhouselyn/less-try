@@ -61,6 +61,20 @@ def fix_llm_options_result(result: dict) -> dict:
         }
     return result
 
+def filter_eligible_sentences(sentences):
+    eligible = []
+    for s in sentences:
+        if "sentence" not in s:
+            continue
+        word_count = s.get("word_count", 0)
+        if word_count < 2:
+            if "translation_result" in s and "translation" in s["translation_result"]:
+                word_count = len(s["translation_result"]["translation"])
+            if word_count < 2:
+                continue
+        eligible.append(s)
+    return eligible
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -1237,9 +1251,23 @@ async def get_phase_units(file_id: str, phase_number: int):
             # 阶段二使用句子练习进度
             progress = storage.load_phase_progress(file_id, phase_number)
             
-            # 提取句子字符串
-            sentence_list = [s["sentence"] for s in sentences if "sentence" in s]
+            eligible_sentences = filter_eligible_sentences(sentences)
+            sentence_list = [s["sentence"] for s in eligible_sentences]
             units = text_processor.group_sentences_into_units(sentence_list, 8)
+            
+            if not units:
+                return {
+                    "phase_number": phase_number,
+                    "units": [
+                        {
+                            "unit_id": 0,
+                            "sentences_count": 0,
+                            "completed": True,
+                            "no_eligible_sentences": True
+                        }
+                    ],
+                    "current_unit": 0
+                }
             
             return {
                 "phase_number": phase_number,
@@ -1268,8 +1296,12 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             raise HTTPException(status_code=404, detail="No sentences found")
         
         # 获取该单元的句子
-        sentence_list = [s for s in sentences if "sentence" in s]
-        units = text_processor.group_sentences_into_units(sentence_list, 8)
+        eligible_sentences = filter_eligible_sentences(sentences)
+        
+        if not eligible_sentences:
+            return {"unit_complete": True, "no_eligible_sentences": True}
+        
+        units = text_processor.group_sentences_into_units(eligible_sentences, 8)
         
         if unit_id >= len(units):
             raise HTTPException(status_code=404, detail="Unit not found")
