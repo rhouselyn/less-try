@@ -17,6 +17,50 @@ load_dotenv()
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
+def fix_llm_options_result(result: dict) -> dict:
+    if not isinstance(result, dict):
+        return result
+    mc = result.get("multiple_choice")
+    if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+        return result
+    if isinstance(mc, str) and not mc.strip():
+        result.pop("multiple_choice", None)
+    if "options" in result:
+        raw_opts = result["options"]
+        if isinstance(raw_opts, str):
+            try:
+                raw_opts = json.loads(raw_opts)
+            except (json.JSONDecodeError, TypeError):
+                raw_opts = []
+        if isinstance(raw_opts, list):
+            correct_answer = result.get("correct_answer", "")
+            mc_options = []
+            for opt in raw_opts:
+                if isinstance(opt, dict) and "text" in opt:
+                    mc_options.append(opt)
+                elif isinstance(opt, str):
+                    is_correct = (opt == correct_answer)
+                    mc_options.append({"text": opt, "is_correct": is_correct})
+            if mc_options:
+                result["multiple_choice"] = {
+                    "question": result.get("question", ""),
+                    "correct_answer": correct_answer,
+                    "options": mc_options
+                }
+    if "multiple_choice" not in result or not isinstance(result.get("multiple_choice"), dict) or "options" not in result.get("multiple_choice", {}):
+        correct_meaning = result.get("enriched_meaning", result.get("context_meaning", ""))
+        result["multiple_choice"] = {
+            "question": "",
+            "correct_answer": correct_meaning,
+            "options": [
+                {"text": correct_meaning, "is_correct": True},
+                {"text": "其他释义A", "is_correct": False},
+                {"text": "其他释义B", "is_correct": False},
+                {"text": "其他释义C", "is_correct": False}
+            ]
+        }
+    return result
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -252,8 +296,7 @@ async def get_random_word(file_id: str):
                     if opt["is_correct"]:
                         correct_index = i
             else:
-                # 回退到旧格式
-                options = [cached_word.get("meaning", ""), "选项1", "选项2", "选项3"]
+                options = [cached_word.get("meaning", ""), "其他释义A", "其他释义B", "其他释义C"]
                 correct_index = 0
             
             # 启动后台任务预生成下一个单词
@@ -310,6 +353,7 @@ async def get_random_word(file_id: str):
             context,
             target_lang
         )
+        options_result = fix_llm_options_result(options_result)
         
         # 提取选项和正确索引
         options = []
@@ -320,8 +364,7 @@ async def get_random_word(file_id: str):
                 if opt["is_correct"]:
                     correct_index = i
         else:
-            # 回退到旧格式
-            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+            options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
             correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据
@@ -474,6 +517,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             context,
             target_lang
         )
+        options_result = fix_llm_options_result(options_result)
         
         # 构建缓存数据
         cache_data = dict(options_result)
@@ -608,6 +652,7 @@ async def get_word_details(file_id: str, word: str):
             context,
             target_lang
         )
+        options_result = fix_llm_options_result(options_result)
         
         # 提取选项和正确索引
         options = []
@@ -618,8 +663,7 @@ async def get_word_details(file_id: str, word: str):
                 if opt["is_correct"]:
                     correct_index = i
         else:
-            # 回退到旧格式
-            options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+            options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
             correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据（同时支持单词详情和学习模式）
@@ -748,6 +792,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                 context,
                 target_lang
             )
+            options_result = fix_llm_options_result(options_result)
             
             # 提取选项和正确索引
             options = []
@@ -758,8 +803,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                     if opt["is_correct"]:
                         correct_index = i
             else:
-                # 回退到旧格式
-                options = options_result.get("options", [correct_meaning, "选项1", "选项2", "选项3"])
+                options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
                 correct_index = options_result.get("correct_index", 0)
             
             # 构建学习数据
