@@ -892,8 +892,11 @@ async def check_coverage(file_id: str):
                 # 检查句子单词数量，至少需要2个单词才参与句子练习
                 word_count = sentence_data.get("word_count", 0)
                 if word_count < 2:
-                    print(f"[DEBUG] 句子单词数不足2，跳过: {sentence} (word_count={word_count})")
-                    continue
+                    if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                        word_count = len(sentence_data["translation_result"]["translation"])
+                    if word_count < 2:
+                        print(f"[DEBUG] 句子单词数不足2，跳过: {sentence} (word_count={word_count})")
+                        continue
                 
                 print(f"[DEBUG] 检查句子: {sentence} (word_count={word_count})")
                 
@@ -1001,9 +1004,18 @@ async def generate_sentence_quiz(file_id: str):
         for sentence_data in sentences:
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
-                print(f"[DEBUG] 检查句子: {sentence}")
                 
-                # 修改：只要有有效token就认为可以用（去掉多个token的要求）
+                # 检查句子单词数量，至少需要2个单词才参与句子练习
+                word_count = sentence_data.get("word_count", 0)
+                if word_count < 2:
+                    if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
+                        word_count = len(sentence_data["translation_result"]["translation"])
+                    if word_count < 2:
+                        print(f"[DEBUG] 句子单词数不足2，跳过: {sentence} (word_count={word_count})")
+                        continue
+                
+                print(f"[DEBUG] 检查句子: {sentence} (word_count={word_count})")
+                
                 if not has_valid_token(sentence_data):
                     print(f"[DEBUG] 句子没有有效token，跳过: {sentence}")
                     continue
