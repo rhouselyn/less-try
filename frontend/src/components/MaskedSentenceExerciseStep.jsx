@@ -3,17 +3,18 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks }) {
+function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview }) {
   const [selectedWords, setSelectedWords] = useState([]);
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
   const currentMask = (maskVersion ?? 0) + 1;
   const totalMaskCount = totalMasks ?? 3;
+  const currentQ = (exerciseIndexInUnit ?? 0) + 1;
+  const totalQ = totalExercisesInUnit ?? 10;
 
   const handleWordSelect = (word, index) => {
     if (answerChecked) return;
-    // Find the first empty slot and fill it
     const newSelected = [...selectedWords];
     const emptyIndex = newSelected.findIndex(w => w === null || w === undefined);
     if (emptyIndex !== -1) {
@@ -85,17 +86,24 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           {t.maskedSentenceTitle}
         </motion.h2>
         <p className="text-lg text-slate-600">{t.fillBlanks}</p>
-        <div className="mt-2 flex items-center justify-center gap-2">
-          {Array.from({ length: totalMaskCount }, (_, i) => (
-            <div
-              key={i}
-              className={`w-3 h-3 rounded-full ${
-                i < currentMask ? 'bg-black' : 'bg-slate-200'
-              }`}
-            />
-          ))}
-          <span className="text-sm text-slate-500 ml-2">选词填空 {currentMask}/{totalMaskCount}</span>
+        <div className="mt-2 flex items-center justify-center gap-3">
+          <span className="text-sm text-slate-500">第 {currentQ}/{totalQ} 题</span>
+          <span className="text-slate-300">|</span>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalMaskCount }, (_, i) => (
+              <div
+                key={i}
+                className={`w-2 h-2 rounded-full ${
+                  i < currentMask ? 'bg-black' : 'bg-slate-200'
+                }`}
+              />
+            ))}
+            <span className="text-xs text-slate-400 ml-1">选词 {currentMask}/{totalMaskCount}</span>
+          </div>
         </div>
+        {sentencePreview && (
+          <p className="mt-1 text-xs text-slate-400 truncate max-w-md mx-auto">{sentencePreview}</p>
+        )}
       </div>
 
       <div className="mb-8 p-6 bg-white border border-slate-200 rounded-2xl">
@@ -184,7 +192,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             whileTap={{ scale: 0.97, y: 0 }}
             onClick={() => {
               if (data.unit_completed || data.unit_complete) {
-                // 单元完成，回到all-units页面
                 onComplete();
               } else {
                 handleNext();

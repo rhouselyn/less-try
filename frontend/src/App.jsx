@@ -348,7 +348,10 @@ function App() {
           ...exerciseData.data,
           mask_version: exerciseData.mask_version,
           total_masks: exerciseData.total_masks,
-          exercise_type_index: exerciseData.exercise_type_index
+          exercise_type_index: exerciseData.exercise_type_index,
+          exercise_index_in_unit: exerciseData.exercise_index_in_unit,
+          total_exercises_in_unit: exerciseData.total_exercises_in_unit,
+          sentence_preview: exerciseData.sentence_preview
         })
         setStep('phase-exercise')
       }
@@ -377,7 +380,10 @@ function App() {
           ...exerciseData.data,
           mask_version: exerciseData.mask_version,
           total_masks: exerciseData.total_masks,
-          exercise_type_index: exerciseData.exercise_type_index
+          exercise_type_index: exerciseData.exercise_type_index,
+          exercise_index_in_unit: exerciseData.exercise_index_in_unit,
+          total_exercises_in_unit: exerciseData.total_exercises_in_unit,
+          sentence_preview: exerciseData.sentence_preview
         })
         setStep('phase-exercise')
       }
@@ -427,7 +433,10 @@ function App() {
             ...exerciseData.data,
             mask_version: exerciseData.mask_version,
             total_masks: exerciseData.total_masks,
-            exercise_type_index: exerciseData.exercise_type_index
+            exercise_type_index: exerciseData.exercise_type_index,
+            exercise_index_in_unit: exerciseData.exercise_index_in_unit,
+            total_exercises_in_unit: exerciseData.total_exercises_in_unit,
+            sentence_preview: exerciseData.sentence_preview
           })
         }
       }
@@ -866,6 +875,9 @@ function App() {
               onOpenVocabList={handleOpenVocabList}
               maskVersion={currentExerciseData?.mask_version}
               totalMasks={currentExerciseData?.total_masks}
+              exerciseIndexInUnit={currentExerciseData?.exercise_index_in_unit}
+              totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
+              sentencePreview={currentExerciseData?.sentence_preview}
             />
           )}
           
@@ -876,7 +888,6 @@ function App() {
               onNext={handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
               onComplete={async () => {
-                // 单元完成，更新所有单元的状态，然后回到all-units页面
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
                   api.getPhaseUnits(currentFileId, 2)
@@ -890,6 +901,9 @@ function App() {
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
+              exerciseIndexInUnit={currentExerciseData?.exercise_index_in_unit}
+              totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
+              sentencePreview={currentExerciseData?.sentence_preview}
             />
           )}
           

@@ -3,10 +3,13 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList }) {
+function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview }) {
   const [selectedTokens, setSelectedTokens] = useState([]);
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+
+  const currentQ = (exerciseIndexInUnit ?? 0) + 1;
+  const totalQ = totalExercisesInUnit ?? 10;
 
   const handleTokenSelect = (token, index) => {
     if (answerChecked) return;
@@ -74,6 +77,14 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           {t.translationReconstructionTitle}
         </motion.h2>
         <p className="text-lg text-slate-600">{t.reconstructSentence}</p>
+        <div className="mt-2 flex items-center justify-center gap-3">
+          <span className="text-sm text-slate-500">第 {currentQ}/{totalQ} 题</span>
+          <span className="text-slate-300">|</span>
+          <span className="text-xs text-slate-400">翻译还原</span>
+        </div>
+        {sentencePreview && (
+          <p className="mt-1 text-xs text-slate-400 truncate max-w-md mx-auto">{sentencePreview}</p>
+        )}
       </div>
 
       <div className="mb-8 p-6 bg-white border border-slate-200 rounded-2xl">

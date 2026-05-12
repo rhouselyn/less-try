@@ -270,6 +270,32 @@ class TextProcessor:
                 results.append(masked)
         return results
     
+    def generate_interleaved_exercise_order(self, num_sentences: int, masks_per_sentence: int = 3, seed: int = 42) -> List[List[int]]:
+        """生成交叉出题顺序，不同句子的练习可以穿插
+        
+        每个句子有 (masks_per_sentence + 1) 个练习：3次选词填空 + 1次翻译
+        句子内部顺序保持不变（选词1→选词2→选词3→翻译）
+        不同句子之间随机穿插
+        
+        返回: [(sentence_idx, type_idx), ...] 的扁平列表
+        """
+        import random
+        random.seed(seed)
+        
+        exercises_per_sentence = masks_per_sentence + 1
+        next_type = [0] * num_sentences
+        result = []
+        remaining = num_sentences * exercises_per_sentence
+        
+        while remaining > 0:
+            available = [i for i in range(num_sentences) if next_type[i] < exercises_per_sentence]
+            sent_idx = random.choice(available)
+            result.append([sent_idx, next_type[sent_idx]])
+            next_type[sent_idx] += 1
+            remaining -= 1
+        
+        return result
+    
     def group_sentences_into_units(self, sentences: List[str], unit_size: int = 8) -> List[List[str]]:
         """将句子分组为单元"""
         units = []

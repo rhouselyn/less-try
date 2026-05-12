@@ -109,6 +109,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         
         all_vocab = []
         sentence_translations = []
+        unique_partial = []
         
         for i, sentence in enumerate(sentences):
             print(f"[DEBUG] 正在处理第 {i+1}/{total_sentences} 个句子: {repr(sentence)}")
@@ -151,56 +152,38 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                             else:
                                 sentence_translation_result["dictionary_entries"] = remaining_entries
                         print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
-                        
-                        second_pass_words = set()
-                        for entry in remaining_entries:
-                            if isinstance(entry, dict) and "word" in entry:
-                                second_pass_words.add(entry["word"].lower())
-                        still_missing = [w for w in missing_words if w.lower() not in second_pass_words]
-                        if still_missing:
-                            print(f"[DEBUG] 仍有遗漏单词: {still_missing}")
                 
                 sentence_data = {
                     "sentence": sentence,
                     "translation_result": sentence_translation_result
                 }
                 sentence_translations.append(sentence_data)
-                
-                partial_vocab = []
-                for si, sd in enumerate(sentence_translations):
-                    tr = sd.get("translation_result", {})
-                    if isinstance(tr, dict) and "dictionary_entries" in tr:
-                        de = tr["dictionary_entries"]
-                        if isinstance(de, str):
-                            try:
-                                de = json.loads(de)
-                            except:
-                                continue
-                        if isinstance(de, list):
-                            for entry in de:
-                                if isinstance(entry, dict):
-                                    entry["sentence_index"] = si
-                                    partial_vocab.append(entry)
-                
-                seen = set()
-                unique_partial = []
-                for entry in partial_vocab:
-                    word = entry.get("word", "").lower()
-                    if word not in seen and word:
-                        seen.add(word)
-                        unique_partial.append(entry)
-                unique_partial.sort(key=lambda x: x["word"].lower())
-                
-                progress = int((i + 1) / total_sentences * 100)
-                processing_status[file_id] = {
-                    "status": "processing",
-                    "progress": progress,
-                    "current_sentence": i + 1,
-                    "total_sentences": total_sentences,
-                    "vocab": unique_partial,
-                    "sentence_translations": list(sentence_translations)
-                }
-                print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(sentence_translations)} 个句子, 词汇 {len(unique_partial)} 个")
+            
+            partial_vocab = []
+            for si, sd in enumerate(sentence_translations):
+                tr = sd.get("translation_result", {})
+                if isinstance(tr, dict) and "dictionary_entries" in tr:
+                    de = tr["dictionary_entries"]
+                    if isinstance(de, str):
+                        try:
+                            de = json.loads(de)
+                        except:
+                            continue
+                    if isinstance(de, list):
+                        for entry in de:
+                            if isinstance(entry, dict):
+                                entry_copy = dict(entry)
+                                entry_copy["sentence_index"] = si
+                                partial_vocab.append(entry_copy)
+            
+            seen = set()
+            unique_partial = []
+            for entry in partial_vocab:
+                word = entry.get("word", "").lower()
+                if word not in seen and word:
+                    seen.add(word)
+                    unique_partial.append(entry)
+            unique_partial.sort(key=lambda x: x["word"].lower())
             
             progress = int((i + 1) / total_sentences * 100)
             processing_status[file_id] = {
@@ -208,9 +191,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 "progress": progress,
                 "current_sentence": i + 1,
                 "total_sentences": total_sentences,
-                "vocab": unique_partial if sentence.strip() else all_vocab,
+                "vocab": unique_partial,
                 "sentence_translations": list(sentence_translations)
             }
+            print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(sentence_translations)} 个句子, 词汇 {len(unique_partial)} 个")
         
         all_vocab = []
         for i, sentence_data in enumerate(sentence_translations):
@@ -1264,31 +1248,22 @@ async def get_phases(file_id: str):
 
 @app.get("/api/{file_id}/phase/{phase_number}/units")
 async def get_phase_units(file_id: str, phase_number: int):
-    """获取指定阶段的单元列表"""
     try:
         sentences = storage.load_pipeline_data(file_id)
         vocab = storage.load_vocab(file_id)
         if not sentences:
             raise HTTPException(status_code=404, detail="No sentences found")
         
-        sentence_list = [s["sentence"] for s in sentences if "sentence" in s]
-        units = text_processor.group_sentences_into_units(sentence_list, 8)
-        
-        # 加载进度
         if phase_number == 1:
-            # 阶段一使用单词学习进度
             group_size = 10
             current_index = storage.load_learning_progress(file_id)
             current_unit = current_index // group_size
             
-            # 生成阶段一的单元列表
             phase1_units = []
             for i in range(0, len(vocab), group_size):
                 unit_words = vocab[i:i+group_size]
                 unit_index = i // group_size
-                # 计算单元结束索引
                 unit_end_index = min(i + group_size, len(vocab))
-                # 如果当前索引到达或超过单元结束索引，则该单元已完成
                 completed = current_index >= unit_end_index
                 phase1_units.append({
                     "word_count": len(unit_words),
@@ -1308,38 +1283,46 @@ async def get_phase_units(file_id: str, phase_number: int):
                 "current_unit": current_unit
             }
         else:
-            # 阶段二使用句子练习进度
-            progress = storage.load_phase_progress(file_id, phase_number)
-            
             eligible_sentences = filter_eligible_sentences(sentences)
-            sentence_list = [s["sentence"] for s in eligible_sentences]
-            units = text_processor.group_sentences_into_units(sentence_list, 8)
             
-            if not units:
+            if not eligible_sentences:
                 return {
                     "phase_number": phase_number,
-                    "units": [
-                        {
-                            "unit_id": 0,
-                            "sentences_count": 0,
-                            "completed": True,
-                            "no_eligible_sentences": True
-                        }
-                    ],
+                    "units": [{"unit_id": 0, "exercises_count": 0, "completed": True, "no_eligible_sentences": True}],
                     "current_unit": 0
                 }
             
+            exercise_order = storage.load_exercise_order(file_id, phase_number)
+            expected_length = len(eligible_sentences) * 4
+            
+            if exercise_order is None or len(exercise_order) != expected_length:
+                seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
+                exercise_order = text_processor.generate_interleaved_exercise_order(
+                    len(eligible_sentences), masks_per_sentence=3, seed=seed
+                )
+                storage.save_exercise_order(file_id, phase_number, exercise_order)
+            
+            unit_size = 10
+            total_exercises = len(exercise_order)
+            num_units = max(1, (total_exercises + unit_size - 1) // unit_size)
+            
+            current_exercise_index = storage.load_phase2_progress(file_id)
+            current_unit = min(current_exercise_index // unit_size, num_units - 1)
+            
+            units = []
+            for i in range(num_units):
+                start = i * unit_size
+                end = min(start + unit_size, total_exercises)
+                units.append({
+                    "unit_id": i,
+                    "exercises_count": end - start,
+                    "completed": i < current_unit
+                })
+            
             return {
                 "phase_number": phase_number,
-                "units": [
-                    {
-                        "unit_id": i,
-                        "sentences_count": len(unit),
-                        "completed": i < progress["current_unit"]
-                    }
-                    for i, unit in enumerate(units)
-                ],
-                "current_unit": progress["current_unit"]
+                "units": units,
+                "current_unit": current_unit
             }
     except Exception as e:
         print(f"[ERROR] get_phase_units: {str(e)}")
@@ -1347,66 +1330,44 @@ async def get_phase_units(file_id: str, phase_number: int):
 
 @app.get("/api/{file_id}/phase/{phase_number}/unit/{unit_id}")
 async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int):
-    """获取指定单元的当前练习
-    
-    阶段二：每个句子有4种练习类型
-    - exercise_type_index 0,1,2: 选词填空（3次不同蒙版）
-    - exercise_type_index 3: 翻译还原
-    多句子间随机打乱，但每个句子内部遵循 3次选词→1次翻译 的顺序
-    """
     try:
         sentences = storage.load_pipeline_data(file_id)
         vocab = storage.load_vocab(file_id)
         if not sentences:
             raise HTTPException(status_code=404, detail="No sentences found")
         
-        eligible_sentences = filter_eligible_sentences(sentences)
-        
-        if not eligible_sentences:
-            return {"unit_complete": True, "no_eligible_sentences": True}
-        
-        units = text_processor.group_sentences_into_units(eligible_sentences, 8)
-        
-        if unit_id >= len(units):
-            raise HTTPException(status_code=404, detail="Unit not found")
-        
-        unit_sentences = units[unit_id]
-        
-        def has_valid_token(sentence_data):
-            if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) >= 1
-            return False
-        
-        shuffled_order = storage.load_sentence_order(file_id, phase_number)
-        if shuffled_order is None or len(shuffled_order) != len(unit_sentences):
-            import random
-            random.seed(unit_id * 1000 + hash(str([s.get("sentence", "") for s in unit_sentences])))
-            shuffled_order = list(range(len(unit_sentences)))
-            random.shuffle(shuffled_order)
-            storage.save_sentence_order(file_id, phase_number, shuffled_order)
-            print(f"[DEBUG] 生成并保存句子打乱顺序: {shuffled_order}")
-        
-        progress = storage.load_phase_progress(file_id, phase_number)
-        
-        exercise_index = progress["current_exercise"]
-        exercise_type_index = progress.get("current_exercise_type_index", 0)
-        
-        while exercise_index < len(shuffled_order):
-            actual_idx = shuffled_order[exercise_index]
-            if actual_idx < len(unit_sentences):
-                current_sentence_data = unit_sentences[actual_idx]
-                if has_valid_token(current_sentence_data):
-                    break
-            exercise_index += 1
-            exercise_type_index = 0
-        
-        if exercise_index >= len(shuffled_order):
-            return {"unit_complete": True}
-        
         if phase_number == 2:
-            actual_idx = shuffled_order[exercise_index]
-            current_sentence_data = unit_sentences[actual_idx]
+            eligible_sentences = filter_eligible_sentences(sentences)
+            
+            if not eligible_sentences:
+                return {"unit_complete": True, "no_eligible_sentences": True}
+            
+            exercise_order = storage.load_exercise_order(file_id, phase_number)
+            expected_length = len(eligible_sentences) * 4
+            
+            if exercise_order is None or len(exercise_order) != expected_length:
+                seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
+                exercise_order = text_processor.generate_interleaved_exercise_order(
+                    len(eligible_sentences), masks_per_sentence=3, seed=seed
+                )
+                storage.save_exercise_order(file_id, phase_number, exercise_order)
+            
+            unit_size = 10
+            current_exercise_index = storage.load_phase2_progress(file_id)
+            current_unit = current_exercise_index // unit_size
+            
+            exercise_start = unit_id * unit_size
+            exercise_end = min(exercise_start + unit_size, len(exercise_order))
+            
+            if current_exercise_index >= exercise_end:
+                return {"unit_complete": True}
+            
+            if current_exercise_index < exercise_start:
+                current_exercise_index = exercise_start
+                storage.save_phase2_progress(file_id, current_exercise_index)
+            
+            sent_idx, type_idx = exercise_order[current_exercise_index]
+            current_sentence_data = eligible_sentences[sent_idx]
             current_sentence = current_sentence_data["sentence"]
             
             translation_result = current_sentence_data.get("translation_result", {})
@@ -1416,8 +1377,11 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     if isinstance(token, dict) and "text" in token:
                         translation_tokens.append(token["text"])
             
-            if exercise_type_index < 3:
-                mask_seed = hash(current_sentence) + exercise_type_index + 1
+            exercise_index_in_unit = current_exercise_index - exercise_start
+            total_exercises_in_unit = exercise_end - exercise_start
+            
+            if type_idx < 3:
+                mask_seed = hash(current_sentence) + type_idx + 1
                 masked_exercise = text_processor.generate_masked_sentence(
                     current_sentence,
                     vocab,
@@ -1428,12 +1392,13 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 
                 return {
                     "exercise_type": "masked_sentence",
-                    "exercise_index": exercise_index,
-                    "exercise_type_index": exercise_type_index,
-                    "mask_version": exercise_type_index,
+                    "exercise_index_in_unit": exercise_index_in_unit,
+                    "total_exercises_in_unit": total_exercises_in_unit,
+                    "mask_version": type_idx,
+                    "total_masks": 3,
                     "data": masked_exercise,
                     "unit_id": unit_id,
-                    "total_masks": 3
+                    "sentence_preview": current_sentence[:50] + "..." if len(current_sentence) > 50 else current_sentence
                 }
             else:
                 tokenized_translation = translation_result.get("tokenized_translation", "")
@@ -1469,15 +1434,15 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 
                 return {
                     "exercise_type": "translation_reconstruction",
-                    "exercise_index": exercise_index,
-                    "exercise_type_index": exercise_type_index,
+                    "exercise_index_in_unit": exercise_index_in_unit,
+                    "total_exercises_in_unit": total_exercises_in_unit,
                     "data": {
                         "native_translation": tokenized_translation,
                         "original_tokens": original_tokens,
                         "options": all_tokens
                     },
                     "unit_id": unit_id,
-                    "total_masks": 3
+                    "sentence_preview": current_sentence[:50] + "..." if len(current_sentence) > 50 else current_sentence
                 }
         
         return {"redirect_to_phase1": True}
@@ -1489,79 +1454,42 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
 
 @app.post("/api/{file_id}/phase/{phase_number}/unit/{unit_id}/next")
 async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
-    """进入下一个练习
-    
-    阶段二：每个句子有4种练习类型 (0,1,2=选词填空, 3=翻译还原)
-    按顺序：选词1→选词2→选词3→翻译→下一个句子的选词1→...
-    """
     try:
-        def has_valid_token(sentence_data):
-            if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                tokens = sentence_data["translation_result"]["translation"]
-                return len(tokens) >= 1
-            return False
-        
-        progress = storage.load_phase_progress(file_id, phase_number)
-        current_exercise_index = progress["current_exercise"]
-        current_exercise_type_index = progress.get("current_exercise_type_index", 0)
-        
-        sentences = storage.load_pipeline_data(file_id)
-        eligible_sentences = filter_eligible_sentences(sentences)
-        units = text_processor.group_sentences_into_units(eligible_sentences, 8)
-        
-        if unit_id >= len(units):
-            return {"success": False, "error": "Unit not found"}
-        
-        unit_sentences = units[unit_id]
-        
-        shuffled_order = storage.load_sentence_order(file_id, phase_number)
-        if shuffled_order is None or len(shuffled_order) != len(unit_sentences):
-            import random
-            random.seed(unit_id * 1000 + hash(str([s.get("sentence", "") for s in unit_sentences])))
-            shuffled_order = list(range(len(unit_sentences)))
-            random.shuffle(shuffled_order)
-            storage.save_sentence_order(file_id, phase_number, shuffled_order)
-        
-        max_sentences = len(shuffled_order)
-        
         if phase_number == 2:
-            if current_exercise_type_index < 3:
-                new_exercise_type_index = current_exercise_type_index + 1
-                new_exercise_index = current_exercise_index
-                
-                actual_idx = shuffled_order[new_exercise_index] if new_exercise_index < max_sentences else -1
-                if actual_idx >= 0 and actual_idx < len(unit_sentences) and has_valid_token(unit_sentences[actual_idx]):
-                    storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
-                    return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
-            
-            new_exercise_type_index = 0
+            current_exercise_index = storage.load_phase2_progress(file_id)
             new_exercise_index = current_exercise_index + 1
             
-            while new_exercise_index < max_sentences:
-                actual_idx = shuffled_order[new_exercise_index]
-                if actual_idx < len(unit_sentences) and has_valid_token(unit_sentences[actual_idx]):
-                    break
-                
-                print(f"[DEBUG] 句子没有有效token，跳过")
-                new_exercise_index += 1
+            exercise_order = storage.load_exercise_order(file_id, phase_number)
+            if exercise_order is None:
+                return {"success": False, "error": "No exercise order found"}
             
-            if new_exercise_index >= max_sentences:
-                new_unit_id = unit_id + 1
-                storage.save_phase_progress(file_id, phase_number, new_unit_id, 0, 0)
-                return {"success": True, "unit_complete": True, "new_unit": new_unit_id}
-            else:
-                storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
-                return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
+            unit_size = 10
+            total_exercises = len(exercise_order)
+            new_unit = new_exercise_index // unit_size
+            
+            if new_exercise_index >= total_exercises:
+                storage.save_phase2_progress(file_id, new_exercise_index)
+                return {"success": True, "all_complete": True}
+            
+            if new_unit > unit_id:
+                storage.save_phase2_progress(file_id, new_exercise_index)
+                return {"success": True, "unit_complete": True, "new_unit": new_unit}
+            
+            storage.save_phase2_progress(file_id, new_exercise_index)
+            return {"success": True, "new_exercise_index": new_exercise_index}
         else:
+            progress = storage.load_phase_progress(file_id, phase_number)
+            current_exercise_index = progress["current_exercise"]
             new_exercise_index = current_exercise_index + 1
-            max_exercises = max_sentences
             
-            while new_exercise_index < max_exercises:
-                if new_exercise_index < len(shuffled_order):
-                    actual_idx = shuffled_order[new_exercise_index]
-                    if actual_idx < len(unit_sentences) and has_valid_token(unit_sentences[actual_idx]):
-                        break
-                new_exercise_index += 1
+            sentences = storage.load_pipeline_data(file_id)
+            sentence_list = [s for s in sentences if "sentence" in s]
+            units = text_processor.group_sentences_into_units(sentence_list, 8)
+            
+            if unit_id >= len(units):
+                return {"success": False, "error": "Unit not found"}
+            
+            max_exercises = len(units[unit_id])
             
             if new_exercise_index >= max_exercises:
                 new_unit_id = unit_id + 1
@@ -1575,22 +1503,33 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
 
 @app.post("/api/{file_id}/phase/{phase_number}/unit/{unit_id}/complete")
 async def complete_phase_unit(file_id: str, phase_number: int, unit_id: int):
-    """标记单元为完成"""
     try:
-        storage.save_phase_progress(file_id, phase_number, unit_id + 1, 0, 0)
-        return {"success": True}
+        if phase_number == 2:
+            exercise_order = storage.load_exercise_order(file_id, phase_number)
+            if exercise_order:
+                unit_size = 10
+                new_exercise_index = (unit_id + 1) * unit_size
+                storage.save_phase2_progress(file_id, new_exercise_index)
+            return {"success": True}
+        else:
+            storage.save_phase_progress(file_id, phase_number, unit_id + 1, 0, 0)
+            return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/{file_id}/phase/{phase_number}/set-progress")
 async def set_phase_progress(file_id: str, phase_number: int, request: dict):
-    """设置阶段进度"""
     try:
-        unit_id = request.get("unit_id", 0)
-        exercise_index = request.get("exercise_index", 0)
-        exercise_type_index = request.get("exercise_type_index", 0)
-        storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index, exercise_type_index)
-        return {"success": True}
+        if phase_number == 2:
+            exercise_index = request.get("exercise_index", 0)
+            storage.save_phase2_progress(file_id, exercise_index)
+            return {"success": True}
+        else:
+            unit_id = request.get("unit_id", 0)
+            exercise_index = request.get("exercise_index", 0)
+            exercise_type_index = request.get("exercise_type_index", 0)
+            storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index, exercise_type_index)
+            return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -198,6 +198,36 @@ class Storage:
                 return json.load(f)
         return None
     
+    def save_exercise_order(self, file_id: str, phase: int, exercise_order: List):
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / f"phase{phase}_exercise_order.json"
+        with open(order_path, 'w', encoding='utf-8') as f:
+            json.dump({"exercise_order": exercise_order}, f, ensure_ascii=False, indent=2)
+    
+    def load_exercise_order(self, file_id: str, phase: int):
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / f"phase{phase}_exercise_order.json"
+        if order_path.exists():
+            with open(order_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("exercise_order")
+        return None
+    
+    def save_phase2_progress(self, file_id: str, current_exercise_index: int):
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "phase2_progress.json"
+        with open(progress_path, 'w', encoding='utf-8') as f:
+            json.dump({"current_exercise_index": current_exercise_index}, f, ensure_ascii=False, indent=2)
+    
+    def load_phase2_progress(self, file_id: str) -> int:
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "phase2_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("current_exercise_index", 0)
+        return 0
+    
     def save_used_sentences(self, file_id: str, used_sentences: List[str]):
         """保存已使用的句子"""
         file_dir = self.get_file_dir(file_id)
