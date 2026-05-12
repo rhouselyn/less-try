@@ -256,6 +256,20 @@ class TextProcessor:
             "word_count": word_count
         }
     
+    def generate_multiple_masked_sentences(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, num_versions: int = 3) -> List[Dict[str, Any]]:
+        """生成多个不同蒙版版本的填空练习"""
+        results = []
+        base_seed = hash(sentence)
+        for i in range(num_versions):
+            seed = base_seed + i + 1
+            masked = self.generate_masked_sentence(
+                sentence, vocab, translation_tokens, all_sentences, mask_seed=seed
+            )
+            if masked:
+                masked["mask_version"] = i
+                results.append(masked)
+        return results
+    
     def group_sentences_into_units(self, sentences: List[str], unit_size: int = 8) -> List[List[str]]:
         """将句子分组为单元"""
         units = []
@@ -292,15 +306,15 @@ class TextProcessor:
         
         return distractors
     
-    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None) -> Dict[str, Any]:
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None) -> Dict[str, Any]:
         """
         生成蒙版填空练习
-        - 支持任意长度句子（<8个token时掩码1个）
+        - 每6个单词蒙版1个
         - 使用翻译token而非自动分词
         - 集成备选词库
         - 干扰词从其他句子或词库选择，不使用当前句子的单词
+        - mask_seed: 可选的种子，用于生成不同的蒙版模式
         """
-        # 使用翻译token或自动分词
         if translation_tokens:
             words = translation_tokens
         else:
@@ -308,21 +322,17 @@ class TextProcessor:
         
         word_count = len(words)
         
-        # 计算要蒙版的数量
-        if word_count < 8:
-            num_masks = 1
-        else:
-            num_masks = 1 + (word_count - 8) // 8
+        num_masks = max(1, word_count // 6)
         
         if num_masks > word_count // 2:
-            num_masks = word_count // 2  # 最多蒙一半
+            num_masks = max(1, word_count // 2)
         
         import random
-        # 固定种子，确保每个单元的掩码位置一致
-        # 使用句子内容作为种子，确保相同句子有相同的掩码模式
-        random.seed(hash(sentence))
-        # 随机选择要蒙版的单词索引
-        mask_indices = random.sample(range(word_count), num_masks)
+        if mask_seed is not None:
+            random.seed(mask_seed)
+        else:
+            random.seed(hash(sentence))
+        mask_indices = sorted(random.sample(range(word_count), num_masks))
         
         # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []

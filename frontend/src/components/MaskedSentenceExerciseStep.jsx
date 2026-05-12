@@ -3,10 +3,13 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList }) {
+function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks }) {
   const [selectedWords, setSelectedWords] = useState([]);
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+
+  const currentMask = (maskVersion ?? 0) + 1;
+  const totalMaskCount = totalMasks ?? 3;
 
   const handleWordSelect = (word, index) => {
     if (answerChecked) return;
@@ -82,6 +85,17 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           {t.maskedSentenceTitle}
         </motion.h2>
         <p className="text-lg text-slate-600">{t.fillBlanks}</p>
+        <div className="mt-2 flex items-center justify-center gap-2">
+          {Array.from({ length: totalMaskCount }, (_, i) => (
+            <div
+              key={i}
+              className={`w-3 h-3 rounded-full ${
+                i < currentMask ? 'bg-black' : 'bg-slate-200'
+              }`}
+            />
+          ))}
+          <span className="text-sm text-slate-500 ml-2">选词填空 {currentMask}/{totalMaskCount}</span>
+        </div>
       </div>
 
       <div className="mb-8 p-6 bg-white border border-slate-200 rounded-2xl">

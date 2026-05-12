@@ -101,23 +101,18 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         print(f"[DEBUG] 开始处理文件 {file_id}")
         processing_status[file_id] = {"status": "processing", "progress": 0}
         
-        # 保存语言设置
         storage.save_language_settings(file_id, source_lang, target_lang)
         
-        # 拆分为多个句子
         sentences = text_processor.split_sentences(text)
         total_sentences = len(sentences)
         print(f"[DEBUG] 分割为 {total_sentences} 个句子: {sentences}")
         
         all_vocab = []
-        # 新的数据结构：每个句子单独一条数据
         sentence_translations = []
         
-        # 处理句子级别的数据
         for i, sentence in enumerate(sentences):
             print(f"[DEBUG] 正在处理第 {i+1}/{total_sentences} 个句子: {repr(sentence)}")
             if sentence.strip():
-                # 对每个句子单独进行翻译
                 print(f"[DEBUG] 正在翻译句子: {repr(sentence)}")
                 sentence_translation_result = await text_processor.process_translation(
                     sentence,
@@ -127,30 +122,101 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 )
                 print(f"[DEBUG] 句子翻译完成")
                 
-                # 构建句子数据
+                sentence_words = text_processor.extract_words(sentence, source_lang)
+                dict_entry_words = set()
+                if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
+                    dict_entries = sentence_translation_result["dictionary_entries"]
+                    if isinstance(dict_entries, str):
+                        try:
+                            dict_entries = json.loads(dict_entries)
+                            sentence_translation_result["dictionary_entries"] = dict_entries
+                        except:
+                            dict_entries = []
+                    if isinstance(dict_entries, list):
+                        for entry in dict_entries:
+                            if isinstance(entry, dict) and "word" in entry:
+                                dict_entry_words.add(entry["word"].lower())
+                
+                missing_words = [w for w in sentence_words if w.lower() not in dict_entry_words]
+                
+                if missing_words:
+                    print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
+                    remaining_entries = await nvidia_api.process_remaining_words(
+                        missing_words, source_lang, target_lang, sentence
+                    )
+                    if remaining_entries:
+                        if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
+                            if isinstance(sentence_translation_result["dictionary_entries"], list):
+                                sentence_translation_result["dictionary_entries"].extend(remaining_entries)
+                            else:
+                                sentence_translation_result["dictionary_entries"] = remaining_entries
+                        print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
+                        
+                        second_pass_words = set()
+                        for entry in remaining_entries:
+                            if isinstance(entry, dict) and "word" in entry:
+                                second_pass_words.add(entry["word"].lower())
+                        still_missing = [w for w in missing_words if w.lower() not in second_pass_words]
+                        if still_missing:
+                            print(f"[DEBUG] 仍有遗漏单词: {still_missing}")
+                
                 sentence_data = {
                     "sentence": sentence,
                     "translation_result": sentence_translation_result
                 }
                 sentence_translations.append(sentence_data)
+                
+                partial_vocab = []
+                for si, sd in enumerate(sentence_translations):
+                    tr = sd.get("translation_result", {})
+                    if isinstance(tr, dict) and "dictionary_entries" in tr:
+                        de = tr["dictionary_entries"]
+                        if isinstance(de, str):
+                            try:
+                                de = json.loads(de)
+                            except:
+                                continue
+                        if isinstance(de, list):
+                            for entry in de:
+                                if isinstance(entry, dict):
+                                    entry["sentence_index"] = si
+                                    partial_vocab.append(entry)
+                
+                seen = set()
+                unique_partial = []
+                for entry in partial_vocab:
+                    word = entry.get("word", "").lower()
+                    if word not in seen and word:
+                        seen.add(word)
+                        unique_partial.append(entry)
+                unique_partial.sort(key=lambda x: x["word"].lower())
+                
+                progress = int((i + 1) / total_sentences * 100)
+                processing_status[file_id] = {
+                    "status": "processing",
+                    "progress": progress,
+                    "current_sentence": i + 1,
+                    "total_sentences": total_sentences,
+                    "vocab": unique_partial,
+                    "sentence_translations": list(sentence_translations)
+                }
+                print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(sentence_translations)} 个句子, 词汇 {len(unique_partial)} 个")
             
-            # 更新进度
             progress = int((i + 1) / total_sentences * 100)
             processing_status[file_id] = {
                 "status": "processing",
                 "progress": progress,
                 "current_sentence": i + 1,
-                "total_sentences": total_sentences
+                "total_sentences": total_sentences,
+                "vocab": unique_partial if sentence.strip() else all_vocab,
+                "sentence_translations": list(sentence_translations)
             }
-            print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(sentence_translations)} 个句子")
         
-        # 从所有句子的翻译结果中提取词典条目
         all_vocab = []
         for i, sentence_data in enumerate(sentence_translations):
             translation_result = sentence_data.get("translation_result", {})
             if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
                 dictionary_entries = translation_result["dictionary_entries"]
-                # 处理dictionary_entries可能是字符串的情况
                 if isinstance(dictionary_entries, str):
                     try:
                         import json
@@ -159,12 +225,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                         continue
                 if isinstance(dictionary_entries, list):
                     for dict_entry in dictionary_entries:
-                        # 为每个词条添加句子索引
                         if isinstance(dict_entry, dict):
                             dict_entry["sentence_index"] = i
                             all_vocab.append(dict_entry)
         
-        # 去重
         seen = set()
         unique_vocab = []
         for entry in all_vocab:
@@ -174,15 +238,12 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 unique_vocab.append(entry)
         all_vocab = unique_vocab
         
-        # 按字母表排序词汇表
         all_vocab.sort(key=lambda x: x["word"].lower())
         print(f"[DEBUG] 从所有句子中提取词典条目，共 {len(all_vocab)} 个单词: {[word['word'] for word in all_vocab]}")
         
-        # 保存新的结构：每个句子单独一条数据
         storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
         
-        # 提前生成并保存固定的单词打乱顺序
         if all_vocab:
             random.seed(42)
             shuffled_indices = list(range(len(all_vocab)))
@@ -190,7 +251,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             storage.save_shuffled_order(file_id, shuffled_indices)
             print(f"[DEBUG] 保存打乱顺序: {shuffled_indices}")
             
-            # 预生成第一个单词的信息
             asyncio.create_task(pre_generate_next_word(file_id, all_vocab, 0))
             print(f"[DEBUG] 预生成第一个单词信息")
         
@@ -1287,15 +1347,19 @@ async def get_phase_units(file_id: str, phase_number: int):
 
 @app.get("/api/{file_id}/phase/{phase_number}/unit/{unit_id}")
 async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int):
-    """获取指定单元的当前练习"""
+    """获取指定单元的当前练习
+    
+    阶段二：每个句子有4种练习类型
+    - exercise_type_index 0,1,2: 选词填空（3次不同蒙版）
+    - exercise_type_index 3: 翻译还原
+    多句子间随机打乱，但每个句子内部遵循 3次选词→1次翻译 的顺序
+    """
     try:
-        # 加载数据
         sentences = storage.load_pipeline_data(file_id)
         vocab = storage.load_vocab(file_id)
         if not sentences:
             raise HTTPException(status_code=404, detail="No sentences found")
         
-        # 获取该单元的句子
         eligible_sentences = filter_eligible_sentences(sentences)
         
         if not eligible_sentences:
@@ -1308,86 +1372,81 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
         
         unit_sentences = units[unit_id]
         
-        # 检查句子是否有至少一个有效token（修改：原来是要求多个token）
         def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
                 return len(tokens) >= 1
             return False
         
-        # 加载进度
+        shuffled_order = storage.load_sentence_order(file_id, phase_number)
+        if shuffled_order is None or len(shuffled_order) != len(unit_sentences):
+            import random
+            random.seed(unit_id * 1000 + hash(str([s.get("sentence", "") for s in unit_sentences])))
+            shuffled_order = list(range(len(unit_sentences)))
+            random.shuffle(shuffled_order)
+            storage.save_sentence_order(file_id, phase_number, shuffled_order)
+            print(f"[DEBUG] 生成并保存句子打乱顺序: {shuffled_order}")
+        
         progress = storage.load_phase_progress(file_id, phase_number)
         
         exercise_index = progress["current_exercise"]
         exercise_type_index = progress.get("current_exercise_type_index", 0)
         
-        # 找到下一个有效练习，跳过没有有效token的句子
-        while exercise_index < len(unit_sentences):
-            sentence_idx = exercise_index
-            current_sentence_data = unit_sentences[sentence_idx]
-            current_sentence = current_sentence_data["sentence"]
-            
-            # 检查是否有有效token
-            if has_valid_token(current_sentence_data):
-                print(f"[DEBUG] 找到有效练习，句子: {current_sentence}, 练习类型索引: {exercise_type_index}")
-                break
-            
-            print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence}")
+        while exercise_index < len(shuffled_order):
+            actual_idx = shuffled_order[exercise_index]
+            if actual_idx < len(unit_sentences):
+                current_sentence_data = unit_sentences[actual_idx]
+                if has_valid_token(current_sentence_data):
+                    break
             exercise_index += 1
+            exercise_type_index = 0
         
-        if exercise_index >= len(unit_sentences):
+        if exercise_index >= len(shuffled_order):
             return {"unit_complete": True}
         
         if phase_number == 2:
-            # 根据exercise_type_index确定练习类型
-            # 0表示masked_sentence，1表示translation_reconstruction
-            sentence_idx = exercise_index
-            current_sentence_data = unit_sentences[sentence_idx]
+            actual_idx = shuffled_order[exercise_index]
+            current_sentence_data = unit_sentences[actual_idx]
             current_sentence = current_sentence_data["sentence"]
             
-            if exercise_type_index == 0:
-                # 练习1：蒙版填空
-                # 获取翻译tokens
-                translation_result = current_sentence_data.get("translation_result", {})
-                translation_tokens = []
-                if "translation" in translation_result:
-                    for token in translation_result["translation"]:
-                        if isinstance(token, dict) and "text" in token:
-                            translation_tokens.append(token["text"])
-                
-                # 生成蒙版练习（支持任意长度句子）
-                # 确保使用LLM生成的tokens
+            translation_result = current_sentence_data.get("translation_result", {})
+            translation_tokens = []
+            if "translation" in translation_result:
+                for token in translation_result["translation"]:
+                    if isinstance(token, dict) and "text" in token:
+                        translation_tokens.append(token["text"])
+            
+            if exercise_type_index < 3:
+                mask_seed = hash(current_sentence) + exercise_type_index + 1
                 masked_exercise = text_processor.generate_masked_sentence(
-                    current_sentence, 
-                    vocab, 
-                    translation_tokens,  # 强制使用LLM生成的tokens
-                    sentences  # 传递所有句子用于获取干扰词
+                    current_sentence,
+                    vocab,
+                    translation_tokens,
+                    sentences,
+                    mask_seed=mask_seed
                 )
                 
                 return {
                     "exercise_type": "masked_sentence",
                     "exercise_index": exercise_index,
                     "exercise_type_index": exercise_type_index,
+                    "mask_version": exercise_type_index,
                     "data": masked_exercise,
-                    "unit_id": unit_id
+                    "unit_id": unit_id,
+                    "total_masks": 3
                 }
             else:
-                # 练习2：翻译还原（从母语到原文）
-                translation_result = current_sentence_data.get("translation_result", {})
                 tokenized_translation = translation_result.get("tokenized_translation", "")
                 
-                # 使用LLM的分词结果而不是程序分词
                 original_tokens = []
                 if "translation" in translation_result:
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
                             original_tokens.append(token["text"])
                 
-                # 如果LLM没有分词结果，使用程序分词作为 fallback
                 if not original_tokens:
                     original_tokens = text_processor.tokenize_sentence(current_sentence)
                 
-                # Get English distractors from vocab
                 import random
                 distractors = []
                 vocab_words = [v["word"] for v in vocab]
@@ -1397,7 +1456,6 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     if vw.lower() not in original_lower and len(distractors) < 4:
                         distractors.append(vw)
                 
-                # Backup distractors
                 backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish"]
                 idx = 0
                 while len(distractors) < 4:
@@ -1406,7 +1464,6 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                         distractors.append(bd)
                     idx += 1
                 
-                # Prepare options
                 all_tokens = original_tokens + distractors
                 random.shuffle(all_tokens)
                 
@@ -1419,11 +1476,10 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                         "original_tokens": original_tokens,
                         "options": all_tokens
                     },
-                    "unit_id": unit_id
+                    "unit_id": unit_id,
+                    "total_masks": 3
                 }
         
-        # 阶段1：返回单词学习（复用现有逻辑）
-        # 这里我们暂时返回第一阶段的进度入口
         return {"redirect_to_phase1": True}
         
     except Exception as e:
@@ -1433,9 +1489,12 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
 
 @app.post("/api/{file_id}/phase/{phase_number}/unit/{unit_id}/next")
 async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
-    """进入下一个练习"""
+    """进入下一个练习
+    
+    阶段二：每个句子有4种练习类型 (0,1,2=选词填空, 3=翻译还原)
+    按顺序：选词1→选词2→选词3→翻译→下一个句子的选词1→...
+    """
     try:
-        # 检查句子是否有至少一个有效token（修改：原来是要求多个token）
         def has_valid_token(sentence_data):
             if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
                 tokens = sentence_data["translation_result"]["translation"]
@@ -1446,46 +1505,47 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
         current_exercise_index = progress["current_exercise"]
         current_exercise_type_index = progress.get("current_exercise_type_index", 0)
         
-        # 检查单元是否完成
         sentences = storage.load_pipeline_data(file_id)
-        sentence_list = [s for s in sentences if "sentence" in s]
-        units = text_processor.group_sentences_into_units(sentence_list, 8)
+        eligible_sentences = filter_eligible_sentences(sentences)
+        units = text_processor.group_sentences_into_units(eligible_sentences, 8)
         
         if unit_id >= len(units):
             return {"success": False, "error": "Unit not found"}
         
         unit_sentences = units[unit_id]
-        max_sentences = len(unit_sentences)
+        
+        shuffled_order = storage.load_sentence_order(file_id, phase_number)
+        if shuffled_order is None or len(shuffled_order) != len(unit_sentences):
+            import random
+            random.seed(unit_id * 1000 + hash(str([s.get("sentence", "") for s in unit_sentences])))
+            shuffled_order = list(range(len(unit_sentences)))
+            random.shuffle(shuffled_order)
+            storage.save_sentence_order(file_id, phase_number, shuffled_order)
+        
+        max_sentences = len(shuffled_order)
         
         if phase_number == 2:
-            # 阶段二：每个句子有两种练习类型
-            if current_exercise_type_index == 0:
-                # 先尝试切换练习类型
-                new_exercise_type_index = 1
+            if current_exercise_type_index < 3:
+                new_exercise_type_index = current_exercise_type_index + 1
                 new_exercise_index = current_exercise_index
-                # 检查当前句子是否有效
-                if new_exercise_index < max_sentences and has_valid_token(unit_sentences[new_exercise_index]):
-                    # 保存新进度
+                
+                actual_idx = shuffled_order[new_exercise_index] if new_exercise_index < max_sentences else -1
+                if actual_idx >= 0 and actual_idx < len(unit_sentences) and has_valid_token(unit_sentences[actual_idx]):
                     storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
                     return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
             
-            # 如果是第二种练习类型，或者当前句子无效，则进入下一个句子
             new_exercise_type_index = 0
             new_exercise_index = current_exercise_index + 1
             
-            # 找到下一个有效练习，跳过没有有效token的句子
             while new_exercise_index < max_sentences:
-                sentence_idx = new_exercise_index
-                current_sentence_data = unit_sentences[sentence_idx]
-                
-                if has_valid_token(current_sentence_data):
+                actual_idx = shuffled_order[new_exercise_index]
+                if actual_idx < len(unit_sentences) and has_valid_token(unit_sentences[actual_idx]):
                     break
                 
-                print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence_data['sentence']}")
+                print(f"[DEBUG] 句子没有有效token，跳过")
                 new_exercise_index += 1
             
             if new_exercise_index >= max_sentences:
-                # 单元完成，进入下一个单元
                 new_unit_id = unit_id + 1
                 storage.save_phase_progress(file_id, phase_number, new_unit_id, 0, 0)
                 return {"success": True, "unit_complete": True, "new_unit": new_unit_id}
@@ -1493,18 +1553,14 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 storage.save_phase_progress(file_id, phase_number, unit_id, new_exercise_index, new_exercise_type_index)
                 return {"success": True, "new_exercise_index": new_exercise_index, "new_exercise_type_index": new_exercise_type_index}
         else:
-            # 阶段一：保持原有逻辑
             new_exercise_index = current_exercise_index + 1
             max_exercises = max_sentences
             
             while new_exercise_index < max_exercises:
-                sentence_idx = new_exercise_index
-                current_sentence_data = unit_sentences[sentence_idx]
-                
-                if has_valid_token(current_sentence_data):
-                    break
-                
-                print(f"[DEBUG] 句子没有有效token，跳过: {current_sentence_data['sentence']}")
+                if new_exercise_index < len(shuffled_order):
+                    actual_idx = shuffled_order[new_exercise_index]
+                    if actual_idx < len(unit_sentences) and has_valid_token(unit_sentences[actual_idx]):
+                        break
                 new_exercise_index += 1
             
             if new_exercise_index >= max_exercises:

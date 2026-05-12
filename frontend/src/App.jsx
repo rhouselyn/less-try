@@ -344,7 +344,12 @@ function App() {
         setStep('all-units')
       } else {
         setExerciseType(exerciseData.exercise_type)
-        setCurrentExerciseData(exerciseData.data)
+        setCurrentExerciseData({
+          ...exerciseData.data,
+          mask_version: exerciseData.mask_version,
+          total_masks: exerciseData.total_masks,
+          exercise_type_index: exerciseData.exercise_type_index
+        })
         setStep('phase-exercise')
       }
     } catch (error) {
@@ -368,7 +373,12 @@ function App() {
         setStep('progress')
       } else {
         setExerciseType(exerciseData.exercise_type)
-        setCurrentExerciseData(exerciseData.data)
+        setCurrentExerciseData({
+          ...exerciseData.data,
+          mask_version: exerciseData.mask_version,
+          total_masks: exerciseData.total_masks,
+          exercise_type_index: exerciseData.exercise_type_index
+        })
         setStep('phase-exercise')
       }
     } catch (error) {
@@ -413,7 +423,12 @@ function App() {
           setStep('all-units')
         } else {
           setExerciseType(exerciseData.exercise_type)
-          setCurrentExerciseData(exerciseData.data)
+          setCurrentExerciseData({
+            ...exerciseData.data,
+            mask_version: exerciseData.mask_version,
+            total_masks: exerciseData.total_masks,
+            exercise_type_index: exerciseData.exercise_type_index
+          })
         }
       }
     } catch (error) {
@@ -836,7 +851,6 @@ function App() {
               onNext={handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
               onComplete={async () => {
-                // 单元完成，更新所有单元的状态，然后回到all-units页面
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
                   api.getPhaseUnits(currentFileId, 2)
@@ -850,6 +864,8 @@ function App() {
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
+              maskVersion={currentExerciseData?.mask_version}
+              totalMasks={currentExerciseData?.total_masks}
             />
           )}
           
