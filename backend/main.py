@@ -474,17 +474,89 @@ async def next_word(file_id: str):
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
         
-        # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
-        print(f"[DEBUG] 加载学习进度: current_index = {current_index}")
-        
-        # 更新进度
         new_index = current_index + 1
         storage.save_learning_progress(file_id, new_index)
-        print(f"[DEBUG] 保存学习进度: {new_index}")
         
-        # 启动后台任务预生成下一个单词
         asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
+        
+        learned_words = vocab[:new_index]
+        
+        sentences = storage.load_pipeline_data(file_id)
+        if sentences:
+            used_sentences = storage.load_used_sentences(file_id) or []
+            
+            for sentence_data in sentences:
+                if "sentence" not in sentence_data:
+                    continue
+                
+                sentence = sentence_data["sentence"]
+                if sentence in used_sentences:
+                    continue
+                
+                tr = sentence_data.get("translation_result", {})
+                if "translation" not in tr:
+                    continue
+                
+                translation_tokens = tr.get("translation", [])
+                if not translation_tokens:
+                    continue
+                
+                sentence_covered = True
+                for token in translation_tokens:
+                    if isinstance(token, dict) and "text" in token:
+                        token_text = token["text"].lower()
+                        token_covered = False
+                        for w in learned_words:
+                            w_tokens = w.get("tokens", [w["word"]])
+                            for wt in w_tokens:
+                                if wt.lower() == token_text or wt.lower() in token_text or token_text in wt.lower():
+                                    token_covered = True
+                                    break
+                            if token_covered:
+                                break
+                        if not token_covered:
+                            sentence_covered = False
+                            break
+                
+                if sentence_covered:
+                    import random
+                    import re
+                    
+                    used_sentences.append(sentence)
+                    storage.save_used_sentences(file_id, used_sentences)
+                    
+                    correct_tokens = []
+                    for token in translation_tokens:
+                        if isinstance(token, dict):
+                            text = token.get("translation", token.get("text", ""))
+                            cleaned = re.sub(r'[^\w\s]', '', text)
+                            if cleaned:
+                                correct_tokens.append(cleaned)
+                    
+                    redundant_tokens = tr.get("redundant_tokens", [])
+                    cleaned_redundant = []
+                    for rt in redundant_tokens:
+                        cleaned = re.sub(r'[^\w\s]', '', rt)
+                        if cleaned and cleaned not in correct_tokens:
+                            cleaned_redundant.append(cleaned)
+                    
+                    selected_distractors = list(set(cleaned_redundant))[:3]
+                    all_tokens = correct_tokens + selected_distractors
+                    random.shuffle(all_tokens)
+                    
+                    correct_translation = re.sub(r'[^\w\s]', '', tr.get("tokenized_translation", ""))
+                    
+                    return {
+                        "success": True,
+                        "new_index": new_index,
+                        "sentence_quiz": {
+                            "original_sentence": sentence,
+                            "correct_translation": correct_translation,
+                            "correct_tokens": correct_tokens,
+                            "tokens": all_tokens
+                        }
+                    }
         
         return {"success": True, "new_index": new_index}
     except Exception as e:

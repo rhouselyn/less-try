@@ -487,6 +487,13 @@ function App() {
       const nextWordResponse = await api.nextWord(currentFileId)
       const newIndex = nextWordResponse.new_index
       
+      if (nextWordResponse.sentence_quiz) {
+        setQuizData(nextWordResponse.sentence_quiz)
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
+        return
+      }
+      
       const vocabResponse = await api.getVocab(currentFileId)
       const vocabLength = vocabResponse.vocab.length
       
@@ -552,47 +559,23 @@ function App() {
   const handleNextSentenceQuiz = async () => {
     setLoading(true)
     try {
-      // 检查是否还有可组成的句子
-      const coverageData = await api.checkCoverage(currentFileId)
-      if (coverageData.can_form_sentences) {
-        try {
-          // 生成下一个句子翻译题
-          const quizResponse = await api.generateSentenceQuiz(currentFileId)
-          
-          // 检查是否所有句子都已使用
-          if (quizResponse.unit_completed) {
-            // 单元完成，更新阶段一进度并返回单元列表
-            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-            setPhase1Units(phase1UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setStep('all-units')
-          } else {
-            setQuizData({
-              ...quizResponse,
-              unit_completed: coverageData.unit_completed
-            })
-            setLearningMode('sentence')
-            setStep('sentence-quiz')
-          }
-        } catch (quizError) {
-          if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元完成
-            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-            setPhase1Units(phase1UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setStep('all-units')
-          } else {
-            throw quizError
-          }
-        }
-      } else if (coverageData.unit_completed) {
-        // 单元完成，更新阶段一进度并返回单元列表
-        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+      const vocabResponse = await api.getVocab(currentFileId)
+      const vocabLength = vocabResponse.vocab.length
+      const currentIdx = nextWordResponse?.new_index || 0
+      const unitSize = 10
+      const currentUnitEnd = Math.min((Math.floor((currentIdx - 1) / unitSize) + 1) * unitSize, vocabLength)
+      
+      if (currentIdx >= currentUnitEnd) {
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
         setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setStep('all-units')
       } else {
-        // 回到单词学习
         const response = await api.getRandomWord(currentFileId)
         setLearningData(response)
         setShowWordCard(false)
@@ -603,7 +586,13 @@ function App() {
       }
     } catch (error) {
       console.error('获取下一个句子翻译题错误:', error)
-      alert('无法获取下一个句子翻译题，请重试')
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setLearningMode('word')
+      setStep('learning')
     } finally {
       setLoading(false)
     }
