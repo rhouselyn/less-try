@@ -239,7 +239,10 @@ class Storage:
         if progress_path.exists():
             with open(progress_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                return data.get("max_exercise_index", 0)
+                max_idx = data.get("max_exercise_index", None)
+                if max_idx is not None:
+                    return max_idx
+                return data.get("current_exercise_index", 0)
         return 0
     
     def save_used_sentences(self, file_id: str, used_sentences: List[str]):

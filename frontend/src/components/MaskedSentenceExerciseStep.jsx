@@ -13,6 +13,8 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
   const currentQ = (exerciseIndexInUnit ?? 0) + 1;
   const totalQ = totalExercisesInUnit ?? 10;
 
+  const isLastExercise = currentQ >= totalQ;
+
   const handleWordSelect = (word, index) => {
     if (answerChecked) return;
     const newSelected = [...selectedWords];
@@ -143,7 +145,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                 {t.correctAnswer}: <span className="font-medium">{data.answer_words.join(' ')}</span>
               </p>
             )}
-            {isCorrect && (data.unit_completed || data.unit_complete) && (
+            {isCorrect && isLastExercise && (
               <p className="font-medium mt-3 text-lg text-green-700">
                 🎉 该单元学习已完成！
               </p>
@@ -191,11 +193,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
             whileTap={{ scale: 0.97, y: 0 }}
             onClick={() => {
-              if (data.unit_completed || data.unit_complete) {
-                onComplete();
-              } else {
-                handleNext();
-              }
+              handleNext();
             }}
             disabled={loading}
             className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -205,7 +203,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                 <Loader2 className="w-5 h-5 animate-spin" />
                 {t.loading}
               </>
-            ) : (data.unit_completed || data.unit_complete) ? (
+            ) : isLastExercise ? (
               '完成'
             ) : (
               <>
