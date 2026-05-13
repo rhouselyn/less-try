@@ -229,14 +229,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         storage.save_vocab(file_id, all_vocab)
         
         if all_vocab:
-            random.seed(42)
-            shuffled_indices = list(range(len(all_vocab)))
-            random.shuffle(shuffled_indices)
-            storage.save_shuffled_order(file_id, shuffled_indices)
-            print(f"[DEBUG] 保存打乱顺序: {shuffled_indices}")
-            
             asyncio.create_task(pre_generate_next_word(file_id, all_vocab, 0))
-            print(f"[DEBUG] 预生成第一个单词信息")
         
         processing_status[file_id] = {
             "status": "completed",
@@ -317,29 +310,24 @@ async def get_random_word(file_id: str):
         
         print(f"[DEBUG] 单词总数: {len(vocab)}, 单词列表: {[w['word'] for w in vocab]}")
         
-        # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
         
-        # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
-        print(f"[DEBUG] 加载学习进度: current_index = {current_index}")
         
-        # 使用保存的固定打乱顺序
-        shuffled_indices = storage.load_shuffled_order(file_id)
-        if not shuffled_indices:
-            # 如果没有保存，生成并保存
-            random.seed(42)
-            shuffled_indices = list(range(len(vocab)))
-            random.shuffle(shuffled_indices)
-            storage.save_shuffled_order(file_id, shuffled_indices)
-        print(f"[DEBUG] 打乱后的索引顺序: {shuffled_indices}")
+        unit_size = 10
+        unit_id = current_index // unit_size
+        index_in_unit = current_index % unit_size
+        unit_start = unit_id * unit_size
+        unit_end = min(unit_start + unit_size, len(vocab))
+        unit_vocab_indices = list(range(unit_start, unit_end))
         
-        # 获取当前单词
-        actual_index = shuffled_indices[current_index % len(vocab)]
-        random_word = vocab[actual_index]
+        random.seed(42 + unit_id)
+        random.shuffle(unit_vocab_indices)
+        
+        actual_vocab_index = unit_vocab_indices[index_in_unit]
+        random_word = vocab[actual_vocab_index]
         word = random_word["word"]
-        print(f"[DEBUG] 当前单词索引: {current_index}, 实际索引: {actual_index}, 单词: {word}")
         
         # 先检查缓存
         cached_word = storage.load_word_cache(file_id, word)
@@ -568,9 +556,8 @@ async def set_progress(file_id: str, request: dict):
     try:
         index = request.get("index", 0)
         storage.save_learning_progress(file_id, index)
-        print(f"[DEBUG] 设置学习进度: {index}")
+        storage.save_used_sentences(file_id, [])
         
-        # 预生成下一个单词
         vocab = storage.load_vocab(file_id)
         if vocab:
             asyncio.create_task(pre_generate_next_word(file_id, vocab, index))
@@ -580,24 +567,25 @@ async def set_progress(file_id: str, request: dict):
         raise HTTPException(status_code=500, detail=f"Error setting progress: {str(e)}")
 
 async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: int):
-    """后台预生成下一个单词的信息"""
     try:
-        # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
         
-        # 使用保存的固定打乱顺序
-        shuffled_indices = storage.load_shuffled_order(file_id)
-        if not shuffled_indices:
-            # 如果没有保存，生成并保存
-            random.seed(42)
-            shuffled_indices = list(range(len(vocab)))
-            random.shuffle(shuffled_indices)
-            storage.save_shuffled_order(file_id, shuffled_indices)
+        unit_size = 10
+        unit_id = next_index // unit_size
+        index_in_unit = next_index % unit_size
+        unit_start = unit_id * unit_size
+        unit_end = min(unit_start + unit_size, len(vocab))
+        unit_vocab_indices = list(range(unit_start, unit_end))
         
-        # 获取下一个单词
-        actual_index = shuffled_indices[next_index % len(vocab)]
-        random_word = vocab[actual_index]
+        random.seed(42 + unit_id)
+        random.shuffle(unit_vocab_indices)
+        
+        if index_in_unit >= len(unit_vocab_indices):
+            return
+        
+        actual_vocab_index = unit_vocab_indices[index_in_unit]
+        random_word = vocab[actual_vocab_index]
         word = random_word["word"]
         
         # 检查是否已缓存
