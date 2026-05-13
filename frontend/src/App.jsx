@@ -140,13 +140,13 @@ function App() {
         }
       } catch (error) {
         console.error('轮询错误:', error)
-        // 404错误可能是因为后端还没有开始处理，继续轮询
         if (error.response && error.response.status === 404) {
           console.log('后端还未开始处理，继续轮询...')
+        } else if (error.response && (error.response.status === 504 || error.response.status === 502 || error.response.status === 503)) {
+          console.log('后端繁忙，继续轮询...')
         } else if (pollCount >= maxPolls) {
           alert('网络错误，请重试')
           setLoading(false)
-          // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
           }
