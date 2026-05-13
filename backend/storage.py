@@ -216,8 +216,13 @@ class Storage:
     def save_phase2_progress(self, file_id: str, current_exercise_index: int):
         file_dir = self.get_file_dir(file_id)
         progress_path = file_dir / "phase2_progress.json"
+        existing = {}
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+        max_index = max(existing.get("max_exercise_index", 0), current_exercise_index)
         with open(progress_path, 'w', encoding='utf-8') as f:
-            json.dump({"current_exercise_index": current_exercise_index}, f, ensure_ascii=False, indent=2)
+            json.dump({"current_exercise_index": current_exercise_index, "max_exercise_index": max_index}, f, ensure_ascii=False, indent=2)
     
     def load_phase2_progress(self, file_id: str) -> int:
         file_dir = self.get_file_dir(file_id)
@@ -226,6 +231,15 @@ class Storage:
             with open(progress_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return data.get("current_exercise_index", 0)
+        return 0
+    
+    def load_phase2_max_progress(self, file_id: str) -> int:
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "phase2_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("max_exercise_index", 0)
         return 0
     
     def save_used_sentences(self, file_id: str, used_sentences: List[str]):

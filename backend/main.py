@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 
 from nvidia_api import NvidiaAPI
-from text_processor import TextProcessor, BACKUP_VOCAB
+from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG
 from storage import Storage
 
 load_dotenv()
@@ -1307,7 +1307,9 @@ async def get_phase_units(file_id: str, phase_number: int):
             num_units = max(1, (total_exercises + unit_size - 1) // unit_size)
             
             current_exercise_index = storage.load_phase2_progress(file_id)
-            current_unit = min(current_exercise_index // unit_size, num_units - 1)
+            max_exercise_index = storage.load_phase2_max_progress(file_id)
+            current_unit_raw = max_exercise_index // unit_size
+            current_unit = min(current_unit_raw, num_units - 1)
             
             units = []
             for i in range(num_units):
@@ -1316,7 +1318,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                 units.append({
                     "unit_id": i,
                     "exercises_count": end - start,
-                    "completed": i < current_unit
+                    "completed": i < current_unit_raw
                 })
             
             return {
@@ -1337,6 +1339,9 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             raise HTTPException(status_code=404, detail="No sentences found")
         
         if phase_number == 2:
+            language_settings = storage.load_language_settings(file_id)
+            source_lang = language_settings.get("source_lang", "en")
+            
             eligible_sentences = filter_eligible_sentences(sentences)
             
             if not eligible_sentences:
@@ -1360,11 +1365,12 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             exercise_end = min(exercise_start + unit_size, len(exercise_order))
             
             if current_exercise_index >= exercise_end:
-                return {"unit_complete": True}
+                storage.save_phase2_progress(file_id, exercise_start)
+                current_exercise_index = exercise_start
             
             if current_exercise_index < exercise_start:
+                storage.save_phase2_progress(file_id, exercise_start)
                 current_exercise_index = exercise_start
-                storage.save_phase2_progress(file_id, current_exercise_index)
             
             sent_idx, type_idx = exercise_order[current_exercise_index]
             current_sentence_data = eligible_sentences[sent_idx]
@@ -1387,7 +1393,8 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     vocab,
                     translation_tokens,
                     sentences,
-                    mask_seed=mask_seed
+                    mask_seed=mask_seed,
+                    source_lang=source_lang
                 )
                 
                 return {
@@ -1421,7 +1428,9 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     if vw.lower() not in original_lower and len(distractors) < 4:
                         distractors.append(vw)
                 
-                backup_distractors = BACKUP_VOCAB
+                backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
+                backup_distractors = list(backup_vocab_list)
+                random.shuffle(backup_distractors)
                 idx = 0
                 while len(distractors) < 4:
                     bd = backup_distractors[idx % len(backup_distractors)]

@@ -1,33 +1,142 @@
 from typing import List, Set, Dict, Any
 import string
 
-BACKUP_VOCAB = [
-    "access", "accidents", "across", "adopt", "adopting", "agencies", "agricultural", "allows",
-    "amounts", "analyze", "and", "are", "areas", "around", "artificial", "automation",
-    "autonomous", "blockchain", "borders", "broadband", "businesses", "cables", "changes", "cities",
-    "city", "climate", "cloud", "collaborate", "communicate", "communication", "communities", "companies",
-    "complex", "computing", "conditions", "conferences", "connect", "constellations", "consult", "consumption",
-    "continue", "countries", "creative", "crop", "data", "deployed", "design", "develop",
-    "diagnosis", "different", "digital", "discover", "distant", "distribution", "driving", "drones",
-    "education", "efficiently", "electric", "embrace", "employees", "energy", "engineers", "ensure",
-    "entertainment", "environmental", "every", "evolved", "expand", "experiences", "explore", "facilities",
-    "farming", "fiber", "financial", "flow", "forests", "fuel",
-    "globe", "has", "have", "healthcare", "helps", "humans", "imagery", "immersive",
-    "implement", "improve", "industries", "infrastructure", "institutions", "integrate", "intelligence",
-    "international", "learning", "maintaining", "manage", "manufacturing", "might", "missions", "modern",
-    "monitor", "needing", "networks", "oceans", "office", "online",
-    "operators", "optic", "optimize", "origins", "overlook", "patients", "patterns",
-    "physical", "planets", "planners", "plans", "platforms", "precision", "problems", "production",
-    "professional", "professionals", "programs", "providing", "quality", "reach", "reality", "recycling",
-    "reduce", "regions", "rely", "remote", "remotely", "researchers", "robotic", "rural",
-    "safe", "satellite", "scarce", "schools", "scientists", "secure", "securely", "sensor",
-    "sensors", "servers", "smart", "space", "store", "students", "study", "systems",
-    "techniques", "technology", "telemedicine", "through", "tools",
-    "traditional", "traffic", "training", "transactions", "transformed", "transparent", "transportation", "treatment",
-    "universe", "urban", "usage", "using", "vast", "vehicles", "video",
-    "virtual", "waste", "water", "while",
-    "without", "work", "working", "world", "yields",
-]
+BACKUP_VOCAB_BY_LANG = {
+    "en": [
+        "morning", "evening", "family", "friend", "school", "teacher", "student", "classroom",
+        "garden", "flower", "animal", "water", "river", "mountain", "forest", "weather",
+        "summer", "winter", "spring", "autumn", "holiday", "birthday", "breakfast", "dinner",
+        "kitchen", "window", "door", "table", "chair", "picture", "color", "music",
+        "story", "letter", "number", "question", "answer", "example", "practice", "lesson",
+        "country", "village", "market", "bridge", "station", "library", "hospital", "museum",
+        "travel", "visit", "arrive", "return", "carry", "follow", "listen", "remember",
+        "beautiful", "important", "different", "difficult", "wonderful", "careful", "together", "between",
+        "always", "usually", "sometimes", "quickly", "slowly", "carefully", "certainly", "already",
+        "enough", "another", "several", "perhaps", "almost", "during", "without", "against",
+        "believe", "prepare", "discover", "explain", "imagine", "include", "provide", "suppose",
+        "produce", "collect", "protect", "connect", "develop", "improve", "increase", "consider",
+        "nature", "science", "culture", "future", "history", "language", "knowledge", "attention",
+        "special", "possible", "popular", "similar", "simple", "strange", "useful", "serious",
+        "decide", "depend", "divide", "enter", "happen", "invite", "notice", "promise",
+        "suggest", "support", "achieve", "continue", "organize", "introduce", "celebrate", "communicate",
+        "opinion", "decision", "direction", "information", "experience", "education", "condition", "position",
+        "ancient", "modern", "correct", "exact", "proper", "necessary", "original", "traditional",
+        "accept", "agree", "allow", "appear", "cause", "create", "expect", "force",
+        "influence", "observe", "prefer", "receive", "require", "serve", "share", "spread",
+    ],
+    "zh": [
+        "早上", "晚上", "家人", "朋友", "学校", "老师", "学生", "教室",
+        "花园", "花朵", "动物", "喝水", "河流", "高山", "森林", "天气",
+        "夏天", "冬天", "春天", "秋天", "假期", "生日", "早餐", "晚餐",
+        "厨房", "窗户", "门", "桌子", "椅子", "图画", "颜色", "音乐",
+        "故事", "信件", "数字", "问题", "回答", "例子", "练习", "课程",
+        "国家", "村庄", "市场", "桥梁", "车站", "图书馆", "医院", "博物馆",
+        "旅行", "参观", "到达", "回来", "携带", "跟随", "听", "记得",
+        "美丽", "重要", "不同", "困难", "精彩", "小心", "一起", "之间",
+        "总是", "通常", "有时", "快速", "慢慢", "仔细", "当然", "已经",
+        "足够", "另一个", "几个", "也许", "几乎", "期间", "没有", "反对",
+        "相信", "准备", "发现", "解释", "想象", "包括", "提供", "假设",
+        "生产", "收集", "保护", "连接", "发展", "改善", "增加", "考虑",
+        "自然", "科学", "文化", "未来", "历史", "语言", "知识", "注意",
+        "特别", "可能", "流行", "相似", "简单", "奇怪", "有用", "认真",
+        "决定", "依靠", "分开", "进入", "发生", "邀请", "注意", "承诺",
+        "建议", "支持", "实现", "继续", "组织", "介绍", "庆祝", "交流",
+        "意见", "决定", "方向", "信息", "经验", "教育", "条件", "位置",
+        "古老", "现代", "正确", "精确", "适当", "必要", "原始", "传统",
+        "接受", "同意", "允许", "出现", "原因", "创造", "期望", "力量",
+        "影响", "观察", "偏好", "收到", "需要", "服务", "分享", "传播",
+    ],
+    "es": [
+        "mañana", "tarde", "familia", "amigo", "escuela", "profesor", "estudiante", "aula",
+        "jardín", "flor", "animal", "agua", "río", "montaña", "bosque", "clima",
+        "verano", "invierno", "primavera", "otoño", "vacaciones", "cumpleaños", "desayuno", "cena",
+        "cocina", "ventana", "puerta", "mesa", "silla", "imagen", "color", "música",
+        "historia", "carta", "número", "pregunta", "respuesta", "ejemplo", "práctica", "lección",
+        "país", "pueblo", "mercado", "puente", "estación", "biblioteca", "hospital", "museo",
+        "viaje", "visita", "llegada", "regreso", "llevar", "seguir", "escuchar", "recordar",
+        "hermoso", "importante", "diferente", "difícil", "maravilloso", "cuidadoso", "juntos", "entre",
+        "siempre", "generalmente", "a veces", "rápido", "lento", "cuidadosamente", "ciertamente", "ya",
+        "suficiente", "otro", "varios", "quizás", "casi", "durante", "sin", "contra",
+        "creer", "preparar", "descubrir", "explicar", "imaginar", "incluir", "proporcionar", "suponer",
+        "producir", "recolectar", "proteger", "conectar", "desarrollar", "mejorar", "aumentar", "considerar",
+        "naturaleza", "ciencia", "cultura", "futuro", "historia", "idioma", "conocimiento", "atención",
+        "especial", "posible", "popular", "similar", "simple", "extraño", "útil", "serio",
+        "decidir", "depender", "dividir", "entrar", "pasar", "invitar", "notar", "prometer",
+        "sugerir", "apoyar", "lograr", "continuar", "organizar", "presentar", "celebrar", "comunicar",
+        "opinión", "decisión", "dirección", "información", "experiencia", "educación", "condición", "posición",
+        "antiguo", "moderno", "correcto", "exacto", "apropiado", "necesario", "original", "tradicional",
+        "aceptar", "acordar", "permitir", "aparecer", "causar", "crear", "esperar", "fuerza",
+        "influencia", "observar", "preferir", "recibir", "requerir", "servir", "compartir", "extender",
+    ],
+    "de": [
+        "Morgen", "Abend", "Familie", "Freund", "Schule", "Lehrer", "Schüler", "Klassenzimmer",
+        "Garten", "Blume", "Tier", "Wasser", "Fluss", "Berg", "Wald", "Wetter",
+        "Sommer", "Winter", "Frühling", "Herbst", "Urlaub", "Geburtstag", "Frühstück", "Abendessen",
+        "Küche", "Fenster", "Tür", "Tisch", "Stuhl", "Bild", "Farbe", "Musik",
+        "Geschichte", "Brief", "Zahl", "Frage", "Antwort", "Beispiel", "Übung", "Lektion",
+        "Land", "Dorf", "Markt", "Brücke", "Bahnhof", "Bibliothek", "Krankenhaus", "Museum",
+        "Reise", "Besuch", "Ankunft", "Rückkehr", "tragen", "folgen", "zuhören", "erinnern",
+        "schön", "wichtig", "verschieden", "schwierig", "wunderbar", "vorsichtig", "zusammen", "zwischen",
+        "immer", "gewöhnlich", "manchmal", "schnell", "langsam", "sorgfältig", "bestimmt", "schon",
+        "genug", "anderer", "mehrere", "vielleicht", "fast", "während", "ohne", "gegen",
+        "glauben", "vorbereiten", "entdecken", "erklären", "vorstellen", "einschließen", "bieten", "annehmen",
+        "produzieren", "sammeln", "schützen", "verbinden", "entwickeln", "verbessern", "erhöhen", "bedenken",
+        "Natur", "Wissenschaft", "Kultur", "Zukunft", "Geschichte", "Sprache", "Wissen", "Aufmerksamkeit",
+        "besonders", "möglich", "beliebt", "ähnlich", "einfach", "seltsam", "nützlich", "ernst",
+        "entscheiden", "abhängen", "teilen", "eintreten", "passieren", "einladen", "bemerken", "versprechen",
+        "vorschlagen", "unterstützen", "erreichen", "fortsetzen", "organisieren", "vorstellen", "feiern", "kommunizieren",
+        "Meinung", "Entscheidung", "Richtung", "Information", "Erfahrung", "Bildung", "Bedingung", "Position",
+        "alt", "modern", "richtig", "genau", "passend", "notwendig", "ursprünglich", "traditionell",
+        "akzeptieren", "zustimmen", "erlauben", "erscheinen", "verursachen", "erschaffen", "erwarten", "Kraft",
+        "Einfluss", "beobachten", "bevorzugen", "empfangen", "benötigen", "dienen", "teilen", "verbreiten",
+    ],
+    "fr": [
+        "matin", "soir", "famille", "ami", "école", "professeur", "étudiant", "salle",
+        "jardin", "fleur", "animal", "eau", "rivière", "montagne", "forêt", "temps",
+        "été", "hiver", "printemps", "automne", "vacances", "anniversaire", "petit-déjeuner", "dîner",
+        "cuisine", "fenêtre", "porte", "table", "chaise", "image", "couleur", "musique",
+        "histoire", "lettre", "nombre", "question", "réponse", "exemple", "exercice", "leçon",
+        "pays", "village", "marché", "pont", "gare", "bibliothèque", "hôpital", "musée",
+        "voyage", "visite", "arrivée", "retour", "porter", "suivre", "écouter", "rappeler",
+        "beau", "important", "différent", "difficile", "merveilleux", "prudent", "ensemble", "entre",
+        "toujours", "généralement", "parfois", "vite", "lentement", "soigneusement", "certainement", "déjà",
+        "assez", "autre", "plusieurs", "peut-être", "presque", "pendant", "sans", "contre",
+        "croire", "préparer", "découvrir", "expliquer", "imaginer", "inclure", "fournir", "supposer",
+        "produire", "collecter", "protéger", "connecter", "développer", "améliorer", "augmenter", "considérer",
+        "nature", "science", "culture", "avenir", "histoire", "langue", "connaissance", "attention",
+        "spécial", "possible", "populaire", "similaire", "simple", "étrange", "utile", "sérieux",
+        "décider", "dépendre", "diviser", "entrer", "arriver", "inviter", "remarquer", "promettre",
+        "suggérer", "soutenir", "réaliser", "continuer", "organiser", "présenter", "célébrer", "communiquer",
+        "opinion", "décision", "direction", "information", "expérience", "éducation", "condition", "position",
+        "ancien", "moderne", "correct", "exact", "propre", "nécessaire", "original", "traditionnel",
+        "accepter", "accepter", "permettre", "apparaître", "causer", "créer", "espérer", "force",
+        "influence", "observer", "préférer", "recevoir", "exiger", "servir", "partager", "répandre",
+    ],
+    "ja": [
+        "朝", "夕方", "家族", "友達", "学校", "先生", "学生", "教室",
+        "庭", "花", "動物", "水", "川", "山", "森", "天気",
+        "夏", "冬", "春", "秋", "休み", "誕生日", "朝食", "夕食",
+        "台所", "窓", "扉", "机", "椅子", "絵", "色", "音楽",
+        "物語", "手紙", "数字", "質問", "答え", "例", "練習", "授業",
+        "国", "村", "市場", "橋", "駅", "図書館", "病院", "美術館",
+        "旅行", "訪問", "到着", "帰り", "持つ", "従う", "聞く", "覚える",
+        "美しい", "大切", "違う", "難しい", "素晴らしい", "慎重", "一緒", "間",
+        "いつも", "普通", "時々", "速い", "遅い", "丁寧", "確実", "もう",
+        "十分", "別の", "いくつか", "たぶん", "ほとんど", "間", "なし", "反対",
+        "信じる", "準備", "発見", "説明", "想像", "含む", "提供", "仮定",
+        "作る", "集める", "守る", "繋ぐ", "発展", "改善", "増やす", "考える",
+        "自然", "科学", "文化", "未来", "歴史", "言葉", "知識", "注意",
+        "特別", "可能", "人気", "似ている", "簡単", "変", "役立つ", "真剣",
+        "決める", "頼る", "分ける", "入る", "起こる", "招待", "気づく", "約束",
+        "提案", "応援", "達成", "続ける", "整理", "紹介", "祝う", "伝える",
+        "意見", "決定", "方向", "情報", "経験", "教育", "条件", "位置",
+        "古い", "現代", "正しい", "正確", "適切", "必要", "元の", "伝統的",
+        "受け入れる", "同意", "許す", "現れる", "原因", "創造", "期待", "力",
+        "影響", "観察", "好む", "受け取る", "必要", "仕える", "共有", "広がる",
+    ],
+}
+
+BACKUP_VOCAB = BACKUP_VOCAB_BY_LANG["en"]
 
 
 class TextProcessor:
@@ -174,181 +283,7 @@ class TextProcessor:
         words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
         return words
     
-    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None) -> Dict[str, Any]:
-        """
-        生成蒙版填空练习
-        - 大于8个词的句子才生成
-        - 每8个词多蒙一个
-        """
-        # 使用翻译token或自动分词
-        if translation_tokens:
-            words = translation_tokens
-        else:
-            words = self.tokenize_sentence(sentence)
-        word_count = len(words)
-        
-        if word_count < 8:
-            return None
-        
-        # 计算要蒙版的数量
-        num_masks = 1 + (word_count - 8) // 8
-        if num_masks < 1:
-            num_masks = 1
-        if num_masks > word_count // 2:
-            num_masks = word_count // 2  # 最多蒙一半
-        
-        import random
-        # 固定种子，确保每个单元的掩码位置一致
-        # 使用句子内容作为种子，确保相同句子有相同的掩码模式
-        random.seed(hash(sentence))
-        # 随机选择要蒙版的单词索引
-        mask_indices = random.sample(range(word_count), num_masks)
-        
-        # 构建蒙版后的句子 - 使用LLM生成的tokens
-        masked_tokens = []
-        answer_words = []
-        
-        # 如果提供了translation_tokens，使用它们来构建蒙版句子
-        if translation_tokens:
-            for i, token in enumerate(translation_tokens):
-                if i in mask_indices:
-                    masked_tokens.append("___")
-                    answer_words.append(token)
-                else:
-                    masked_tokens.append(token)
-        else:
-            # 回退到自动分词
-            import re
-            # 正确处理缩写形式，如 I'm, don't 等
-            tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
-            # 映射单词位置到token位置
-            current_word_idx = 0
-            for token in tokens_with_punc:
-                # 检查是否是单词（包括缩写形式）
-                if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
-                    if current_word_idx in mask_indices:
-                        masked_tokens.append("___")
-                        answer_words.append(token)
-                    else:
-                        masked_tokens.append(token)
-                    current_word_idx += 1
-                else:
-                    masked_tokens.append(token)
-        
-        # 生成选项：正确答案 + 干扰项（来自vocab的其他单词）
-        options = answer_words.copy()
-        # 从词汇表中找干扰项
-        distractors = []
-        vocab_words = [v["word"] for v in vocab]
-        answer_lower = [w.lower() for w in answer_words]
-        random.shuffle(vocab_words)
-        for vw in vocab_words:
-            if vw.lower() not in answer_lower and len(distractors) < 3 * num_masks:
-                distractors.append(vw)
-        
-        # 如果词汇表不够，添加一些常见的英语干扰词
-        backup_distractors = BACKUP_VOCAB
-        idx = 0
-        while len(distractors) < 3 * num_masks:
-            bd = backup_distractors[idx % len(backup_distractors)]
-            if bd.lower() not in answer_lower and bd not in distractors:
-                distractors.append(bd)
-            idx += 1
-        
-        # 打乱干扰项
-        random.shuffle(distractors)
-        options += distractors[:3 * num_masks]
-        
-        # 打乱所有选项
-        random.shuffle(options)
-        
-        # 构建蒙版句子，保持原始句子的格式
-        if translation_tokens:
-            # 当使用LLM生成的tokens时，简单地用空格连接
-            masked_sentence = " ".join(masked_tokens)
-        else:
-            # 当使用自动分词时，保持原始格式
-            masked_sentence = "".join(
-                [
-                    " " + token if token not in [".", ",", "!", "?", ":", ";", ")"] and i > 0 else token 
-                    for i, token in enumerate(masked_tokens)
-                ]
-            )
-        
-        return {
-            "original_sentence": sentence,
-            "masked_sentence": masked_sentence,
-            "answer_words": answer_words,
-            "mask_indices": mask_indices,
-            "options": options,
-            "word_count": word_count
-        }
-    
-    def generate_multiple_masked_sentences(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, num_versions: int = 3) -> List[Dict[str, Any]]:
-        """生成多个不同蒙版版本的填空练习"""
-        results = []
-        base_seed = hash(sentence)
-        for i in range(num_versions):
-            seed = base_seed + i + 1
-            masked = self.generate_masked_sentence(
-                sentence, vocab, translation_tokens, all_sentences, mask_seed=seed
-            )
-            if masked:
-                masked["mask_version"] = i
-                results.append(masked)
-        return results
-    
-    def generate_interleaved_exercise_order(self, num_sentences: int, masks_per_sentence: int = 3, seed: int = 42) -> List[List[int]]:
-        """生成交叉出题顺序，不同句子的练习可以穿插
-        
-        每个句子有 (masks_per_sentence + 1) 个练习：3次选词填空 + 1次翻译
-        句子内部顺序保持不变（选词1→选词2→选词3→翻译）
-        不同句子之间随机穿插
-        
-        返回: [(sentence_idx, type_idx), ...] 的扁平列表
-        """
-        import random
-        random.seed(seed)
-        
-        exercises_per_sentence = masks_per_sentence + 1
-        next_type = [0] * num_sentences
-        result = []
-        remaining = num_sentences * exercises_per_sentence
-        
-        while remaining > 0:
-            available = [i for i in range(num_sentences) if next_type[i] < exercises_per_sentence]
-            sent_idx = random.choice(available)
-            result.append([sent_idx, next_type[sent_idx]])
-            next_type[sent_idx] += 1
-            remaining -= 1
-        
-        return result
-    
-    def group_sentences_into_units(self, sentences: List[str], unit_size: int = 8) -> List[List[str]]:
-        """将句子分组为单元"""
-        units = []
-        for i in range(0, len(sentences), unit_size):
-            units.append(sentences[i:i+unit_size])
-        return units
-    
-    def get_fallback_distractors(self, count: int, exclude_words: List[str] = None) -> List[str]:
-        if exclude_words is None:
-            exclude_words = []
-        
-        exclude_lower = [w.lower() for w in exclude_words]
-        distractors = []
-        
-        import random
-        shuffled = list(BACKUP_VOCAB)
-        random.shuffle(shuffled)
-        
-        for word in shuffled:
-            if word.lower() not in exclude_lower and len(distractors) < count:
-                distractors.append(word)
-        
-        return distractors
-    
-    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None) -> Dict[str, Any]:
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en") -> Dict[str, Any]:
         """
         生成蒙版填空练习
         - 每6个单词蒙版1个
@@ -435,7 +370,7 @@ class TextProcessor:
         # 如果词汇表不够，使用备选词库
         if len(distractors) < 3 * num_masks:
             fallback_needed = 3 * num_masks - len(distractors)
-            fallback_distractors = self.get_fallback_distractors(fallback_needed, answer_words + distractors)
+            fallback_distractors = self.get_fallback_distractors(fallback_needed, answer_words + distractors, source_lang)
             distractors.extend(fallback_distractors)
         
         # 打乱干扰项
@@ -466,3 +401,58 @@ class TextProcessor:
             "options": options,
             "word_count": word_count
         }
+
+    def generate_multiple_masked_sentences(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, num_versions: int = 3) -> List[Dict[str, Any]]:
+        results = []
+        base_seed = hash(sentence)
+        for i in range(num_versions):
+            seed = base_seed + i + 1
+            masked = self.generate_masked_sentence(
+                sentence, vocab, translation_tokens, all_sentences, mask_seed=seed
+            )
+            if masked:
+                masked["mask_version"] = i
+                results.append(masked)
+        return results
+
+    def generate_interleaved_exercise_order(self, num_sentences: int, masks_per_sentence: int = 3, seed: int = 42) -> List[List[int]]:
+        import random
+        random.seed(seed)
+        
+        exercises_per_sentence = masks_per_sentence + 1
+        next_type = [0] * num_sentences
+        result = []
+        remaining = num_sentences * exercises_per_sentence
+        
+        while remaining > 0:
+            available = [i for i in range(num_sentences) if next_type[i] < exercises_per_sentence]
+            sent_idx = random.choice(available)
+            result.append([sent_idx, next_type[sent_idx]])
+            next_type[sent_idx] += 1
+            remaining -= 1
+        
+        return result
+
+    def group_sentences_into_units(self, sentences: List[str], unit_size: int = 8) -> List[List[str]]:
+        units = []
+        for i in range(0, len(sentences), unit_size):
+            units.append(sentences[i:i+unit_size])
+        return units
+
+    def get_fallback_distractors(self, count: int, exclude_words: List[str] = None, source_lang: str = "en") -> List[str]:
+        if exclude_words is None:
+            exclude_words = []
+        
+        exclude_lower = [w.lower() for w in exclude_words]
+        distractors = []
+        
+        import random
+        vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
+        shuffled = list(vocab_list)
+        random.shuffle(shuffled)
+        
+        for word in shuffled:
+            if word.lower() not in exclude_lower and len(distractors) < count:
+                distractors.append(word)
+        
+        return distractors

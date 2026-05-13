@@ -306,8 +306,12 @@ function App() {
     
     setLoading(true)
     try {
-      // 阶段1直接进入单词学习
-      await api.setProgress(currentFileId, unitId * 10)
+      const progressData = await api.getLearningProgress(currentFileId)
+      const currentIndex = progressData.current_index || 0
+      const unitStart = unitId * 10
+      if (currentIndex < unitStart) {
+        await api.setProgress(currentFileId, unitStart)
+      }
       const response = await api.getRandomWord(currentFileId)
       setLearningData(response)
       setShowWordCard(false)
@@ -402,8 +406,7 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       
-      if (nextRes.unit_complete) {
-        // 单元完成，更新单元状态并返回列表
+      if (nextRes.unit_complete || nextRes.all_complete) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
