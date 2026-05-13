@@ -1,6 +1,34 @@
 from typing import List, Set, Dict, Any
 import string
 
+BACKUP_VOCAB = [
+    "access", "accidents", "across", "adopt", "adopting", "agencies", "agricultural", "allows",
+    "amounts", "analyze", "and", "are", "areas", "around", "artificial", "automation",
+    "autonomous", "blockchain", "borders", "broadband", "businesses", "cables", "changes", "cities",
+    "city", "climate", "cloud", "collaborate", "communicate", "communication", "communities", "companies",
+    "complex", "computing", "conditions", "conferences", "connect", "constellations", "consult", "consumption",
+    "continue", "countries", "creative", "crop", "data", "deployed", "design", "develop",
+    "diagnosis", "different", "digital", "discover", "distant", "distribution", "driving", "drones",
+    "education", "efficiently", "electric", "embrace", "employees", "energy", "engineers", "ensure",
+    "entertainment", "environmental", "every", "evolved", "expand", "experiences", "explore", "facilities",
+    "farming", "fiber", "financial", "flow", "forests", "fuel",
+    "globe", "has", "have", "healthcare", "helps", "humans", "imagery", "immersive",
+    "implement", "improve", "industries", "infrastructure", "institutions", "integrate", "intelligence",
+    "international", "learning", "maintaining", "manage", "manufacturing", "might", "missions", "modern",
+    "monitor", "needing", "networks", "oceans", "office", "online",
+    "operators", "optic", "optimize", "origins", "overlook", "patients", "patterns",
+    "physical", "planets", "planners", "plans", "platforms", "precision", "problems", "production",
+    "professional", "professionals", "programs", "providing", "quality", "reach", "reality", "recycling",
+    "reduce", "regions", "rely", "remote", "remotely", "researchers", "robotic", "rural",
+    "safe", "satellite", "scarce", "schools", "scientists", "secure", "securely", "sensor",
+    "sensors", "servers", "smart", "space", "store", "students", "study", "systems",
+    "techniques", "technology", "telemedicine", "through", "tools",
+    "traditional", "traffic", "training", "transactions", "transformed", "transparent", "transportation", "treatment",
+    "universe", "urban", "usage", "using", "vast", "vehicles", "video",
+    "virtual", "waste", "water", "while",
+    "without", "work", "working", "world", "yields",
+]
+
 
 class TextProcessor:
     def __init__(self):
@@ -219,7 +247,7 @@ class TextProcessor:
                 distractors.append(vw)
         
         # 如果词汇表不够，添加一些常见的英语干扰词
-        backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish", "grape", "house"]
+        backup_distractors = BACKUP_VOCAB
         idx = 0
         while len(distractors) < 3 * num_masks:
             bd = backup_distractors[idx % len(backup_distractors)]
@@ -304,31 +332,19 @@ class TextProcessor:
         return units
     
     def get_fallback_distractors(self, count: int, exclude_words: List[str] = None) -> List[str]:
-        """获取备选干扰词"""
         if exclude_words is None:
             exclude_words = []
-        
-        # 常用英语单词词库
-        common_words = [
-            "apple", "banana", "cat", "dog", "elephant", "fish", "grape", "house",
-            "ice", "jacket", "king", "lion", "mouse", "notebook", "orange", "pen",
-            "queen", "rabbit", "sun", "tree", "umbrella", "violin", "water", "xylophone",
-            "yellow", "zebra", "book", "chair", "desk", "flower", "garden", "hat",
-            "island", "juice", "kite", "lamp", "mountain", "night", "ocean", "piano"
-        ]
         
         exclude_lower = [w.lower() for w in exclude_words]
         distractors = []
         
-        for word in common_words:
+        import random
+        shuffled = list(BACKUP_VOCAB)
+        random.shuffle(shuffled)
+        
+        for word in shuffled:
             if word.lower() not in exclude_lower and len(distractors) < count:
                 distractors.append(word)
-        
-        # 如果不够，添加一些常见动词
-        common_verbs = ["run", "jump", "walk", "talk", "sing", "dance", "write", "read"]
-        for verb in common_verbs:
-            if verb.lower() not in exclude_lower and len(distractors) < count:
-                distractors.append(verb)
         
         return distractors
     

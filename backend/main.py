@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 
 from nvidia_api import NvidiaAPI
-from text_processor import TextProcessor
+from text_processor import TextProcessor, BACKUP_VOCAB
 from storage import Storage
 
 load_dotenv()
@@ -1421,7 +1421,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     if vw.lower() not in original_lower and len(distractors) < 4:
                         distractors.append(vw)
                 
-                backup_distractors = ["apple", "banana", "cat", "dog", "elephant", "fish"]
+                backup_distractors = BACKUP_VOCAB
                 idx = 0
                 while len(distractors) < 4:
                     bd = backup_distractors[idx % len(backup_distractors)]
