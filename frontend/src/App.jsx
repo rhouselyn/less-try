@@ -306,12 +306,8 @@ function App() {
     
     setLoading(true)
     try {
-      const progressData = await api.getLearningProgress(currentFileId)
-      const currentIndex = progressData.current_index || 0
       const unitStart = unitId * 10
-      if (currentIndex < unitStart) {
-        await api.setProgress(currentFileId, unitStart)
-      }
+      await api.setProgress(currentFileId, unitStart)
       const response = await api.getRandomWord(currentFileId)
       setLearningData(response)
       setShowWordCard(false)
@@ -488,108 +484,33 @@ function App() {
     
     setLoading(true)
     try {
-      // 先调用 API 更新进度
       const nextWordResponse = await api.nextWord(currentFileId)
       const newIndex = nextWordResponse.new_index
       
-      // 获取词汇表长度
       const vocabResponse = await api.getVocab(currentFileId)
       const vocabLength = vocabResponse.vocab.length
       
-      // 检查是否学习完所有单词
-      const allWordsLearned = newIndex >= vocabLength
+      const unitSize = 10
+      const currentUnitEnd = Math.min((Math.floor((newIndex - 1) / unitSize) + 1) * unitSize, vocabLength)
       
-      if (allWordsLearned) {
-        // 检查是否可以生成句子翻译题
-        const coverageData = await api.checkCoverage(currentFileId)
-        if (coverageData.can_form_sentences) {
-          try {
-            // 生成句子翻译题
-            const quizResponse = await api.generateSentenceQuiz(currentFileId)
-            
-            // 检查是否所有句子都已使用
-            if (quizResponse.unit_completed) {
-              // 单元完成，更新阶段一进度并返回单元列表
-              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-              setPhase1Units(phase1UnitsData.units)
-              setCurrentPhase1Unit(phase1UnitsData.current_unit)
-              setStep('all-units')
-            } else {
-              setQuizData({
-                ...quizResponse,
-                unit_completed: coverageData.unit_completed
-              })
-              setLearningMode('sentence')
-              setStep('sentence-quiz')
-            }
-          } catch (quizError) {
-            if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-              // 所有句子都已使用，单元完成
-              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-              setPhase1Units(phase1UnitsData.units)
-              setCurrentPhase1Unit(phase1UnitsData.current_unit)
-              setStep('all-units')
-            } else {
-              throw quizError
-            }
-          }
-        } else {
-          // 单元完成，更新阶段一进度并返回单元列表
-          const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-          setPhase1Units(phase1UnitsData.units)
-          setCurrentPhase1Unit(phase1UnitsData.current_unit)
-          setStep('all-units')
-        }
+      if (newIndex >= currentUnitEnd) {
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
         return
       }
       
-      // 检查是否需要插入句子翻译题
-      const coverageData = await api.checkCoverage(currentFileId)
-      if (coverageData.can_form_sentences) {
-        try {
-          // 生成句子翻译题
-          const quizResponse = await api.generateSentenceQuiz(currentFileId)
-          
-          // 检查是否所有句子都已使用
-          if (quizResponse.unit_completed) {
-            // 单元完成，更新阶段一进度并返回单元列表
-            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-            setPhase1Units(phase1UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setStep('all-units')
-          } else {
-            setQuizData({
-              ...quizResponse,
-              unit_completed: coverageData.unit_completed
-            })
-            setLearningMode('sentence')
-            setStep('sentence-quiz')
-          }
-        } catch (quizError) {
-          if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元完成
-            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-            setPhase1Units(phase1UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setStep('all-units')
-          } else {
-            throw quizError
-          }
-        }
-      } else if (coverageData.unit_completed) {
-        // 单元完成，更新阶段一进度并返回单元列表
-        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-        setPhase1Units(phase1UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        setStep('all-units')
-      } else {
-        // 继续单词学习
-        const response = await api.getRandomWord(currentFileId)
-        setLearningData(response)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-      }
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
     } catch (error) {
       console.error('获取下一个单词错误:', error)
       alert('无法获取下一个单词，请重试')

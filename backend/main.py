@@ -1257,18 +1257,19 @@ async def get_phase_units(file_id: str, phase_number: int):
         if phase_number == 1:
             group_size = 10
             current_index = storage.load_learning_progress(file_id)
-            current_unit = current_index // group_size
+            max_index = storage.load_learning_max_progress(file_id)
             
             phase1_units = []
             for i in range(0, len(vocab), group_size):
                 unit_words = vocab[i:i+group_size]
-                unit_index = i // group_size
                 unit_end_index = min(i + group_size, len(vocab))
-                completed = current_index >= unit_end_index
+                completed = max_index >= unit_end_index
                 phase1_units.append({
                     "word_count": len(unit_words),
                     "completed": completed
                 })
+            
+            current_unit = min(current_index // group_size, len(phase1_units) - 1) if phase1_units else 0
             
             return {
                 "phase_number": phase_number,
@@ -1306,10 +1307,8 @@ async def get_phase_units(file_id: str, phase_number: int):
             total_exercises = len(exercise_order)
             num_units = max(1, (total_exercises + unit_size - 1) // unit_size)
             
-            current_exercise_index = storage.load_phase2_progress(file_id)
             max_exercise_index = storage.load_phase2_max_progress(file_id)
-            current_unit_raw = max_exercise_index // unit_size
-            current_unit = min(current_unit_raw, num_units - 1)
+            current_exercise_index = storage.load_phase2_progress(file_id)
             
             units = []
             for i in range(num_units):
@@ -1318,8 +1317,16 @@ async def get_phase_units(file_id: str, phase_number: int):
                 units.append({
                     "unit_id": i,
                     "exercises_count": end - start,
-                    "completed": i < current_unit_raw
+                    "completed": max_exercise_index >= end
                 })
+            
+            current_unit = 0
+            for i in range(num_units):
+                if current_exercise_index < (i + 1) * unit_size and current_exercise_index >= i * unit_size:
+                    current_unit = i
+                    break
+            else:
+                current_unit = min(num_units - 1, current_exercise_index // unit_size)
             
             return {
                 "phase_number": phase_number,

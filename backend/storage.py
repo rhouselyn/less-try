@@ -102,19 +102,34 @@ class Storage:
         }
     
     def save_learning_progress(self, file_id: str, current_index: int):
-        """保存学习进度"""
         file_dir = self.get_file_dir(file_id)
         progress_path = file_dir / "learning_progress.json"
+        existing = {}
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+        max_index = max(existing.get("max_index", 0), current_index)
         with open(progress_path, 'w', encoding='utf-8') as f:
-            json.dump({"current_index": current_index}, f, ensure_ascii=False, indent=2)
+            json.dump({"current_index": current_index, "max_index": max_index}, f, ensure_ascii=False, indent=2)
     
     def load_learning_progress(self, file_id: str) -> int:
-        """加载学习进度"""
         file_dir = self.get_file_dir(file_id)
         progress_path = file_dir / "learning_progress.json"
         if progress_path.exists():
             with open(progress_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
+                return data.get("current_index", 0)
+        return 0
+    
+    def load_learning_max_progress(self, file_id: str) -> int:
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "learning_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                max_idx = data.get("max_index", None)
+                if max_idx is not None:
+                    return max_idx
                 return data.get("current_index", 0)
         return 0
     
