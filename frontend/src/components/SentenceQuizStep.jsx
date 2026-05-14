@@ -204,14 +204,14 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 {quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}
               </motion.p>
             )}
-            {isCorrect && quizData.unit_completed && (
+            {isCorrect && (
               <motion.p 
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
                 className="font-medium mt-3 text-lg text-green-700"
               >
-                🎉 该单元学习已完成！
+                🎉 翻译正确！
               </motion.p>
             )}
           </motion.div>
@@ -237,11 +237,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 setSelectedTokens([]);
                 setIsChecked(false);
                 setIsCorrect(false);
-                if (quizData.unit_completed || quizData.unit_complete) {
-                  onComplete();
-                } else {
-                  handleNextQuestion();
-                }
+                onNextQuestion();
               }}
               disabled={loading}
               className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -251,11 +247,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                   <Loader2 className="w-5 h-5 animate-spin" />
                   {t.loading}
                 </>
-              ) : (quizData.unit_completed || quizData.unit_complete) ? (
-                '完成'
               ) : (
                 <>
-                  下一题
+                  继续学习
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}

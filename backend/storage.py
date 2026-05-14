@@ -102,14 +102,17 @@ class Storage:
         }
     
     def save_learning_progress(self, file_id: str, current_index: int):
-        """保存学习进度"""
         file_dir = self.get_file_dir(file_id)
         progress_path = file_dir / "learning_progress.json"
+        existing = {}
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+        max_index = max(existing.get("max_index", 0), current_index)
         with open(progress_path, 'w', encoding='utf-8') as f:
-            json.dump({"current_index": current_index}, f, ensure_ascii=False, indent=2)
+            json.dump({"current_index": current_index, "max_index": max_index}, f, ensure_ascii=False, indent=2)
     
     def load_learning_progress(self, file_id: str) -> int:
-        """加载学习进度"""
         file_dir = self.get_file_dir(file_id)
         progress_path = file_dir / "learning_progress.json"
         if progress_path.exists():
@@ -118,21 +121,46 @@ class Storage:
                 return data.get("current_index", 0)
         return 0
     
+    def load_learning_max_progress(self, file_id: str) -> int:
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "learning_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                max_idx = data.get("max_index", None)
+                if max_idx is not None:
+                    return max_idx
+                return data.get("current_index", 0)
+        return 0
+    
     def save_shuffled_order(self, file_id: str, shuffled_indices: List[int]):
-        """保存单词的打乱顺序"""
         file_dir = self.get_file_dir(file_id)
         order_path = file_dir / "shuffled_order.json"
         with open(order_path, 'w', encoding='utf-8') as f:
             json.dump({"shuffled_indices": shuffled_indices}, f, ensure_ascii=False, indent=2)
     
     def load_shuffled_order(self, file_id: str) -> Optional[List[int]]:
-        """加载单词的打乱顺序"""
         file_dir = self.get_file_dir(file_id)
         order_path = file_dir / "shuffled_order.json"
         if order_path.exists():
             with open(order_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return data.get("shuffled_indices")
+        return None
+    
+    def save_learning_plan(self, file_id: str, plan: List[Dict]):
+        file_dir = self.get_file_dir(file_id)
+        plan_path = file_dir / "learning_plan.json"
+        with open(plan_path, 'w', encoding='utf-8') as f:
+            json.dump({"plan": plan}, f, ensure_ascii=False, indent=2)
+    
+    def load_learning_plan(self, file_id: str) -> Optional[List[Dict]]:
+        file_dir = self.get_file_dir(file_id)
+        plan_path = file_dir / "learning_plan.json"
+        if plan_path.exists():
+            with open(plan_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("plan")
         return None
     
     def save_phase_progress(self, file_id: str, phase: int, unit_id: int, exercise_index: int, exercise_type_index: int = 0):
@@ -197,6 +225,53 @@ class Storage:
             with open(cache_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return None
+    
+    def save_exercise_order(self, file_id: str, phase: int, exercise_order: List):
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / f"phase{phase}_exercise_order.json"
+        with open(order_path, 'w', encoding='utf-8') as f:
+            json.dump({"exercise_order": exercise_order}, f, ensure_ascii=False, indent=2)
+    
+    def load_exercise_order(self, file_id: str, phase: int):
+        file_dir = self.get_file_dir(file_id)
+        order_path = file_dir / f"phase{phase}_exercise_order.json"
+        if order_path.exists():
+            with open(order_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("exercise_order")
+        return None
+    
+    def save_phase2_progress(self, file_id: str, current_exercise_index: int):
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "phase2_progress.json"
+        existing = {}
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+        max_index = max(existing.get("max_exercise_index", 0), current_exercise_index)
+        with open(progress_path, 'w', encoding='utf-8') as f:
+            json.dump({"current_exercise_index": current_exercise_index, "max_exercise_index": max_index}, f, ensure_ascii=False, indent=2)
+    
+    def load_phase2_progress(self, file_id: str) -> int:
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "phase2_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("current_exercise_index", 0)
+        return 0
+    
+    def load_phase2_max_progress(self, file_id: str) -> int:
+        file_dir = self.get_file_dir(file_id)
+        progress_path = file_dir / "phase2_progress.json"
+        if progress_path.exists():
+            with open(progress_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                max_idx = data.get("max_exercise_index", None)
+                if max_idx is not None:
+                    return max_idx
+                return data.get("current_exercise_index", 0)
+        return 0
     
     def save_used_sentences(self, file_id: str, used_sentences: List[str]):
         """保存已使用的句子"""

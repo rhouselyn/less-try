@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import asyncio
 from typing import List, Dict, Any
 
 
@@ -14,13 +15,27 @@ class NvidiaAPI:
             "Content-Type": "application/json"
         }
 
+    def _sync_post(self, url, headers, payload, timeout):
+        response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+        response.raise_for_status()
+        result = response.json()
+        if "choices" in result and len(result["choices"]) > 0:
+            choice = result["choices"][0]
+            message = choice.get("message", {})
+            content = message.get("content", "")
+            reasoning_content = message.get("reasoning_content", "")
+            if not content and reasoning_content:
+                message["content"] = reasoning_content
+                result["choices"][0]["message"] = message
+        return result
+
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0):
         payload = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
             "max_tokens": 4096,
-            "thinking": {"type": "disabled"}  # 禁用思考模式，直接获取答案
+            "thinking": {"type": "disabled"}
         }
         
         if tools:
@@ -28,52 +43,23 @@ class NvidiaAPI:
             payload["tool_choice"] = "auto"
 
         try:
-            response = requests.post(
+            result = await asyncio.to_thread(
+                self._sync_post,
                 f"{self.base_url}/chat/completions",
-                headers=self.headers,
-                json=payload,
-                timeout=600  # 10分钟超时
+                self.headers,
+                payload,
+                600
             )
-            response.raise_for_status()
-            result = response.json()
-            
-            # Qwen 模型返回的 content 可能是空的，内容在 reasoning_content 里
-            # 需要提取正确的响应内容
-            if "choices" in result and len(result["choices"]) > 0:
-                choice = result["choices"][0]
-                message = choice.get("message", {})
-                content = message.get("content", "")
-                reasoning_content = message.get("reasoning_content", "")
-                
-                # 如果 content 为空但有 reasoning_content，使用 reasoning_content
-                if not content and reasoning_content:
-                    message["content"] = reasoning_content
-                    result["choices"][0]["message"] = message
-            
             return result
         except requests.exceptions.Timeout:
             print("API request timed out. Retrying...")
-            # Retry once
-            response = requests.post(
+            result = await asyncio.to_thread(
+                self._sync_post,
                 f"{self.base_url}/chat/completions",
-                headers=self.headers,
-                json=payload,
-                timeout=600  # 10分钟超时
+                self.headers,
+                payload,
+                600
             )
-            response.raise_for_status()
-            result = response.json()
-            
-            # Qwen 模型返回的 content 可能是空的，内容在 reasoning_content 里
-            if "choices" in result and len(result["choices"]) > 0:
-                choice = result["choices"][0]
-                message = choice.get("message", {})
-                content = message.get("content", "")
-                reasoning_content = message.get("reasoning_content", "")
-                
-                if not content and reasoning_content:
-                    message["content"] = reasoning_content
-                    result["choices"][0]["message"] = message
-            
             return result
 
 
@@ -397,7 +383,14 @@ class NvidiaAPI:
 - 固定搭配的text字段应该包含整个短语，如 "what's up" 而不是分开的 "what's" 和 "up"
 - 对于缩写形式（如 what's, don't, he's 等）也要作为一个整体处理，不要拆分！！！
 
-同时，为文本中出现的所有单词生成完整词典条目（dictionary_entries）：
+同时，为文本中出现的【每一个单词】生成完整词典条目（dictionary_entries）：
+
+【极其重要！！！dictionary_entries必须包含文本中的每一个单词！！！】
+- 必须为文本中出现的每一个单词都生成词典条目，一个都不能遗漏！
+- 这包括但不限于：介词（如 on, in, at, with, of, for, to）、冠词（如 a, an, the）、连词（如 and, or, but）、代词（如 your, their, it）、简单动词（如 is, do, has）、限定词（如 this, that, some）等
+- 即使是看似简单的词（如 on, your, of, with）也必须生成完整的词典条目
+- 不要因为某个词"太简单"或"太常见"就跳过它
+- 请在生成后逐一核对：文本中的每个单词是否都在dictionary_entries中有对应条目
 
 为每个单词提供：
 1. word: The word itself
@@ -453,4 +446,110 @@ TEXT_CONTENT
             print(f"Tool call failed: {e}")
             print(f"Response: {response}")
             return {}
+
+    async def process_remaining_words(self, words: list, source_lang: str, target_lang: str, context: str = ""):
+        """
+        为遗漏的单词生成词典条目
+        """
+        if not words:
+            return []
+        
+        tool_def = {
+            "type": "function",
+            "function": {
+                "name": "generate_remaining_dictionary_entries",
+                "description": "为遗漏的单词生成词典条目",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "dictionary_entries": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "word": {"type": "string"},
+                                    "ipa": {"type": "string"},
+                                    "context_meaning": {"type": "string"},
+                                    "variants": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object",
+                                            "properties": {
+                                                "type": {"type": "string"},
+                                                "form": {"type": "string"}
+                                            },
+                                            "required": ["type", "form"]
+                                        }
+                                    },
+                                    "examples": {
+                                        "type": "array",
+                                        "items": {"type": "string"},
+                                        "minItems": 2,
+                                        "maxItems": 2
+                                    },
+                                    "options": {
+                                        "type": "array",
+                                        "items": {"type": "string"},
+                                        "minItems": 4,
+                                        "maxItems": 4
+                                    },
+                                    "grammar": {"type": "string"},
+                                    "translation": {"type": "string"},
+                                    "tokens": {
+                                        "type": "array",
+                                        "items": {"type": "string"}
+                                    },
+                                    "morphology": {
+                                        "type": "string",
+                                        "description": "词性缩写，如 n, v, adj 等"
+                                    }
+                                },
+                                "required": [
+                                    "word", "ipa", "context_meaning", "variants",
+                                    "examples", "options", "grammar", "translation", "tokens", "morphology"
+                                ]
+                            }
+                        }
+                    },
+                    "required": ["dictionary_entries"]
+                }
+            }
+        }
+
+        words_str = ", ".join(words)
+        prompt = f"""以下单词在之前的处理中被遗漏了，请为它们生成完整的词典条目，使用 {target_lang} 输出。
+
+遗漏的单词：{words_str}
+
+上下文句子：{context}
+
+请为每个单词提供：
+1. word: 单词本身
+2. ipa: 国际音标
+3. context_meaning: 基于上下文的 {target_lang} 释义
+4. variants: 词形变化列表
+5. examples: 2个例句
+6. options: 4个选项（1个正确，3个错误）
+7. grammar: 语法解释
+8. translation: {target_lang} 翻译
+9. tokens: 分词结果
+10. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
+
+【重要】必须为每一个遗漏的单词都生成条目，不要遗漏任何一个！
+【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。"""
+
+        messages = [{"role": "user", "content": prompt}]
+        
+        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
+        
+        try:
+            for choice in response["choices"]:
+                if "tool_calls" in choice["message"]:
+                    tool_call = choice["message"]["tool_calls"][0]
+                    args = json.loads(tool_call["function"]["arguments"])
+                    return args.get("dictionary_entries", [])
+            return []
+        except Exception as e:
+            print(f"Process remaining words failed: {e}")
+            return []
 

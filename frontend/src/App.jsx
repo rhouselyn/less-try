@@ -56,8 +56,8 @@ function App() {
   const [phase2Units, setPhase2Units] = useState([])
   const [currentPhase1Unit, setCurrentPhase1Unit] = useState(0)
   const [currentPhase2Unit, setCurrentPhase2Unit] = useState(0)
-  // State for vocab list
   const [previousStep, setPreviousStep] = useState(null)
+  const [unitEndIndex, setUnitEndIndex] = useState(null)
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -140,13 +140,13 @@ function App() {
         }
       } catch (error) {
         console.error('轮询错误:', error)
-        // 404错误可能是因为后端还没有开始处理，继续轮询
         if (error.response && error.response.status === 404) {
           console.log('后端还未开始处理，继续轮询...')
+        } else if (error.response && (error.response.status === 504 || error.response.status === 502 || error.response.status === 503)) {
+          console.log('后端繁忙，继续轮询...')
         } else if (pollCount >= maxPolls) {
           alert('网络错误，请重试')
           setLoading(false)
-          // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
           }
@@ -306,15 +306,34 @@ function App() {
     
     setLoading(true)
     try {
-      // 阶段1直接进入单词学习
-      await api.setProgress(currentFileId, unitId * 10)
+      const unit = phase1Units[unitId]
+      const startIndex = unit?.start_index ?? unitId * 10
+      await api.setProgress(currentFileId, startIndex)
       const response = await api.getRandomWord(currentFileId)
-      setLearningData(response)
-      setShowWordCard(false)
-      setSelectedOption(null)
-      setIsCorrect(null)
-      setLearningMode('word')
-      setStep('learning')
+      if (response.type === 'sentence_quiz') {
+        setQuizData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
+      } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
+      } else {
+        setLearningData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setShowWordCard(false)
+        setSelectedOption(null)
+        setIsCorrect(null)
+        setLearningMode('word')
+        setStep('learning')
+      }
     } catch (error) {
       console.error('获取单元单词错误:', error)
       alert('无法获取单元单词，请重试')
@@ -344,7 +363,15 @@ function App() {
         setStep('all-units')
       } else {
         setExerciseType(exerciseData.exercise_type)
-        setCurrentExerciseData(exerciseData.data)
+        setCurrentExerciseData({
+          ...exerciseData.data,
+          mask_version: exerciseData.mask_version,
+          total_masks: exerciseData.total_masks,
+          exercise_type_index: exerciseData.exercise_type_index,
+          exercise_index_in_unit: exerciseData.exercise_index_in_unit,
+          total_exercises_in_unit: exerciseData.total_exercises_in_unit,
+          sentence_preview: exerciseData.sentence_preview
+        })
         setStep('phase-exercise')
       }
     } catch (error) {
@@ -368,7 +395,15 @@ function App() {
         setStep('progress')
       } else {
         setExerciseType(exerciseData.exercise_type)
-        setCurrentExerciseData(exerciseData.data)
+        setCurrentExerciseData({
+          ...exerciseData.data,
+          mask_version: exerciseData.mask_version,
+          total_masks: exerciseData.total_masks,
+          exercise_type_index: exerciseData.exercise_type_index,
+          exercise_index_in_unit: exerciseData.exercise_index_in_unit,
+          total_exercises_in_unit: exerciseData.total_exercises_in_unit,
+          sentence_preview: exerciseData.sentence_preview
+        })
         setStep('phase-exercise')
       }
     } catch (error) {
@@ -386,8 +421,7 @@ function App() {
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
       
-      if (nextRes.unit_complete) {
-        // 单元完成，更新单元状态并返回列表
+      if (nextRes.unit_complete || nextRes.all_complete) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
@@ -413,7 +447,15 @@ function App() {
           setStep('all-units')
         } else {
           setExerciseType(exerciseData.exercise_type)
-          setCurrentExerciseData(exerciseData.data)
+          setCurrentExerciseData({
+            ...exerciseData.data,
+            mask_version: exerciseData.mask_version,
+            total_masks: exerciseData.total_masks,
+            exercise_type_index: exerciseData.exercise_type_index,
+            exercise_index_in_unit: exerciseData.exercise_index_in_unit,
+            total_exercises_in_unit: exerciseData.total_exercises_in_unit,
+            sentence_preview: exerciseData.sentence_preview
+          })
         }
       }
     } catch (error) {
@@ -461,104 +503,50 @@ function App() {
     
     setLoading(true)
     try {
-      // 先调用 API 更新进度
       const nextWordResponse = await api.nextWord(currentFileId)
       const newIndex = nextWordResponse.new_index
+      const endIdx = nextWordResponse.unit_end_index || unitEndIndex
       
-      // 获取词汇表长度
-      const vocabResponse = await api.getVocab(currentFileId)
-      const vocabLength = vocabResponse.vocab.length
-      
-      // 检查是否学习完所有单词
-      const allWordsLearned = newIndex >= vocabLength
-      
-      if (allWordsLearned) {
-        // 检查是否可以生成句子翻译题
-        const coverageData = await api.checkCoverage(currentFileId)
-        if (coverageData.can_form_sentences) {
-          try {
-            // 生成句子翻译题
-            const quizResponse = await api.generateSentenceQuiz(currentFileId)
-            
-            // 检查是否所有句子都已使用
-            if (quizResponse.unit_completed) {
-              // 单元完成，更新阶段一进度并返回单元列表
-              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-              setPhase1Units(phase1UnitsData.units)
-              setCurrentPhase1Unit(phase1UnitsData.current_unit)
-              setStep('all-units')
-            } else {
-              setQuizData({
-                ...quizResponse,
-                unit_completed: coverageData.unit_completed
-              })
-              setLearningMode('sentence')
-              setStep('sentence-quiz')
-            }
-          } catch (quizError) {
-            if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-              // 所有句子都已使用，单元完成
-              const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-              setPhase1Units(phase1UnitsData.units)
-              setCurrentPhase1Unit(phase1UnitsData.current_unit)
-              setStep('all-units')
-            } else {
-              throw quizError
-            }
-          }
-        } else {
-          // 单元完成，更新阶段一进度并返回单元列表
-          const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-          setPhase1Units(phase1UnitsData.units)
-          setCurrentPhase1Unit(phase1UnitsData.current_unit)
-          setStep('all-units')
-        }
+      if (nextWordResponse.sentence_quiz) {
+        setQuizData(nextWordResponse.sentence_quiz)
+        setUnitEndIndex(endIdx)
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
         return
       }
       
-      // 检查是否需要插入句子翻译题
-      const coverageData = await api.checkCoverage(currentFileId)
-      if (coverageData.can_form_sentences) {
-        try {
-          // 生成句子翻译题
-          const quizResponse = await api.generateSentenceQuiz(currentFileId)
-          
-          // 检查是否所有句子都已使用
-          if (quizResponse.unit_completed) {
-            // 单元完成，更新阶段一进度并返回单元列表
-            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-            setPhase1Units(phase1UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setStep('all-units')
-          } else {
-            setQuizData({
-              ...quizResponse,
-              unit_completed: coverageData.unit_completed
-            })
-            setLearningMode('sentence')
-            setStep('sentence-quiz')
-          }
-        } catch (quizError) {
-          if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元完成
-            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-            setPhase1Units(phase1UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setStep('all-units')
-          } else {
-            throw quizError
-          }
-        }
-      } else if (coverageData.unit_completed) {
-        // 单元完成，更新阶段一进度并返回单元列表
-        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+      if (endIdx && newIndex >= endIdx) {
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
         setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
+        return
+      }
+      
+      const response = await api.getRandomWord(currentFileId)
+      if (response.type === 'sentence_quiz') {
+        setQuizData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
+      } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setStep('all-units')
       } else {
-        // 继续单词学习
-        const response = await api.getRandomWord(currentFileId)
         setLearningData(response)
+        setUnitEndIndex(response.unit_end_index)
         setShowWordCard(false)
         setSelectedOption(null)
         setIsCorrect(null)
@@ -604,58 +592,16 @@ function App() {
   const handleNextSentenceQuiz = async () => {
     setLoading(true)
     try {
-      // 检查是否还有可组成的句子
-      const coverageData = await api.checkCoverage(currentFileId)
-      if (coverageData.can_form_sentences) {
-        try {
-          // 生成下一个句子翻译题
-          const quizResponse = await api.generateSentenceQuiz(currentFileId)
-          
-          // 检查是否所有句子都已使用
-          if (quizResponse.unit_completed) {
-            // 单元完成，更新阶段一进度并返回单元列表
-            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-            setPhase1Units(phase1UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setStep('all-units')
-          } else {
-            setQuizData({
-              ...quizResponse,
-              unit_completed: coverageData.unit_completed
-            })
-            setLearningMode('sentence')
-            setStep('sentence-quiz')
-          }
-        } catch (quizError) {
-          if (quizError.response && quizError.response.status === 404 && quizError.response.data.detail === 'No more eligible sentences') {
-            // 所有句子都已使用，单元完成
-            const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-            setPhase1Units(phase1UnitsData.units)
-            setCurrentPhase1Unit(phase1UnitsData.current_unit)
-            setStep('all-units')
-          } else {
-            throw quizError
-          }
-        }
-      } else if (coverageData.unit_completed) {
-        // 单元完成，更新阶段一进度并返回单元列表
-        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
-        setPhase1Units(phase1UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        setStep('all-units')
-      } else {
-        // 回到单词学习
-        const response = await api.getRandomWord(currentFileId)
-        setLearningData(response)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-        setLearningMode('word')
-        setStep('learning')
-      }
+      await getNextWord()
     } catch (error) {
       console.error('获取下一个句子翻译题错误:', error)
-      alert('无法获取下一个句子翻译题，请重试')
+      const response = await api.getRandomWord(currentFileId)
+      setLearningData(response)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setLearningMode('word')
+      setStep('learning')
     } finally {
       setLoading(false)
     }
@@ -836,7 +782,6 @@ function App() {
               onNext={handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
               onComplete={async () => {
-                // 单元完成，更新所有单元的状态，然后回到all-units页面
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
                   api.getPhaseUnits(currentFileId, 2)
@@ -850,6 +795,11 @@ function App() {
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
+              maskVersion={currentExerciseData?.mask_version}
+              totalMasks={currentExerciseData?.total_masks}
+              exerciseIndexInUnit={currentExerciseData?.exercise_index_in_unit}
+              totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
+              sentencePreview={currentExerciseData?.sentence_preview}
             />
           )}
           
@@ -860,7 +810,6 @@ function App() {
               onNext={handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
               onComplete={async () => {
-                // 单元完成，更新所有单元的状态，然后回到all-units页面
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
                   api.getPhaseUnits(currentFileId, 2)
@@ -874,6 +823,9 @@ function App() {
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
+              exerciseIndexInUnit={currentExerciseData?.exercise_index_in_unit}
+              totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
+              sentencePreview={currentExerciseData?.sentence_preview}
             />
           )}
           

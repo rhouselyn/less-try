@@ -3,10 +3,15 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
 import { useState } from 'react';
 
-function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList }) {
+function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview }) {
   const [selectedTokens, setSelectedTokens] = useState([]);
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+
+  const currentQ = (exerciseIndexInUnit ?? 0) + 1;
+  const totalQ = totalExercisesInUnit ?? 10;
+
+  const isLastExercise = currentQ >= totalQ;
 
   const handleTokenSelect = (token, index) => {
     if (answerChecked) return;
@@ -74,6 +79,11 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           {t.translationReconstructionTitle}
         </motion.h2>
         <p className="text-lg text-slate-600">{t.reconstructSentence}</p>
+        <div className="mt-2 flex items-center justify-center gap-3">
+          <span className="text-sm text-slate-500">第 {currentQ}/{totalQ} 题</span>
+          <span className="text-slate-300">|</span>
+          <span className="text-xs text-slate-400">翻译还原</span>
+        </div>
       </div>
 
       <div className="mb-8 p-6 bg-white border border-slate-200 rounded-2xl">
@@ -111,7 +121,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 {t.correctAnswer}: <span className="font-medium">{data.original_tokens.join(' ')}</span>
               </p>
             )}
-            {isCorrect && (data.unit_completed || data.unit_complete) && (
+            {isCorrect && isLastExercise && (
               <p className="font-medium mt-3 text-lg text-green-700">
                 🎉 该单元学习已完成！
               </p>
@@ -159,12 +169,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
             whileTap={{ scale: 0.97, y: 0 }}
             onClick={() => {
-              if (data.unit_completed || data.unit_complete) {
-                // 单元完成，回到all-units页面
-                onComplete();
-              } else {
-                handleNext();
-              }
+              handleNext();
             }}
             disabled={loading}
             className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -174,7 +179,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 <Loader2 className="w-5 h-5 animate-spin" />
                 {t.loading}
               </>
-            ) : (data.unit_completed || data.unit_complete) ? (
+            ) : isLastExercise ? (
               '完成'
             ) : (
               <>
