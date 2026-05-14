@@ -91,7 +91,7 @@ function AllUnitsStep({
       ) : (
         <div className="space-y-8">
           <div>
-            <h3 className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase1}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -108,7 +108,7 @@ function AllUnitsStep({
           </div>
 
           <div>
-            <h3 className="text-sm font-medium text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase2}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
