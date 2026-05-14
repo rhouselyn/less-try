@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 function AllUnitsStep({ 
   phase1Units, 
@@ -24,30 +24,15 @@ function AllUnitsStep({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.03 }}
         onClick={onClick}
-        className={`relative p-4 border rounded-2xl transition-all text-center aspect-square flex flex-col items-center justify-center ${
+        className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center text-sm font-medium ${
           isCompleted
-            ? 'border-emerald-400 bg-emerald-50/50'
+            ? 'bg-emerald-500 text-white'
             : isCurrent
-            ? 'border-stone-300 bg-stone-50 shadow-sm'
-            : 'border-stone-200/60 bg-white hover:border-stone-300 hover:shadow-sm'
+            ? 'bg-stone-200 text-stone-700'
+            : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
         }`}
       >
-        <span className="text-lg font-semibold text-stone-800 mb-1">
-          {index + 1}
-        </span>
-        <p className="text-xs text-stone-400">
-          {unit.no_eligible_sentences ? '无需练习' : `${unit.exercises_count || unit.word_count || unit.sentences_count || 0} 题`}
-        </p>
-        {isCompleted && (
-          <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center mt-2">
-            <Check className="w-3 h-3 text-white" />
-          </div>
-        )}
-        {isCurrent && !isCompleted && (
-          <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md mt-2">
-            当前
-          </span>
-        )}
+        {index + 1}
       </motion.button>
     );
   };
@@ -90,7 +75,7 @@ function AllUnitsStep({
             <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase1}
             </h3>
-            <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+            <div className="flex flex-wrap gap-2">
               {phase1Units.map((unit, index) => 
                 renderUnitCard(
                   unit, 
@@ -107,7 +92,7 @@ function AllUnitsStep({
             <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase2}
             </h3>
-            <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
+            <div className="flex flex-wrap gap-2">
               {phase2Units.map((unit, index) => 
                 renderUnitCard(
                   unit, 
