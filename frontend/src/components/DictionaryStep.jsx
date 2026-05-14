@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Shuffle, Loader2, Languages, BookOpen } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
@@ -9,11 +9,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
-
-  const tabs = [
-    { id: 'sentences', label: t.sentTranslation, icon: Languages, count: safeSentenceTranslations.length },
-    { id: 'vocab', label: t.vocabList, icon: BookOpen, count: vocab.length },
-  ]
 
   return (
     <motion.div
@@ -61,49 +56,61 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
       <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden">
         <div className="flex border-b border-stone-200/80">
-          {tabs.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'text-stone-800'
-                    : 'text-stone-400 hover:text-stone-600'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  isActive
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-stone-100 text-stone-400'
-                }`}>
-                  {tab.count}
-                </span>
-                {isActive && (
-                  <motion.div
-                    layoutId="tab-indicator"
-                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-500 rounded-full"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </button>
-            )
-          })}
+          <button
+            onClick={() => setActiveTab('sentences')}
+            className={`relative flex-1 flex items-center justify-center gap-2.5 py-4 text-sm font-medium transition-all duration-200 ${
+              activeTab === 'sentences'
+                ? 'text-stone-800'
+                : 'text-stone-400 hover:text-stone-600'
+            }`}
+          >
+            <Languages className="w-4 h-4" />
+            <span>{t.sentTranslation}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full transition-colors duration-200 ${
+              activeTab === 'sentences'
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-stone-100 text-stone-400'
+            }`}>
+              {safeSentenceTranslations.length}
+            </span>
+            {activeTab === 'sentences' && (
+              <motion.div
+                layoutId="dict-tab-indicator"
+                className="absolute bottom-0 left-4 right-4 h-0.5 bg-amber-500 rounded-full"
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab('vocab')}
+            className={`relative flex-1 flex items-center justify-center gap-2.5 py-4 text-sm font-medium transition-all duration-200 ${
+              activeTab === 'vocab'
+                ? 'text-stone-800'
+                : 'text-stone-400 hover:text-stone-600'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" />
+            <span>{t.vocabList}</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full transition-colors duration-200 ${
+              activeTab === 'vocab'
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-stone-100 text-stone-400'
+            }`}>
+              {vocab.length}
+            </span>
+            {activeTab === 'vocab' && (
+              <motion.div
+                layoutId="dict-tab-indicator"
+                className="absolute bottom-0 left-4 right-4 h-0.5 bg-amber-500 rounded-full"
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
+            )}
+          </button>
         </div>
 
-        <AnimatePresence mode="wait">
+        <div className="relative">
           {activeTab === 'sentences' && (
-            <motion.div
-              key="sentences"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ duration: 0.15 }}
-            >
+            <div key="sentences-panel">
               {safeSentenceTranslations.length > 0 ? (
                 <div className="divide-y divide-stone-200/60">
                   {safeSentenceTranslations.map((item, index) => (
@@ -124,7 +131,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
                           className="border-t border-stone-200/60 p-4 bg-stone-50/50"
                         >
                           <SentenceDetail
@@ -142,17 +148,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                   <p className="text-stone-400 text-sm">{t.loading}</p>
                 </div>
               )}
-            </motion.div>
+            </div>
           )}
 
           {activeTab === 'vocab' && (
-            <motion.div
-              key="vocab"
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.15 }}
-            >
+            <div key="vocab-panel">
               <div className="flex items-center justify-between px-4 py-2.5 bg-stone-50/60 border-b border-stone-200/60">
                 <div className="grid grid-cols-3 gap-1 flex-1">
                   <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t.wordLabel}</div>
@@ -186,7 +186,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
                         className="border-t border-stone-200/60 p-4 bg-stone-50/50"
                       >
                         <WordDetail
@@ -198,9 +197,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                   </div>
                 ))}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
       </div>
     </motion.div>
   )
