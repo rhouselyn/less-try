@@ -33,6 +33,7 @@ function App() {
   const [progress, setProgress] = useState(0)
   const [processingInfo, setProcessingInfo] = useState(null)
   const [currentFileId, setCurrentFileId] = useState(null)
+  const [skipPolling, setSkipPolling] = useState(false)
   const [learningData, setLearningData] = useState(null)
   const [showWordCard, setShowWordCard] = useState(false)
   const [selectedOption, setSelectedOption] = useState(null)
@@ -70,7 +71,7 @@ function App() {
 
   // 轮询处理状态
   useEffect(() => {
-    if (!currentFileId) return
+    if (!currentFileId || skipPolling) return
 
     console.log('开始轮询，文件ID:', currentFileId)
 
@@ -141,7 +142,13 @@ function App() {
       } catch (error) {
         console.error('轮询错误:', error)
         if (error.response && error.response.status === 404) {
-          console.log('后端还未开始处理，继续轮询...')
+          if (pollCount > 10) {
+            console.log('连续404超过10次，停止轮询')
+            setLoading(false)
+            if (pollingInterval) {
+              clearInterval(pollingInterval)
+            }
+          }
         } else if (error.response && (error.response.status === 504 || error.response.status === 502 || error.response.status === 503)) {
           console.log('后端繁忙，继续轮询...')
         } else if (pollCount >= maxPolls) {
@@ -191,6 +198,7 @@ function App() {
   const handleProcess = async () => {
     if (!text.trim()) return
     
+    setSkipPolling(false)
     setLoading(true)
     setProgress(0)
     setProcessingInfo(null)
@@ -590,6 +598,7 @@ function App() {
   }
 
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang) => {
+    setSkipPolling(true)
     setLoading(true)
     try {
       setSourceLang(srcLang)
