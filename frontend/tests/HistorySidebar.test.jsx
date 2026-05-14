@@ -90,22 +90,13 @@ describe('HistorySidebar', () => {
     expect(onNavigate).toHaveBeenCalledWith('text_20240101_120000_000', 'en', 'zh');
   });
 
-  test('deletes a record via API', async () => {
-    api.getHistory.mockResolvedValue({ records: [mockRecords[0]] });
-    api.deleteHistory.mockResolvedValue({ success: true });
-    const { container } = render(<HistorySidebar onNavigateToRecord={jest.fn()} t={mockT} />);
+  test('shows record count per language group', async () => {
+    api.getHistory.mockResolvedValue({ records: mockRecords });
+    render(<HistorySidebar onNavigateToRecord={jest.fn()} t={mockT} />);
     await waitFor(() => {
-      expect(screen.getByText('英语短文')).toBeInTheDocument();
+      expect(screen.getByText('2')).toBeInTheDocument();
+      expect(screen.getByText('1')).toBeInTheDocument();
     });
-    const recordEl = screen.getByText('英语短文').closest('.group');
-    expect(recordEl).toBeTruthy();
-    fireEvent.mouseEnter(recordEl);
-    await waitFor(() => {
-      const moreButtons = container.querySelectorAll('[data-testid] button, .group button');
-      const allButtons = screen.getAllByRole('button');
-      expect(allButtons.length).toBeGreaterThan(0);
-    });
-    expect(api.getHistory).toHaveBeenCalled();
   });
 
   test('rename calls API with correct params', async () => {
@@ -127,5 +118,13 @@ describe('HistorySidebar', () => {
       await api.deleteHistory('text_20240101_120000_000');
     });
     expect(api.deleteHistory).toHaveBeenCalledWith('text_20240101_120000_000');
+  });
+
+  test('shows total record count in footer', async () => {
+    api.getHistory.mockResolvedValue({ records: mockRecords });
+    render(<HistorySidebar onNavigateToRecord={jest.fn()} t={mockT} />);
+    await waitFor(() => {
+      expect(screen.getByText(/3 records/)).toBeInTheDocument();
+    });
   });
 });
