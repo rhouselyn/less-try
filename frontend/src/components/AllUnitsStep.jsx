@@ -38,7 +38,7 @@ function AllUnitsStep({
               单元 {index + 1}
             </span>
             <p className="text-sm text-stone-400 mt-1">
-              {unit.no_eligible_sentences ? '无需练习' : `${unit.word_count || unit.exercises_count || unit.sentences_count || 0} ${unit.word_count ? '个单词' : '个题目'}`}
+              {unit.no_eligible_sentences ? '无需练习' : `${unit.exercises_count || unit.word_count || unit.sentences_count || 0} 个题目`}
             </p>
           </div>
           {isCompleted && (

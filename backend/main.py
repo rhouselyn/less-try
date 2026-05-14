@@ -1463,6 +1463,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                 completed = max_index >= end_index
                 phase1_units.append({
                     "word_count": word_count,
+                    "exercises_count": len(items),
                     "completed": completed,
                     "start_index": start_index,
                     "end_index": end_index
@@ -1483,6 +1484,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                     {
                         "unit_id": i,
                         "word_count": unit["word_count"],
+                        "exercises_count": unit["exercises_count"],
                         "completed": unit["completed"],
                         "start_index": unit["start_index"],
                         "end_index": unit["end_index"]
