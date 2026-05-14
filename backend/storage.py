@@ -134,20 +134,33 @@ class Storage:
         return 0
     
     def save_shuffled_order(self, file_id: str, shuffled_indices: List[int]):
-        """保存单词的打乱顺序"""
         file_dir = self.get_file_dir(file_id)
         order_path = file_dir / "shuffled_order.json"
         with open(order_path, 'w', encoding='utf-8') as f:
             json.dump({"shuffled_indices": shuffled_indices}, f, ensure_ascii=False, indent=2)
     
     def load_shuffled_order(self, file_id: str) -> Optional[List[int]]:
-        """加载单词的打乱顺序"""
         file_dir = self.get_file_dir(file_id)
         order_path = file_dir / "shuffled_order.json"
         if order_path.exists():
             with open(order_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 return data.get("shuffled_indices")
+        return None
+    
+    def save_learning_plan(self, file_id: str, plan: List[Dict]):
+        file_dir = self.get_file_dir(file_id)
+        plan_path = file_dir / "learning_plan.json"
+        with open(plan_path, 'w', encoding='utf-8') as f:
+            json.dump({"plan": plan}, f, ensure_ascii=False, indent=2)
+    
+    def load_learning_plan(self, file_id: str) -> Optional[List[Dict]]:
+        file_dir = self.get_file_dir(file_id)
+        plan_path = file_dir / "learning_plan.json"
+        if plan_path.exists():
+            with open(plan_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("plan")
         return None
     
     def save_phase_progress(self, file_id: str, phase: int, unit_id: int, exercise_index: int, exercise_type_index: int = 0):

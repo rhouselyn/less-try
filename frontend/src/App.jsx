@@ -56,8 +56,8 @@ function App() {
   const [phase2Units, setPhase2Units] = useState([])
   const [currentPhase1Unit, setCurrentPhase1Unit] = useState(0)
   const [currentPhase2Unit, setCurrentPhase2Unit] = useState(0)
-  // State for vocab list
   const [previousStep, setPreviousStep] = useState(null)
+  const [unitEndIndex, setUnitEndIndex] = useState(null)
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -306,15 +306,34 @@ function App() {
     
     setLoading(true)
     try {
-      const unitStart = unitId * 10
-      await api.setProgress(currentFileId, unitStart)
+      const unit = phase1Units[unitId]
+      const startIndex = unit?.start_index ?? unitId * 10
+      await api.setProgress(currentFileId, startIndex)
       const response = await api.getRandomWord(currentFileId)
-      setLearningData(response)
-      setShowWordCard(false)
-      setSelectedOption(null)
-      setIsCorrect(null)
-      setLearningMode('word')
-      setStep('learning')
+      if (response.type === 'sentence_quiz') {
+        setQuizData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
+      } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
+      } else {
+        setLearningData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setShowWordCard(false)
+        setSelectedOption(null)
+        setIsCorrect(null)
+        setLearningMode('word')
+        setStep('learning')
+      }
     } catch (error) {
       console.error('获取单元单词错误:', error)
       alert('无法获取单元单词，请重试')
@@ -486,21 +505,17 @@ function App() {
     try {
       const nextWordResponse = await api.nextWord(currentFileId)
       const newIndex = nextWordResponse.new_index
+      const endIdx = nextWordResponse.unit_end_index || unitEndIndex
       
       if (nextWordResponse.sentence_quiz) {
         setQuizData(nextWordResponse.sentence_quiz)
+        setUnitEndIndex(endIdx)
         setLearningMode('sentence')
         setStep('sentence-quiz')
         return
       }
       
-      const vocabResponse = await api.getVocab(currentFileId)
-      const vocabLength = vocabResponse.vocab.length
-      
-      const unitSize = 10
-      const currentUnitEnd = Math.min((Math.floor((newIndex - 1) / unitSize) + 1) * unitSize, vocabLength)
-      
-      if (newIndex >= currentUnitEnd) {
+      if (endIdx && newIndex >= endIdx) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
@@ -514,10 +529,28 @@ function App() {
       }
       
       const response = await api.getRandomWord(currentFileId)
-      setLearningData(response)
-      setShowWordCard(false)
-      setSelectedOption(null)
-      setIsCorrect(null)
+      if (response.type === 'sentence_quiz') {
+        setQuizData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
+      } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setStep('all-units')
+      } else {
+        setLearningData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setShowWordCard(false)
+        setSelectedOption(null)
+        setIsCorrect(null)
+      }
     } catch (error) {
       console.error('获取下一个单词错误:', error)
       alert('无法获取下一个单词，请重试')
@@ -559,31 +592,7 @@ function App() {
   const handleNextSentenceQuiz = async () => {
     setLoading(true)
     try {
-      const vocabResponse = await api.getVocab(currentFileId)
-      const vocabLength = vocabResponse.vocab.length
-      const currentIdx = nextWordResponse?.new_index || 0
-      const unitSize = 10
-      const currentUnitEnd = Math.min((Math.floor((currentIdx - 1) / unitSize) + 1) * unitSize, vocabLength)
-      
-      if (currentIdx >= currentUnitEnd) {
-        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
-          api.getPhaseUnits(currentFileId, 2)
-        ])
-        setPhase1Units(phase1UnitsData.units)
-        setPhase2Units(phase2UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
-      } else {
-        const response = await api.getRandomWord(currentFileId)
-        setLearningData(response)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-        setLearningMode('word')
-        setStep('learning')
-      }
+      await getNextWord()
     } catch (error) {
       console.error('获取下一个句子翻译题错误:', error)
       const response = await api.getRandomWord(currentFileId)

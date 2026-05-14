@@ -75,6 +75,24 @@ def filter_eligible_sentences(sentences):
         eligible.append(s)
     return eligible
 
+def find_item_in_plan(plan, flat_index):
+    accumulated = 0
+    for unit_id, unit_plan in enumerate(plan):
+        items = unit_plan.get("items", [])
+        if flat_index < accumulated + len(items):
+            return unit_id, flat_index - accumulated
+        accumulated += len(items)
+    return None, None
+
+def get_unit_flat_range(plan, target_unit_id):
+    accumulated = 0
+    for i, unit_plan in enumerate(plan):
+        items = unit_plan.get("items", [])
+        if i == target_unit_id:
+            return accumulated, accumulated + len(items)
+        accumulated += len(items)
+    return None, None
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -229,6 +247,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         storage.save_vocab(file_id, all_vocab)
         
         if all_vocab:
+            generate_and_save_learning_plan(file_id, all_vocab, sentence_translations)
             asyncio.create_task(pre_generate_next_word(file_id, all_vocab, 0))
         
         processing_status[file_id] = {
@@ -246,6 +265,118 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             "status": "error",
             "error": str(e)
         }
+
+
+def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: List[Dict]):
+    import random
+    import re
+    
+    random.seed(42)
+    shuffled_indices = list(range(len(vocab)))
+    random.shuffle(shuffled_indices)
+    storage.save_shuffled_order(file_id, shuffled_indices)
+    
+    unit_size = 10
+    num_units = max(1, (len(vocab) + unit_size - 1) // unit_size)
+    
+    plan = []
+    all_learned_vocab_indices = set()
+    used_sentences = set()
+    
+    for unit_id in range(num_units):
+        unit_start = unit_id * unit_size
+        unit_end = min(unit_start + unit_size, len(vocab))
+        unit_shuffled = shuffled_indices[unit_start:unit_end]
+        
+        unit_items = []
+        
+        for step_idx, vocab_idx in enumerate(unit_shuffled):
+            unit_items.append({
+                "type": "word",
+                "vocab_index": vocab_idx
+            })
+            all_learned_vocab_indices.add(vocab_idx)
+            
+            learned_words = [vocab[i] for i in all_learned_vocab_indices]
+            
+            for sentence_data in sentences:
+                if "sentence" not in sentence_data:
+                    continue
+                
+                sentence = sentence_data["sentence"]
+                
+                if sentence in used_sentences:
+                    continue
+                
+                already_in_unit = any(
+                    item["type"] == "sentence_quiz" and item["sentence"] == sentence
+                    for item in unit_items
+                )
+                if already_in_unit:
+                    continue
+                
+                tr = sentence_data.get("translation_result", {})
+                if "translation" not in tr:
+                    continue
+                
+                translation_tokens = tr.get("translation", [])
+                if not translation_tokens:
+                    continue
+                
+                sentence_covered = True
+                for token in translation_tokens:
+                    if isinstance(token, dict) and "text" in token:
+                        token_text = token["text"].lower()
+                        token_covered = False
+                        for w in learned_words:
+                            w_tokens = w.get("tokens", [w["word"]])
+                            for wt in w_tokens:
+                                if wt.lower() == token_text or wt.lower() in token_text or token_text in wt.lower():
+                                    token_covered = True
+                                    break
+                            if token_covered:
+                                break
+                        if not token_covered:
+                            sentence_covered = False
+                            break
+                
+                if sentence_covered:
+                    used_sentences.add(sentence)
+                    
+                    correct_tokens = []
+                    for token in translation_tokens:
+                        if isinstance(token, dict):
+                            text = token.get("translation", token.get("text", ""))
+                            cleaned = re.sub(r'[^\w\s]', '', text)
+                            if cleaned:
+                                correct_tokens.append(cleaned)
+                    
+                    redundant_tokens = tr.get("redundant_tokens", [])
+                    cleaned_redundant = []
+                    for rt in redundant_tokens:
+                        cleaned = re.sub(r'[^\w\s]', '', rt)
+                        if cleaned and cleaned not in correct_tokens:
+                            cleaned_redundant.append(cleaned)
+                    
+                    selected_distractors = list(set(cleaned_redundant))[:3]
+                    all_tokens = correct_tokens + selected_distractors
+                    
+                    correct_translation = re.sub(r'[^\w\s]', '', tr.get("tokenized_translation", ""))
+                    
+                    unit_items.append({
+                        "type": "sentence_quiz",
+                        "sentence": sentence,
+                        "correct_translation": correct_translation,
+                        "correct_tokens": correct_tokens,
+                        "tokens": all_tokens
+                    })
+        
+        plan.append({
+            "unit_id": unit_id,
+            "items": unit_items
+        })
+    
+    storage.save_learning_plan(file_id, plan)
 
 
 @app.post("/api/process-text")
@@ -308,26 +439,46 @@ async def get_random_word(file_id: str):
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
         
-        print(f"[DEBUG] 单词总数: {len(vocab)}, 单词列表: {[w['word'] for w in vocab]}")
-        
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
         
         current_index = storage.load_learning_progress(file_id)
         
-        unit_size = 10
-        unit_id = current_index // unit_size
-        index_in_unit = current_index % unit_size
-        unit_start = unit_id * unit_size
-        unit_end = min(unit_start + unit_size, len(vocab))
-        unit_vocab_indices = list(range(unit_start, unit_end))
+        plan = storage.load_learning_plan(file_id)
+        if not plan:
+            generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
+            plan = storage.load_learning_plan(file_id)
         
-        random.seed(42 + unit_id)
-        random.shuffle(unit_vocab_indices)
+        unit_id, step_in_unit = find_item_in_plan(plan, current_index)
         
-        actual_vocab_index = unit_vocab_indices[index_in_unit]
-        random_word = vocab[actual_vocab_index]
-        word = random_word["word"]
+        if unit_id is not None:
+            unit_plan = plan[unit_id]
+            items = unit_plan.get("items", [])
+            _, unit_end_index = get_unit_flat_range(plan, unit_id)
+            
+            if step_in_unit < len(items):
+                current_item = items[step_in_unit]
+                
+                if current_item["type"] == "sentence_quiz":
+                    import random as rnd
+                    tokens = list(current_item.get("tokens", []))
+                    rnd.shuffle(tokens)
+                    return {
+                        "type": "sentence_quiz",
+                        "original_sentence": current_item["sentence"],
+                        "correct_translation": current_item.get("correct_translation", ""),
+                        "correct_tokens": current_item.get("correct_tokens", []),
+                        "tokens": tokens,
+                        "unit_end_index": unit_end_index
+                    }
+                
+                vocab_idx = current_item["vocab_index"]
+                random_word = vocab[vocab_idx]
+                word = random_word["word"]
+            else:
+                return {"type": "unit_complete", "unit_end_index": unit_end_index}
+        else:
+            return {"type": "all_complete"}
         
         # 先检查缓存
         cached_word = storage.load_word_cache(file_id, word)
@@ -354,10 +505,11 @@ async def get_random_word(file_id: str):
                 "correct_meaning": cached_word.get("meaning", ""),
                 "options": options,
                 "correct_index": correct_index,
-                "context": "",  # 上下文在单词详情中显示
+                "context": "",
                 "variants_detail": cached_word.get("variants_detail", []),
                 "examples": cached_word.get("examples", []),
-                "memory_hint": cached_word.get("memory_hint", "")
+                "memory_hint": cached_word.get("memory_hint", ""),
+                "unit_end_index": unit_end_index
             }
         
         # 构建上下文（包含翻译）
@@ -425,7 +577,8 @@ async def get_random_word(file_id: str):
             "examples": options_result.get("examples", []),
             "memory_hint": options_result.get("memory_hint", ""),
             "enriched_meaning": options_result.get("enriched_meaning", correct_meaning),
-            "context_meaning": options_result.get("context_meaning", correct_meaning)
+            "context_meaning": options_result.get("context_meaning", correct_meaning),
+            "unit_end_index": unit_end_index
         }
         
         # 构建缓存数据
@@ -468,83 +621,36 @@ async def next_word(file_id: str):
         
         asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
         
-        learned_words = vocab[:new_index]
+        plan = storage.load_learning_plan(file_id)
+        if not plan:
+            return {"success": True, "new_index": new_index}
         
-        sentences = storage.load_pipeline_data(file_id)
-        if sentences:
-            used_sentences = storage.load_used_sentences(file_id) or []
+        unit_id, step_in_unit = find_item_in_plan(plan, new_index)
+        
+        if unit_id is not None:
+            _, unit_end_index = get_unit_flat_range(plan, unit_id)
             
-            for sentence_data in sentences:
-                if "sentence" not in sentence_data:
-                    continue
+            items = plan[unit_id].get("items", [])
+            if step_in_unit < len(items):
+                next_item = items[step_in_unit]
                 
-                sentence = sentence_data["sentence"]
-                if sentence in used_sentences:
-                    continue
-                
-                tr = sentence_data.get("translation_result", {})
-                if "translation" not in tr:
-                    continue
-                
-                translation_tokens = tr.get("translation", [])
-                if not translation_tokens:
-                    continue
-                
-                sentence_covered = True
-                for token in translation_tokens:
-                    if isinstance(token, dict) and "text" in token:
-                        token_text = token["text"].lower()
-                        token_covered = False
-                        for w in learned_words:
-                            w_tokens = w.get("tokens", [w["word"]])
-                            for wt in w_tokens:
-                                if wt.lower() == token_text or wt.lower() in token_text or token_text in wt.lower():
-                                    token_covered = True
-                                    break
-                            if token_covered:
-                                break
-                        if not token_covered:
-                            sentence_covered = False
-                            break
-                
-                if sentence_covered:
-                    import random
-                    import re
-                    
-                    used_sentences.append(sentence)
-                    storage.save_used_sentences(file_id, used_sentences)
-                    
-                    correct_tokens = []
-                    for token in translation_tokens:
-                        if isinstance(token, dict):
-                            text = token.get("translation", token.get("text", ""))
-                            cleaned = re.sub(r'[^\w\s]', '', text)
-                            if cleaned:
-                                correct_tokens.append(cleaned)
-                    
-                    redundant_tokens = tr.get("redundant_tokens", [])
-                    cleaned_redundant = []
-                    for rt in redundant_tokens:
-                        cleaned = re.sub(r'[^\w\s]', '', rt)
-                        if cleaned and cleaned not in correct_tokens:
-                            cleaned_redundant.append(cleaned)
-                    
-                    selected_distractors = list(set(cleaned_redundant))[:3]
-                    all_tokens = correct_tokens + selected_distractors
-                    random.shuffle(all_tokens)
-                    
-                    correct_translation = re.sub(r'[^\w\s]', '', tr.get("tokenized_translation", ""))
-                    
+                if next_item["type"] == "sentence_quiz":
+                    import random as rnd
+                    tokens = list(next_item.get("tokens", []))
+                    rnd.shuffle(tokens)
                     return {
                         "success": True,
                         "new_index": new_index,
+                        "unit_end_index": unit_end_index,
                         "sentence_quiz": {
-                            "original_sentence": sentence,
-                            "correct_translation": correct_translation,
-                            "correct_tokens": correct_tokens,
-                            "tokens": all_tokens
+                            "original_sentence": next_item["sentence"],
+                            "correct_translation": next_item.get("correct_translation", ""),
+                            "correct_tokens": next_item.get("correct_tokens", []),
+                            "tokens": tokens
                         }
                     }
+            
+            return {"success": True, "new_index": new_index, "unit_end_index": unit_end_index}
         
         return {"success": True, "new_index": new_index}
     except Exception as e:
@@ -556,7 +662,6 @@ async def set_progress(file_id: str, request: dict):
     try:
         index = request.get("index", 0)
         storage.save_learning_progress(file_id, index)
-        storage.save_used_sentences(file_id, [])
         
         vocab = storage.load_vocab(file_id)
         if vocab:
@@ -571,21 +676,24 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
         
-        unit_size = 10
-        unit_id = next_index // unit_size
-        index_in_unit = next_index % unit_size
-        unit_start = unit_id * unit_size
-        unit_end = min(unit_start + unit_size, len(vocab))
-        unit_vocab_indices = list(range(unit_start, unit_end))
-        
-        random.seed(42 + unit_id)
-        random.shuffle(unit_vocab_indices)
-        
-        if index_in_unit >= len(unit_vocab_indices):
+        plan = storage.load_learning_plan(file_id)
+        if not plan:
             return
         
-        actual_vocab_index = unit_vocab_indices[index_in_unit]
-        random_word = vocab[actual_vocab_index]
+        unit_id, step_in_unit = find_item_in_plan(plan, next_index)
+        if unit_id is None:
+            return
+        
+        items = plan[unit_id].get("items", [])
+        if step_in_unit >= len(items):
+            return
+        
+        next_item = items[step_in_unit]
+        if next_item["type"] == "sentence_quiz":
+            return
+        
+        vocab_idx = next_item["vocab_index"]
+        random_word = vocab[vocab_idx]
         word = random_word["word"]
         
         # 检查是否已缓存
@@ -1315,21 +1423,37 @@ async def get_phase_units(file_id: str, phase_number: int):
             raise HTTPException(status_code=404, detail="No sentences found")
         
         if phase_number == 1:
-            group_size = 10
             current_index = storage.load_learning_progress(file_id)
             max_index = storage.load_learning_max_progress(file_id)
             
-            phase1_units = []
-            for i in range(0, len(vocab), group_size):
-                unit_words = vocab[i:i+group_size]
-                unit_end_index = min(i + group_size, len(vocab))
-                completed = max_index >= unit_end_index
-                phase1_units.append({
-                    "word_count": len(unit_words),
-                    "completed": completed
-                })
+            plan = storage.load_learning_plan(file_id)
+            if not plan:
+                generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
+                plan = storage.load_learning_plan(file_id)
             
-            current_unit = min(current_index // group_size, len(phase1_units) - 1) if phase1_units else 0
+            phase1_units = []
+            accumulated = 0
+            for i, unit_plan in enumerate(plan):
+                items = unit_plan.get("items", [])
+                start_index = accumulated
+                end_index = accumulated + len(items)
+                word_count = sum(1 for item in items if item["type"] == "word")
+                completed = max_index >= end_index
+                phase1_units.append({
+                    "word_count": word_count,
+                    "completed": completed,
+                    "start_index": start_index,
+                    "end_index": end_index
+                })
+                accumulated += len(items)
+            
+            current_unit = 0
+            for i, unit in enumerate(phase1_units):
+                if current_index < unit["end_index"]:
+                    current_unit = i
+                    break
+            else:
+                current_unit = len(phase1_units) - 1 if phase1_units else 0
             
             return {
                 "phase_number": phase_number,
@@ -1337,7 +1461,9 @@ async def get_phase_units(file_id: str, phase_number: int):
                     {
                         "unit_id": i,
                         "word_count": unit["word_count"],
-                        "completed": unit["completed"]
+                        "completed": unit["completed"],
+                        "start_index": unit["start_index"],
+                        "end_index": unit["end_index"]
                     }
                     for i, unit in enumerate(phase1_units)
                 ],
