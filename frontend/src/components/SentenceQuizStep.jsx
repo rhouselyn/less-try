@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X, BookOpen } from 'lucide-react'
 
 function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList }) {
   const [selectedTokens, setSelectedTokens] = useState([])
@@ -79,7 +79,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           whileHover={{ scale: 1.05, x: 2 }}
           whileTap={{ scale: 0.95 }}
         >
-          📚 单词表
+          <BookOpen className="w-4 h-4" />
+          单词表
         </motion.button>
       </div>
 

@@ -1,6 +1,6 @@
 
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronRight, BookOpen } from 'lucide-react';
 import { useState } from 'react';
 
 function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview }) {
@@ -75,7 +75,8 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           onClick={onOpenVocabList}
           className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
         >
-          📚 单词表
+          <BookOpen className="w-4 h-4" />
+          单词表
         </motion.button>
       </div>
 
