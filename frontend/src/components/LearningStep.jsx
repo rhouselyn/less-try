@@ -10,8 +10,8 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
         className="max-w-3xl mx-auto"
       >
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" />
-          <p className="text-lg text-slate-600">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-stone-400" />
+          <p className="text-lg text-stone-600">{t.loading}</p>
         </div>
       </motion.div>
     )
@@ -30,7 +30,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
         >
           <ArrowLeft className="w-4 h-4" />
           {t.backToVocab}
@@ -40,7 +40,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
             onClick={onOpenVocabList}
-            className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+            className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
           >
             <BookOpen className="w-4 h-4" />
             单词表
@@ -55,13 +55,13 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
+            className="bg-white border border-stone-200/80 rounded-2xl p-8 shadow-sm"
           >
             <div className="text-center mb-8">
               <motion.h2 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-4xl font-semibold text-slate-900 mb-2"
+                className="text-4xl font-semibold text-stone-800 mb-2"
               >
                 {learningData.word}
               </motion.h2>
@@ -70,7 +70,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="text-xl text-slate-500 ipa-font"
+                  className="text-xl text-stone-500 ipa-font"
                 >
                   /{learningData.ipa}/
                 </motion.p>
@@ -88,7 +88,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-4 px-6 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800') : 'bg-white border border-slate-200 text-slate-900 hover:bg-slate-50'}`}
+                  className={`w-full py-4 px-6 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800') : 'bg-white border border-stone-200/80 text-stone-800 hover:bg-amber-50/50'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && (
@@ -116,14 +116,14 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white border border-slate-200 rounded-2xl p-8 shadow-sm"
+            className="bg-white border border-stone-200/80 rounded-2xl p-8 shadow-sm"
           >
             <div className="flex items-start justify-between mb-8">
               <div>
                 <motion.h2 
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-4xl font-semibold text-slate-900 mb-2"
+                  className="text-4xl font-semibold text-stone-800 mb-2"
                 >
                   {learningData.word}
                 </motion.h2>
@@ -132,7 +132,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="text-xl text-slate-500 ipa-font"
+                    className="text-xl text-stone-500 ipa-font"
                   >
                     /{learningData.ipa}/
                   </motion.p>
@@ -146,17 +146,17 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
               >
-                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
-                <p className="text-lg text-slate-700 leading-relaxed mb-4">
+                <p className="text-lg text-stone-700 leading-relaxed mb-4">
                   {learningData.enriched_meaning || learningData.correct_meaning}
                 </p>
                 {learningData.context_meaning && learningData.context_meaning !== learningData.enriched_meaning && (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                    <h4 className="text-sm font-medium text-blue-800 mb-2">上下文释义</h4>
-                    <p className="text-slate-700">{learningData.context_meaning}</p>
+                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
+                    <h4 className="text-sm font-medium text-amber-800 mb-2">上下文释义</h4>
+                    <p className="text-stone-700">{learningData.context_meaning}</p>
                   </div>
                 )}
               </motion.div>
@@ -167,10 +167,10 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
                     {t.context}
                   </h3>
-                  <p className="text-lg text-slate-700 leading-relaxed italic">
+                  <p className="text-lg text-stone-700 leading-relaxed italic">
                     {learningData.context}
                   </p>
                 </motion.div>
@@ -182,16 +182,16 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
                 >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
                     {t.variants}
                   </h3>
                   <div className="space-y-2">
                     {learningData.variants_detail.map((variant, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-sm font-medium">
+                        <span className="px-2 py-1 bg-stone-100 text-stone-700 rounded text-sm font-medium">
                           {variant.type}
                         </span>
-                        <span className="text-slate-700">{variant.form}</span>
+                        <span className="text-stone-700">{variant.form}</span>
                       </div>
                     ))}
                   </div>
@@ -204,14 +204,14 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
                     {t.examples}
                   </h3>
                   <div className="space-y-4">
                     {learningData.examples.map((example, index) => (
-                      <div key={index} className="border-l-4 border-slate-200 pl-4">
-                        <p className="text-slate-900 mb-1">{example.sentence}</p>
-                        <p className="text-slate-600 text-sm">{example.translation}</p>
+                      <div key={index} className="border-l-4 border-stone-300 pl-4">
+                        <p className="text-stone-800 mb-1">{example.sentence}</p>
+                        <p className="text-stone-600 text-sm">{example.translation}</p>
                       </div>
                     ))}
                   </div>
@@ -224,10 +224,10 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
                     {t.memoryHint}
                   </h3>
-                  <p className="text-lg text-slate-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-100">
+                  <p className="text-lg text-stone-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-200">
                     {learningData.memory_hint}
                   </p>
                 </motion.div>
@@ -242,7 +242,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
               whileTap={{ scale: 0.99 }}
               onClick={onNextWord}
               disabled={loading}
-              className="mt-8 w-full py-4 bg-black text-white font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+              className="mt-8 w-full py-4 bg-stone-800 text-white font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

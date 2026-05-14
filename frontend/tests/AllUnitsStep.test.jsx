@@ -34,10 +34,10 @@ test('Phase 1 units should display completed status with green color and checkma
   // Check phase 1 completed unit
   const phase1Units = screen.getAllByText('单元 1');
   const phase1CompletedUnit = phase1Units[0].closest('button');
-  expect(phase1CompletedUnit).toHaveClass('border-green-500', 'bg-green-100');
+  expect(phase1CompletedUnit).toHaveClass('border-[#788c5d]', 'bg-[#788c5d]/10');
   
   // Check phase 1 incomplete unit
   const phase2Units = screen.getAllByText('单元 2');
   const phase1IncompleteUnit = phase2Units[0].closest('button');
-  expect(phase1IncompleteUnit).not.toHaveClass('border-green-500', 'bg-green-100');
+  expect(phase1IncompleteUnit).not.toHaveClass('border-[#788c5d]', 'bg-[#788c5d]/10');
 });

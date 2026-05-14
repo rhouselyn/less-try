@@ -632,17 +632,17 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 shadow-sm">
+    <div className="min-h-screen bg-stone-50">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-amber-100" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
-                <p className="text-sm text-slate-500">{t.subtitle || 'Lesslingo'}</p>
+                <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
+                <p className="text-sm text-stone-400">{t.subtitle || 'Lesslingo'}</p>
               </div>
             </div>
             <AnimatePresence>
@@ -658,7 +658,7 @@ function App() {
                       setStep('input');
                     }
                   }}
-                  className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+                  className="flex items-center gap-2 px-4 py-2 text-stone-500 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   {t.back}

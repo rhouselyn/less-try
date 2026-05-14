@@ -64,7 +64,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
         >
           <ArrowLeft className="w-4 h-4" />
           {t.back}
@@ -73,7 +73,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={onOpenVocabList}
-          className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
         >
           📚 单词表
         </motion.button>
@@ -83,30 +83,30 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold text-slate-900 mb-4"
+          className="text-3xl font-semibold text-stone-800 mb-4"
         >
           {t.maskedSentenceTitle}
         </motion.h2>
-        <p className="text-lg text-slate-600">{t.fillBlanks}</p>
+        <p className="text-lg text-stone-600">{t.fillBlanks}</p>
         <div className="mt-2 flex items-center justify-center gap-3">
-          <span className="text-sm text-slate-500">第 {currentQ}/{totalQ} 题</span>
-          <span className="text-slate-300">|</span>
+          <span className="text-sm text-stone-500">第 {currentQ}/{totalQ} 题</span>
+          <span className="text-stone-300">|</span>
           <div className="flex items-center gap-1">
             {Array.from({ length: totalMaskCount }, (_, i) => (
               <div
                 key={i}
                 className={`w-2 h-2 rounded-full ${
-                  i < currentMask ? 'bg-black' : 'bg-slate-200'
+                  i < currentMask ? 'bg-stone-800' : 'bg-stone-200'
                 }`}
               />
             ))}
-            <span className="text-xs text-slate-400 ml-1">选词 {currentMask}/{totalMaskCount}</span>
+            <span className="text-xs text-stone-400 ml-1">选词 {currentMask}/{totalMaskCount}</span>
           </div>
         </div>
       </div>
 
-      <div className="mb-8 p-6 bg-white border border-slate-200 rounded-2xl">
-        <p className="text-xl text-slate-900 mb-6">{data.masked_sentence}</p>
+      <div className="mb-8 p-6 bg-white border border-stone-200/80 rounded-2xl">
+        <p className="text-xl text-stone-800 mb-6">{data.masked_sentence}</p>
 
         <div className="flex flex-wrap gap-3 mb-6">
           {data.answer_words.map((_, idx) => (
@@ -117,18 +117,18 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                   ? isCorrect
                     ? 'border-green-500 bg-green-50'
                     : 'border-red-500 bg-red-50'
-                  : 'border-slate-300 bg-slate-50'
+                  : 'border-stone-300 bg-stone-50'
               }`}
             >
               {selectedWords[idx] ? (
                 <span
-                  className="cursor-pointer text-slate-900"
+                  className="cursor-pointer text-stone-800"
                   onClick={() => handleRemoveWord(idx)}
                 >
                   {selectedWords[idx].word}
                 </span>
               ) : (
-                <span className="text-slate-400">____</span>
+                <span className="text-stone-400">____</span>
               )}
             </div>
           ))}
@@ -152,7 +152,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
       </div>
 
       <div className="mb-8">
-        <h3 className="text-lg font-semibold text-slate-900 mb-3">{t.selectWords}</h3>
+        <h3 className="text-lg font-semibold text-stone-800 mb-3">{t.selectWords}</h3>
         <div className="flex flex-wrap gap-3">
           {data.options.map((word, idx) => {
             const isSelected = selectedWords.some(w => w && w.index === idx);
@@ -163,8 +163,8 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                 disabled={isSelected || answerChecked}
                 className={`px-4 py-2 rounded-lg border transition-all ${
                   isSelected || answerChecked
-                    ? 'border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed'
-                    : 'border-slate-300 bg-white hover:border-black hover:shadow-sm'
+                    ? 'border-stone-200 bg-stone-50 text-stone-400 cursor-not-allowed'
+                    : 'border-stone-300 bg-white hover:border-stone-400 hover:shadow-sm'
                 }`}
               >
                 {word}
@@ -181,7 +181,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             whileTap={{ scale: 0.97, y: 0 }}
             onClick={checkAnswer}
             disabled={selectedWords.length === 0}
-            className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {t.checkAnswer}
           </motion.button>
@@ -193,7 +193,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               handleNext();
             }}
             disabled={loading}
-            className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
