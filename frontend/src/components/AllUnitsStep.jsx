@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 function AllUnitsStep({ 
   phase1Units, 
@@ -24,34 +24,15 @@ function AllUnitsStep({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.03 }}
         onClick={onClick}
-        className={`relative p-4 border rounded-xl transition-all text-left min-h-[100px] ${
+        className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center text-sm font-medium ${
           isCompleted
-            ? 'border-[#788c5d] bg-[#788c5d]/10'
+            ? 'bg-emerald-500 text-white'
             : isCurrent
-            ? 'border-[#d97757] bg-[#d97757]/10 shadow-sm'
-            : 'border-[#e8e6dc] bg-white hover:border-[#b0aea5] hover:shadow-sm'
+            ? 'bg-stone-200 text-stone-700'
+            : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
         }`}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <span className="text-base font-medium text-[#141413]">
-              单元 {index + 1}
-            </span>
-            <p className="text-sm text-[#b0aea5] mt-1">
-              {unit.no_eligible_sentences ? '无需练习' : `${unit.word_count || unit.exercises_count || unit.sentences_count || 0} ${unit.word_count ? '个单词' : '个题目'}`}
-            </p>
-          </div>
-          {isCompleted && (
-            <div className="w-6 h-6 rounded-full bg-[#788c5d] flex items-center justify-center flex-shrink-0">
-              <Check className="w-4 h-4 text-white" />
-            </div>
-          )}
-          {isCurrent && !isCompleted && (
-            <span className="text-xs font-medium text-[#d97757] bg-[#d97757]/10 px-2 py-1 rounded">
-              当前
-            </span>
-          )}
-        </div>
+        {index + 1}
       </motion.button>
     );
   };
@@ -67,7 +48,7 @@ function AllUnitsStep({
         initial={{ opacity: 0, x: -10 }}
         animate={{ opacity: 1, x: 0 }}
         onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-[#b0aea5] hover:text-[#141413] transition-colors rounded-lg hover:bg-[#e8e6dc]/50 mb-8"
+        className="flex items-center gap-2 px-4 py-2 text-stone-400 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100 mb-8"
       >
         <ArrowLeft className="w-4 h-4" />
         {t.back}
@@ -77,25 +58,24 @@ function AllUnitsStep({
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-2xl font-semibold text-[#141413] mb-2"
+          className="text-2xl font-semibold text-stone-800 mb-2"
         >
           学习单元
         </motion.h2>
-        <p className="text-base text-[#b0aea5]">选择单元开始学习</p>
+        <p className="text-base text-stone-400">选择单元开始学习</p>
       </div>
 
       {loading ? (
         <div className="text-center py-16">
-          <p className="text-lg text-[#b0aea5]">{t.loading}</p>
+          <p className="text-lg text-stone-400">{t.loading}</p>
         </div>
       ) : (
         <div className="space-y-8">
           <div>
-            <h3 className="text-lg font-medium text-[#141413] mb-3 flex items-center gap-2">
-              <span className="w-6 h-6 bg-[#d97757] text-white rounded-full flex items-center justify-center text-xs font-medium">1</span>
+            <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase1}
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="flex flex-wrap gap-2">
               {phase1Units.map((unit, index) => 
                 renderUnitCard(
                   unit, 
@@ -109,11 +89,10 @@ function AllUnitsStep({
           </div>
 
           <div>
-            <h3 className="text-lg font-medium text-[#141413] mb-3 flex items-center gap-2">
-              <span className="w-6 h-6 bg-[#6a9bcc] text-white rounded-full flex items-center justify-center text-xs font-medium">2</span>
+            <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase2}
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="flex flex-wrap gap-2">
               {phase2Units.map((unit, index) => 
                 renderUnitCard(
                   unit, 

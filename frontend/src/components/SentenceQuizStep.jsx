@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X, BookOpen } from 'lucide-react'
 
 function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList }) {
   const [selectedTokens, setSelectedTokens] = useState([])
@@ -15,8 +15,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         className="max-w-3xl mx-auto"
       >
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-gray-400" />
-          <p className="text-lg text-gray-600">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-stone-400" />
+          <p className="text-lg text-stone-600">{t.loading}</p>
         </div>
       </motion.div>
     )
@@ -64,7 +64,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
           whileHover={{ scale: 1.05, x: -2 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -75,21 +75,22 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={onOpenVocabList}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors rounded-md hover:bg-gray-100"
+          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
           whileHover={{ scale: 1.05, x: 2 }}
           whileTap={{ scale: 0.95 }}
         >
-          📚 单词表
+          <BookOpen className="w-4 h-4" />
+          单词表
         </motion.button>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+      <div className="bg-white border border-stone-200/80 rounded-2xl p-8 shadow-sm">
         <div className="text-center mb-8">
           <motion.h2 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="text-2xl font-semibold text-gray-900 mb-4"
+            className="text-2xl font-semibold text-stone-800 mb-4"
           >
             {t.sentenceTranslationQuiz}
           </motion.h2>
@@ -97,17 +98,17 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="text-lg text-gray-800 mb-6"
+            className="text-lg text-stone-700 mb-6"
           >
             {quizData.original_sentence}
           </motion.p>
         </div>
 
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">
             {t.translation}
           </h3>
-          <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg min-h-20 flex flex-wrap gap-2 items-center bg-gray-50">
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-lg min-h-20 flex flex-wrap gap-2 items-center bg-stone-50">
             <AnimatePresence>
               {selectedTokens.map((token, index) => (
                 <motion.div
@@ -116,7 +117,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0 }}
                   whileHover={{ scale: 1.1, y: -5 }}
-                  className="flex items-center gap-1 bg-black text-white px-4 py-2 rounded-full text-sm font-medium"
+                  className="flex items-center gap-1 bg-stone-800 text-white px-4 py-2 rounded-full text-sm font-medium"
                 >
                   <span>{token}</span>
                   <motion.button
@@ -135,7 +136,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               <motion.p 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="italic text-gray-400"
+                className="italic text-stone-400"
               >
                 {t.selectTokensHint}
               </motion.p>
@@ -144,7 +145,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
 
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">
+          <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">
             {t.selectTokens}
           </h3>
           <div className="flex flex-wrap gap-3">
@@ -157,7 +158,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 whileTap={{ scale: 0.9, y: 2 }}
                 onClick={() => handleTokenClick(token)}
                 disabled={isChecked}
-                className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-900 border-2 border-gray-200'}`}
+                className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'bg-stone-200 text-stone-500 cursor-not-allowed' : 'bg-white text-stone-800 border-2 border-stone-200/80'}`}
               >
                 {token}
               </motion.button>
@@ -199,7 +200,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
-                className="text-base text-gray-800 font-medium"
+                className="text-base text-stone-700 font-medium"
               >
                 {quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}
               </motion.p>
@@ -224,7 +225,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={handleCheckAnswer}
               disabled={selectedTokens.length === 0}
-              className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {t.checkAnswer}
             </motion.button>
@@ -240,7 +241,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 onNextQuestion();
               }}
               disabled={loading}
-              className="flex-1 py-4 bg-black text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

@@ -4,7 +4,6 @@ import { BookOpen, ArrowLeft } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 
-// 导入组件
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
@@ -16,6 +15,7 @@ import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
 import TranslationReconstructionStep from './components/TranslationReconstructionStep'
 import AllUnitsStep from './components/AllUnitsStep'
 import VocabListStep from './components/VocabListStep'
+import HistorySidebar from './components/HistorySidebar'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -33,6 +33,7 @@ function App() {
   const [progress, setProgress] = useState(0)
   const [processingInfo, setProcessingInfo] = useState(null)
   const [currentFileId, setCurrentFileId] = useState(null)
+  const [skipPolling, setSkipPolling] = useState(false)
   const [learningData, setLearningData] = useState(null)
   const [showWordCard, setShowWordCard] = useState(false)
   const [selectedOption, setSelectedOption] = useState(null)
@@ -70,7 +71,7 @@ function App() {
 
   // 轮询处理状态
   useEffect(() => {
-    if (!currentFileId) return
+    if (!currentFileId || skipPolling) return
 
     console.log('开始轮询，文件ID:', currentFileId)
 
@@ -141,7 +142,13 @@ function App() {
       } catch (error) {
         console.error('轮询错误:', error)
         if (error.response && error.response.status === 404) {
-          console.log('后端还未开始处理，继续轮询...')
+          if (pollCount > 10) {
+            console.log('连续404超过10次，停止轮询')
+            setLoading(false)
+            if (pollingInterval) {
+              clearInterval(pollingInterval)
+            }
+          }
         } else if (error.response && (error.response.status === 504 || error.response.status === 502 || error.response.status === 503)) {
           console.log('后端繁忙，继续轮询...')
         } else if (pollCount >= maxPolls) {
@@ -191,6 +198,7 @@ function App() {
   const handleProcess = async () => {
     if (!text.trim()) return
     
+    setSkipPolling(false)
     setLoading(true)
     setProgress(0)
     setProcessingInfo(null)
@@ -589,6 +597,31 @@ function App() {
     setStep('vocab-list')
   }
 
+  const handleNavigateToRecord = async (fileId, srcLang, tgtLang) => {
+    setSkipPolling(true)
+    setLoading(true)
+    try {
+      setSourceLang(srcLang)
+      setTargetLang(tgtLang)
+      setCurrentFileId(fileId)
+      setFileId(fileId)
+      const vocabData = await api.getVocab(fileId)
+      const vocabList = vocabData.vocab || []
+      setVocab(vocabList)
+      const sentencesData = await api.getSentences(fileId)
+      const sentenceList = sentencesData.sentences || []
+      setSentenceTranslations(Array.isArray(sentenceList) ? sentenceList : [])
+      setProgress(100)
+      setProcessingInfo(null)
+      setStep('dictionary')
+    } catch (error) {
+      console.error('Failed to load record:', error)
+      alert('无法加载学习记录，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleNextSentenceQuiz = async () => {
     setLoading(true)
     try {
@@ -608,17 +641,17 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-white border-b border-slate-200 shadow-sm">
+    <div className="min-h-screen bg-stone-50">
+      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center">
+                <BookOpen className="w-5 h-5 text-amber-100" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-slate-900">{t.title}</h1>
-                <p className="text-sm text-slate-500">{t.subtitle || 'Lesslingo'}</p>
+                <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
+                <p className="text-sm text-stone-400">{t.subtitle || 'Lesslingo'}</p>
               </div>
             </div>
             <AnimatePresence>
@@ -634,7 +667,7 @@ function App() {
                       setStep('input');
                     }
                   }}
-                  className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-900 transition-colors rounded-md hover:bg-slate-100"
+                  className="flex items-center gap-2 px-4 py-2 text-stone-500 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   {t.back}
@@ -645,24 +678,30 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        <AnimatePresence mode="wait">
-          {step === 'input' && (
-            <InputStep
-              key="input"
-              text={text}
-              setText={setText}
-              sourceLang={sourceLang}
-              setSourceLang={setSourceLang}
-              targetLang={targetLang}
-              setTargetLang={setTargetLang}
-              loading={loading}
-              onProcess={handleProcess}
-              t={t}
-            />
-          )}
-          
+      <main>
+        {step === 'input' ? (
+          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
+            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} />
+            <div className="flex-1 min-w-0">
+              <AnimatePresence mode="wait">
+                <InputStep
+                  key="input"
+                  text={text}
+                  setText={setText}
+                  sourceLang={sourceLang}
+                  setSourceLang={setSourceLang}
+                  targetLang={targetLang}
+                  setTargetLang={setTargetLang}
+                  loading={loading}
+                  onProcess={handleProcess}
+                  t={t}
+                />
+              </AnimatePresence>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
               key="dictionary"
@@ -839,6 +878,8 @@ function App() {
             />
           )}
         </AnimatePresence>
+          </div>
+        )}
       </main>
     </div>
   )

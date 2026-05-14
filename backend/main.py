@@ -379,6 +379,24 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     storage.save_learning_plan(file_id, plan)
 
 
+async def generate_title(text: str, source_lang: str) -> str:
+    first_line = text.strip().split('\n')[0].strip()
+    if len(first_line) <= 30 and not first_line.endswith(('。', '，', '！', '？', '.', ',', '!', '?', ';', '；')):
+        return first_line
+    try:
+        messages = [
+            {"role": "system", "content": "You are a title generator. Generate a very short title (max 20 characters) that summarizes the given text. If the text already has a clear title in the first line, use that as the title. Output ONLY the title, nothing else."},
+            {"role": "user", "content": f"Generate a short title for this text (language: {source_lang}):\n\n{text[:500]}"}
+        ]
+        result = await nvidia_api.call_minimax(messages, temperature=0.3)
+        title = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        if title and len(title) <= 50:
+            return title
+    except Exception as e:
+        print(f"[WARN] Title generation failed: {e}")
+    return first_line[:20] + "..." if len(first_line) > 20 else first_line
+
+
 @app.post("/api/process-text")
 async def process_text(request: dict, background_tasks: BackgroundTasks):
     try:
@@ -393,12 +411,16 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         now = datetime.datetime.now()
         file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
         
-        # 立即返回文件ID，后台处理
+        title = await generate_title(text, source_lang)
+        text_preview = text.strip()[:100]
+        storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
+        
         background_tasks.add_task(process_text_background, file_id, text, source_lang, target_lang)
         
         return {
             "file_id": file_id,
-            "status": "processing"
+            "status": "processing",
+            "title": title
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -1441,6 +1463,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                 completed = max_index >= end_index
                 phase1_units.append({
                     "word_count": word_count,
+                    "exercises_count": len(items),
                     "completed": completed,
                     "start_index": start_index,
                     "end_index": end_index
@@ -1461,6 +1484,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                     {
                         "unit_id": i,
                         "word_count": unit["word_count"],
+                        "exercises_count": unit["exercises_count"],
                         "completed": unit["completed"],
                         "start_index": unit["start_index"],
                         "end_index": unit["end_index"]
@@ -1732,6 +1756,45 @@ async def set_phase_progress(file_id: str, phase_number: int, request: dict):
             exercise_type_index = request.get("exercise_type_index", 0)
             storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index, exercise_type_index)
             return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/history")
+async def get_history():
+    try:
+        records = storage.load_history()
+        records.sort(key=lambda x: x.get("created_at", ""), reverse=True)
+        return {"records": records}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.delete("/api/history/{file_id}")
+async def delete_history(file_id: str):
+    try:
+        success = storage.delete_history_record(file_id)
+        if success:
+            return {"success": True}
+        raise HTTPException(status_code=404, detail="Record not found")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.put("/api/history/{file_id}")
+async def rename_history(file_id: str, request: dict):
+    try:
+        new_title = request.get("title", "").strip()
+        if not new_title:
+            raise HTTPException(status_code=400, detail="Title is required")
+        success = storage.rename_history_record(file_id, new_title)
+        if success:
+            return {"success": True}
+        raise HTTPException(status_code=404, detail="Record not found")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
