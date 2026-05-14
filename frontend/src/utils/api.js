@@ -125,5 +125,20 @@ export const api = {
       exercise_index: exerciseIndex,
     });
     return response.data;
+  },
+
+  getHistory: async () => {
+    const response = await axios.get(`${baseUrl}/api/history`);
+    return response.data;
+  },
+
+  deleteHistory: async (fileId) => {
+    const response = await axios.delete(`${baseUrl}/api/history/${fileId}`);
+    return response.data;
+  },
+
+  renameHistory: async (fileId, title) => {
+    const response = await axios.put(`${baseUrl}/api/history/${fileId}`, { title });
+    return response.data;
   }
 };

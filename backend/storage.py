@@ -289,3 +289,56 @@ class Storage:
                 data = json.load(f)
                 return data.get("used_sentences", [])
         return None
+
+    def _get_history_path(self) -> Path:
+        return self.base_dir / "history.json"
+
+    def load_history(self) -> List[Dict]:
+        history_path = self._get_history_path()
+        if history_path.exists():
+            with open(history_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get("records", [])
+        return []
+
+    def save_history(self, records: List[Dict]):
+        history_path = self._get_history_path()
+        with open(history_path, 'w', encoding='utf-8') as f:
+            json.dump({"records": records}, f, ensure_ascii=False, indent=2)
+
+    def add_history_record(self, file_id: str, title: str, source_lang: str, target_lang: str, text_preview: str):
+        records = self.load_history()
+        import datetime
+        record = {
+            "file_id": file_id,
+            "title": title,
+            "source_lang": source_lang,
+            "target_lang": target_lang,
+            "text_preview": text_preview,
+            "created_at": datetime.datetime.now().isoformat()
+        }
+        records.append(record)
+        self.save_history(records)
+        return record
+
+    def delete_history_record(self, file_id: str) -> bool:
+        records = self.load_history()
+        original_len = len(records)
+        records = [r for r in records if r.get("file_id") != file_id]
+        if len(records) < original_len:
+            self.save_history(records)
+            file_dir = self.files_dir / file_id
+            if file_dir.exists():
+                import shutil
+                shutil.rmtree(file_dir)
+            return True
+        return False
+
+    def rename_history_record(self, file_id: str, new_title: str) -> bool:
+        records = self.load_history()
+        for r in records:
+            if r.get("file_id") == file_id:
+                r["title"] = new_title
+                self.save_history(records)
+                return True
+        return False

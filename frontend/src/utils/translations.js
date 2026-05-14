@@ -57,7 +57,11 @@ export const translations = {
     translationReconstructionTitle: "翻译还原",
     reconstructSentence: "根据母语翻译还原原文句子",
     selectWords: "选择单词",
-    yourAnswer: "你的答案"
+    yourAnswer: "你的答案",
+    historyTitle: "学习记录",
+    noHistory: "暂无学习记录",
+    rename: "重命名",
+    delete: "删除"
   },
   en: {
     title: "Lesslingo",
@@ -116,6 +120,10 @@ export const translations = {
     translationReconstructionTitle: "Translation Reconstruction",
     reconstructSentence: "Reconstruct the original sentence from the native translation",
     selectWords: "Select Words",
-    yourAnswer: "Your Answer"
+    yourAnswer: "Your Answer",
+    historyTitle: "Learning History",
+    noHistory: "No learning history yet",
+    rename: "Rename",
+    delete: "Delete"
   }
 };

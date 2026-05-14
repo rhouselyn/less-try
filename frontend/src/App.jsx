@@ -4,7 +4,6 @@ import { BookOpen, ArrowLeft } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 
-// 导入组件
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
@@ -16,6 +15,7 @@ import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
 import TranslationReconstructionStep from './components/TranslationReconstructionStep'
 import AllUnitsStep from './components/AllUnitsStep'
 import VocabListStep from './components/VocabListStep'
+import HistorySidebar from './components/HistorySidebar'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -589,6 +589,30 @@ function App() {
     setStep('vocab-list')
   }
 
+  const handleNavigateToRecord = async (fileId, srcLang, tgtLang) => {
+    setLoading(true)
+    try {
+      setSourceLang(srcLang)
+      setTargetLang(tgtLang)
+      setCurrentFileId(fileId)
+      setFileId(fileId)
+      const vocabData = await api.getVocab(fileId)
+      const vocabList = vocabData.vocab || []
+      setVocab(vocabList)
+      const sentencesData = await api.getSentences(fileId)
+      const sentenceList = sentencesData.sentences || []
+      setSentenceTranslations(Array.isArray(sentenceList) ? sentenceList : [])
+      setProgress(100)
+      setProcessingInfo(null)
+      setStep('dictionary')
+    } catch (error) {
+      console.error('Failed to load record:', error)
+      alert('无法加载学习记录，请重试')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleNextSentenceQuiz = async () => {
     setLoading(true)
     try {
@@ -645,24 +669,30 @@ function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-        <AnimatePresence mode="wait">
-          {step === 'input' && (
-            <InputStep
-              key="input"
-              text={text}
-              setText={setText}
-              sourceLang={sourceLang}
-              setSourceLang={setSourceLang}
-              targetLang={targetLang}
-              setTargetLang={setTargetLang}
-              loading={loading}
-              onProcess={handleProcess}
-              t={t}
-            />
-          )}
-          
+      <main>
+        {step === 'input' ? (
+          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
+            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} />
+            <div className="flex-1 min-w-0">
+              <AnimatePresence mode="wait">
+                <InputStep
+                  key="input"
+                  text={text}
+                  setText={setText}
+                  sourceLang={sourceLang}
+                  setSourceLang={setSourceLang}
+                  targetLang={targetLang}
+                  setTargetLang={setTargetLang}
+                  loading={loading}
+                  onProcess={handleProcess}
+                  t={t}
+                />
+              </AnimatePresence>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
               key="dictionary"
@@ -839,6 +869,8 @@ function App() {
             />
           )}
         </AnimatePresence>
+          </div>
+        )}
       </main>
     </div>
   )
