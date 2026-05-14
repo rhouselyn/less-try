@@ -24,34 +24,30 @@ function AllUnitsStep({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.03 }}
         onClick={onClick}
-        className={`relative p-4 border rounded-xl transition-all text-left min-h-[100px] ${
+        className={`relative p-4 border rounded-2xl transition-all text-center aspect-square flex flex-col items-center justify-center ${
           isCompleted
-            ? 'border-stone-300 bg-stone-50'
+            ? 'border-emerald-400 bg-emerald-50/50'
             : isCurrent
             ? 'border-stone-300 bg-stone-50 shadow-sm'
             : 'border-stone-200/60 bg-white hover:border-stone-300 hover:shadow-sm'
         }`}
       >
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <span className="text-base font-medium text-stone-800">
-              单元 {index + 1}
-            </span>
-            <p className="text-sm text-stone-400 mt-1">
-              {unit.no_eligible_sentences ? '无需练习' : `${unit.exercises_count || unit.word_count || unit.sentences_count || 0} 个题目`}
-            </p>
+        <span className="text-lg font-semibold text-stone-800 mb-1">
+          {index + 1}
+        </span>
+        <p className="text-xs text-stone-400">
+          {unit.no_eligible_sentences ? '无需练习' : `${unit.exercises_count || unit.word_count || unit.sentences_count || 0} 题`}
+        </p>
+        {isCompleted && (
+          <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center mt-2">
+            <Check className="w-3 h-3 text-white" />
           </div>
-          {isCompleted && (
-            <div className="w-5 h-5 rounded-full bg-stone-700 flex items-center justify-center flex-shrink-0">
-              <Check className="w-3 h-3 text-white" />
-            </div>
-          )}
-          {isCurrent && !isCompleted && (
-            <span className="text-[11px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md">
-              当前
-            </span>
-          )}
-        </div>
+        )}
+        {isCurrent && !isCompleted && (
+          <span className="text-[10px] font-medium text-stone-500 bg-stone-100 px-2 py-0.5 rounded-md mt-2">
+            当前
+          </span>
+        )}
       </motion.button>
     );
   };
@@ -94,7 +90,7 @@ function AllUnitsStep({
             <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase1}
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               {phase1Units.map((unit, index) => 
                 renderUnitCard(
                   unit, 
@@ -111,7 +107,7 @@ function AllUnitsStep({
             <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase2}
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
               {phase2Units.map((unit, index) => 
                 renderUnitCard(
                   unit, 
