@@ -84,9 +84,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           <span className="text-slate-300">|</span>
           <span className="text-xs text-slate-400">翻译还原</span>
         </div>
-        {sentencePreview && (
-          <p className="mt-1 text-xs text-slate-400 truncate max-w-md mx-auto">{sentencePreview}</p>
-        )}
       </div>
 
       <div className="mb-8 p-6 bg-white border border-slate-200 rounded-2xl">
