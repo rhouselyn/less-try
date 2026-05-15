@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft } from 'lucide-react'
+import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 
@@ -16,6 +16,7 @@ import TranslationReconstructionStep from './components/TranslationReconstructio
 import AllUnitsStep from './components/AllUnitsStep'
 import VocabListStep from './components/VocabListStep'
 import HistorySidebar from './components/HistorySidebar'
+import SettingsModal from './components/SettingsModal'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -36,6 +37,7 @@ function App() {
   const [skipPolling, setSkipPolling] = useState(false)
   const [learningData, setLearningData] = useState(null)
   const [showWordCard, setShowWordCard] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [selectedOption, setSelectedOption] = useState(null)
   const [isCorrect, setIsCorrect] = useState(null)
   const [units, setUnits] = useState([])
@@ -203,7 +205,12 @@ function App() {
     setProgress(0)
     setProcessingInfo(null)
     setVocab([])
+    setDisplayVocab([])
     setSentenceTranslations([])
+    setSelectedWord(null)
+    setSelectedSentence(null)
+    setSelectedOption(null)
+    setIsCorrect(null)
     
     // 立即跳转到单词表页面，即使还没有收到响应
     setStep('dictionary')
@@ -682,7 +689,15 @@ function App() {
         {step === 'input' ? (
           <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} />
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 relative">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowSettings(true)}
+                className="absolute top-0 right-0 p-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors z-10"
+              >
+                <Settings className="w-5 h-5" />
+              </motion.button>
               <AnimatePresence mode="wait">
                 <InputStep
                   key="input"
@@ -719,6 +734,7 @@ function App() {
               onStartLearning={startLearningPhases}
               loading={loading}
               t={t}
+              currentFileId={currentFileId}
             />
           )}
           
@@ -881,6 +897,7 @@ function App() {
           </div>
         )}
       </main>
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   )
 }

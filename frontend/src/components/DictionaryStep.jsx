@@ -1,19 +1,142 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen } from 'lucide-react'
+import { useState, useRef, useCallback } from 'react'
+import { motion } from 'framer-motion'
+import { Shuffle, Loader2, Languages, BookOpen, ArrowUpDown } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t }) {
-  const [activeTab, setActiveTab] = useState('sentences')
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId }) {
+  const [expandedWord, setExpandedWord] = useState(null)
+  const [wordDetailCache, setWordDetailCache] = useState({})
+  const [loadingWords, setLoadingWords] = useState({})
+  const [wordDetails, setWordDetails] = useState({})
+  const vocabListRef = useRef(null)
+  const wordRefs = useRef({})
 
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
 
-  const tabs = [
-    { id: 'sentences', label: t.sentTranslation, icon: Languages, count: safeSentenceTranslations.length },
-    { id: 'vocab', label: t.vocabList, icon: BookOpen, count: vocab.length },
-  ]
+  const fetchWordDetail = useCallback(async (wordKey) => {
+    if (wordDetails[wordKey]) return wordDetails[wordKey]
+    if (wordDetailCache[wordKey]) {
+      setWordDetails(prev => ({ ...prev, [wordKey]: wordDetailCache[wordKey] }))
+      return wordDetailCache[wordKey]
+    }
+
+    setLoadingWords(prev => ({ ...prev, [wordKey]: true }))
+    try {
+      const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
+      const data = await response.json()
+      setWordDetails(prev => ({ ...prev, [wordKey]: data }))
+      setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
+      return data
+    } catch (e) {
+      console.error('Failed to load word details:', e)
+      return null
+    } finally {
+      setLoadingWords(prev => ({ ...prev, [wordKey]: false }))
+    }
+  }, [currentFileId, wordDetails, wordDetailCache])
+
+  const scrollToWord = useCallback((wordKey, delay = 100) => {
+    setTimeout(() => {
+      const el = wordRefs.current[wordKey]
+      if (el && vocabListRef.current) {
+        const container = vocabListRef.current
+        const containerRect = container.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        const scrollOffset = elRect.top - containerRect.top + container.scrollTop
+        container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+      }
+    }, delay)
+  }, [])
+
+  const handleTokenClick = useCallback(async (sourceWord) => {
+    const sourceLower = sourceWord.toLowerCase()
+    const matchedWord = vocab.find(w => {
+      if (w.word.toLowerCase() === sourceLower) return true
+      if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      return false
+    })
+
+    if (!matchedWord) return
+
+    const wordKey = matchedWord.word
+    setExpandedWord(wordKey)
+    scrollToWord(wordKey, 100)
+    const detail = await fetchWordDetail(wordKey)
+    if (detail) {
+      scrollToWord(wordKey, 300)
+    }
+  }, [vocab, scrollToWord, fetchWordDetail])
+
+  const handleVocabWordClick = useCallback(async (word) => {
+    const wordKey = word.word
+    if (expandedWord === wordKey) {
+      setExpandedWord(null)
+      return
+    }
+    setExpandedWord(wordKey)
+    fetchWordDetail(wordKey)
+  }, [expandedWord, fetchWordDetail])
+
+  const findVocabWordBySourceText = useCallback((sourceText) => {
+    const sourceLower = sourceText.toLowerCase()
+    return vocab.some(w => {
+      if (w.word.toLowerCase() === sourceLower) return true
+      if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      return false
+    })
+  }, [vocab])
+
+  const renderOriginalSentence = (item) => {
+    const sentence = item.sentence || ''
+    const tr = item.translation_result
+    const tokens = (tr && tr.translation && Array.isArray(tr.translation)) ? tr.translation : null
+
+    if (!tokens) {
+      return <div className="font-medium text-stone-800 mb-1.5">{sentence}</div>
+    }
+
+    const vocabWords = tokens
+      .filter(t => typeof t === 'object' && t.text)
+      .map(t => t.text)
+
+    if (vocabWords.length === 0) {
+      return <div className="font-medium text-stone-800 mb-1.5">{sentence}</div>
+    }
+
+    const escapedWords = vocabWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const pattern = new RegExp(`(${escapedWords.join('|')})`, 'gi')
+    const parts = sentence.split(pattern)
+
+    return (
+      <div className="font-medium text-stone-800 mb-1.5 leading-relaxed">
+        {parts.map((part, i) => {
+          if (!part) return null
+          const clickable = findVocabWordBySourceText(part)
+          if (clickable) {
+            return (
+              <span
+                key={i}
+                onClick={(e) => { e.stopPropagation(); handleTokenClick(part) }}
+                className="cursor-pointer rounded px-0.5 -mx-0.5 hover:bg-amber-100 hover:text-amber-800 transition-colors duration-150 border-b border-amber-300/50"
+              >
+                {part}
+              </span>
+            )
+          }
+          return <span key={i}>{part}</span>
+        })}
+      </div>
+    )
+  }
+
+  const renderTranslation = (item) => {
+    const tr = item.translation_result
+    const text = tr?.tokenized_translation || ''
+    if (!text) return null
+    return <div className="text-stone-600 text-sm">{text}</div>
+  }
 
   return (
     <motion.div
@@ -59,51 +182,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </motion.button>
       )}
 
-      <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex border-b border-stone-200/80">
-          {tabs.map((tab) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`relative flex-1 flex items-center justify-center gap-2 py-3.5 text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'text-stone-800'
-                    : 'text-stone-400 hover:text-stone-600'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                  isActive
-                    ? 'bg-amber-100 text-amber-700'
-                    : 'bg-stone-100 text-stone-400'
-                }`}>
-                  {tab.count}
-                </span>
-                {isActive && (
-                  <motion.div
-                    layoutId="tab-indicator"
-                    className="absolute bottom-0 left-3 right-3 h-0.5 bg-amber-500 rounded-full"
-                    transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                  />
-                )}
-              </button>
-            )
-          })}
-        </div>
-
-        <AnimatePresence mode="wait">
-          {activeTab === 'sentences' && (
-            <motion.div
-              key="sentences"
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 8 }}
-              transition={{ duration: 0.15 }}
-            >
+      <div className="flex gap-6" style={{ minHeight: '70vh' }}>
+        <div className="w-1/2 flex flex-col">
+          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
+            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
+              <Languages className="w-4 h-4 text-stone-500" />
+              <h3 className="text-sm font-semibold text-stone-700">{t.sentTranslation}</h3>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                {safeSentenceTranslations.length}
+              </span>
+            </div>
+            <div className="flex-1 overflow-y-auto" style={{ maxHeight: '70vh' }}>
               {safeSentenceTranslations.length > 0 ? (
                 <div className="divide-y divide-stone-200/60">
                   {safeSentenceTranslations.map((item, index) => (
@@ -112,19 +201,18 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.02 }}
-                        className="p-4 hover:bg-amber-50/40 cursor-pointer transition-colors"
+                        className={`p-4 cursor-pointer transition-colors ${
+                          selectedSentence === index ? 'bg-amber-50/60' : 'hover:bg-amber-50/30'
+                        }`}
                         onClick={() => onSentenceClick(index)}
                       >
-                        <div className="font-medium text-stone-800 mb-1.5">{item.sentence}</div>
-                        {item.translation_result && item.translation_result.tokenized_translation && (
-                          <div className="text-stone-600 text-sm">{item.translation_result.tokenized_translation}</div>
-                        )}
+                        {renderOriginalSentence(item)}
+                        {renderTranslation(item)}
                       </motion.div>
                       {selectedSentence === index && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
                           className="border-t border-stone-200/60 p-4 bg-stone-50/50"
                         >
                           <SentenceDetail
@@ -142,65 +230,97 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                   <p className="text-stone-400 text-sm">{t.loading}</p>
                 </div>
               )}
-            </motion.div>
-          )}
+            </div>
+          </div>
+        </div>
 
-          {activeTab === 'vocab' && (
-            <motion.div
-              key="vocab"
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -8 }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="flex items-center justify-between px-4 py-2.5 bg-stone-50/60 border-b border-stone-200/60">
-                <div className="grid grid-cols-3 gap-1 flex-1">
-                  <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t.wordLabel}</div>
-                  <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t.meaningLabel}</div>
-                  <div className="text-xs font-semibold text-stone-500 uppercase tracking-wider">{t.posLabel}</div>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={onToggleSort}
-                  className="ml-3 p-1.5 text-stone-400 hover:text-stone-700 hover:bg-amber-50 rounded-md transition-colors text-xs font-medium"
-                >
-                  {sortOrder === 'asc' ? t.aToZ : t.zToA}
-                </motion.button>
+        <div className="w-1/2 flex flex-col">
+          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-stone-500" />
+                <h3 className="text-sm font-semibold text-stone-700">{t.vocabList}</h3>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                  {vocab.length}
+                </span>
               </div>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onToggleSort}
+                className="flex items-center gap-1 p-1.5 text-stone-400 hover:text-stone-700 hover:bg-amber-50 rounded-md transition-colors text-xs font-medium"
+              >
+                <ArrowUpDown className="w-3 h-3" />
+                {sortOrder === 'asc' ? t.aToZ : t.zToA}
+              </motion.button>
+            </div>
+            <div className="flex-1 overflow-y-auto" ref={vocabListRef} style={{ maxHeight: '70vh' }}>
               <div className="divide-y divide-stone-200/60">
-                {vocab.map((word, index) => (
-                  <div key={word.word || index}>
-                    <motion.div
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.02 }}
-                      className="grid grid-cols-3 gap-1 p-4 hover:bg-amber-50/40 cursor-pointer transition-colors"
-                      onClick={() => onWordClick(word.word)}
-                    >
-                      <div className="font-medium text-stone-800">{word.word}</div>
-                      <div className="text-stone-600">{word.context_meaning}</div>
-                      <div className="text-stone-500 font-mono text-sm">{word.morphology}</div>
-                    </motion.div>
-                    {selectedWord && selectedWord.word === word.word && (
+                {vocab.map((word, index) => {
+                  const wordKey = word.word
+                  const isExpanded = expandedWord === wordKey
+                  const isLoading = loadingWords[wordKey]
+                  const detail = wordDetails[wordKey]
+
+                  return (
+                    <div key={wordKey || index} ref={el => { wordRefs.current[wordKey] = el }}>
                       <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="border-t border-stone-200/60 p-4 bg-stone-50/50"
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.01 }}
+                        className={`p-4 cursor-pointer transition-colors ${
+                          isExpanded ? 'bg-amber-50/50' : 'hover:bg-amber-50/30'
+                        }`}
+                        onClick={() => handleVocabWordClick(word)}
                       >
-                        <WordDetail
-                          word={selectedWord}
-                          t={t}
-                        />
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <span className="font-medium text-stone-800">{word.word}</span>
+                              {word.ipa && (
+                                <span className="text-stone-400 text-sm ml-2 ipa-font">/{word.ipa}/</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-stone-600 text-sm">{word.context_meaning}</span>
+                            {word.morphology && (
+                              <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-500 rounded font-mono">
+                                {word.morphology}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </motion.div>
-                    )}
-                  </div>
-                ))}
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="border-t border-stone-200/60 bg-stone-50/30"
+                        >
+                          {isLoading ? (
+                            <div className="p-8 flex flex-col items-center justify-center gap-3">
+                              <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                              <p className="text-sm text-stone-400">正在生成单词详解...</p>
+                            </div>
+                          ) : detail ? (
+                            <div className="p-4">
+                              <WordDetail word={detail} t={t} />
+                            </div>
+                          ) : (
+                            <div className="p-4 text-center text-stone-400 text-sm">
+                              暂无详情
+                            </div>
+                          )}
+                        </motion.div>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+          </div>
+        </div>
       </div>
     </motion.div>
   )

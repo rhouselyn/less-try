@@ -1,19 +1,61 @@
 import os
-import requests
 import json
+import requests
 import asyncio
 from typing import List, Dict, Any
+
+CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "llm_settings.json")
+
+def _load_settings():
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {
+        "api_key": "sk-tszhvcglvfqiivwqqtqwkxmxsneyuymjjywtfxteofmfvkct",
+        "base_url": "https://api.siliconflow.cn/v1",
+        "model": "Qwen/Qwen3.6-27B"
+    }
+
+def _save_settings(settings: dict):
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+        json.dump(settings, f, indent=2, ensure_ascii=False)
+
+def get_settings():
+    return _load_settings()
+
+def update_settings(api_key: str = None, base_url: str = None, model: str = None):
+    current = _load_settings()
+    if api_key is not None:
+        current["api_key"] = api_key
+    if base_url is not None:
+        current["base_url"] = base_url
+    if model is not None:
+        current["model"] = model
+    _save_settings(current)
+    return current
 
 
 class NvidiaAPI:
     def __init__(self):
-        self.api_key = "sk-tszhvcglvfqiivwqqtqwkxmxsneyuymjjywtfxteofmfvkct"
-        self.base_url = "https://api.siliconflow.cn/v1"
-        self.model = "Qwen/Qwen3.6-27B"
+        self._reload()
+
+    def _reload(self):
+        settings = _load_settings()
+        self.api_key = settings.get("api_key", "")
+        self.base_url = settings.get("base_url", "https://api.siliconflow.cn/v1")
+        self.model = settings.get("model", "Qwen/Qwen3.6-27B")
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
+
+    def reload(self):
+        self._reload()
 
     def _sync_post(self, url, headers, payload, timeout):
         response = requests.post(url, headers=headers, json=payload, timeout=timeout)
@@ -30,6 +72,7 @@ class NvidiaAPI:
         return result
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0):
+        self.reload()
         payload = {
             "model": self.model,
             "messages": messages,
@@ -142,7 +185,6 @@ class NvidiaAPI:
             }
         }
 
-        # 构建prompt
         prompt = f"""
 为单词 '{word}' 生成丰富的信息，使用 {target_lang} 输出。
 
@@ -186,7 +228,6 @@ class NvidiaAPI:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
                     return args
-            # 构建默认响应
             default_response = {
                 "word": word,
                 "enriched_meaning": correct_meaning,
@@ -212,7 +253,6 @@ class NvidiaAPI:
         except Exception as e:
             print(f"Tool call failed: {e}")
             print(f"Response: {response}")
-            # 构建错误时的默认响应
             error_response = {
                 "word": word,
                 "enriched_meaning": correct_meaning,
@@ -237,18 +277,6 @@ class NvidiaAPI:
             return error_response
 
     async def process_text_with_dictionary(self, text: str, source_lang: str, target_lang: str):
-        """
-        合并处理：同时对整段文本进行句子级拆解 + 为文本中主要单词生成完整词典条目
-        
-        返回结构（一个字典）：
-        - original
-        - tokenized_translation
-        - grammar_explanation
-        - translation（token数组，带词性、音标等）
-        - redundant_tokens
-        - dictionary_entries（单词列表的完整词典条目）
-        """
-        
         tool_def = {
             "type": "function",
             "function": {
@@ -344,7 +372,6 @@ class NvidiaAPI:
             }
         }
 
-        # 构建 prompt（split_and_translate 部分描述完全不变，dictionary_entries 部分已严格改回原风格）
         prompt = """处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
 
 【非常非常重要的说明！！！】
@@ -419,7 +446,6 @@ TEXT_CONTENT
 请严格按照 tool 定义的 JSON 结构返回所有字段，不要遗漏任何 required 字段。
 """
 
-        # 替换占位符
         prompt = prompt.replace("TEXT_LANG", source_lang)
         prompt = prompt.replace("TARGET_LANG", target_lang)
         prompt = prompt.replace("TEXT_CONTENT", text)
@@ -448,9 +474,6 @@ TEXT_CONTENT
             return {}
 
     async def process_remaining_words(self, words: list, source_lang: str, target_lang: str, context: str = ""):
-        """
-        为遗漏的单词生成词典条目
-        """
         if not words:
             return []
         
@@ -552,4 +575,3 @@ TEXT_CONTENT
         except Exception as e:
             print(f"Process remaining words failed: {e}")
             return []
-
