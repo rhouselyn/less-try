@@ -37,17 +37,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
   }, [currentFileId, wordDetails, wordDetailCache])
 
-  const scrollToWord = useCallback((wordKey) => {
+  const scrollToWord = useCallback((wordKey, delay = 100) => {
     setTimeout(() => {
       const el = wordRefs.current[wordKey]
       if (el && vocabListRef.current) {
         const container = vocabListRef.current
         const containerRect = container.getBoundingClientRect()
         const elRect = el.getBoundingClientRect()
-        const scrollOffset = elRect.top - containerRect.top + container.scrollTop - containerRect.height / 3
+        const scrollOffset = elRect.top - containerRect.top + container.scrollTop
         container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
       }
-    }, 100)
+    }, delay)
   }, [])
 
   const handleTokenClick = useCallback(async (sourceWord) => {
@@ -62,8 +62,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
     const wordKey = matchedWord.word
     setExpandedWord(wordKey)
-    scrollToWord(wordKey)
-    fetchWordDetail(wordKey)
+    scrollToWord(wordKey, 100)
+    const detail = await fetchWordDetail(wordKey)
+    if (detail) {
+      scrollToWord(wordKey, 300)
+    }
   }, [vocab, scrollToWord, fetchWordDetail])
 
   const handleVocabWordClick = useCallback(async (word) => {
