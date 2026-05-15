@@ -85,20 +85,21 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     })
   }, [vocab])
 
-  const renderTokenizedTranslation = (item) => {
+  const renderOriginalSentence = (item) => {
     const tr = item.translation_result
-    if (!tr || !tr.translation || !Array.isArray(tr.translation)) {
-      return tr?.tokenized_translation ? <span className="text-stone-600 text-sm">{tr.tokenized_translation}</span> : null
+    const tokens = (tr && tr.translation && Array.isArray(tr.translation)) ? tr.translation : null
+
+    if (!tokens) {
+      return <div className="font-medium text-stone-800 mb-1.5">{item.sentence}</div>
     }
 
     return (
-      <div className="text-stone-600 text-sm leading-relaxed">
-        {tr.translation.map((token, i) => {
+      <div className="font-medium text-stone-800 mb-1.5 leading-relaxed">
+        {tokens.map((token, i) => {
           if (typeof token === 'string') {
             return <span key={i}>{token}</span>
           }
           const sourceText = token.text || ''
-          const displayText = token.translation || token.text || ''
           const clickable = findVocabWordBySourceText(sourceText)
           return (
             <span
@@ -109,12 +110,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 : ''
               }
             >
-              {displayText}
+              {sourceText}
             </span>
           )
         })}
       </div>
     )
+  }
+
+  const renderTranslation = (item) => {
+    const tr = item.translation_result
+    const text = tr?.tokenized_translation || ''
+    if (!text) return null
+    return <div className="text-stone-600 text-sm">{text}</div>
   }
 
   return (
@@ -185,8 +193,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         }`}
                         onClick={() => onSentenceClick(index)}
                       >
-                        <div className="font-medium text-stone-800 mb-1.5">{item.sentence}</div>
-                        {renderTokenizedTranslation(item)}
+                        {renderOriginalSentence(item)}
+                        {renderTranslation(item)}
                       </motion.div>
                       {selectedSentence === index && (
                         <motion.div
