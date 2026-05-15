@@ -344,11 +344,17 @@ class TextProcessor:
         
         # 生成选项：正确答案 + 干扰项
         options = answer_words.copy()
-        # 收集所有干扰词
         distractors = []
         answer_lower = [w.lower() for w in answer_words]
         
-        # 首先从其他句子中获取干扰词
+        current_sentence_words_lower = set()
+        if translation_tokens:
+            current_sentence_words_lower = {w.lower() for w in translation_tokens}
+        else:
+            current_sentence_words_lower = {w.lower() for w in self.tokenize_sentence(sentence)}
+        
+        exclude_lower = set(answer_lower) | current_sentence_words_lower
+        
         if all_sentences:
             for sent_data in all_sentences:
                 if "sentence" in sent_data and sent_data["sentence"] != sentence:
@@ -356,21 +362,19 @@ class TextProcessor:
                         for token in sent_data["translation_result"]["translation"]:
                             if isinstance(token, dict) and "text" in token:
                                 token_text = token["text"]
-                                if token_text.lower() not in answer_lower and token_text not in distractors and len(distractors) < 3 * num_masks:
+                                if token_text.lower() not in exclude_lower and token_text not in distractors and len(distractors) < 3 * num_masks:
                                     distractors.append(token_text)
         
-        # 然后从词汇表中找干扰词
         if len(distractors) < 3 * num_masks:
             vocab_words = [v["word"] for v in vocab]
             random.shuffle(vocab_words)
             for vw in vocab_words:
-                if vw.lower() not in answer_lower and vw not in distractors and len(distractors) < 3 * num_masks:
+                if vw.lower() not in exclude_lower and vw not in distractors and len(distractors) < 3 * num_masks:
                     distractors.append(vw)
         
-        # 如果词汇表不够，使用备选词库
         if len(distractors) < 3 * num_masks:
             fallback_needed = 3 * num_masks - len(distractors)
-            fallback_distractors = self.get_fallback_distractors(fallback_needed, answer_words + distractors, source_lang)
+            fallback_distractors = self.get_fallback_distractors(fallback_needed, list(exclude_lower) + distractors, source_lang)
             distractors.extend(fallback_distractors)
         
         # 打乱干扰项
