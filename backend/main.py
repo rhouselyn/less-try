@@ -269,6 +269,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
 
 def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: List[Dict]):
     import random
+    import re
     
     random.seed(42)
     shuffled_indices = list(range(len(vocab)))
@@ -279,6 +280,8 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     num_units = max(1, (len(vocab) + unit_size - 1) // unit_size)
     
     plan = []
+    all_learned_vocab_indices = set()
+    used_sentences = set()
     
     for unit_id in range(num_units):
         unit_start = unit_id * unit_size
@@ -292,6 +295,81 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                 "type": "word",
                 "vocab_index": vocab_idx
             })
+            all_learned_vocab_indices.add(vocab_idx)
+            
+            learned_words = [vocab[i] for i in all_learned_vocab_indices]
+            
+            for sentence_data in sentences:
+                if "sentence" not in sentence_data:
+                    continue
+                
+                sentence = sentence_data["sentence"]
+                
+                if sentence in used_sentences:
+                    continue
+                
+                already_in_unit = any(
+                    item["type"] == "sentence_quiz" and item["sentence"] == sentence
+                    for item in unit_items
+                )
+                if already_in_unit:
+                    continue
+                
+                tr = sentence_data.get("translation_result", {})
+                if "translation" not in tr:
+                    continue
+                
+                translation_tokens = tr.get("translation", [])
+                if not translation_tokens:
+                    continue
+                
+                sentence_covered = True
+                for token in translation_tokens:
+                    if isinstance(token, dict) and "text" in token:
+                        token_text = token["text"].lower()
+                        token_covered = False
+                        for w in learned_words:
+                            w_tokens = w.get("tokens", [w["word"]])
+                            for wt in w_tokens:
+                                if wt.lower() == token_text or wt.lower() in token_text or token_text in wt.lower():
+                                    token_covered = True
+                                    break
+                            if token_covered:
+                                break
+                        if not token_covered:
+                            sentence_covered = False
+                            break
+                
+                if sentence_covered:
+                    used_sentences.add(sentence)
+                    
+                    correct_tokens = []
+                    for token in translation_tokens:
+                        if isinstance(token, dict):
+                            text = token.get("translation", token.get("text", ""))
+                            cleaned = re.sub(r'[^\w\s]', '', text)
+                            if cleaned:
+                                correct_tokens.append(cleaned)
+                    
+                    redundant_tokens = tr.get("redundant_tokens", [])
+                    cleaned_redundant = []
+                    for rt in redundant_tokens:
+                        cleaned = re.sub(r'[^\w\s]', '', rt)
+                        if cleaned and cleaned not in correct_tokens:
+                            cleaned_redundant.append(cleaned)
+                    
+                    selected_distractors = list(set(cleaned_redundant))[:3]
+                    all_tokens = correct_tokens + selected_distractors
+                    
+                    correct_translation = re.sub(r'[^\w\s]', '', tr.get("tokenized_translation", ""))
+                    
+                    unit_items.append({
+                        "type": "sentence_quiz",
+                        "sentence": sentence,
+                        "correct_translation": correct_translation,
+                        "correct_tokens": correct_tokens,
+                        "tokens": all_tokens
+                    })
         
         plan.append({
             "unit_id": unit_id,

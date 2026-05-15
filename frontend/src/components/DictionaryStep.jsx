@@ -1,10 +1,10 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, ArrowUpDown, Volume2, Brain } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, ArrowUpDown } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, onGetWordDetails }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId }) {
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
@@ -15,26 +15,29 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
 
-  const handleTokenClick = useCallback(async (tokenText) => {
-    const tokenLower = tokenText.toLowerCase()
-    const matchedWord = vocab.find(w => {
-      if (w.word.toLowerCase() === tokenLower) return true
-      if (w.tokens && w.tokens.some(t => t.toLowerCase() === tokenLower)) return true
-      if (w.word.toLowerCase().startsWith(tokenLower) || tokenLower.startsWith(w.word.toLowerCase())) return true
-      return false
-    })
-
-    if (!matchedWord) return
-
-    const wordKey = matchedWord.word
-
-    if (expandedWord === wordKey) {
-      setExpandedWord(null)
-      return
+  const fetchWordDetail = useCallback(async (wordKey) => {
+    if (wordDetails[wordKey]) return wordDetails[wordKey]
+    if (wordDetailCache[wordKey]) {
+      setWordDetails(prev => ({ ...prev, [wordKey]: wordDetailCache[wordKey] }))
+      return wordDetailCache[wordKey]
     }
 
-    setExpandedWord(wordKey)
+    setLoadingWords(prev => ({ ...prev, [wordKey]: true }))
+    try {
+      const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
+      const data = await response.json()
+      setWordDetails(prev => ({ ...prev, [wordKey]: data }))
+      setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
+      return data
+    } catch (e) {
+      console.error('Failed to load word details:', e)
+      return null
+    } finally {
+      setLoadingWords(prev => ({ ...prev, [wordKey]: false }))
+    }
+  }, [currentFileId, wordDetails, wordDetailCache])
 
+  const scrollToWord = useCallback((wordKey) => {
     setTimeout(() => {
       const el = wordRefs.current[wordKey]
       if (el && vocabListRef.current) {
@@ -45,65 +48,39 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
       }
     }, 100)
+  }, [])
 
-    if (wordDetails[wordKey]) return
+  const handleTokenClick = useCallback(async (sourceWord) => {
+    const sourceLower = sourceWord.toLowerCase()
+    const matchedWord = vocab.find(w => {
+      if (w.word.toLowerCase() === sourceLower) return true
+      if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      return false
+    })
 
-    if (wordDetailCache[wordKey]) {
-      setWordDetails(prev => ({ ...prev, [wordKey]: wordDetailCache[wordKey] }))
-      return
-    }
+    if (!matchedWord) return
 
-    setLoadingWords(prev => ({ ...prev, [wordKey]: true }))
-
-    try {
-      const response = await fetch(`/api/word/${currentFileId}/${matchedWord.word}`)
-      const data = await response.json()
-      setWordDetails(prev => ({ ...prev, [wordKey]: data }))
-      setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
-    } catch (e) {
-      console.error('Failed to load word details:', e)
-    } finally {
-      setLoadingWords(prev => ({ ...prev, [wordKey]: false }))
-    }
-  }, [vocab, expandedWord, wordDetails, wordDetailCache, currentFileId])
+    const wordKey = matchedWord.word
+    setExpandedWord(wordKey)
+    scrollToWord(wordKey)
+    fetchWordDetail(wordKey)
+  }, [vocab, scrollToWord, fetchWordDetail])
 
   const handleVocabWordClick = useCallback(async (word) => {
     const wordKey = word.word
-
     if (expandedWord === wordKey) {
       setExpandedWord(null)
       return
     }
-
     setExpandedWord(wordKey)
+    fetchWordDetail(wordKey)
+  }, [expandedWord, fetchWordDetail])
 
-    if (wordDetails[wordKey]) return
-
-    if (wordDetailCache[wordKey]) {
-      setWordDetails(prev => ({ ...prev, [wordKey]: wordDetailCache[wordKey] }))
-      return
-    }
-
-    setLoadingWords(prev => ({ ...prev, [wordKey]: true }))
-
-    try {
-      const response = await fetch(`/api/word/${currentFileId}/${word.word}`)
-      const data = await response.json()
-      setWordDetails(prev => ({ ...prev, [wordKey]: data }))
-      setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
-    } catch (e) {
-      console.error('Failed to load word details:', e)
-    } finally {
-      setLoadingWords(prev => ({ ...prev, [wordKey]: false }))
-    }
-  }, [expandedWord, wordDetails, wordDetailCache, currentFileId])
-
-  const isTokenInVocab = useCallback((tokenText) => {
-    const tokenLower = tokenText.toLowerCase()
+  const findVocabWordBySourceText = useCallback((sourceText) => {
+    const sourceLower = sourceText.toLowerCase()
     return vocab.some(w => {
-      if (w.word.toLowerCase() === tokenLower) return true
-      if (w.tokens && w.tokens.some(t => t.toLowerCase() === tokenLower)) return true
-      if (w.word.toLowerCase().startsWith(tokenLower) || tokenLower.startsWith(w.word.toLowerCase())) return true
+      if (w.word.toLowerCase() === sourceLower) return true
+      if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
       return false
     })
   }, [vocab])
@@ -120,18 +97,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           if (typeof token === 'string') {
             return <span key={i}>{token}</span>
           }
-          const text = token.translation || token.text || ''
-          const clickable = isTokenInVocab(text)
+          const sourceText = token.text || ''
+          const displayText = token.translation || token.text || ''
+          const clickable = findVocabWordBySourceText(sourceText)
           return (
             <span
               key={i}
-              onClick={clickable ? (e) => { e.stopPropagation(); handleTokenClick(text) } : undefined}
+              onClick={clickable ? (e) => { e.stopPropagation(); handleTokenClick(sourceText) } : undefined}
               className={clickable
                 ? 'cursor-pointer rounded px-0.5 -mx-0.5 hover:bg-amber-100 hover:text-amber-800 transition-colors duration-150 border-b border-amber-300/50'
                 : ''
               }
             >
-              {text}
+              {displayText}
             </span>
           )
         })}
@@ -189,7 +167,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="flex items-center gap-2 px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <Languages className="w-4 h-4 text-stone-500" />
               <h3 className="text-sm font-semibold text-stone-700">{t.sentTranslation}</h3>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 ml-auto">
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                 {safeSentenceTranslations.length}
               </span>
             </div>
