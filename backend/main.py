@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
+from pydantic import BaseModel
 import os
 import json
 import random
@@ -9,7 +10,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import re
 
-from nvidia_api import NvidiaAPI
+from nvidia_api import NvidiaAPI, get_settings, update_settings
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG
 from storage import Storage
 
@@ -1779,6 +1780,50 @@ async def get_history():
         records = storage.load_history()
         records.sort(key=lambda x: x.get("created_at", ""), reverse=True)
         return {"records": records}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/settings")
+async def get_llm_settings():
+    try:
+        settings = get_settings()
+        masked_key = settings.get("api_key", "")
+        if masked_key and len(masked_key) > 8:
+            masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+        return {
+            "api_key": masked_key,
+            "base_url": settings.get("base_url", ""),
+            "model": settings.get("model", ""),
+            "has_key": bool(settings.get("api_key", ""))
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class SettingsUpdate(BaseModel):
+    api_key: Optional[str] = None
+    base_url: Optional[str] = None
+    model: Optional[str] = None
+
+
+@app.post("/api/settings")
+async def update_llm_settings(req: SettingsUpdate):
+    try:
+        current = get_settings()
+        api_key = req.api_key if req.api_key and not req.api_key.startswith("****") else None
+        base_url = req.base_url if req.base_url else None
+        model = req.model if req.model else None
+        new_settings = update_settings(api_key=api_key, base_url=base_url, model=model)
+        masked_key = new_settings.get("api_key", "")
+        if masked_key and len(masked_key) > 8:
+            masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+        return {
+            "api_key": masked_key,
+            "base_url": new_settings.get("base_url", ""),
+            "model": new_settings.get("model", ""),
+            "has_key": bool(new_settings.get("api_key", ""))
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

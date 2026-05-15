@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft } from 'lucide-react'
+import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 
@@ -16,6 +16,7 @@ import TranslationReconstructionStep from './components/TranslationReconstructio
 import AllUnitsStep from './components/AllUnitsStep'
 import VocabListStep from './components/VocabListStep'
 import HistorySidebar from './components/HistorySidebar'
+import SettingsModal from './components/SettingsModal'
 
 function App() {
   const [step, setStep] = useState('input')
@@ -36,6 +37,7 @@ function App() {
   const [skipPolling, setSkipPolling] = useState(false)
   const [learningData, setLearningData] = useState(null)
   const [showWordCard, setShowWordCard] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [selectedOption, setSelectedOption] = useState(null)
   const [isCorrect, setIsCorrect] = useState(null)
   const [units, setUnits] = useState([])
@@ -674,6 +676,14 @@ function App() {
                 </motion.button>
               )}
             </AnimatePresence>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowSettings(true)}
+              className="p-2.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
+            >
+              <Settings className="w-5 h-5" />
+            </motion.button>
           </div>
         </div>
       </header>
@@ -882,6 +892,7 @@ function App() {
           </div>
         )}
       </main>
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   )
 }
