@@ -86,33 +86,43 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [vocab])
 
   const renderOriginalSentence = (item) => {
+    const sentence = item.sentence || ''
     const tr = item.translation_result
     const tokens = (tr && tr.translation && Array.isArray(tr.translation)) ? tr.translation : null
 
     if (!tokens) {
-      return <div className="font-medium text-stone-800 mb-1.5">{item.sentence}</div>
+      return <div className="font-medium text-stone-800 mb-1.5">{sentence}</div>
     }
+
+    const vocabWords = tokens
+      .filter(t => typeof t === 'object' && t.text)
+      .map(t => t.text)
+
+    if (vocabWords.length === 0) {
+      return <div className="font-medium text-stone-800 mb-1.5">{sentence}</div>
+    }
+
+    const escapedWords = vocabWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const pattern = new RegExp(`(${escapedWords.join('|')})`, 'gi')
+    const parts = sentence.split(pattern)
 
     return (
       <div className="font-medium text-stone-800 mb-1.5 leading-relaxed">
-        {tokens.map((token, i) => {
-          if (typeof token === 'string') {
-            return <span key={i}>{token}</span>
+        {parts.map((part, i) => {
+          if (!part) return null
+          const clickable = findVocabWordBySourceText(part)
+          if (clickable) {
+            return (
+              <span
+                key={i}
+                onClick={(e) => { e.stopPropagation(); handleTokenClick(part) }}
+                className="cursor-pointer rounded px-0.5 -mx-0.5 hover:bg-amber-100 hover:text-amber-800 transition-colors duration-150 border-b border-amber-300/50"
+              >
+                {part}
+              </span>
+            )
           }
-          const sourceText = token.text || ''
-          const clickable = findVocabWordBySourceText(sourceText)
-          return (
-            <span
-              key={i}
-              onClick={clickable ? (e) => { e.stopPropagation(); handleTokenClick(sourceText) } : undefined}
-              className={clickable
-                ? 'cursor-pointer rounded px-0.5 -mx-0.5 hover:bg-amber-100 hover:text-amber-800 transition-colors duration-150 border-b border-amber-300/50'
-                : ''
-              }
-            >
-              {sourceText}
-            </span>
-          )
+          return <span key={i}>{part}</span>
         })}
       </div>
     )
