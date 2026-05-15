@@ -12,155 +12,113 @@ function WordDetail({ word, t }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-stone-200/80 rounded-2xl p-8 shadow-sm"
+      className="py-3"
     >
-      <div className="flex items-start justify-between mb-8">
+      <div className="flex items-start justify-between mb-3">
         <div>
-          <motion.h2 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-4xl font-semibold text-stone-800 mb-2"
+          <span className="text-2xl font-semibold text-stone-800">{word.word}</span>
+          {word.ipa && (
+            <span className="text-sm text-stone-500 ml-2 ipa-font">/{word.ipa}/</span>
+          )}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handlePlayAudio}
+            className="p-1 ml-1 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-full transition-colors inline-flex items-center"
           >
-            {word.word}
-          </motion.h2>
-          <div className="flex items-center gap-3">
-            {word.ipa && (
-              <motion.p 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-xl text-stone-500 ipa-font"
-              >
-                /{word.ipa}/
-              </motion.p>
-            )}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={handlePlayAudio}
-              className="p-2 text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-full transition-colors"
-            >
-              <Volume2 className={`w-5 h-5 ${isPlaying ? 'animate-pulse' : ''}`} />
-            </motion.button>
-          </div>
+            <Volume2 className={`w-3.5 h-3.5 ${isPlaying ? 'animate-pulse' : ''}`} />
+          </motion.button>
         </div>
         {word.morphology && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="px-4 py-2 bg-amber-50 text-stone-700 rounded-full text-sm font-medium"
-          >
+          <span className="px-2 py-0.5 bg-amber-50 text-stone-600 rounded text-xs font-medium">
             {word.morphology}
-          </motion.span>
+          </span>
         )}
       </div>
 
-
-
-      <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
-          <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Brain className="w-4 h-4" />
+      <div className="space-y-2.5">
+        <div>
+          <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+            <Brain className="w-3 h-3" />
             {t.definition}
           </h3>
-          <p className="text-lg text-stone-700 leading-relaxed">
+          <p className="text-sm text-stone-700 leading-snug">
             {word.meaning || word.context_meaning}
           </p>
-        </motion.div>
+        </div>
 
         {word.variants_detail && word.variants_detail.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
+          <div>
+            <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-1">
               {t.variants}
             </h3>
-            <div className="space-y-2">
+            <div className="flex flex-wrap gap-1.5">
               {word.variants_detail.map((variant, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <span className="px-2 py-1 bg-amber-50 text-stone-700 rounded text-sm font-medium">
+                <div key={index} className="flex items-center gap-1">
+                  <span className="px-1.5 py-0.5 bg-amber-50 text-stone-600 rounded text-xs font-medium">
                     {variant.type}
                   </span>
-                  <span className="text-stone-700">{variant.form}</span>
+                  <span className="text-stone-700 text-sm">{variant.form}</span>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {word.examples && word.examples.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-          >
-            <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
+          <div>
+            <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-1">
               {t.examples}
             </h3>
-            <div className="space-y-4">
+            <div className="space-y-1.5">
               {word.examples.map((example, index) => (
-                <div key={index} className="border-l-4 border-stone-200 pl-4">
-                  <p className="text-stone-800 mb-1">{example.sentence}</p>
-                  <p className="text-stone-600 text-sm">{example.translation}</p>
+                <div key={index} className="border-l-2 border-stone-200 pl-2.5">
+                  <p className="text-stone-800 text-sm leading-snug">{example.sentence}</p>
+                  <p className="text-stone-500 text-xs">{example.translation}</p>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {word.memory_hint && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
+          <div>
+            <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-1">
               {t.memoryHint}
             </h3>
-            <p className="text-lg text-stone-700 leading-relaxed bg-amber-50 p-4 rounded-lg border border-amber-200">
+            <p className="text-sm text-stone-700 leading-snug bg-amber-50 px-3 py-2 rounded border border-amber-200">
               {word.memory_hint}
             </p>
-          </motion.div>
+          </div>
         )}
 
         {word.context_sentences && word.context_sentences.length > 0 && (
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-            >
-                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
-                    {t.originalSent}
-                </h3>
-                <div className="space-y-4">
-                    {word.context_sentences.map((sentenceObj, index) => {
-                        let sentence = typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence;
-                        let translation = null;
-                        if (typeof sentenceObj === 'object' && sentenceObj.translation) {
-                            translation = sentenceObj.translation;
-                        } else if (word.context_translations && word.context_translations[index]) {
-                            translation = word.context_translations[index];
-                        }
-                        return (
-                            <div key={index} className="border-l-4 border-stone-200 pl-4 py-2">
-                                <p className="text-stone-800 mb-2 text-lg italic font-serif">{sentence}</p>
-                                {translation && (
-                                    <p className="text-stone-600 text-sm font-medium">{translation}</p>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-            </motion.div>
+          <div>
+            <h3 className="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-1">
+              {t.originalSent}
+            </h3>
+            <div className="space-y-1.5">
+              {word.context_sentences.map((sentenceObj, index) => {
+                let sentence = typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence;
+                let translation = null;
+                if (typeof sentenceObj === 'object' && sentenceObj.translation) {
+                  translation = sentenceObj.translation;
+                } else if (word.context_translations && word.context_translations[index]) {
+                  translation = word.context_translations[index];
+                }
+                return (
+                  <div key={index} className="border-l-2 border-stone-200 pl-2.5">
+                    <p className="text-stone-800 text-sm italic leading-snug">{sentence}</p>
+                    {translation && (
+                      <p className="text-stone-500 text-xs">{translation}</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
       </div>
     </motion.div>

@@ -69,7 +69,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           whileTap={{ scale: 0.95 }}
         >
           <ArrowLeft className="w-4 h-4" />
-          {t.backToVocab}
+          {t.back}
         </motion.button>
         <motion.button
           initial={{ opacity: 0, x: 10 }}
