@@ -205,7 +205,12 @@ function App() {
     setProgress(0)
     setProcessingInfo(null)
     setVocab([])
+    setDisplayVocab([])
     setSentenceTranslations([])
+    setSelectedWord(null)
+    setSelectedSentence(null)
+    setSelectedOption(null)
+    setIsCorrect(null)
     
     // 立即跳转到单词表页面，即使还没有收到响应
     setStep('dictionary')
@@ -676,14 +681,6 @@ function App() {
                 </motion.button>
               )}
             </AnimatePresence>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowSettings(true)}
-              className="p-2.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
-            >
-              <Settings className="w-5 h-5" />
-            </motion.button>
           </div>
         </div>
       </header>
@@ -692,7 +689,15 @@ function App() {
         {step === 'input' ? (
           <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} />
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 relative">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowSettings(true)}
+                className="absolute top-0 right-0 p-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors z-10"
+              >
+                <Settings className="w-5 h-5" />
+              </motion.button>
               <AnimatePresence mode="wait">
                 <InputStep
                   key="input"
