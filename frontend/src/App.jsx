@@ -719,6 +719,7 @@ function App() {
               onStartLearning={startLearningPhases}
               loading={loading}
               t={t}
+              currentFileId={currentFileId}
             />
           )}
           
