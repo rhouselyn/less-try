@@ -144,21 +144,10 @@ class TextProcessor:
         pass
 
     def extract_words(self, text: str, language: str) -> List[str]:
-        """从文本中提取单词并去重，排除标点符号"""
-        # 简单的单词提取，不使用正则表达式
-        words = []
-        current_word = ""
-        for char in text:
-            if char.isalpha():
-                current_word += char
-            else:
-                if current_word:
-                    words.append(current_word.lower())
-                current_word = ""
-        if current_word:
-            words.append(current_word.lower())
+        import re
+        words = re.findall(r"\b\w+(?:'\w+)?\b", text)
+        words = [w.lower() for w in words]
         
-        # 去重
         seen = set()
         unique_words = []
         for word in words:
@@ -275,11 +264,44 @@ class TextProcessor:
         # 返回处理后的结果，保留LLM生成的自然翻译
         return result
     
+    def validate_and_complete_translation(self, sentence: str, translation_result: dict, source_lang: str) -> dict:
+        if not isinstance(translation_result, dict) or 'translation' not in translation_result:
+            return translation_result
+        
+        original_words = self.tokenize_sentence(sentence)
+        
+        existing_tokens = []
+        if 'translation' in translation_result:
+            for token in translation_result['translation']:
+                if isinstance(token, dict) and 'text' in token:
+                    existing_tokens.append(token)
+        
+        existing_text_lower = [t['text'].lower() for t in existing_tokens]
+        
+        completed_translation = []
+        used_existing = set()
+        
+        for orig_word in original_words:
+            found = False
+            for i, token in enumerate(existing_tokens):
+                if i not in used_existing and token['text'].lower() == orig_word.lower():
+                    completed_translation.append(token)
+                    used_existing.add(i)
+                    found = True
+                    break
+            if not found:
+                completed_translation.append({
+                    'text': orig_word,
+                    'translation': '',
+                    'phonetic': '',
+                    'morphology': ''
+                })
+        
+        translation_result['translation'] = completed_translation
+        return translation_result
+
     def tokenize_sentence(self, sentence: str) -> List[str]:
-        """简单句子分词，按空格和标点分割，保留单词，正确处理缩写形式"""
-        # 保留单词和缩写形式，如 what's, don't 等
         import re
-        # 匹配单词和缩写形式
         words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
         return words
     

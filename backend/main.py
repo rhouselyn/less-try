@@ -142,6 +142,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 )
                 print(f"[DEBUG] 句子翻译完成")
                 
+                sentence_translation_result = text_processor.validate_and_complete_translation(
+                    sentence, sentence_translation_result, source_lang
+                )
+                
                 sentence_words = text_processor.extract_words(sentence, source_lang)
                 dict_entry_words = set()
                 if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
@@ -167,9 +171,33 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     if remaining_entries:
                         if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
                             if isinstance(sentence_translation_result["dictionary_entries"], list):
-                                sentence_translation_result["dictionary_entries"].extend(remaining_entries)
+                                existing_words_lower = {e.get("word", "").lower() for e in sentence_translation_result["dictionary_entries"] if isinstance(e, dict)}
+                                for entry in remaining_entries:
+                                    if isinstance(entry, dict) and "word" in entry:
+                                        if entry["word"].lower() not in existing_words_lower:
+                                            sentence_translation_result["dictionary_entries"].append(entry)
+                                            existing_words_lower.add(entry["word"].lower())
                             else:
                                 sentence_translation_result["dictionary_entries"] = remaining_entries
+                        
+                        if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
+                            translation_text_lower = []
+                            for token in sentence_translation_result["translation"]:
+                                if isinstance(token, dict) and "text" in token:
+                                    translation_text_lower.append(token["text"].lower())
+                            
+                            for entry in remaining_entries:
+                                if isinstance(entry, dict) and "word" in entry:
+                                    word = entry["word"]
+                                    if word.lower() not in translation_text_lower:
+                                        sentence_translation_result["translation"].append({
+                                            "text": word,
+                                            "translation": entry.get("translation", ""),
+                                            "phonetic": entry.get("ipa", ""),
+                                            "morphology": entry.get("morphology", "")
+                                        })
+                                        translation_text_lower.append(word.lower())
+                        
                         print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
                 
                 sentence_data = {
