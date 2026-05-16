@@ -647,9 +647,7 @@ async def get_random_word(file_id: str):
         if unit_id is not None:
             unit_plan = plan[unit_id]
             items = unit_plan.get("items", [])
-            unit_start_index, unit_end_index = get_unit_flat_range(plan, unit_id)
-            unit_total_items = len(items)
-            word_items_count = sum(1 for it in items if it["type"] == "word")
+            _, unit_end_index = get_unit_flat_range(plan, unit_id)
             
             if step_in_unit < len(items):
                 current_item = items[step_in_unit]
@@ -664,10 +662,7 @@ async def get_random_word(file_id: str):
                         "correct_translation": current_item.get("correct_translation", ""),
                         "correct_tokens": current_item.get("correct_tokens", []),
                         "tokens": tokens,
-                        "unit_end_index": unit_end_index,
-                        "unit_start_index": unit_start_index,
-                        "step_in_unit": step_in_unit,
-                        "unit_total_items": unit_total_items
+                        "unit_end_index": unit_end_index
                     }
                 
                 vocab_idx = current_item["vocab_index"]
@@ -1805,13 +1800,10 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     if isinstance(token, dict) and "text" in token:
                         translation_tokens.append(token["text"])
             
-            word_count = len(current_sentence.split())
-            needs_masked = word_count >= 3
-            
             exercise_index_in_unit = current_exercise_index - exercise_start
             total_exercises_in_unit = exercise_end - exercise_start
             
-            if needs_masked and type_idx < 3:
+            if type_idx < 3:
                 mask_seed = hash(current_sentence) + 1
                 masked_exercise = text_processor.generate_masked_sentence(
                     current_sentence,
