@@ -310,11 +310,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   <span className="text-[15px] font-semibold text-stone-800 tracking-tight">
                                     {word.word}
                                   </span>
-                                  {word.ipa && (
-                                    <span className="text-[12px] text-stone-400 ipa-font truncate">
-                                      {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
-                                    </span>
-                                  )}
                                 </div>
                                 <div className="flex items-center gap-2 mt-0.5">
                                   <span className="text-[13px] text-stone-500 truncate">
@@ -323,11 +318,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                 </div>
                               </div>
                               <div className="flex items-center gap-2 shrink-0">
-                                {word.morphology && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide">
-                                    {word.morphology}
-                                  </span>
-                                )}
                                 <motion.div
                                   animate={{ rotate: isExpanded ? 0 : -90 }}
                                   transition={{ duration: 0.15 }}
