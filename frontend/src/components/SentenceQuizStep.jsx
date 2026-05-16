@@ -1,11 +1,31 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X, BookOpen } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X, BookOpen, Volume2 } from 'lucide-react'
+
+function speakText(text) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-US'
+    utterance.rate = 0.9
+    window.speechSynthesis.speak(utterance)
+  }
+}
 
 function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
+
+  const autoSpeak = useCallback(() => {
+    if (quizData?.original_sentence) {
+      setTimeout(() => speakText(quizData.original_sentence), 300)
+    }
+  }, [quizData?.original_sentence])
+
+  useEffect(() => {
+    autoSpeak()
+  }, [autoSpeak])
 
   if (!quizData) {
     return (
@@ -98,14 +118,26 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           >
             {t.sentenceTranslationQuiz}
           </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-lg text-stone-700 mb-6"
-          >
-            {quizData.original_sentence}
-          </motion.p>
+          <div className="flex items-center justify-center gap-2">
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-lg text-stone-700 mb-6"
+            >
+              {quizData.original_sentence}
+            </motion.p>
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => { e.stopPropagation(); speakText(quizData.original_sentence) }}
+              className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors mb-6"
+            >
+              <Volume2 className="w-5 h-5" />
+            </motion.button>
+          </div>
         </div>
 
         <div className="mb-8">

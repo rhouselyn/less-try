@@ -1927,6 +1927,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 import random
                 distractors = []
                 original_lower_set = set(t.lower() for t in original_tokens)
+                max_distractors = 2
                 
                 for sent_data in eligible_sentences:
                     if sent_data is current_sentence_data:
@@ -1935,22 +1936,22 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                         for token in sent_data["translation_result"]["translation"]:
                             if isinstance(token, dict) and "text" in token:
                                 token_text = token["text"]
-                                if token_text.lower() not in original_lower_set and token_text not in distractors and len(distractors) < 4:
+                                if token_text.lower() not in original_lower_set and token_text not in distractors and len(distractors) < max_distractors:
                                     distractors.append(token_text)
                 
-                if len(distractors) < 4:
+                if len(distractors) < max_distractors:
                     vocab_words = [v["word"] for v in vocab]
                     random.shuffle(vocab_words)
                     for vw in vocab_words:
-                        if vw.lower() not in original_lower_set and vw not in distractors and len(distractors) < 4:
+                        if vw.lower() not in original_lower_set and vw not in distractors and len(distractors) < max_distractors:
                             distractors.append(vw)
                 
-                if len(distractors) < 4:
+                if len(distractors) < max_distractors:
                     backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
                     backup_distractors = list(backup_vocab_list)
                     random.shuffle(backup_distractors)
                     idx = 0
-                    while len(distractors) < 4:
+                    while len(distractors) < max_distractors:
                         bd = backup_distractors[idx % len(backup_distractors)]
                         if bd.lower() not in original_lower_set and bd not in distractors:
                             distractors.append(bd)

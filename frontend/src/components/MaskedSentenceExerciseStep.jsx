@@ -1,7 +1,17 @@
 
 import { motion } from 'framer-motion';
-import { ArrowLeft, Loader2, ChevronRight, BookOpen } from 'lucide-react';
+import { ArrowLeft, Loader2, ChevronRight, BookOpen, Lightbulb } from 'lucide-react';
 import { useState } from 'react';
+
+function speakText(text) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-US'
+    utterance.rate = 0.9
+    window.speechSynthesis.speak(utterance)
+  }
+}
 
 function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview }) {
   const [selectedWords, setSelectedWords] = useState([]);
@@ -93,7 +103,18 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
       </div>
 
       <div className="mb-8 p-6 bg-white border border-stone-200/80 rounded-2xl">
-        <p className="text-xl text-stone-800 mb-6">{data.masked_sentence}</p>
+        <div className="flex items-start gap-2 mb-6">
+          <p className="text-xl text-stone-800 flex-1">{data.masked_sentence}</p>
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''))}
+            className="p-1.5 text-stone-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors shrink-0"
+            title="点击发音"
+          >
+            <Lightbulb className="w-4 h-4" />
+          </motion.button>
+        </div>
 
         <div className="flex flex-wrap gap-3 mb-6">
           {data.answer_words.map((_, idx) => (

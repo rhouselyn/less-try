@@ -396,6 +396,8 @@ class TextProcessor:
         
         exclude_lower = set(answer_lower) | current_sentence_words_lower
         
+        max_distractors = 2
+        
         if all_sentences:
             for sent_data in all_sentences:
                 if "sentence" in sent_data and sent_data["sentence"] != sentence:
@@ -403,24 +405,23 @@ class TextProcessor:
                         for token in sent_data["translation_result"]["translation"]:
                             if isinstance(token, dict) and "text" in token:
                                 token_text = token["text"]
-                                if token_text.lower() not in exclude_lower and token_text not in distractors and len(distractors) < 3 * num_masks:
+                                if token_text.lower() not in exclude_lower and token_text not in distractors and len(distractors) < max_distractors:
                                     distractors.append(token_text)
         
-        if len(distractors) < 3 * num_masks:
+        if len(distractors) < max_distractors:
             vocab_words = [v["word"] for v in vocab]
             random.shuffle(vocab_words)
             for vw in vocab_words:
-                if vw.lower() not in exclude_lower and vw not in distractors and len(distractors) < 3 * num_masks:
+                if vw.lower() not in exclude_lower and vw not in distractors and len(distractors) < max_distractors:
                     distractors.append(vw)
         
-        if len(distractors) < 3 * num_masks:
-            fallback_needed = 3 * num_masks - len(distractors)
+        if len(distractors) < max_distractors:
+            fallback_needed = max_distractors - len(distractors)
             fallback_distractors = self.get_fallback_distractors(fallback_needed, list(exclude_lower) + distractors, source_lang)
             distractors.extend(fallback_distractors)
         
-        # 打乱干扰项
         random.shuffle(distractors)
-        options += distractors[:3 * num_masks]
+        options += distractors[:max_distractors]
         
         # 打乱所有选项
         random.shuffle(options)
