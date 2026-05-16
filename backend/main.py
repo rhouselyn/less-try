@@ -433,17 +433,25 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     vocab_pointer = 0
     
     while vocab_pointer < len(shuffled_indices):
-        unit_items = []
+        word_items = []
+        extra_items = []
         
-        while vocab_pointer < len(shuffled_indices) and len(unit_items) < max_items_per_unit:
+        while vocab_pointer < len(shuffled_indices) and len(word_items) + len(extra_items) < max_items_per_unit:
             vocab_idx = shuffled_indices[vocab_pointer]
             vocab_pointer += 1
             
-            unit_items.append({
+            word_items.append({
                 "type": "word",
                 "vocab_index": vocab_idx
             })
             all_learned_vocab_indices.add(vocab_idx)
+            
+            if len(word_items) >= 3:
+                listening_item = {
+                    "type": "listening_quiz",
+                    "vocab_index": vocab_idx
+                }
+                extra_items.append(listening_item)
             
             learned_words = [vocab[i] for i in all_learned_vocab_indices]
             
@@ -461,8 +469,8 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     continue
                 
                 already_in_unit = any(
-                    item["type"] == "sentence_quiz" and item["sentence"] == sentence
-                    for item in unit_items
+                    item["type"] == "sentence_quiz" and item.get("sentence") == sentence
+                    for item in extra_items
                 )
                 if already_in_unit:
                     continue
@@ -493,7 +501,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             break
                 
                 if sentence_covered:
-                    if len(unit_items) >= max_items_per_unit:
+                    if len(word_items) + len(extra_items) >= max_items_per_unit:
                         continue
                     
                     used_sentences.add(sentence)
@@ -536,13 +544,20 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     if not correct_translation.strip():
                         correct_translation = "".join(correct_tokens)
                     
-                    unit_items.append({
+                    extra_items.append({
                         "type": "sentence_quiz",
                         "sentence": sentence,
                         "correct_translation": correct_translation,
                         "correct_tokens": correct_tokens,
                         "tokens": all_tokens
                     })
+        
+        unit_items = list(word_items)
+        for extra in extra_items:
+            if len(unit_items) >= max_items_per_unit:
+                break
+            insert_pos = random.randint(1, len(unit_items))
+            unit_items.insert(insert_pos, extra)
         
         if unit_items:
             plan.append({
