@@ -25,9 +25,11 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
     setSelectedTokens(newSelected);
   };
 
+  const stripPunctuation = (str) => str.replace(/[，。、；：！？,.:;!?]/g, '')
+
   const checkAnswer = () => {
-    const userTokens = selectedTokens.map(t => t.token.toLowerCase());
-    const correctTokens = data.original_tokens.map(t => t.toLowerCase());
+    const userTokens = selectedTokens.map(t => stripPunctuation(t.token.toLowerCase()));
+    const correctTokens = data.original_tokens.map(t => stripPunctuation(t.toLowerCase()));
     
     const correct = userTokens.length === correctTokens.length &&
       userTokens.every((token, index) => token === correctTokens[index]);

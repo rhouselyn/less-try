@@ -470,12 +470,18 @@ class TextProcessor:
         next_type = [0] * num_sentences
         result = []
         remaining = sum(exercises_per_sentence_list)
+        last_sent = -1
         
         while remaining > 0:
             available = [i for i in range(num_sentences) if next_type[i] < exercises_per_sentence_list[i]]
-            sent_idx = random.choice(available)
+            if len(available) > 1 and last_sent in available:
+                preferred = [i for i in available if i != last_sent]
+                sent_idx = random.choice(preferred)
+            else:
+                sent_idx = random.choice(available)
             result.append([sent_idx, next_type[sent_idx]])
             next_type[sent_idx] += 1
+            last_sent = sent_idx
             remaining -= 1
         
         return result

@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Search, BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
+import { ArrowLeft, Search, BookOpen, ChevronDown, ChevronRight, Volume2 } from 'lucide-react'
 
 function VocabListStep({ vocab, onBack, loading, t }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -56,6 +56,17 @@ function VocabListStep({ vocab, onBack, loading, t }) {
   const letterIndex = useMemo(() => {
     return groupedVocab.map(([letter]) => letter)
   }, [groupedVocab])
+
+  const speakWord = useCallback((text, e) => {
+    if (e) e.stopPropagation()
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'en-US'
+      utterance.rate = 0.9
+      window.speechSynthesis.speak(utterance)
+    }
+  }, [])
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`vocab-group-${letter}`)
@@ -151,6 +162,7 @@ function VocabListStep({ vocab, onBack, loading, t }) {
                             onClick={() => handleWordClick(word)}
                             className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-colors group"
                           >
+                            <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors" onClick={(e) => speakWord(word.word, e)} />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-baseline gap-2.5">
                                 <span className="text-[15px] font-semibold text-stone-800 tracking-tight">
@@ -224,18 +236,6 @@ function VocabListStep({ vocab, onBack, loading, t }) {
                                                 <p className="text-[11px] text-stone-400 leading-snug mt-0.5">{ex.translation}</p>
                                               )}
                                             </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-                                    {word.options && word.options.length > 0 && (
-                                      <div>
-                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">易混淆</span>
-                                        <div className="flex flex-wrap gap-1.5 mt-1">
-                                          {word.options.filter(o => o !== (word.enriched_meaning || word.context_meaning || word.translation)).slice(0, 3).map((opt, i) => (
-                                            <span key={i} className="text-[11px] px-2 py-0.5 bg-stone-50 text-stone-500 rounded-md border border-stone-150">
-                                              {opt}
-                                            </span>
                                           ))}
                                         </div>
                                       </div>

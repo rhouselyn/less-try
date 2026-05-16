@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, ArrowUpDown, ChevronDown } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, ArrowUpDown, ChevronDown, Volume2 } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 
@@ -112,6 +112,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       }
     }, 300)
   }, [onSentenceClick])
+
+  const speakWord = useCallback((text, e) => {
+    if (e) e.stopPropagation()
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'en-US'
+      utterance.rate = 0.9
+      window.speechSynthesis.speak(utterance)
+    }
+  }, [])
 
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
@@ -240,8 +251,13 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         }`}
                         onClick={() => onSentenceClick(index)}
                       >
-                        {renderOriginalSentence(item)}
-                        {renderTranslation(item)}
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            {renderOriginalSentence(item)}
+                            {renderTranslation(item)}
+                          </div>
+                          <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 mt-1 transition-colors" onClick={(e) => speakWord(item.sentence || '', e)} />
+                        </div>
                       </motion.div>
                       {selectedSentence === index && (
                         <motion.div
@@ -320,6 +336,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               onClick={() => handleVocabWordClick(word)}
                               className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-colors group"
                             >
+                              <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors" onClick={(e) => speakWord(word.word, e)} />
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-baseline gap-2.5">
                                   <span className="text-[15px] font-semibold text-stone-800 tracking-tight">

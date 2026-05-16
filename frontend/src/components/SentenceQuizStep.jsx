@@ -37,9 +37,12 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
     setSelectedIndices([...selectedIndices.slice(0, pos), ...selectedIndices.slice(pos + 1)])
   }
 
+  const stripPunctuation = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
+
   const handleCheckAnswer = () => {
-    const userTokens = selectedIndices.map(i => quizData.tokens[i])
-    const isCorrectAnswer = JSON.stringify(userTokens) === JSON.stringify(quizData.correct_tokens)
+    const userTokens = selectedIndices.map(i => stripPunctuation(quizData.tokens[i]))
+    const correctTokens = quizData.correct_tokens.map(t => stripPunctuation(t))
+    const isCorrectAnswer = JSON.stringify(userTokens) === JSON.stringify(correctTokens)
     setIsCorrect(isCorrectAnswer)
     setIsChecked(true)
   }

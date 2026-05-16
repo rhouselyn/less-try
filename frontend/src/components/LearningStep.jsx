@@ -151,11 +151,25 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             </div>
 
             <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+              >
+                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                  <Brain className="w-4 h-4" />
+                  {t.definition}
+                </h3>
+                <p className="text-lg text-stone-700 leading-relaxed">
+                  {learningData.enriched_meaning || learningData.correct_meaning}
+                </p>
+              </motion.div>
+
               {learningData.context && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.15 }}
+                  transition={{ delay: 0.2 }}
                 >
                   <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
                     {t.context}
@@ -166,25 +180,17 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 </motion.div>
               )}
 
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                  <Brain className="w-4 h-4" />
-                  {t.definition}
-                </h3>
-                <p className="text-lg text-stone-700 leading-relaxed mb-4">
-                  {learningData.enriched_meaning || learningData.correct_meaning}
-                </p>
-                {learningData.context_meaning && learningData.context_meaning !== learningData.enriched_meaning && (
-                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
-                    <h4 className="text-sm font-medium text-amber-800 mb-2">上下文释义</h4>
-                    <p className="text-stone-700">{learningData.context_meaning}</p>
-                  </div>
-                )}
-              </motion.div>
+              {learningData.context_meaning && learningData.context_meaning !== learningData.enriched_meaning && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="bg-amber-50 p-4 rounded-lg border border-amber-200"
+                >
+                  <h4 className="text-sm font-medium text-amber-800 mb-2">上下文释义</h4>
+                  <p className="text-stone-700">{learningData.context_meaning}</p>
+                </motion.div>
+              )}
 
               {learningData.variants_detail && learningData.variants_detail.length > 0 && (
                 <motion.div

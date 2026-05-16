@@ -424,21 +424,21 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     random.shuffle(shuffled_indices)
     storage.save_shuffled_order(file_id, shuffled_indices)
     
-    unit_size = 10
-    num_units = max(1, (len(vocab) + unit_size - 1) // unit_size)
+    max_items_per_unit = 10
     
     plan = []
     all_learned_vocab_indices = set()
     used_sentences = set()
     
-    for unit_id in range(num_units):
-        unit_start = unit_id * unit_size
-        unit_end = min(unit_start + unit_size, len(vocab))
-        unit_shuffled = shuffled_indices[unit_start:unit_end]
-        
+    vocab_pointer = 0
+    
+    while vocab_pointer < len(shuffled_indices):
         unit_items = []
         
-        for step_idx, vocab_idx in enumerate(unit_shuffled):
+        while vocab_pointer < len(shuffled_indices) and len(unit_items) < max_items_per_unit:
+            vocab_idx = shuffled_indices[vocab_pointer]
+            vocab_pointer += 1
+            
             unit_items.append({
                 "type": "word",
                 "vocab_index": vocab_idx
@@ -493,6 +493,9 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             break
                 
                 if sentence_covered:
+                    if len(unit_items) >= max_items_per_unit:
+                        continue
+                    
                     used_sentences.add(sentence)
                     
                     raw_translation = tr.get("tokenized_translation", "")
@@ -541,10 +544,11 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         "tokens": all_tokens
                     })
         
-        plan.append({
-            "unit_id": unit_id,
-            "items": unit_items
-        })
+        if unit_items:
+            plan.append({
+                "unit_id": len(plan),
+                "items": unit_items
+            })
     
     storage.save_learning_plan(file_id, plan)
 
@@ -697,6 +701,39 @@ async def get_random_word(file_id: str):
             # 启动后台任务预生成下一个单词
             asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
             
+            context_sents = cached_word.get("context_sentences", [])
+            needs_rebuild = False
+            for cs in context_sents:
+                if isinstance(cs, dict) and "sentence_index" not in cs:
+                    needs_rebuild = True
+                    break
+                if isinstance(cs, str):
+                    needs_rebuild = True
+                    break
+            
+            if needs_rebuild or not context_sents:
+                all_sentences = storage.load_pipeline_data(file_id)
+                if all_sentences:
+                    import re as re_mod
+                    word_pattern = re_mod.compile(r'\b' + re_mod.escape(word) + r'\b', re_mod.IGNORECASE)
+                    rebuilt = []
+                    for sent_idx, sentence_data in enumerate(all_sentences):
+                        if "sentence" in sentence_data:
+                            if word_pattern.search(sentence_data["sentence"]):
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                rebuilt.append({
+                                    "sentence": sentence_data["sentence"],
+                                    "translation": translation,
+                                    "sentence_index": sent_idx
+                                })
+                                if len(rebuilt) >= 2:
+                                    break
+                    context_sents = rebuilt
+                    cached_word["context_sentences"] = rebuilt
+                    storage.save_word_cache(file_id, word, cached_word)
+            
             return {
                 "word": cached_word.get("word", word),
                 "ipa": cached_word.get("ipa", ""),
@@ -704,7 +741,7 @@ async def get_random_word(file_id: str):
                 "options": options,
                 "correct_index": correct_index,
                 "context": cached_word.get("context", ""),
-                "context_sentences": cached_word.get("context_sentences", []),
+                "context_sentences": context_sents,
                 "variants_detail": cached_word.get("variants_detail", []),
                 "examples": cached_word.get("examples", []),
                 "memory_hint": cached_word.get("memory_hint", ""),
@@ -724,7 +761,7 @@ async def get_random_word(file_id: str):
         if sentences:
             import re
             word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
-            for sentence_data in sentences:
+            for sent_idx, sentence_data in enumerate(sentences):
                 if "sentence" in sentence_data:
                     if word_pattern.search(sentence_data["sentence"]):
                         context = sentence_data["sentence"]
@@ -733,9 +770,11 @@ async def get_random_word(file_id: str):
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
                         context_sentences.append({
                             "sentence": sentence_data["sentence"],
-                            "translation": translation
+                            "translation": translation,
+                            "sentence_index": sent_idx
                         })
-                        break
+                        if len(context_sentences) >= 2:
+                            break
             if not context and sentences:
                 context = sentences[0].get("sentence", "")
         
@@ -936,7 +975,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         if sentences:
             import re
             word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
-            for sentence_data in sentences:
+            for sent_idx, sentence_data in enumerate(sentences):
                 if "sentence" in sentence_data:
                     if word_pattern.search(sentence_data["sentence"]):
                         context = sentence_data["sentence"]
@@ -945,9 +984,11 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
                         context_sentences.append({
                             "sentence": sentence_data["sentence"],
-                            "translation": translation
+                            "translation": translation,
+                            "sentence_index": sent_idx
                         })
-                        break
+                        if len(context_sentences) >= 2:
+                            break
             if not context and sentences:
                 context = sentences[0].get("sentence", "")
         
@@ -1005,7 +1046,6 @@ async def get_word_details(file_id: str, word: str):
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
-            # 如果有 multiple_choice 但没有 options，需要从其中提取
             if "multiple_choice" in cached_word and "options" not in cached_word:
                 options = []
                 correct_index = 0
@@ -1017,6 +1057,39 @@ async def get_word_details(file_id: str, word: str):
                     cached_word["options"] = options
                     cached_word["correct_index"] = correct_index
                     print(f"[DEBUG] 从 multiple_choice 提取 options: {options}")
+            
+            context_sents = cached_word.get("context_sentences", [])
+            needs_rebuild = False
+            for cs in context_sents:
+                if isinstance(cs, dict) and "sentence_index" not in cs:
+                    needs_rebuild = True
+                    break
+                if isinstance(cs, str):
+                    needs_rebuild = True
+                    break
+            
+            if needs_rebuild or not context_sents:
+                sentences = storage.load_pipeline_data(file_id)
+                if sentences:
+                    import re as re_mod
+                    word_pattern = re_mod.compile(r'\b' + re_mod.escape(word) + r'\b', re_mod.IGNORECASE)
+                    rebuilt = []
+                    for sent_idx, sentence_data in enumerate(sentences):
+                        if "sentence" in sentence_data:
+                            if word_pattern.search(sentence_data["sentence"]):
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                rebuilt.append({
+                                    "sentence": sentence_data["sentence"],
+                                    "translation": translation,
+                                    "sentence_index": sent_idx
+                                })
+                                if len(rebuilt) >= 3:
+                                    break
+                    cached_word["context_sentences"] = rebuilt
+                    storage.save_word_cache(file_id, word, cached_word)
+            
             return cached_word
 
         vocab = storage.load_vocab(file_id)
@@ -1058,6 +1131,8 @@ async def get_word_details(file_id: str, word: str):
                             "translation": translation,
                             "sentence_index": sent_idx
                         })
+                        if len(context_sentences_with_translations) >= 3:
+                            break
             
             if context_sentences:
                 context = context_sentences[0]
