@@ -4,6 +4,47 @@ import requests
 import asyncio
 from typing import List, Dict, Any
 
+
+def _repair_truncated_json(json_str):
+    if not json_str or not isinstance(json_str, str):
+        return []
+    try:
+        return json.loads(json_str)
+    except (json.JSONDecodeError, TypeError):
+        pass
+    
+    try:
+        if json_str.strip().startswith('['):
+            depth = 0
+            last_valid_end = -1
+            for i, c in enumerate(json_str):
+                if c == '[':
+                    depth += 1
+                elif c == ']':
+                    depth -= 1
+                    if depth == 0:
+                        last_valid_end = i
+                        break
+            
+            if last_valid_end > 0:
+                repaired = json_str[:last_valid_end + 1]
+                return json.loads(repaired)
+            
+            brace_depth = 0
+            for i in range(len(json_str) - 1, -1, -1):
+                if json_str[i] == '}':
+                    brace_depth += 1
+                elif json_str[i] == '{':
+                    brace_depth -= 1
+                    if brace_depth == 0:
+                        repaired = json_str[:i + 1] + ']'
+                        return json.loads(repaired)
+    except (json.JSONDecodeError, TypeError):
+        pass
+    
+    return []
+
+
 CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "llm_settings.json")
 
@@ -71,13 +112,13 @@ class NvidiaAPI:
                 result["choices"][0]["message"] = message
         return result
 
-    async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0):
+    async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         self.reload()
         payload = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 4096,
+            "max_tokens": max_tokens,
             "thinking": {"type": "disabled"}
         }
         
@@ -220,7 +261,7 @@ class NvidiaAPI:
 
         messages = [{"role": "user", "content": prompt}]
         
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
+        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)
         
         try:
             for choice in response["choices"]:
@@ -452,20 +493,23 @@ TEXT_CONTENT
 
         messages = [{"role": "user", "content": prompt}]
         
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
-        
+        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)        
         try:
-            print("=== LLM Tool JSON Response (Merged) ===")
-            print(json.dumps(response, indent=2, ensure_ascii=False))
-            print("======================")
-            
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    print("=== Parsed Tool Arguments (Merged) ===")
-                    print(json.dumps(args, indent=2, ensure_ascii=False))
-                    print("======================")
+                    if "dictionary_entries" in args:
+                        de = args["dictionary_entries"]
+                        if isinstance(de, str):
+                            repaired = _repair_truncated_json(de)
+                            args["dictionary_entries"] = repaired
+                            print(f"[DEBUG] process_text_with_dictionary: repaired dictionary_entries from string, got {len(repaired)} entries")
+                        elif isinstance(de, list) and de and not isinstance(de[0], dict):
+                            args["dictionary_entries"] = []
+                    if "translation" in args and isinstance(args["translation"], str):
+                        repaired_tr = _repair_truncated_json(args["translation"])
+                        args["translation"] = repaired_tr if isinstance(repaired_tr, list) else []
                     return args
             return {}
         except Exception as e:
@@ -563,14 +607,21 @@ TEXT_CONTENT
 
         messages = [{"role": "user", "content": prompt}]
         
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
+        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)
         
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    return args.get("dictionary_entries", [])
+                    entries = args.get("dictionary_entries", [])
+                    if isinstance(entries, str):
+                        entries = _repair_truncated_json(entries)
+                    if not isinstance(entries, list):
+                        entries = []
+                    valid_entries = [e for e in entries if isinstance(e, dict) and "word" in e]
+                    print(f"[DEBUG] process_remaining_words returned {len(valid_entries)} valid entries")
+                    return valid_entries
             return []
         except Exception as e:
             print(f"Process remaining words failed: {e}")

@@ -156,6 +156,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                             sentence_translation_result["dictionary_entries"] = dict_entries
                         except:
                             dict_entries = []
+                            sentence_translation_result["dictionary_entries"] = []
                     if isinstance(dict_entries, list):
                         for entry in dict_entries:
                             if isinstance(entry, dict) and "word" in entry:
@@ -169,7 +170,20 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                         missing_words, source_lang, target_lang, sentence
                     )
                     if remaining_entries:
-                        if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
+                        if isinstance(sentence_translation_result, dict):
+                            if "dictionary_entries" not in sentence_translation_result:
+                                sentence_translation_result["dictionary_entries"] = []
+                            
+                            if not isinstance(sentence_translation_result["dictionary_entries"], list):
+                                try:
+                                    parsed = json.loads(sentence_translation_result["dictionary_entries"])
+                                    if isinstance(parsed, list):
+                                        sentence_translation_result["dictionary_entries"] = parsed
+                                    else:
+                                        sentence_translation_result["dictionary_entries"] = []
+                                except:
+                                    sentence_translation_result["dictionary_entries"] = []
+                            
                             if isinstance(sentence_translation_result["dictionary_entries"], list):
                                 existing_words_lower = {e.get("word", "").lower() for e in sentence_translation_result["dictionary_entries"] if isinstance(e, dict)}
                                 for entry in remaining_entries:
@@ -177,8 +191,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                         if entry["word"].lower() not in existing_words_lower:
                                             sentence_translation_result["dictionary_entries"].append(entry)
                                             existing_words_lower.add(entry["word"].lower())
-                            else:
-                                sentence_translation_result["dictionary_entries"] = remaining_entries
                         
                         if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
                             translation_text_lower = []
