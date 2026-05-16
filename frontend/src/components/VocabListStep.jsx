@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Search, BookOpen, Volume2 } from 'lucide-react'
 
-function VocabListStep({ vocab, onBack, loading, t }) {
+function VocabListStep({ vocab, onBack, loading, t, onWordClick }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedWord, setExpandedWord] = useState(null)
   const listRef = useRef(null)
@@ -26,12 +26,13 @@ function VocabListStep({ vocab, onBack, loading, t }) {
     const wordKey = word.word
     if (expandedWord === wordKey) {
       setExpandedWord(null)
+      if (onWordClick) onWordClick(word)
       return
     }
     setExpandedWord(wordKey)
     scrollToWord(wordKey, 100)
     scrollToWord(wordKey, 300)
-  }, [expandedWord, scrollToWord])
+  }, [expandedWord, scrollToWord, onWordClick])
 
   const filteredVocab = useMemo(() => {
     if (!searchQuery.trim()) return vocab

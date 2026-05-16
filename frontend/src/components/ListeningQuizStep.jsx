@@ -26,7 +26,7 @@ function speakText(text, sourceLang = 'en') {
 }
 
 function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang }) {
-  const [selectedOption, setSelectedOption] = useState(null)
+  const [selectedWords, setSelectedWords] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
@@ -57,21 +57,31 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
 
   const stepInUnit = (quizData.step_in_unit ?? 0) + 1
   const totalItemsInUnit = quizData.total_items_in_unit ?? 0
+  const correctWords = quizData.correct_words || []
+  const options = quizData.options || []
 
-  const handleOptionSelect = (index) => {
+  const handleWordSelect = (word, index) => {
     if (isChecked) return
-    setSelectedOption(index)
+    setSelectedWords([...selectedWords, { word, index }])
   }
 
-  const handleCheckAnswer = () => {
-    if (selectedOption === null) return
-    const correct = selectedOption === quizData.correct_index
+  const handleRemoveWord = (pos) => {
+    if (isChecked) return
+    const newSelected = [...selectedWords]
+    newSelected.splice(pos, 1)
+    setSelectedWords(newSelected)
+  }
+
+  const checkAnswer = () => {
+    const userWords = selectedWords.map(w => w.word.toLowerCase())
+    const correct = userWords.length === correctWords.length &&
+      userWords.every((w, i) => w === correctWords[i].toLowerCase())
     setIsCorrect(correct)
     setIsChecked(true)
   }
 
   const handleNextQuestion = () => {
-    setSelectedOption(null)
+    setSelectedWords([])
     setIsChecked(false)
     setIsCorrect(false)
     onNextQuestion()
@@ -128,124 +138,115 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
           <motion.h2
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="text-2xl font-semibold text-stone-800 mb-6"
+            className="text-2xl font-semibold text-stone-800 mb-4"
           >
-            听一听，选出你听到的句子
+            听一听，选出听到的单词
           </motion.h2>
-
-          <motion.button
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => speakText(quizData.original_sentence, sourceLang)}
-            className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-amber-200 hover:shadow-xl hover:shadow-amber-300 transition-shadow"
-          >
-            <Volume2 className="w-10 h-10" />
-          </motion.button>
-          <p className="text-sm text-stone-400 mt-3">点击播放</p>
+          <div className="flex items-center justify-center gap-2">
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => speakText(quizData.original_sentence, sourceLang)}
+              className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
+            >
+              <Volume2 className="w-6 h-6" />
+            </motion.button>
+            <span className="text-sm text-stone-400">点击播放</span>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          {quizData.options.map((option, index) => (
-            <motion.button
-              key={index}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.08 }}
-              whileHover={!isChecked ? { scale: 1.01 } : {}}
-              whileTap={!isChecked ? { scale: 0.99 } : {}}
-              onClick={() => handleOptionSelect(index)}
-              disabled={isChecked}
-              className={`w-full py-4 px-6 text-left rounded-xl transition-all border ${
-                isChecked
-                  ? index === quizData.correct_index
-                    ? 'bg-green-50 border-green-300 text-green-800'
-                    : selectedOption === index
-                    ? 'bg-red-50 border-red-300 text-red-800'
-                    : 'bg-white border-stone-200/60 text-stone-400'
-                  : selectedOption === index
-                  ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-sm'
-                  : 'bg-white border-stone-200/80 text-stone-700 hover:bg-stone-50 hover:border-stone-300'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm font-medium shrink-0 ${
-                  isChecked
-                    ? index === quizData.correct_index
-                      ? 'bg-green-200 text-green-700'
-                      : selectedOption === index
-                      ? 'bg-red-200 text-red-700'
-                      : 'bg-stone-100 text-stone-400'
-                    : selectedOption === index
-                    ? 'bg-amber-200 text-amber-700'
-                    : 'bg-stone-100 text-stone-500'
-                }`}>
-                  {isChecked && index === quizData.correct_index ? (
-                    <CheckCircle2 className="w-4 h-4" />
-                  ) : isChecked && selectedOption === index ? (
-                    <XCircle className="w-4 h-4" />
-                  ) : (
-                    String.fromCharCode(65 + index)
-                  )}
-                </div>
-                <span className="text-base leading-relaxed">{option}</span>
-              </div>
-            </motion.button>
-          ))}
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">
+            你的答案
+          </h3>
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-lg min-h-16 flex flex-wrap gap-2 items-center bg-stone-50">
+            <AnimatePresence>
+              {selectedWords.map((item, pos) => (
+                <motion.div
+                  key={`sel-${item.index}-${pos}`}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0 }}
+                  whileHover={{ scale: 1.05 }}
+                  className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer ${
+                    isChecked
+                      ? isCorrect
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : 'bg-red-100 text-red-800 border border-red-300'
+                      : 'bg-stone-800 text-white'
+                  }`}
+                  onClick={() => handleRemoveWord(pos)}
+                >
+                  {item.word}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {selectedWords.length === 0 && (
+              <span className="italic text-stone-400 text-sm">按顺序点击下方单词组成句子</span>
+            )}
+          </div>
+        </div>
+
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">
+            选择单词
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            {options.map((word, index) => {
+              const isSelected = selectedWords.some(w => w.index === index)
+              return (
+                <motion.button
+                  key={`opt-${index}`}
+                  whileHover={!isChecked && !isSelected ? { scale: 1.05 } : {}}
+                  whileTap={!isChecked && !isSelected ? { scale: 0.95 } : {}}
+                  onClick={() => handleWordSelect(word, index)}
+                  disabled={isSelected || isChecked}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    isSelected || isChecked
+                      ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+                      : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
+                  }`}
+                >
+                  {word}
+                </motion.button>
+              )
+            })}
+          </div>
         </div>
 
         {isChecked && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className={`mt-6 p-5 rounded-xl ${isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}
+            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 mb-2">
               {isCorrect ? (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 10 }}
-                >
-                  <CheckCircle2 className="w-6 h-6 text-green-600" />
-                </motion.div>
+                <CheckCircle2 className="w-6 h-6 text-green-600" />
               ) : (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 10 }}
-                >
-                  <XCircle className="w-6 h-6 text-red-600" />
-                </motion.div>
+                <XCircle className="w-6 h-6 text-red-600" />
               )}
               <span className={`font-semibold text-lg ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
                 {isCorrect ? t.correct : t.incorrect}
               </span>
             </div>
             {!isCorrect && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.2 }}
-                className="mt-2 text-stone-700 font-medium"
-              >
-                正确答案：{quizData.options[quizData.correct_index]}
-              </motion.p>
+              <p className="text-stone-700 font-medium">
+                正确答案：{correctWords.join(' ')}
+              </p>
             )}
           </motion.div>
         )}
 
-        <div className="mt-6 flex gap-4">
+        <div className="flex gap-4">
           {!isChecked ? (
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
-              onClick={handleCheckAnswer}
-              disabled={selectedOption === null}
+              onClick={checkAnswer}
+              disabled={selectedWords.length === 0}
               className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {t.checkAnswer}

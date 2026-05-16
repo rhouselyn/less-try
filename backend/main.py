@@ -558,7 +558,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
         
         final_items = list(unit_word_items)
         for quiz in unit_quiz_items:
-            insert_pos = random.randint(1, max(1, len(final_items)))
+            insert_pos = random.randint(len(unit_word_items), max(len(unit_word_items), len(final_items)))
             final_items.insert(insert_pos, quiz)
         
         if final_items:
@@ -694,15 +694,25 @@ async def get_random_word(file_id: str):
                 if current_item["type"] == "listening_quiz":
                     import random as rnd
                     correct_sentence = current_item["sentence"]
+                    correct_words = correct_sentence.split()
                     distractors = list(current_item.get("distractor_sentences", []))
-                    options = [correct_sentence] + distractors
+                    distractor_words = []
+                    for ds in distractors:
+                        for w in ds.split():
+                            w_clean = w.strip()
+                            if w_clean and w_clean not in correct_words and w_clean not in distractor_words:
+                                distractor_words.append(w_clean)
+                                if len(distractor_words) >= 2:
+                                    break
+                        if len(distractor_words) >= 2:
+                            break
+                    options = correct_words + distractor_words[:2]
                     rnd.shuffle(options)
-                    correct_index = options.index(correct_sentence)
                     return {
                         "type": "listening_quiz",
                         "original_sentence": correct_sentence,
+                        "correct_words": correct_words,
                         "options": options,
-                        "correct_index": correct_index,
                         "unit_end_index": unit_end_index,
                         "current_index": current_index,
                         "unit_start_index": unit_start_index,
@@ -951,18 +961,28 @@ async def next_word(file_id: str):
                 if next_item["type"] == "listening_quiz":
                     import random as rnd
                     correct_sentence = next_item["sentence"]
+                    correct_words = correct_sentence.split()
                     distractors = list(next_item.get("distractor_sentences", []))
-                    options = [correct_sentence] + distractors
+                    distractor_words = []
+                    for ds in distractors:
+                        for w in ds.split():
+                            w_clean = w.strip()
+                            if w_clean and w_clean not in correct_words and w_clean not in distractor_words:
+                                distractor_words.append(w_clean)
+                                if len(distractor_words) >= 2:
+                                    break
+                        if len(distractor_words) >= 2:
+                            break
+                    options = correct_words + distractor_words[:2]
                     rnd.shuffle(options)
-                    correct_index = options.index(correct_sentence)
                     return {
                         "success": True,
                         "new_index": new_index,
                         "unit_end_index": unit_end_index,
                         "listening_quiz": {
                             "original_sentence": correct_sentence,
-                            "options": options,
-                            "correct_index": correct_index
+                            "correct_words": correct_words,
+                            "options": options
                         }
                     }
             

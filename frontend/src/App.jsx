@@ -48,7 +48,11 @@ function App() {
   const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
   const [quizData, setQuizData] = useState(null)
   const [listeningQuizData, setListeningQuizData] = useState(null)
-  const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
+  const [learningMode, setLearningMode] = useState('word')
+  const [unitErrorCount, setUnitErrorCount] = useState(0)
+  const [wrongItems, setWrongItems] = useState([])
+  const [reviewMode, setReviewMode] = useState(false)
+  const [reviewIndex, setReviewIndex] = useState(0) // 'word' or 'sentence'
   
   // New states for phases
   const [phases, setPhases] = useState([])
@@ -324,6 +328,11 @@ function App() {
   const handlePhase1UnitClick = async (unitId) => {
     if (!currentFileId) return
     
+    setUnitErrorCount(0)
+    setWrongItems([])
+    setReviewMode(false)
+    setReviewIndex(0)
+    
     setLoading(true)
     try {
       const unit = phase1Units[unitId]
@@ -525,6 +534,40 @@ function App() {
     setIsCorrect(isCorrectAnswer)
     if (isCorrectAnswer) {
       setShowWordCard(true)
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+      }
+    } else {
+      setUnitErrorCount(prev => prev + 1)
+      if (!reviewMode) {
+        setWrongItems(prev => [...prev, { type: 'word', data: learningData }])
+      }
+    }
+  }
+
+  const goToNextReviewItem = () => {
+    const remaining = wrongItems.filter((_, i) => i !== reviewIndex || false)
+    if (remaining.length === 0) {
+      setReviewMode(false)
+      setReviewIndex(0)
+      setStep('unit-complete')
+      return
+    }
+    const nextItem = remaining[0]
+    setWrongItems(remaining)
+    setReviewIndex(0)
+    if (nextItem?.type === 'word') {
+      setLearningData(nextItem.data)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setStep('learning')
+    } else if (nextItem?.type === 'sentence_quiz') {
+      setQuizData(nextItem.data)
+      setStep('sentence-quiz')
+    } else if (nextItem?.type === 'listening_quiz') {
+      setListeningQuizData(nextItem.data)
+      setStep('listening-quiz')
     }
   }
 
@@ -670,6 +713,11 @@ function App() {
   }
 
   const handleNextSentenceQuiz = async () => {
+    if (reviewMode) {
+      goToNextReviewItem()
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       await getNextWord()
@@ -799,7 +847,7 @@ function App() {
               selectedOption={selectedOption}
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
-              onNextWord={getNextWord}
+              onNextWord={reviewMode ? goToNextReviewItem : getNextWord}
               onBack={() => setStep('all-units')}
               onOpenVocabList={handleOpenVocabList}
               loading={loading}
@@ -850,7 +898,33 @@ function App() {
               unitNumber={completedUnitId || 0}
               totalUnits={phase1Units.length || 1}
               phase={completedPhase}
-              onContinue={() => setStep('all-units')}
+              onContinue={() => {
+                setUnitErrorCount(0)
+                setWrongItems([])
+                setReviewMode(false)
+                setReviewIndex(0)
+                setStep('all-units')
+              }}
+              onReview={() => {
+                setReviewMode(true)
+                setReviewIndex(0)
+                const firstWrong = wrongItems[0]
+                if (firstWrong?.type === 'word') {
+                  setLearningData(firstWrong.data)
+                  setShowWordCard(false)
+                  setSelectedOption(null)
+                  setIsCorrect(null)
+                  setStep('learning')
+                } else if (firstWrong?.type === 'sentence_quiz') {
+                  setQuizData(firstWrong.data)
+                  setStep('sentence-quiz')
+                } else if (firstWrong?.type === 'listening_quiz') {
+                  setListeningQuizData(firstWrong.data)
+                  setStep('listening-quiz')
+                }
+              }}
+              errorCount={unitErrorCount}
+              hasWrongItems={wrongItems.length > 0}
               t={t}
             />
           )}
@@ -960,6 +1034,7 @@ function App() {
               key="vocab-list"
               vocab={vocab}
               onBack={() => setStep(previousStep || 'all-units')}
+              onWordClick={() => setStep(previousStep || 'all-units')}
               loading={loading}
               t={t}
             />
