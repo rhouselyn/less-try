@@ -8,8 +8,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
-  const currentMask = (maskVersion ?? 0) + 1;
-  const totalMaskCount = totalMasks ?? 3;
   const currentQ = (exerciseIndexInUnit ?? 0) + 1;
   const totalQ = totalExercisesInUnit ?? 10;
 
@@ -91,18 +89,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         <p className="text-lg text-stone-600">{t.fillBlanks}</p>
         <div className="mt-2 flex items-center justify-center gap-3">
           <span className="text-sm text-stone-500">第 {currentQ}/{totalQ} 题</span>
-          <span className="text-stone-300">|</span>
-          <div className="flex items-center gap-1">
-            {Array.from({ length: totalMaskCount }, (_, i) => (
-              <div
-                key={i}
-                className={`w-2 h-2 rounded-full ${
-                  i < currentMask ? 'bg-stone-800' : 'bg-stone-200'
-                }`}
-              />
-            ))}
-            <span className="text-xs text-stone-400 ml-1">选词 {currentMask}/{totalMaskCount}</span>
-          </div>
         </div>
       </div>
 

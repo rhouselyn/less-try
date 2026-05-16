@@ -4,6 +4,47 @@ import requests
 import asyncio
 from typing import List, Dict, Any
 
+
+def _repair_truncated_json(json_str):
+    if not json_str or not isinstance(json_str, str):
+        return []
+    try:
+        return json.loads(json_str)
+    except (json.JSONDecodeError, TypeError):
+        pass
+    
+    try:
+        if json_str.strip().startswith('['):
+            depth = 0
+            last_valid_end = -1
+            for i, c in enumerate(json_str):
+                if c == '[':
+                    depth += 1
+                elif c == ']':
+                    depth -= 1
+                    if depth == 0:
+                        last_valid_end = i
+                        break
+            
+            if last_valid_end > 0:
+                repaired = json_str[:last_valid_end + 1]
+                return json.loads(repaired)
+            
+            brace_depth = 0
+            for i in range(len(json_str) - 1, -1, -1):
+                if json_str[i] == '}':
+                    brace_depth += 1
+                elif json_str[i] == '{':
+                    brace_depth -= 1
+                    if brace_depth == 0:
+                        repaired = json_str[:i + 1] + ']'
+                        return json.loads(repaired)
+    except (json.JSONDecodeError, TypeError):
+        pass
+    
+    return []
+
+
 CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
 CONFIG_FILE = os.path.join(CONFIG_DIR, "llm_settings.json")
 
@@ -71,13 +112,13 @@ class NvidiaAPI:
                 result["choices"][0]["message"] = message
         return result
 
-    async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0):
+    async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         self.reload()
         payload = {
             "model": self.model,
             "messages": messages,
             "temperature": temperature,
-            "max_tokens": 4096,
+            "max_tokens": max_tokens,
             "thinking": {"type": "disabled"}
         }
         
@@ -220,7 +261,7 @@ class NvidiaAPI:
 
         messages = [{"role": "user", "content": prompt}]
         
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
+        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)
         
         try:
             for choice in response["choices"]:
@@ -306,6 +347,11 @@ class NvidiaAPI:
                             "type": "string",
                             "description": "完整自然的 TARGET_LANG 翻译，正常句子格式"
                         },
+                        "translation_phrases": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "将 tokenized_translation 尽可能拆分为单个词作为独立片段，用于翻译排序练习。【拆分原则】1.优先拆成单个词（如'每天早上'应拆为'每天'和'早上'）；2.只有当几个词必须连在一起才有完整意思时才合并（如'跑得很快'中'跑得很快'是一个完整结构不可拆）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容"
+                        },
                         "grammar_explanation": {
                             "type": "string",
                             "description": "整个文本的一个完整语法解释，用 TARGET_LANG"
@@ -365,7 +411,7 @@ class NvidiaAPI:
                         }
                     },
                     "required": [
-                        "original", "translation", "tokenized_translation", 
+                        "original", "translation", "tokenized_translation", "translation_phrases",
                         "grammar_explanation", "redundant_tokens", "dictionary_entries"
                     ]
                 }
@@ -398,12 +444,13 @@ class NvidiaAPI:
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
   - text: 原词/标记（不带标点）
-  - translation: 这个词翻译成 TARGET_LANG
+  - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
+- translation_phrases: 将 tokenized_translation 尽可能拆分为单个词作为独立片段，用于翻译排序练习。【拆分原则】1.优先拆成单个词（如'每天早上'应拆为'每天'和'早上'）；2.只有当几个词必须连在一起才有完整意思时才合并（如'跑得很快'中'跑得很快'是一个完整结构不可拆）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
-- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
+- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组。【关键规则】生成的冗余词与正确答案中的词组合后，不能形成与正确答案相同或近似的意思。例如：如果正确答案是"她读书"，冗余词"看"是不合适的，因为"她看书"和"她读书"意思几乎一样；应该选择如"写"、"买"、"卖"等组合后意思明显不同的词
 
 【极其重要！！！固定搭配处理规则！！！
 - 对于固定搭配（如 what's up, live in, how are you, look forward to 等），请将整个固定搭配作为一个整体处理，不要拆分！！！
@@ -439,6 +486,7 @@ class NvidiaAPI:
   3. 冗余词的意思不能太相近，要避免多个冗余词都表达类似的含义
   4. 确保使用错误的答案组成的意思不是合理的，也不能是与正确答案近似的意思
   5. 冗余词应该是容易混淆但明显不同的概念
+  6. 【极其重要】冗余词替换正确答案中的对应词后，组成的句子意思不能与原句意思相同或近似。例如正确答案是"读书"，冗余词不能是"看"（因为"看书"≈"读书"），而应该是"写"、"买"等意思明显不同的词
 
 要处理的文本：
 TEXT_CONTENT
@@ -452,20 +500,23 @@ TEXT_CONTENT
 
         messages = [{"role": "user", "content": prompt}]
         
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
-        
+        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)        
         try:
-            print("=== LLM Tool JSON Response (Merged) ===")
-            print(json.dumps(response, indent=2, ensure_ascii=False))
-            print("======================")
-            
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    print("=== Parsed Tool Arguments (Merged) ===")
-                    print(json.dumps(args, indent=2, ensure_ascii=False))
-                    print("======================")
+                    if "dictionary_entries" in args:
+                        de = args["dictionary_entries"]
+                        if isinstance(de, str):
+                            repaired = _repair_truncated_json(de)
+                            args["dictionary_entries"] = repaired
+                            print(f"[DEBUG] process_text_with_dictionary: repaired dictionary_entries from string, got {len(repaired)} entries")
+                        elif isinstance(de, list) and de and not isinstance(de[0], dict):
+                            args["dictionary_entries"] = []
+                    if "translation" in args and isinstance(args["translation"], str):
+                        repaired_tr = _repair_truncated_json(args["translation"])
+                        args["translation"] = repaired_tr if isinstance(repaired_tr, list) else []
                     return args
             return {}
         except Exception as e:
@@ -563,14 +614,21 @@ TEXT_CONTENT
 
         messages = [{"role": "user", "content": prompt}]
         
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0)
+        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)
         
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    return args.get("dictionary_entries", [])
+                    entries = args.get("dictionary_entries", [])
+                    if isinstance(entries, str):
+                        entries = _repair_truncated_json(entries)
+                    if not isinstance(entries, list):
+                        entries = []
+                    valid_entries = [e for e in entries if isinstance(e, dict) and "word" in e]
+                    print(f"[DEBUG] process_remaining_words returned {len(valid_entries)} valid entries")
+                    return valid_entries
             return []
         except Exception as e:
             print(f"Process remaining words failed: {e}")

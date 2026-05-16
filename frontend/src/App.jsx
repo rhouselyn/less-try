@@ -14,6 +14,7 @@ import PhaseProgressStep from './components/PhaseProgressStep'
 import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
 import TranslationReconstructionStep from './components/TranslationReconstructionStep'
 import AllUnitsStep from './components/AllUnitsStep'
+import UnitCompleteStep from './components/UnitCompleteStep'
 import VocabListStep from './components/VocabListStep'
 import HistorySidebar from './components/HistorySidebar'
 import SettingsModal from './components/SettingsModal'
@@ -61,6 +62,8 @@ function App() {
   const [currentPhase2Unit, setCurrentPhase2Unit] = useState(0)
   const [previousStep, setPreviousStep] = useState(null)
   const [unitEndIndex, setUnitEndIndex] = useState(null)
+  const [completedUnitId, setCompletedUnitId] = useState(null)
+  const [completedPhase, setCompletedPhase] = useState(1)
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -339,7 +342,9 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
+        setCompletedUnitId(unitId)
+        setCompletedPhase(1)
+        setStep('unit-complete')
       } else {
         setLearningData(response)
         setUnitEndIndex(response.unit_end_index)
@@ -366,7 +371,6 @@ function App() {
       setCurrentPhaseUnit(unitId)
       const exerciseData = await api.getPhaseUnitExercise(currentFileId, 2, unitId)
       if (exerciseData.unit_complete) {
-        // 单元完成，重新加载所有单元
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
@@ -375,7 +379,9 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
+        setCompletedUnitId(unitId)
+        setCompletedPhase(2)
+        setStep('unit-complete')
       } else {
         setExerciseType(exerciseData.exercise_type)
         setCurrentExerciseData({
@@ -445,12 +451,12 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
+        setCompletedUnitId(currentPhaseUnit)
+        setCompletedPhase(currentPhase)
+        setStep('unit-complete')
       } else {
-        // 获取下一个练习
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
         if (exerciseData.unit_complete) {
-          // 单元完成，更新单元状态并返回列表
           const [phase1UnitsData, phase2UnitsData] = await Promise.all([
             api.getPhaseUnits(currentFileId, 1),
             api.getPhaseUnits(currentFileId, 2)
@@ -459,7 +465,9 @@ function App() {
           setPhase2Units(phase2UnitsData.units)
           setCurrentPhase1Unit(phase1UnitsData.current_unit)
           setCurrentPhase2Unit(phase2UnitsData.current_unit)
-          setStep('all-units')
+          setCompletedUnitId(currentPhaseUnit)
+          setCompletedPhase(currentPhase)
+          setStep('unit-complete')
         } else {
           setExerciseType(exerciseData.exercise_type)
           setCurrentExerciseData({
@@ -513,24 +521,15 @@ function App() {
     }
   }
 
-  const getNextWord = async () => {
+  const getNextWord = async (retryCount = 0) => {
     if (!currentFileId) return
     
     setLoading(true)
     try {
       const nextWordResponse = await api.nextWord(currentFileId)
       const newIndex = nextWordResponse.new_index
-      const endIdx = nextWordResponse.unit_end_index || unitEndIndex
       
-      if (nextWordResponse.sentence_quiz) {
-        setQuizData(nextWordResponse.sentence_quiz)
-        setUnitEndIndex(endIdx)
-        setLearningMode('sentence')
-        setStep('sentence-quiz')
-        return
-      }
-      
-      if (endIdx && newIndex >= endIdx) {
+      if (nextWordResponse.type === 'unit_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
@@ -539,7 +538,18 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
+        setCompletedUnitId(phase1UnitsData.current_unit)
+        setCompletedPhase(1)
+        setStep('unit-complete')
+        return
+      }
+      
+      if (nextWordResponse.sentence_quiz) {
+        const endIdx = nextWordResponse.unit_end_index || unitEndIndex
+        setQuizData(nextWordResponse.sentence_quiz)
+        setUnitEndIndex(endIdx)
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
         return
       }
       
@@ -558,7 +568,9 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setStep('all-units')
+        setCompletedUnitId(phase1UnitsData.current_unit)
+        setCompletedPhase(1)
+        setStep('unit-complete')
       } else {
         setLearningData(response)
         setUnitEndIndex(response.unit_end_index)
@@ -568,7 +580,14 @@ function App() {
       }
     } catch (error) {
       console.error('获取下一个单词错误:', error)
-      alert('无法获取下一个单词，请重试')
+      if (error.response && error.response.status === 401 && retryCount < 2) {
+        setTimeout(() => getNextWord(retryCount + 1), 1000)
+        return
+      }
+      if (error.response && (error.response.status === 401 || error.response.status === 502 || error.response.status === 503 || error.response.status === 504)) {
+        setTimeout(() => getNextWord(retryCount + 1), 2000)
+        return
+      }
     } finally {
       setLoading(false)
     }
@@ -774,19 +793,29 @@ function App() {
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => setStep('all-units')}
               onComplete={async () => {
-                // 单元完成，更新阶段一的进度
                 if (currentFileId && currentPhase) {
-                  // 计算下一个单元
                   const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
                   const nextUnit = phase1UnitsData.current_unit + 1
-                  // 更新阶段一的进度
                   await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
                 }
-                setStep('all-units')
+                setCompletedUnitId(currentPhase1Unit)
+                setCompletedPhase(1)
+                setStep('unit-complete')
               }}
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
+            />
+          )}
+          
+          {step === 'unit-complete' && (
+            <UnitCompleteStep
+              key="unit-complete"
+              unitNumber={completedUnitId || 0}
+              totalUnits={phase1Units.length || 1}
+              phase={completedPhase}
+              onContinue={() => setStep('all-units')}
+              t={t}
             />
           )}
           
@@ -845,7 +874,9 @@ function App() {
                 setPhase2Units(phase2UnitsData.units)
                 setCurrentPhase1Unit(phase1UnitsData.current_unit)
                 setCurrentPhase2Unit(phase2UnitsData.current_unit)
-                setStep('all-units')
+                setCompletedUnitId(currentPhaseUnit)
+                setCompletedPhase(currentPhase)
+                setStep('unit-complete')
               }}
               loading={loading}
               t={t}
@@ -873,7 +904,9 @@ function App() {
                 setPhase2Units(phase2UnitsData.units)
                 setCurrentPhase1Unit(phase1UnitsData.current_unit)
                 setCurrentPhase2Unit(phase2UnitsData.current_unit)
-                setStep('all-units')
+                setCompletedUnitId(currentPhaseUnit)
+                setCompletedPhase(currentPhase)
+                setStep('unit-complete')
               }}
               loading={loading}
               t={t}

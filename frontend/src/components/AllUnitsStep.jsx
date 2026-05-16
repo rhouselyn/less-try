@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Lock } from 'lucide-react';
 
 function AllUnitsStep({ 
   phase1Units, 
@@ -14,8 +14,25 @@ function AllUnitsStep({
   loading, 
   t 
 }) {
-  const renderUnitCard = (unit, index, isCurrent, onClick, keyPrefix) => {
+  const isPhase1Unlocked = (index) => {
+    if (index === 0) return true;
+    for (let i = 0; i < index; i++) {
+      if (!phase1Units[i]?.completed) return false;
+    }
+    return true;
+  };
+
+  const isPhase2Unlocked = (index) => {
+    if (index === 0) return true;
+    for (let i = 0; i < index; i++) {
+      if (!phase2Units[i]?.completed) return false;
+    }
+    return true;
+  };
+
+  const renderUnitCard = (unit, index, isCurrent, onClick, keyPrefix, isUnlocked) => {
     const isCompleted = unit.completed;
+    const isLocked = !isUnlocked && !isCompleted;
     
     return (
       <motion.button
@@ -23,16 +40,17 @@ function AllUnitsStep({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.03 }}
-        onClick={onClick}
+        onClick={isLocked ? undefined : onClick}
+        disabled={isLocked}
         className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center text-sm font-medium ${
           isCompleted
-            ? 'bg-emerald-500 text-white'
-            : isCurrent
-            ? 'bg-stone-200 text-stone-700'
-            : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
+            ? 'bg-[#eef2e8] text-[#5a6e48] border border-[#d4dcc8]/60'
+            : isLocked
+            ? 'bg-stone-100 text-stone-300 cursor-not-allowed'
+            : 'bg-[#f5ebe4] text-[#b85a3a] hover:bg-[#efe0d6] border border-[#e0cfc4]/60'
         }`}
       >
-        {index + 1}
+        {isLocked ? <Lock className="w-3.5 h-3.5" /> : index + 1}
       </motion.button>
     );
   };
@@ -62,7 +80,7 @@ function AllUnitsStep({
         >
           学习单元
         </motion.h2>
-        <p className="text-base text-stone-400">选择单元开始学习</p>
+        <p className="text-base text-stone-400">按顺序完成单元，解锁下一单元</p>
       </div>
 
       {loading ? (
@@ -82,7 +100,8 @@ function AllUnitsStep({
                   index, 
                   index === currentPhase1Unit, 
                   () => onPhase1UnitClick(index),
-                  'phase1'
+                  'phase1',
+                  isPhase1Unlocked(index)
                 )
               )}
             </div>
@@ -99,7 +118,8 @@ function AllUnitsStep({
                   index, 
                   index === currentPhase2Unit, 
                   () => onPhase2UnitClick(index),
-                  'phase2'
+                  'phase2',
+                  isPhase2Unlocked(index)
                 )
               )}
             </div>

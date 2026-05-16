@@ -18,11 +18,115 @@ load_dotenv()
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
-def fix_llm_options_result(result: dict) -> dict:
+import re
+
+def is_source_lang_text(text, source_lang="en"):
+    if not text or not isinstance(text, str):
+        return False
+    text = text.strip()
+    if source_lang == "en":
+        if re.match(r'^[a-zA-Z\s\-\']+$', text) and len(text.split()) <= 3:
+            if not re.search(r'[\u4e00-\u9fff]', text):
+                return True
+    return False
+
+ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
+
+MAX_SENTENCE_WORDS_FOR_QUIZ = 8
+
+def get_translation_phrases(translation_result, max_phrases=6):
+    if not translation_result or not isinstance(translation_result, dict):
+        return []
+    
+    llm_phrases = translation_result.get("translation_phrases", [])
+    if isinstance(llm_phrases, list) and len(llm_phrases) >= 2:
+        valid = [p.strip() for p in llm_phrases if isinstance(p, str) and p.strip()]
+        if len(valid) >= 2:
+            return valid[:max_phrases]
+    
+    raw_translation = translation_result.get("tokenized_translation", "")
+    if raw_translation and isinstance(raw_translation, str):
+        return split_translation_to_phrases(raw_translation, max_phrases)
+    
+    return []
+
+def split_translation_to_phrases(translation, max_phrases=8):
+    if not translation or not isinstance(translation, str):
+        return [translation] if translation else []
+    
+    import re
+    parts = re.split(r'[，。、；：！？,;:!?]', translation)
+    parts = [p.strip() for p in parts if p.strip()]
+    
+    if not parts:
+        chars = list(translation)
+        chunk_size = max(1, len(chars) // max_phrases)
+        parts = [''.join(chars[i:i+chunk_size]) for i in range(0, len(chars), chunk_size)]
+    
+    if len(parts) <= max_phrases:
+        return parts
+    
+    result = []
+    current = ""
+    for p in parts:
+        if current:
+            candidate = current + "，" + p
+            if len(result) + 1 + (1 if candidate else 0) <= max_phrases:
+                current = candidate
+            else:
+                result.append(current)
+                current = p
+        else:
+            current = p
+    
+    if current:
+        result.append(current)
+    
+    while len(result) > max_phrases:
+        last = result.pop()
+        result[-1] = result[-1] + "，" + last
+    
+    return result
+
+def select_key_tokens(seg_words, max_tokens=10):
+    content_words = []
+    function_words = []
+    for w in seg_words:
+        if len(w) <= 1 or w in ZH_FUNCTION_WORDS:
+            function_words.append(w)
+        else:
+            content_words.append(w)
+    
+    if len(content_words) <= max_tokens:
+        result = content_words + function_words[:max(0, max_tokens - len(content_words))]
+    else:
+        step = len(content_words) / max_tokens
+        result = [content_words[int(i * step)] for i in range(max_tokens)]
+    
+    return result[:max_tokens]
+
+def fix_llm_options_result(result: dict, source_lang="en") -> dict:
     if not isinstance(result, dict):
         return result
     mc = result.get("multiple_choice")
     if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+        filtered_options = []
+        for opt in mc["options"]:
+            if isinstance(opt, dict) and "text" in opt:
+                if opt.get("is_correct", False) or not is_source_lang_text(opt["text"], source_lang):
+                    filtered_options.append(opt)
+        if len(filtered_options) < 4:
+            correct_answer = mc.get("correct_answer", "")
+            existing_texts = {o["text"] for o in filtered_options}
+            fallbacks = ["其他含义", "不同释义", "无关意思", "另一种解释", "不同概念"]
+            for fb in fallbacks:
+                if len(filtered_options) >= 4:
+                    break
+                if fb not in existing_texts:
+                    filtered_options.append({"text": fb, "is_correct": False})
+                    existing_texts.add(fb)
+        mc["options"] = filtered_options[:4]
+        result["multiple_choice"] = mc
         return result
     if isinstance(mc, str) and not mc.strip():
         result.pop("multiple_choice", None)
@@ -142,6 +246,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 )
                 print(f"[DEBUG] 句子翻译完成")
                 
+                sentence_translation_result = text_processor.validate_and_complete_translation(
+                    sentence, sentence_translation_result, source_lang
+                )
+                
                 sentence_words = text_processor.extract_words(sentence, source_lang)
                 dict_entry_words = set()
                 if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
@@ -152,6 +260,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                             sentence_translation_result["dictionary_entries"] = dict_entries
                         except:
                             dict_entries = []
+                            sentence_translation_result["dictionary_entries"] = []
                     if isinstance(dict_entries, list):
                         for entry in dict_entries:
                             if isinstance(entry, dict) and "word" in entry:
@@ -165,11 +274,46 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                         missing_words, source_lang, target_lang, sentence
                     )
                     if remaining_entries:
-                        if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
+                        if isinstance(sentence_translation_result, dict):
+                            if "dictionary_entries" not in sentence_translation_result:
+                                sentence_translation_result["dictionary_entries"] = []
+                            
+                            if not isinstance(sentence_translation_result["dictionary_entries"], list):
+                                try:
+                                    parsed = json.loads(sentence_translation_result["dictionary_entries"])
+                                    if isinstance(parsed, list):
+                                        sentence_translation_result["dictionary_entries"] = parsed
+                                    else:
+                                        sentence_translation_result["dictionary_entries"] = []
+                                except:
+                                    sentence_translation_result["dictionary_entries"] = []
+                            
                             if isinstance(sentence_translation_result["dictionary_entries"], list):
-                                sentence_translation_result["dictionary_entries"].extend(remaining_entries)
-                            else:
-                                sentence_translation_result["dictionary_entries"] = remaining_entries
+                                existing_words_lower = {e.get("word", "").lower() for e in sentence_translation_result["dictionary_entries"] if isinstance(e, dict)}
+                                for entry in remaining_entries:
+                                    if isinstance(entry, dict) and "word" in entry:
+                                        if entry["word"].lower() not in existing_words_lower:
+                                            sentence_translation_result["dictionary_entries"].append(entry)
+                                            existing_words_lower.add(entry["word"].lower())
+                        
+                        if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
+                            translation_text_lower = []
+                            for token in sentence_translation_result["translation"]:
+                                if isinstance(token, dict) and "text" in token:
+                                    translation_text_lower.append(token["text"].lower())
+                            
+                            for entry in remaining_entries:
+                                if isinstance(entry, dict) and "word" in entry:
+                                    word = entry["word"]
+                                    if word.lower() not in translation_text_lower:
+                                        sentence_translation_result["translation"].append({
+                                            "text": word,
+                                            "translation": entry.get("translation", ""),
+                                            "phonetic": entry.get("ipa", ""),
+                                            "morphology": entry.get("morphology", "")
+                                        })
+                                        translation_text_lower.append(word.lower())
+                        
                         print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
                 
                 sentence_data = {
@@ -272,26 +416,29 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     import random
     import re
     
+    language_settings = storage.load_language_settings(file_id)
+    source_lang = language_settings.get("source_lang", "en")
+    
     random.seed(42)
     shuffled_indices = list(range(len(vocab)))
     random.shuffle(shuffled_indices)
     storage.save_shuffled_order(file_id, shuffled_indices)
     
-    unit_size = 10
-    num_units = max(1, (len(vocab) + unit_size - 1) // unit_size)
+    max_items_per_unit = 10
     
     plan = []
     all_learned_vocab_indices = set()
     used_sentences = set()
     
-    for unit_id in range(num_units):
-        unit_start = unit_id * unit_size
-        unit_end = min(unit_start + unit_size, len(vocab))
-        unit_shuffled = shuffled_indices[unit_start:unit_end]
-        
+    vocab_pointer = 0
+    
+    while vocab_pointer < len(shuffled_indices):
         unit_items = []
         
-        for step_idx, vocab_idx in enumerate(unit_shuffled):
+        while vocab_pointer < len(shuffled_indices) and len(unit_items) < max_items_per_unit:
+            vocab_idx = shuffled_indices[vocab_pointer]
+            vocab_pointer += 1
+            
             unit_items.append({
                 "type": "word",
                 "vocab_index": vocab_idx
@@ -307,6 +454,10 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                 sentence = sentence_data["sentence"]
                 
                 if sentence in used_sentences:
+                    continue
+                
+                word_count = len(sentence.split())
+                if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
                     continue
                 
                 already_in_unit = any(
@@ -342,27 +493,48 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             break
                 
                 if sentence_covered:
+                    if len(unit_items) >= max_items_per_unit:
+                        continue
+                    
                     used_sentences.add(sentence)
                     
-                    correct_tokens = []
-                    for token in translation_tokens:
-                        if isinstance(token, dict):
-                            text = token.get("translation", token.get("text", ""))
-                            cleaned = re.sub(r'[^\w\s]', '', text)
-                            if cleaned:
-                                correct_tokens.append(cleaned)
+                    raw_translation = tr.get("tokenized_translation", "")
+                    correct_translation = raw_translation.strip() if raw_translation else ""
+                    
+                    correct_tokens = get_translation_phrases(tr, max_phrases=6)
+                    
+                    if len(correct_tokens) < 2:
+                        continue
                     
                     redundant_tokens = tr.get("redundant_tokens", [])
                     cleaned_redundant = []
                     for rt in redundant_tokens:
-                        cleaned = re.sub(r'[^\w\s]', '', rt)
-                        if cleaned and cleaned not in correct_tokens:
-                            cleaned_redundant.append(cleaned)
+                        rt_stripped = rt.strip()
+                        if rt_stripped and rt_stripped not in correct_tokens and not is_source_lang_text(rt_stripped, source_lang):
+                            cleaned_redundant.append(rt_stripped)
                     
-                    selected_distractors = list(set(cleaned_redundant))[:3]
+                    selected_distractors = list(dict.fromkeys(cleaned_redundant))[:4]
+                    
+                    if len(selected_distractors) < 4:
+                        existing_set = set(correct_tokens) | set(selected_distractors)
+                        for other_sent in sentences:
+                            if other_sent.get("sentence") == sentence:
+                                continue
+                            other_tr = other_sent.get("translation_result", {})
+                            other_phrases = get_translation_phrases(other_tr, max_phrases=10)
+                            for op in other_phrases:
+                                if op not in existing_set and not is_source_lang_text(op, source_lang):
+                                    selected_distractors.append(op)
+                                    existing_set.add(op)
+                                    if len(selected_distractors) >= 4:
+                                        break
+                            if len(selected_distractors) >= 4:
+                                break
+                    
                     all_tokens = correct_tokens + selected_distractors
                     
-                    correct_translation = re.sub(r'[^\w\s]', '', tr.get("tokenized_translation", ""))
+                    if not correct_translation.strip():
+                        correct_translation = "".join(correct_tokens)
                     
                     unit_items.append({
                         "type": "sentence_quiz",
@@ -372,10 +544,11 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         "tokens": all_tokens
                     })
         
-        plan.append({
-            "unit_id": unit_id,
-            "items": unit_items
-        })
+        if unit_items:
+            plan.append({
+                "unit_id": len(plan),
+                "items": unit_items
+            })
     
     storage.save_learning_plan(file_id, plan)
 
@@ -464,6 +637,7 @@ async def get_random_word(file_id: str):
         
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
         
         current_index = storage.load_learning_progress(file_id)
         
@@ -477,7 +651,8 @@ async def get_random_word(file_id: str):
         if unit_id is not None:
             unit_plan = plan[unit_id]
             items = unit_plan.get("items", [])
-            _, unit_end_index = get_unit_flat_range(plan, unit_id)
+            unit_start_index, unit_end_index = get_unit_flat_range(plan, unit_id)
+            total_items_in_unit = len(items)
             
             if step_in_unit < len(items):
                 current_item = items[step_in_unit]
@@ -492,14 +667,18 @@ async def get_random_word(file_id: str):
                         "correct_translation": current_item.get("correct_translation", ""),
                         "correct_tokens": current_item.get("correct_tokens", []),
                         "tokens": tokens,
-                        "unit_end_index": unit_end_index
+                        "unit_end_index": unit_end_index,
+                        "current_index": current_index,
+                        "unit_start_index": unit_start_index,
+                        "total_items_in_unit": total_items_in_unit,
+                        "step_in_unit": step_in_unit
                     }
                 
                 vocab_idx = current_item["vocab_index"]
                 random_word = vocab[vocab_idx]
                 word = random_word["word"]
             else:
-                return {"type": "unit_complete", "unit_end_index": unit_end_index}
+                return {"type": "unit_complete", "unit_end_index": unit_end_index, "current_index": current_index, "unit_start_index": unit_start_index, "total_items_in_unit": total_items_in_unit, "step_in_unit": step_in_unit}
         else:
             return {"type": "all_complete"}
         
@@ -522,17 +701,55 @@ async def get_random_word(file_id: str):
             # 启动后台任务预生成下一个单词
             asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
             
+            context_sents = cached_word.get("context_sentences", [])
+            needs_rebuild = False
+            for cs in context_sents:
+                if isinstance(cs, dict) and "sentence_index" not in cs:
+                    needs_rebuild = True
+                    break
+                if isinstance(cs, str):
+                    needs_rebuild = True
+                    break
+            
+            if needs_rebuild or not context_sents:
+                all_sentences = storage.load_pipeline_data(file_id)
+                if all_sentences:
+                    import re as re_mod
+                    word_pattern = re_mod.compile(r'\b' + re_mod.escape(word) + r'\b', re_mod.IGNORECASE)
+                    rebuilt = []
+                    for sent_idx, sentence_data in enumerate(all_sentences):
+                        if "sentence" in sentence_data:
+                            if word_pattern.search(sentence_data["sentence"]):
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                rebuilt.append({
+                                    "sentence": sentence_data["sentence"],
+                                    "translation": translation,
+                                    "sentence_index": sent_idx
+                                })
+                    context_sents = rebuilt
+                    cached_word["context_sentences"] = rebuilt
+                    storage.save_word_cache(file_id, word, cached_word)
+            
             return {
                 "word": cached_word.get("word", word),
                 "ipa": cached_word.get("ipa", ""),
                 "correct_meaning": cached_word.get("meaning", ""),
                 "options": options,
                 "correct_index": correct_index,
-                "context": "",
+                "context": cached_word.get("context", ""),
+                "context_sentences": context_sents,
                 "variants_detail": cached_word.get("variants_detail", []),
                 "examples": cached_word.get("examples", []),
                 "memory_hint": cached_word.get("memory_hint", ""),
-                "unit_end_index": unit_end_index
+                "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
+                "context_meaning": cached_word.get("context_meaning", cached_word.get("meaning", "")),
+                "unit_end_index": unit_end_index,
+                "current_index": current_index,
+                "unit_start_index": unit_start_index,
+                "total_items_in_unit": total_items_in_unit,
+                "step_in_unit": step_in_unit
             }
         
         # 构建上下文（包含翻译）
@@ -540,22 +757,21 @@ async def get_random_word(file_id: str):
         context = ""
         context_sentences = []
         if sentences:
-            # 找到包含该单词的句子
-            for sentence_data in sentences:
+            import re
+            word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
+            for sent_idx, sentence_data in enumerate(sentences):
                 if "sentence" in sentence_data:
-                    if word in sentence_data["sentence"]:
+                    if word_pattern.search(sentence_data["sentence"]):
                         context = sentence_data["sentence"]
-                        # 获取翻译
                         translation = ""
                         if "translation_result" in sentence_data:
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
                         context_sentences.append({
                             "sentence": sentence_data["sentence"],
-                            "translation": translation
+                            "translation": translation,
+                            "sentence_index": sent_idx
                         })
-                        break
             if not context and sentences:
-                # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
@@ -574,7 +790,7 @@ async def get_random_word(file_id: str):
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result)
+        options_result = fix_llm_options_result(options_result, source_lang)
         
         # 提取选项和正确索引
         options = []
@@ -601,7 +817,11 @@ async def get_random_word(file_id: str):
             "memory_hint": options_result.get("memory_hint", ""),
             "enriched_meaning": options_result.get("enriched_meaning", correct_meaning),
             "context_meaning": options_result.get("context_meaning", correct_meaning),
-            "unit_end_index": unit_end_index
+            "unit_end_index": unit_end_index,
+            "current_index": current_index,
+            "unit_start_index": unit_start_index,
+            "total_items_in_unit": total_items_in_unit,
+            "step_in_unit": step_in_unit
         }
         
         # 构建缓存数据
@@ -611,10 +831,12 @@ async def get_random_word(file_id: str):
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
         cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
         cache_data["examples"] = options_result.get("examples", [])
+        cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
         cache_data["morphology"] = random_word.get("morphology", "")
         cache_data["variants_detail"] = options_result.get("variants_detail", [])
         cache_data["memory_hint"] = options_result.get("memory_hint", "")
+        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
         cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
         if "context_translations" in cache_data:
             del cache_data["context_translations"]
@@ -639,14 +861,31 @@ async def next_word(file_id: str):
             raise HTTPException(status_code=404, detail="Vocab not found")
         
         current_index = storage.load_learning_progress(file_id)
+        
+        plan = storage.load_learning_plan(file_id)
+        if not plan:
+            new_index = current_index + 1
+            storage.save_learning_progress(file_id, new_index)
+            return {"success": True, "new_index": new_index}
+        
+        current_unit_id, current_step = find_item_in_plan(plan, current_index)
+        
+        if current_unit_id is not None:
+            _, current_unit_end = get_unit_flat_range(plan, current_unit_id)
+            
+            if current_index + 1 >= current_unit_end:
+                storage.save_learning_progress(file_id, current_unit_end)
+                return {
+                    "success": True,
+                    "type": "unit_complete",
+                    "new_index": current_unit_end,
+                    "unit_end_index": current_unit_end
+                }
+        
         new_index = current_index + 1
         storage.save_learning_progress(file_id, new_index)
         
         asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
-        
-        plan = storage.load_learning_plan(file_id)
-        if not plan:
-            return {"success": True, "new_index": new_index}
         
         unit_id, step_in_unit = find_item_in_plan(plan, new_index)
         
@@ -698,6 +937,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
     try:
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
         
         plan = storage.load_learning_plan(file_id)
         if not plan:
@@ -729,22 +969,21 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         context = ""
         context_sentences = []
         if sentences:
-            # 找到包含该单词的句子
-            for sentence_data in sentences:
+            import re
+            word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
+            for sent_idx, sentence_data in enumerate(sentences):
                 if "sentence" in sentence_data:
-                    if word in sentence_data["sentence"]:
+                    if word_pattern.search(sentence_data["sentence"]):
                         context = sentence_data["sentence"]
-                        # 获取翻译
                         translation = ""
                         if "translation_result" in sentence_data:
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
                         context_sentences.append({
                             "sentence": sentence_data["sentence"],
-                            "translation": translation
+                            "translation": translation,
+                            "sentence_index": sent_idx
                         })
-                        break
             if not context and sentences:
-                # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
@@ -766,7 +1005,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result)
+        options_result = fix_llm_options_result(options_result, source_lang)
         
         # 构建缓存数据
         cache_data = dict(options_result)
@@ -775,10 +1014,12 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
         cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
         cache_data["examples"] = options_result.get("examples", [])
+        cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
         cache_data["morphology"] = random_word.get("morphology", "")
         cache_data["variants_detail"] = options_result.get("variants_detail", [])
         cache_data["memory_hint"] = options_result.get("memory_hint", "")
+        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
         cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
         if "context_translations" in cache_data:
             del cache_data["context_translations"]
@@ -799,7 +1040,6 @@ async def get_word_details(file_id: str, word: str):
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
-            # 如果有 multiple_choice 但没有 options，需要从其中提取
             if "multiple_choice" in cached_word and "options" not in cached_word:
                 options = []
                 correct_index = 0
@@ -811,6 +1051,37 @@ async def get_word_details(file_id: str, word: str):
                     cached_word["options"] = options
                     cached_word["correct_index"] = correct_index
                     print(f"[DEBUG] 从 multiple_choice 提取 options: {options}")
+            
+            context_sents = cached_word.get("context_sentences", [])
+            needs_rebuild = False
+            for cs in context_sents:
+                if isinstance(cs, dict) and "sentence_index" not in cs:
+                    needs_rebuild = True
+                    break
+                if isinstance(cs, str):
+                    needs_rebuild = True
+                    break
+            
+            if needs_rebuild or not context_sents:
+                sentences = storage.load_pipeline_data(file_id)
+                if sentences:
+                    import re as re_mod
+                    word_pattern = re_mod.compile(r'\b' + re_mod.escape(word) + r'\b', re_mod.IGNORECASE)
+                    rebuilt = []
+                    for sent_idx, sentence_data in enumerate(sentences):
+                        if "sentence" in sentence_data:
+                            if word_pattern.search(sentence_data["sentence"]):
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                rebuilt.append({
+                                    "sentence": sentence_data["sentence"],
+                                    "translation": translation,
+                                    "sentence_index": sent_idx
+                                })
+                    cached_word["context_sentences"] = rebuilt
+                    storage.save_word_cache(file_id, word, cached_word)
+            
             return cached_word
 
         vocab = storage.load_vocab(file_id)
@@ -836,54 +1107,33 @@ async def get_word_details(file_id: str, word: str):
         context_sentences = []
         context_sentences_with_translations = []
         if sentences:
-            # 优先使用sentence_index来找到包含该单词的句子
-            if "sentence_index" in word_data:
-                sentence_index = word_data["sentence_index"]
-                if sentence_index < len(sentences):
-                    sentence_data = sentences[sentence_index]
-                    if "sentence" in sentence_data:
-                        sentence = sentence_data["sentence"]
+            import re
+            word_pattern = re.compile(r'\b' + re.escape(word_data["word"]) + r'\b', re.IGNORECASE)
+            
+            for sent_idx, sentence_data in enumerate(sentences):
+                if "sentence" in sentence_data:
+                    sentence = sentence_data["sentence"]
+                    if word_pattern.search(sentence):
                         context_sentences.append(sentence)
-                        # 获取翻译
                         translation = ""
                         if "translation_result" in sentence_data:
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
                         context_sentences_with_translations.append({
                             "sentence": sentence,
-                            "translation": translation
+                            "translation": translation,
+                            "sentence_index": sent_idx
                         })
             
-            # 如果通过sentence_index没找到，或者没找到足够的句子，再使用字符串匹配
-            if len(context_sentences) < 2:
-                for sentence_data in sentences:
-                    if "sentence" in sentence_data:
-                        # 更智能的匹配方式，考虑大小写和缩写形式
-                        sentence = sentence_data["sentence"]
-                        current_word = word_data["word"]
-                        # 检查单词是否在句子中（不区分大小写）
-                        if current_word.lower() in sentence.lower():
-                            # 避免重复添加同一个句子
-                            if sentence not in [ctx["sentence"] for ctx in context_sentences_with_translations]:
-                                context_sentences.append(sentence)
-                                # 获取翻译
-                                translation = ""
-                                if "translation_result" in sentence_data:
-                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                                context_sentences_with_translations.append({
-                                    "sentence": sentence,
-                                    "translation": translation
-                                })
-                            # 最多添加2个句子
-                            if len(context_sentences) >= 2:
-                                break
+            if context_sentences:
+                context = context_sentences[0]
             
             if not context and sentences:
-                # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
 
         # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
 
         correct_meaning = word_data.get("context_meaning", "")
 
@@ -901,7 +1151,7 @@ async def get_word_details(file_id: str, word: str):
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result)
+        options_result = fix_llm_options_result(options_result, source_lang)
         
         # 提取选项和正确索引
         options = []
@@ -1041,7 +1291,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                 context,
                 target_lang
             )
-            options_result = fix_llm_options_result(options_result)
+            options_result = fix_llm_options_result(options_result, source_lang)
             
             # 提取选项和正确索引
             options = []
@@ -1138,13 +1388,15 @@ async def check_coverage(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 
-                # 检查句子单词数量，至少需要2个单词才参与句子练习
-                word_count = sentence_data.get("word_count", 0)
-                if word_count < 2:
+                word_count = len(sentence.split())
+                if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
+                    continue
+                
+                word_count_check = sentence_data.get("word_count", 0)
+                if word_count_check < 2:
                     if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                        word_count = len(sentence_data["translation_result"]["translation"])
-                    if word_count < 2:
-                        print(f"[DEBUG] 句子单词数不足2，跳过: {sentence} (word_count={word_count})")
+                        word_count_check = len(sentence_data["translation_result"]["translation"])
+                    if word_count_check < 2:
                         continue
                 
                 print(f"[DEBUG] 检查句子: {sentence} (word_count={word_count})")
@@ -1220,6 +1472,7 @@ async def generate_sentence_quiz(file_id: str):
         # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
@@ -1341,34 +1594,39 @@ async def generate_sentence_quiz(file_id: str):
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
-        # 生成正确答案的token列表 - 使用LLM生成的translation数组中的translation字段
-        correct_tokens = []
-        if "translation" in translation_result:
-            for token in translation_result["translation"]:
-                if isinstance(token, dict):
-                    # 优先使用translation字段，如果没有则使用text字段
-                    if "translation" in token:
-                        text = token["translation"]
-                    elif "text" in token:
-                        text = token["text"]
-                    else:
-                        continue
-                    cleaned_text = clean_token(text)
-                    if cleaned_text:
-                        correct_tokens.append(cleaned_text)
-        print(f"[DEBUG] 正确tokens: {correct_tokens}")
+        correct_tokens = get_translation_phrases(translation_result, max_phrases=6)
+        print(f"[DEBUG] 正确翻译片段(LLM拆分): {correct_tokens}")
         
-        # 清理冗余词
+        if len(correct_tokens) < 2:
+            raise HTTPException(status_code=404, detail="Not enough translated tokens for quiz")
+        
         cleaned_redundant_tokens = []
         for token in redundant_tokens:
-            cleaned_text = clean_token(token)
-            if cleaned_text and cleaned_text not in correct_tokens:
-                cleaned_redundant_tokens.append(cleaned_text)
+            rt_stripped = token.strip()
+            if rt_stripped and rt_stripped not in correct_tokens and not is_source_lang_text(rt_stripped, source_lang):
+                cleaned_redundant_tokens.append(rt_stripped)
         print(f"[DEBUG] 清理后的冗余词: {cleaned_redundant_tokens}")
         
-        # 过滤掉重复的冗余词，只保留不超过3个
-        unique_redundant = list(set(cleaned_redundant_tokens))
-        selected_distractors = unique_redundant[:3]
+        unique_redundant = list(dict.fromkeys(cleaned_redundant_tokens))
+        selected_distractors = unique_redundant[:4]
+        
+        if len(selected_distractors) < 4:
+            existing_set = set(correct_tokens) | set(selected_distractors)
+            all_sentences_data = storage.load_pipeline_data(file_id) or []
+            for other_sent in all_sentences_data:
+                if other_sent.get("sentence") == original_sentence:
+                    continue
+                other_tr = other_sent.get("translation_result", {})
+                other_phrases = get_translation_phrases(other_tr, max_phrases=10)
+                for op in other_phrases:
+                    if op not in existing_set and not is_source_lang_text(op, source_lang):
+                        selected_distractors.append(op)
+                        existing_set.add(op)
+                        if len(selected_distractors) >= 4:
+                            break
+                if len(selected_distractors) >= 4:
+                    break
+        
         print(f"[DEBUG] 选择的干扰词: {selected_distractors}")
         
         # 合并正确tokens和干扰词，然后打乱
@@ -1376,9 +1634,11 @@ async def generate_sentence_quiz(file_id: str):
         random.shuffle(all_tokens)
         print(f"[DEBUG] 所有tokens: {all_tokens}")
         
-        # 清理正确翻译，移除标点符号
-        correct_translation = clean_token(tokenized_translation)
-        print(f"[DEBUG] 清理后的翻译: {correct_translation}")
+        # 构建正确翻译
+        correct_translation = tokenized_translation.strip() if tokenized_translation else "".join(correct_tokens)
+        if not correct_translation.strip():
+            correct_translation = "".join(correct_tokens)
+        print(f"[DEBUG] 正确翻译: {correct_translation}")
         
         return {
             "original_sentence": original_sentence,
@@ -1505,14 +1765,20 @@ async def get_phase_units(file_id: str, phase_number: int):
                 }
             
             exercise_order = storage.load_exercise_order(file_id, phase_number)
-            expected_length = len(eligible_sentences) * 4
+            exercises_per_sent = []
+            for s in eligible_sentences:
+                wc = len(s.get("sentence", "").split())
+                exercises_per_sent.append(4 if wc >= 3 else 1)
+            expected_length = sum(exercises_per_sent)
             
             if exercise_order is None or len(exercise_order) != expected_length:
                 seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
                 exercise_order = text_processor.generate_interleaved_exercise_order(
-                    len(eligible_sentences), masks_per_sentence=3, seed=seed
+                    len(eligible_sentences), masks_per_sentence=3, seed=seed,
+                    exercises_per_sentence_list=exercises_per_sent
                 )
                 storage.save_exercise_order(file_id, phase_number, exercise_order)
+                storage.save_phase2_progress(file_id, 0)
             
             unit_size = 10
             total_exercises = len(exercise_order)
@@ -1520,6 +1786,10 @@ async def get_phase_units(file_id: str, phase_number: int):
             
             max_exercise_index = storage.load_phase2_max_progress(file_id)
             current_exercise_index = storage.load_phase2_progress(file_id)
+            if max_exercise_index > total_exercises:
+                storage.save_phase2_progress(file_id, 0)
+                max_exercise_index = 0
+                current_exercise_index = 0
             
             units = []
             for i in range(num_units):
@@ -1566,17 +1836,28 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 return {"unit_complete": True, "no_eligible_sentences": True}
             
             exercise_order = storage.load_exercise_order(file_id, phase_number)
-            expected_length = len(eligible_sentences) * 4
+            exercises_per_sent = []
+            for s in eligible_sentences:
+                wc = len(s.get("sentence", "").split())
+                exercises_per_sent.append(4 if wc >= 3 else 1)
+            expected_length = sum(exercises_per_sent)
             
             if exercise_order is None or len(exercise_order) != expected_length:
                 seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
                 exercise_order = text_processor.generate_interleaved_exercise_order(
-                    len(eligible_sentences), masks_per_sentence=3, seed=seed
+                    len(eligible_sentences), masks_per_sentence=3, seed=seed,
+                    exercises_per_sentence_list=exercises_per_sent
                 )
                 storage.save_exercise_order(file_id, phase_number, exercise_order)
+                storage.save_phase2_progress(file_id, 0)
             
             unit_size = 10
             current_exercise_index = storage.load_phase2_progress(file_id)
+            total_exercises = len(exercise_order)
+            max_exercise_index = storage.load_phase2_max_progress(file_id)
+            if max_exercise_index > total_exercises:
+                storage.save_phase2_progress(file_id, 0)
+                current_exercise_index = 0
             current_unit = current_exercise_index // unit_size
             
             exercise_start = unit_id * unit_size
@@ -1605,14 +1886,20 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             total_exercises_in_unit = exercise_end - exercise_start
             
             if type_idx < 3:
-                mask_seed = hash(current_sentence) + type_idx + 1
+                word_count = len(current_sentence.split())
+                if word_count < 3:
+                    type_idx = 3
+            
+            if type_idx < 3:
+                mask_seed = hash(current_sentence) + 1
                 masked_exercise = text_processor.generate_masked_sentence(
                     current_sentence,
                     vocab,
                     translation_tokens,
                     sentences,
                     mask_seed=mask_seed,
-                    source_lang=source_lang
+                    source_lang=source_lang,
+                    mask_version=type_idx
                 )
                 
                 return {

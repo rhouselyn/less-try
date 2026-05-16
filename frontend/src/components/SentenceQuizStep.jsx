@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X, BookOpen } from 'lucide-react'
 
 function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList }) {
-  const [selectedTokens, setSelectedTokens] = useState([])
+  const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
@@ -22,35 +22,39 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
     )
   }
 
-  const handleTokenClick = (token) => {
-    if (!isChecked) {
-      const index = selectedTokens.indexOf(token)
-      if (index > -1) {
-        setSelectedTokens([...selectedTokens.slice(0, index), ...selectedTokens.slice(index + 1)])
-      } else {
-        setSelectedTokens([...selectedTokens, token])
-      }
+  const handleTokenClick = (tokenIndex) => {
+    if (isChecked) return
+    const pos = selectedIndices.indexOf(tokenIndex)
+    if (pos > -1) {
+      setSelectedIndices([...selectedIndices.slice(0, pos), ...selectedIndices.slice(pos + 1)])
+    } else {
+      setSelectedIndices([...selectedIndices, tokenIndex])
     }
   }
 
-  const handleRemoveToken = (index) => {
-    if (!isChecked) {
-      setSelectedTokens([...selectedTokens.slice(0, index), ...selectedTokens.slice(index + 1)])
-    }
+  const handleRemoveToken = (pos) => {
+    if (isChecked) return
+    setSelectedIndices([...selectedIndices.slice(0, pos), ...selectedIndices.slice(pos + 1)])
   }
+
+  const stripPunctuation = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
 
   const handleCheckAnswer = () => {
-    const isCorrectAnswer = JSON.stringify(selectedTokens) === JSON.stringify(quizData.correct_tokens)
+    const userTokens = selectedIndices.map(i => stripPunctuation(quizData.tokens[i]))
+    const correctTokens = quizData.correct_tokens.map(t => stripPunctuation(t))
+    const isCorrectAnswer = JSON.stringify(userTokens) === JSON.stringify(correctTokens)
     setIsCorrect(isCorrectAnswer)
     setIsChecked(true)
   }
 
   const handleNextQuestion = () => {
-    setSelectedTokens([])
+    setSelectedIndices([])
     setIsChecked(false)
     setIsCorrect(false)
     onNextQuestion()
   }
+
+  const selectedTokens = selectedIndices.map(i => quizData.tokens[i])
 
   return (
     <motion.div
@@ -110,9 +114,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           </h3>
           <div className="p-4 border-2 border-dashed border-stone-300 rounded-lg min-h-20 flex flex-wrap gap-2 items-center bg-stone-50">
             <AnimatePresence>
-              {selectedTokens.map((token, index) => (
+              {selectedTokens.map((token, pos) => (
                 <motion.div
-                  key={index}
+                  key={`sel-${selectedIndices[pos]}`}
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0 }}
@@ -121,7 +125,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 >
                   <span>{token}</span>
                   <motion.button
-                    onClick={() => handleRemoveToken(index)}
+                    onClick={() => handleRemoveToken(pos)}
                     disabled={isChecked}
                     className="p-1 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
                     whileHover={{ scale: 1.2 }}
@@ -151,14 +155,14 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           <div className="flex flex-wrap gap-3">
             {quizData.tokens.map((token, index) => (
               <motion.button
-                key={index}
+                key={`opt-${index}`}
                 initial={{ opacity: 1, y: 0, scale: 1 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 whileHover={{ scale: 1.15, y: -8, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)' }}
                 whileTap={{ scale: 0.9, y: 2 }}
-                onClick={() => handleTokenClick(token)}
+                onClick={() => handleTokenClick(index)}
                 disabled={isChecked}
-                className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${selectedTokens.includes(token) ? 'bg-stone-200 text-stone-500 cursor-not-allowed' : 'bg-white text-stone-800 border-2 border-stone-200/80'}`}
+                className={`px-6 py-3 rounded-full text-sm font-medium transition-all ${selectedIndices.includes(index) ? 'bg-stone-200 text-stone-500 cursor-not-allowed' : 'bg-white text-stone-800 border-2 border-stone-200/80'}`}
               >
                 {token}
               </motion.button>
@@ -202,7 +206,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 transition={{ delay: 0.2 }}
                 className="text-base text-stone-700 font-medium"
               >
-                {quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}
+                {quizData.correct_translation || (quizData.correct_tokens ? quizData.correct_tokens.join('') : '')}
               </motion.p>
             )}
             {isCorrect && (
@@ -224,7 +228,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={handleCheckAnswer}
-              disabled={selectedTokens.length === 0}
+              disabled={selectedIndices.length === 0}
               className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {t.checkAnswer}
@@ -234,12 +238,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             <motion.button
               whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
               whileTap={{ scale: 0.97, y: 0 }}
-              onClick={() => {
-                setSelectedTokens([]);
-                setIsChecked(false);
-                setIsCorrect(false);
-                onNextQuestion();
-              }}
+              onClick={handleNextQuestion}
               disabled={loading}
               className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >

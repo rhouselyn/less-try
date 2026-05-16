@@ -144,21 +144,10 @@ class TextProcessor:
         pass
 
     def extract_words(self, text: str, language: str) -> List[str]:
-        """从文本中提取单词并去重，排除标点符号"""
-        # 简单的单词提取，不使用正则表达式
-        words = []
-        current_word = ""
-        for char in text:
-            if char.isalpha():
-                current_word += char
-            else:
-                if current_word:
-                    words.append(current_word.lower())
-                current_word = ""
-        if current_word:
-            words.append(current_word.lower())
+        import re
+        words = re.findall(r"\b\w+(?:'\w+)?\b", text)
+        words = [w.lower() for w in words]
         
-        # 去重
         seen = set()
         unique_words = []
         for word in words:
@@ -275,23 +264,48 @@ class TextProcessor:
         # 返回处理后的结果，保留LLM生成的自然翻译
         return result
     
+    def validate_and_complete_translation(self, sentence: str, translation_result: dict, source_lang: str) -> dict:
+        if not isinstance(translation_result, dict) or 'translation' not in translation_result:
+            return translation_result
+        
+        original_words = self.tokenize_sentence(sentence)
+        
+        existing_tokens = []
+        if 'translation' in translation_result:
+            for token in translation_result['translation']:
+                if isinstance(token, dict) and 'text' in token:
+                    existing_tokens.append(token)
+        
+        existing_text_lower = [t['text'].lower() for t in existing_tokens]
+        
+        completed_translation = []
+        used_existing = set()
+        
+        for orig_word in original_words:
+            found = False
+            for i, token in enumerate(existing_tokens):
+                if i not in used_existing and token['text'].lower() == orig_word.lower():
+                    completed_translation.append(token)
+                    used_existing.add(i)
+                    found = True
+                    break
+            if not found:
+                completed_translation.append({
+                    'text': orig_word,
+                    'translation': '',
+                    'phonetic': '',
+                    'morphology': ''
+                })
+        
+        translation_result['translation'] = completed_translation
+        return translation_result
+
     def tokenize_sentence(self, sentence: str) -> List[str]:
-        """简单句子分词，按空格和标点分割，保留单词，正确处理缩写形式"""
-        # 保留单词和缩写形式，如 what's, don't 等
         import re
-        # 匹配单词和缩写形式
         words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
         return words
     
-    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en") -> Dict[str, Any]:
-        """
-        生成蒙版填空练习
-        - 每6个单词蒙版1个
-        - 使用翻译token而非自动分词
-        - 集成备选词库
-        - 干扰词从其他句子或词库选择，不使用当前句子的单词
-        - mask_seed: 可选的种子，用于生成不同的蒙版模式
-        """
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0) -> Dict[str, Any]:
         if translation_tokens:
             words = translation_tokens
         else:
@@ -299,7 +313,7 @@ class TextProcessor:
         
         word_count = len(words)
         
-        num_masks = max(1, word_count // 6)
+        num_masks = max(1, word_count // 8)
         
         if num_masks > word_count // 2:
             num_masks = max(1, word_count // 2)
@@ -309,7 +323,34 @@ class TextProcessor:
             random.seed(mask_seed)
         else:
             random.seed(hash(sentence))
-        mask_indices = sorted(random.sample(range(word_count), num_masks))
+        
+        all_candidates = list(range(word_count))
+        random.shuffle(all_candidates)
+        
+        mask_groups = []
+        remaining = list(all_candidates)
+        
+        while remaining and len(mask_groups) < 3:
+            group = []
+            used = set()
+            for idx in remaining:
+                if len(group) >= num_masks:
+                    break
+                too_close = any(abs(idx - e) <= 2 for e in used)
+                if not too_close:
+                    group.append(idx)
+                    used.add(idx)
+            if group:
+                mask_groups.append(sorted(group))
+            remaining = [r for r in remaining if r not in used]
+        
+        while len(mask_groups) < 3:
+            if mask_groups:
+                mask_groups.append(mask_groups[len(mask_groups) % len(mask_groups)])
+            else:
+                mask_groups.append([0])
+        
+        mask_indices = mask_groups[mask_version % len(mask_groups)]
         
         # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []
@@ -419,20 +460,28 @@ class TextProcessor:
                 results.append(masked)
         return results
 
-    def generate_interleaved_exercise_order(self, num_sentences: int, masks_per_sentence: int = 3, seed: int = 42) -> List[List[int]]:
+    def generate_interleaved_exercise_order(self, num_sentences: int, masks_per_sentence: int = 3, seed: int = 42, exercises_per_sentence_list: List[int] = None) -> List[List[int]]:
         import random
         random.seed(seed)
         
-        exercises_per_sentence = masks_per_sentence + 1
+        if exercises_per_sentence_list is None:
+            exercises_per_sentence_list = [masks_per_sentence + 1] * num_sentences
+        
         next_type = [0] * num_sentences
         result = []
-        remaining = num_sentences * exercises_per_sentence
+        remaining = sum(exercises_per_sentence_list)
+        last_sent = -1
         
         while remaining > 0:
-            available = [i for i in range(num_sentences) if next_type[i] < exercises_per_sentence]
-            sent_idx = random.choice(available)
+            available = [i for i in range(num_sentences) if next_type[i] < exercises_per_sentence_list[i]]
+            if len(available) > 1 and last_sent in available:
+                preferred = [i for i in available if i != last_sent]
+                sent_idx = random.choice(preferred)
+            else:
+                sent_idx = random.choice(available)
             result.append([sent_idx, next_type[sent_idx]])
             next_type[sent_idx] += 1
+            last_sent = sent_idx
             remaining -= 1
         
         return result

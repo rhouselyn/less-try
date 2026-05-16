@@ -17,6 +17,9 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
     )
   }
 
+  const stepInUnit = (learningData.step_in_unit ?? 0) + 1
+  const totalItemsInUnit = learningData.total_items_in_unit ?? learningData.word_count_in_unit ?? learningData.unit_end_index ?? 0
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,17 +38,24 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
           <ArrowLeft className="w-4 h-4" />
           {t.back}
         </motion.button>
-        {onOpenVocabList && (
-          <motion.button
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            onClick={onOpenVocabList}
-            className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
-          >
-            <BookOpen className="w-4 h-4" />
-            单词表
-          </motion.button>
-        )}
+        <div className="flex items-center gap-3">
+          {totalItemsInUnit > 0 && (
+            <span className="text-sm text-stone-500 font-medium">
+              第 {stepInUnit} / {totalItemsInUnit} 题
+            </span>
+          )}
+          {onOpenVocabList && (
+            <motion.button
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              onClick={onOpenVocabList}
+              className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+            >
+              <BookOpen className="w-4 h-4" />
+              单词表
+            </motion.button>
+          )}
+        </div>
       </div>
 
       <AnimatePresence mode="wait">
@@ -72,7 +82,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   transition={{ delay: 0.1 }}
                   className="text-xl text-stone-500 ipa-font"
                 >
-                  /{learningData.ipa}/
+                  {learningData.ipa.startsWith('/') ? learningData.ipa : `/${learningData.ipa}/`}
                 </motion.p>
               )}
             </div>
@@ -134,7 +144,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     transition={{ delay: 0.1 }}
                     className="text-xl text-stone-500 ipa-font"
                   >
-                    /{learningData.ipa}/
+                    {learningData.ipa.startsWith('/') ? learningData.ipa : `/${learningData.ipa}/`}
                   </motion.p>
                 )}
               </div>
@@ -150,15 +160,9 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
-                <p className="text-lg text-stone-700 leading-relaxed mb-4">
+                <p className="text-lg text-stone-700 leading-relaxed">
                   {learningData.enriched_meaning || learningData.correct_meaning}
                 </p>
-                {learningData.context_meaning && learningData.context_meaning !== learningData.enriched_meaning && (
-                  <div className="bg-amber-50 p-4 rounded-lg border border-amber-200">
-                    <h4 className="text-sm font-medium text-amber-800 mb-2">上下文释义</h4>
-                    <p className="text-stone-700">{learningData.context_meaning}</p>
-                  </div>
-                )}
               </motion.div>
 
               {learningData.context && (
@@ -173,6 +177,18 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <p className="text-lg text-stone-700 leading-relaxed italic">
                     {learningData.context}
                   </p>
+                </motion.div>
+              )}
+
+              {learningData.context_meaning && learningData.context_meaning !== learningData.enriched_meaning && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25 }}
+                  className="bg-amber-50 p-4 rounded-lg border border-amber-200"
+                >
+                  <h4 className="text-sm font-medium text-amber-800 mb-2">上下文释义</h4>
+                  <p className="text-stone-700">{learningData.context_meaning}</p>
                 </motion.div>
               )}
 
