@@ -202,7 +202,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 transition={{ delay: 0.2 }}
                 className="text-base text-stone-700 font-medium"
               >
-                {quizData.correct_tokens ? quizData.correct_tokens.join('') : quizData.correct_translation}
+                {quizData.correct_translation || (quizData.correct_tokens ? quizData.correct_tokens.join('') : '')}
               </motion.p>
             )}
             {isCorrect && (

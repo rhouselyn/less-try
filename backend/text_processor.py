@@ -308,7 +308,8 @@ class TextProcessor:
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en") -> Dict[str, Any]:
         """
         生成蒙版填空练习
-        - 每6个单词蒙版1个
+        - 每8个单词蒙版1个
+        - 蒙版之间至少间隔3个词，不相邻
         - 使用翻译token而非自动分词
         - 集成备选词库
         - 干扰词从其他句子或词库选择，不使用当前句子的单词
@@ -321,17 +322,35 @@ class TextProcessor:
         
         word_count = len(words)
         
-        num_masks = max(1, word_count // 6)
+        num_masks = max(1, word_count // 8)
         
         if num_masks > word_count // 2:
             num_masks = max(1, word_count // 2)
+        
+        min_gap = 3
         
         import random
         if mask_seed is not None:
             random.seed(mask_seed)
         else:
             random.seed(hash(sentence))
-        mask_indices = sorted(random.sample(range(word_count), num_masks))
+        
+        mask_indices = []
+        candidates = list(range(word_count))
+        random.shuffle(candidates)
+        
+        for idx in candidates:
+            if len(mask_indices) >= num_masks:
+                break
+            too_close = False
+            for existing in mask_indices:
+                if abs(idx - existing) <= min_gap:
+                    too_close = True
+                    break
+            if not too_close:
+                mask_indices.append(idx)
+        
+        mask_indices.sort()
         
         # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []

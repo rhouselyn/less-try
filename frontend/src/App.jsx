@@ -520,17 +520,8 @@ function App() {
     try {
       const nextWordResponse = await api.nextWord(currentFileId)
       const newIndex = nextWordResponse.new_index
-      const endIdx = nextWordResponse.unit_end_index || unitEndIndex
       
-      if (nextWordResponse.sentence_quiz) {
-        setQuizData(nextWordResponse.sentence_quiz)
-        setUnitEndIndex(endIdx)
-        setLearningMode('sentence')
-        setStep('sentence-quiz')
-        return
-      }
-      
-      if (endIdx && newIndex >= endIdx) {
+      if (nextWordResponse.type === 'unit_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
@@ -540,6 +531,15 @@ function App() {
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setStep('all-units')
+        return
+      }
+      
+      if (nextWordResponse.sentence_quiz) {
+        const endIdx = nextWordResponse.unit_end_index || unitEndIndex
+        setQuizData(nextWordResponse.sentence_quiz)
+        setUnitEndIndex(endIdx)
+        setLearningMode('sentence')
+        setStep('sentence-quiz')
         return
       }
       

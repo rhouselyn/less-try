@@ -18,11 +18,59 @@ load_dotenv()
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
-def fix_llm_options_result(result: dict) -> dict:
+import re
+
+def is_source_lang_text(text, source_lang="en"):
+    if not text or not isinstance(text, str):
+        return False
+    text = text.strip()
+    if source_lang == "en":
+        if re.match(r'^[a-zA-Z\s\-\']+$', text) and len(text.split()) <= 3:
+            if not re.search(r'[\u4e00-\u9fff]', text):
+                return True
+    return False
+
+ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
+
+def select_key_tokens(seg_words, max_tokens=10):
+    content_words = []
+    function_words = []
+    for w in seg_words:
+        if len(w) <= 1 or w in ZH_FUNCTION_WORDS:
+            function_words.append(w)
+        else:
+            content_words.append(w)
+    
+    if len(content_words) <= max_tokens:
+        result = content_words + function_words[:max(0, max_tokens - len(content_words))]
+    else:
+        step = len(content_words) / max_tokens
+        result = [content_words[int(i * step)] for i in range(max_tokens)]
+    
+    return result[:max_tokens]
+
+def fix_llm_options_result(result: dict, source_lang="en") -> dict:
     if not isinstance(result, dict):
         return result
     mc = result.get("multiple_choice")
     if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+        filtered_options = []
+        for opt in mc["options"]:
+            if isinstance(opt, dict) and "text" in opt:
+                if opt.get("is_correct", False) or not is_source_lang_text(opt["text"], source_lang):
+                    filtered_options.append(opt)
+        if len(filtered_options) < 4:
+            correct_answer = mc.get("correct_answer", "")
+            existing_texts = {o["text"] for o in filtered_options}
+            fallbacks = ["其他含义", "不同释义", "无关意思", "另一种解释", "不同概念"]
+            for fb in fallbacks:
+                if len(filtered_options) >= 4:
+                    break
+                if fb not in existing_texts:
+                    filtered_options.append({"text": fb, "is_correct": False})
+                    existing_texts.add(fb)
+        mc["options"] = filtered_options[:4]
+        result["multiple_choice"] = mc
         return result
     if isinstance(mc, str) and not mc.strip():
         result.pop("multiple_choice", None)
@@ -312,6 +360,9 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     import random
     import re
     
+    language_settings = storage.load_language_settings(file_id)
+    source_lang = language_settings.get("source_lang", "en")
+    
     random.seed(42)
     shuffled_indices = list(range(len(vocab)))
     random.shuffle(shuffled_indices)
@@ -387,22 +438,65 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     correct_tokens = []
                     for token in translation_tokens:
                         if isinstance(token, dict):
-                            text = token.get("translation", token.get("text", ""))
-                            cleaned = re.sub(r'[^\w\s]', '', text)
-                            if cleaned:
-                                correct_tokens.append(cleaned)
+                            trans = token.get("translation", "")
+                            if trans and trans.strip():
+                                cleaned = re.sub(r'[^\w\s]', '', trans)
+                                if cleaned:
+                                    correct_tokens.append(cleaned)
+                    
+                    if len(correct_tokens) < 3:
+                        raw_translation = tr.get("tokenized_translation", "")
+                        if raw_translation:
+                            try:
+                                import jieba
+                                seg_words = list(jieba.cut(raw_translation))
+                                all_seg = [w for w in seg_words if re.search(r'[\w]', w) and len(w) > 0]
+                                correct_tokens = select_key_tokens(all_seg, max_tokens=10)
+                            except Exception:
+                                correct_tokens = [w for w in raw_translation.split() if w and re.search(r'[\w]', w)]
+                            if not correct_tokens:
+                                correct_tokens = [raw_translation.strip()]
+                    
+                    if len(correct_tokens) < 2:
+                        continue
                     
                     redundant_tokens = tr.get("redundant_tokens", [])
                     cleaned_redundant = []
                     for rt in redundant_tokens:
                         cleaned = re.sub(r'[^\w\s]', '', rt)
-                        if cleaned and cleaned not in correct_tokens:
+                        if cleaned and cleaned not in correct_tokens and not is_source_lang_text(cleaned, source_lang):
                             cleaned_redundant.append(cleaned)
                     
-                    selected_distractors = list(set(cleaned_redundant))[:3]
+                    selected_distractors = list(dict.fromkeys(cleaned_redundant))[:6]
+                    
+                    if len(selected_distractors) < 6:
+                        existing_set = set(correct_tokens) | set(selected_distractors)
+                        for other_sent in sentences:
+                            if other_sent.get("sentence") == sentence:
+                                continue
+                            other_tr = other_sent.get("translation_result", {})
+                            other_tt = other_tr.get("tokenized_translation", "")
+                            if other_tt:
+                                try:
+                                    import jieba
+                                    other_words = [w for w in jieba.cut(other_tt) if re.search(r'[\w]', w) and len(w) > 0]
+                                except Exception:
+                                    other_words = [w for w in other_tt.split() if w and re.search(r'[\w]', w)]
+                                for ow in other_words:
+                                    if ow not in existing_set and not is_source_lang_text(ow, source_lang):
+                                        selected_distractors.append(ow)
+                                        existing_set.add(ow)
+                                        if len(selected_distractors) >= 6:
+                                            break
+                                if len(selected_distractors) >= 6:
+                                    break
+                    
                     all_tokens = correct_tokens + selected_distractors
                     
-                    correct_translation = re.sub(r'[^\w\s]', '', tr.get("tokenized_translation", ""))
+                    raw_translation = tr.get("tokenized_translation", "")
+                    correct_translation = re.sub(r'[^\w\s]', '', raw_translation) if raw_translation else " ".join(correct_tokens)
+                    if not correct_translation.strip():
+                        correct_translation = " ".join(correct_tokens)
                     
                     unit_items.append({
                         "type": "sentence_quiz",
@@ -504,6 +598,7 @@ async def get_random_word(file_id: str):
         
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
         
         current_index = storage.load_learning_progress(file_id)
         
@@ -614,7 +709,7 @@ async def get_random_word(file_id: str):
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result)
+        options_result = fix_llm_options_result(options_result, source_lang)
         
         # 提取选项和正确索引
         options = []
@@ -679,14 +774,30 @@ async def next_word(file_id: str):
             raise HTTPException(status_code=404, detail="Vocab not found")
         
         current_index = storage.load_learning_progress(file_id)
+        
+        plan = storage.load_learning_plan(file_id)
+        if not plan:
+            new_index = current_index + 1
+            storage.save_learning_progress(file_id, new_index)
+            return {"success": True, "new_index": new_index}
+        
+        current_unit_id, current_step = find_item_in_plan(plan, current_index)
+        
+        if current_unit_id is not None:
+            _, current_unit_end = get_unit_flat_range(plan, current_unit_id)
+            
+            if current_index + 1 >= current_unit_end:
+                return {
+                    "success": True,
+                    "type": "unit_complete",
+                    "new_index": current_index,
+                    "unit_end_index": current_unit_end
+                }
+        
         new_index = current_index + 1
         storage.save_learning_progress(file_id, new_index)
         
         asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
-        
-        plan = storage.load_learning_plan(file_id)
-        if not plan:
-            return {"success": True, "new_index": new_index}
         
         unit_id, step_in_unit = find_item_in_plan(plan, new_index)
         
@@ -738,6 +849,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
     try:
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
         
         plan = storage.load_learning_plan(file_id)
         if not plan:
@@ -806,7 +918,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result)
+        options_result = fix_llm_options_result(options_result, source_lang)
         
         # 构建缓存数据
         cache_data = dict(options_result)
@@ -924,6 +1036,7 @@ async def get_word_details(file_id: str, word: str):
         # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
 
         correct_meaning = word_data.get("context_meaning", "")
 
@@ -941,7 +1054,7 @@ async def get_word_details(file_id: str, word: str):
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result)
+        options_result = fix_llm_options_result(options_result, source_lang)
         
         # 提取选项和正确索引
         options = []
@@ -1081,7 +1194,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                 context,
                 target_lang
             )
-            options_result = fix_llm_options_result(options_result)
+            options_result = fix_llm_options_result(options_result, source_lang)
             
             # 提取选项和正确索引
             options = []
@@ -1260,6 +1373,7 @@ async def generate_sentence_quiz(file_id: str):
         # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
         
         # 加载学习进度
         current_index = storage.load_learning_progress(file_id)
@@ -1386,29 +1500,64 @@ async def generate_sentence_quiz(file_id: str):
         if "translation" in translation_result:
             for token in translation_result["translation"]:
                 if isinstance(token, dict):
-                    # 优先使用translation字段，如果没有则使用text字段
-                    if "translation" in token:
-                        text = token["translation"]
-                    elif "text" in token:
-                        text = token["text"]
-                    else:
-                        continue
-                    cleaned_text = clean_token(text)
-                    if cleaned_text:
-                        correct_tokens.append(cleaned_text)
-        print(f"[DEBUG] 正确tokens: {correct_tokens}")
+                    trans = token.get("translation", "")
+                    if trans and trans.strip():
+                        cleaned_text = clean_token(trans)
+                        if cleaned_text:
+                            correct_tokens.append(cleaned_text)
+        print(f"[DEBUG] 正确tokens (from token translations): {correct_tokens}")
+        
+        if len(correct_tokens) < 3:
+            if tokenized_translation:
+                try:
+                    import jieba
+                    seg_words = list(jieba.cut(tokenized_translation))
+                    all_seg = [w for w in seg_words if re.search(r'[\w]', w) and len(w) > 0]
+                    correct_tokens = select_key_tokens(all_seg, max_tokens=10)
+                    print(f"[DEBUG] 使用jieba分词+关键词选取: {len(correct_tokens)} tokens")
+                except Exception as e:
+                    print(f"[DEBUG] jieba分词失败: {e}")
+                    correct_tokens = [w for w in tokenized_translation.split() if w and re.search(r'[\w]', w)]
+                if not correct_tokens:
+                    correct_tokens = [tokenized_translation.strip()]
+        
+        if len(correct_tokens) < 2:
+            raise HTTPException(status_code=404, detail="Not enough translated tokens for quiz")
         
         # 清理冗余词
         cleaned_redundant_tokens = []
         for token in redundant_tokens:
             cleaned_text = clean_token(token)
-            if cleaned_text and cleaned_text not in correct_tokens:
+            if cleaned_text and cleaned_text not in correct_tokens and not is_source_lang_text(cleaned_text, source_lang):
                 cleaned_redundant_tokens.append(cleaned_text)
         print(f"[DEBUG] 清理后的冗余词: {cleaned_redundant_tokens}")
         
-        # 过滤掉重复的冗余词，只保留不超过3个
-        unique_redundant = list(set(cleaned_redundant_tokens))
-        selected_distractors = unique_redundant[:3]
+        unique_redundant = list(dict.fromkeys(cleaned_redundant_tokens))
+        selected_distractors = unique_redundant[:6]
+        
+        if len(selected_distractors) < 6:
+            existing_set = set(correct_tokens) | set(selected_distractors)
+            all_sentences_data = storage.load_pipeline_data(file_id) or []
+            for other_sent in all_sentences_data:
+                if other_sent.get("sentence") == original_sentence:
+                    continue
+                other_tr = other_sent.get("translation_result", {})
+                other_tt = other_tr.get("tokenized_translation", "")
+                if other_tt:
+                    try:
+                        import jieba
+                        other_words = [w for w in jieba.cut(other_tt) if re.search(r'[\w]', w) and len(w) > 0]
+                    except Exception:
+                        other_words = [w for w in other_tt.split() if w and re.search(r'[\w]', w)]
+                    for ow in other_words:
+                        if ow not in existing_set and not is_source_lang_text(ow, source_lang):
+                            selected_distractors.append(ow)
+                            existing_set.add(ow)
+                            if len(selected_distractors) >= 6:
+                                break
+                    if len(selected_distractors) >= 6:
+                        break
+        
         print(f"[DEBUG] 选择的干扰词: {selected_distractors}")
         
         # 合并正确tokens和干扰词，然后打乱
@@ -1416,8 +1565,10 @@ async def generate_sentence_quiz(file_id: str):
         random.shuffle(all_tokens)
         print(f"[DEBUG] 所有tokens: {all_tokens}")
         
-        # 清理正确翻译，移除标点符号
-        correct_translation = clean_token(tokenized_translation)
+        # 构建正确翻译
+        correct_translation = clean_token(tokenized_translation) if tokenized_translation else " ".join(correct_tokens)
+        if not correct_translation.strip():
+            correct_translation = " ".join(correct_tokens)
         print(f"[DEBUG] 清理后的翻译: {correct_translation}")
         
         return {
