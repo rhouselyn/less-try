@@ -44,12 +44,12 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center text-sm font-medium ${
           isCompleted
-            ? 'bg-emerald-500 text-white'
+            ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
             : isLocked
-            ? 'bg-stone-50 text-stone-300 cursor-not-allowed'
+            ? 'bg-stone-100 text-stone-300 cursor-not-allowed'
             : isCurrent
-            ? 'bg-amber-100 text-amber-700 ring-2 ring-amber-300'
-            : 'bg-stone-100 text-stone-500 hover:bg-stone-200'
+            ? 'bg-amber-500 text-white shadow-sm shadow-amber-200'
+            : 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200/60'
         }`}
       >
         {isLocked ? <Lock className="w-3.5 h-3.5" /> : index + 1}

@@ -256,22 +256,24 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         <div className="w-1/2 flex flex-col">
           <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
-              <div className="flex items-center gap-2 mb-2.5">
-                <Languages className="w-4 h-4 text-stone-500" />
-                <h3 className="text-sm font-semibold text-stone-700">{t.sentTranslation}</h3>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                  {filteredSentences.length}
-                </span>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
-                <input
-                  type="text"
-                  value={sentenceSearch}
-                  onChange={e => setSentenceSearch(e.target.value)}
-                  placeholder="搜索单词或释义..."
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-stone-200/80 rounded-lg text-[13px] text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
-                />
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 shrink-0">
+                  <Languages className="w-4 h-4 text-stone-500" />
+                  <h3 className="text-sm font-semibold text-stone-700">{t.sentTranslation}</h3>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                    {filteredSentences.length}
+                  </span>
+                </div>
+                <div className="relative w-1/2 ml-auto">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
+                  <input
+                    type="text"
+                    value={sentenceSearch}
+                    onChange={e => setSentenceSearch(e.target.value)}
+                    placeholder="搜索单词或释义..."
+                    className="w-full pl-9 pr-3 py-1.5 bg-white border border-stone-200/80 rounded-lg text-[13px] text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
+                  />
+                </div>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto" style={{ maxHeight: '70vh' }}>
@@ -327,22 +329,24 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         <div className="w-1/2 flex flex-col">
           <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
-              <div className="flex items-center gap-2 mb-2.5">
-                <BookOpen className="w-4 h-4 text-stone-500" />
-                <h3 className="text-sm font-semibold text-stone-700">{t.vocabList}</h3>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                  {filteredVocab.length}
-                </span>
-              </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
-                <input
-                  type="text"
-                  value={vocabSearch}
-                  onChange={e => setVocabSearch(e.target.value)}
-                  placeholder="搜索单词或释义..."
-                  className="w-full pl-9 pr-3 py-2 bg-white border border-stone-200/80 rounded-lg text-[13px] text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
-                />
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 shrink-0">
+                  <BookOpen className="w-4 h-4 text-stone-500" />
+                  <h3 className="text-sm font-semibold text-stone-700">{t.vocabList}</h3>
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                    {filteredVocab.length}
+                  </span>
+                </div>
+                <div className="relative w-1/2 ml-auto">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
+                  <input
+                    type="text"
+                    value={vocabSearch}
+                    onChange={e => setVocabSearch(e.target.value)}
+                    placeholder="搜索单词或释义..."
+                    className="w-full pl-9 pr-3 py-1.5 bg-white border border-stone-200/80 rounded-lg text-[13px] text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
+                  />
+                </div>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto" ref={vocabListRef} style={{ maxHeight: '70vh' }}>
