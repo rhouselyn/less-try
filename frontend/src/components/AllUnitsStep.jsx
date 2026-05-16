@@ -44,7 +44,7 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center text-sm font-medium ${
           isCompleted
-            ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
+            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200/50'
             : isLocked
             ? 'bg-stone-100 text-stone-300 cursor-not-allowed'
             : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200/50'

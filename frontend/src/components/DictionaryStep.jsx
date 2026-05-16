@@ -91,7 +91,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         const container = vocabListRef.current
         const containerRect = container.getBoundingClientRect()
         const elRect = el.getBoundingClientRect()
-        const scrollOffset = elRect.top - containerRect.top + container.scrollTop
+        const stickyOffset = 32
+        const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
         container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
       }
     }, delay)
