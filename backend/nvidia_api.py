@@ -350,7 +350,7 @@ class NvidiaAPI:
                         "translation_phrases": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "将 tokenized_translation 按语义切分为3-6个有意义的短语片段，用于翻译排序练习。每个片段应是完整的语义单元（如从句、短语），不能是单个虚词。切分时优先在逗号、连词等自然断点处分割。如果翻译较短（少于6个词），可以只切分为2-3个片段。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容"
+                            "description": "将 tokenized_translation 尽可能拆分为单个词作为独立片段，用于翻译排序练习。【拆分原则】1.优先拆成单个词（如'每天早上'应拆为'每天'和'早上'）；2.只有当几个词必须连在一起才有完整意思时才合并（如'跑得很快'中'跑得很快'是一个完整结构不可拆）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容"
                         },
                         "grammar_explanation": {
                             "type": "string",
@@ -448,7 +448,7 @@ class NvidiaAPI:
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
-- translation_phrases: 将 tokenized_translation 按语义切分为3-6个有意义的短语片段，用于翻译排序练习。每个片段应是完整的语义单元（如从句、短语），不能是单个虚词。切分时优先在逗号、连词等自然断点处分割。如果翻译较短（少于6个词），可以只切分为2-3个片段。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
+- translation_phrases: 将 tokenized_translation 尽可能拆分为单个词作为独立片段，用于翻译排序练习。【拆分原则】1.优先拆成单个词（如'每天早上'应拆为'每天'和'早上'）；2.只有当几个词必须连在一起才有完整意思时才合并（如'跑得很快'中'跑得很快'是一个完整结构不可拆）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
 
