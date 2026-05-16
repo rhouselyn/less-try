@@ -25,7 +25,7 @@ function speakText(text, sourceLang = 'en') {
   }
 }
 
-function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang }) {
+function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer }) {
   const [selectedWords, setSelectedWords] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
@@ -78,6 +78,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
       userWords.every((w, i) => w === correctWords[i].toLowerCase())
     setIsCorrect(correct)
     setIsChecked(true)
+    if (onAnswer) onAnswer(correct)
   }
 
   const handleNextQuestion = () => {

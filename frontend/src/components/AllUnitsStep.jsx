@@ -1,18 +1,19 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft, Lock, Star } from 'lucide-react';
 
-function AllUnitsStep({ 
-  phase1Units, 
-  phase2Units, 
-  currentPhase1Unit, 
-  currentPhase2Unit, 
-  onPhase1UnitClick, 
-  onPhase2UnitClick, 
-  onBack, 
-  loading, 
-  t 
+function AllUnitsStep({
+  phase1Units,
+  phase2Units,
+  currentPhase1Unit,
+  currentPhase2Unit,
+  onPhase1UnitClick,
+  onPhase2UnitClick,
+  onBack,
+  loading,
+  t,
+  unitStarCounts
 }) {
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
@@ -30,10 +31,12 @@ function AllUnitsStep({
     return true;
   };
 
-  const renderUnitCard = (unit, index, isCurrent, onClick, keyPrefix, isUnlocked) => {
+  const renderUnitCard = (unit, index, isCurrent, onClick, keyPrefix, isUnlocked, phaseNumber) => {
     const isCompleted = unit.completed;
     const isLocked = !isUnlocked && !isCompleted;
-    
+    const starKey = `${phaseNumber}-${index}`;
+    const starCount = unitStarCounts?.[starKey];
+
     return (
       <motion.button
         key={`${keyPrefix}-unit-${index}`}
@@ -42,15 +45,34 @@ function AllUnitsStep({
         transition={{ delay: index * 0.03 }}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
-        className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center text-sm font-medium ${
+        className={`relative flex flex-col items-center justify-center rounded-lg transition-all ${
           isCompleted
             ? 'bg-[#e8f5e0] text-[#3d7a2a] border border-[#c3e0b2]/60'
             : isLocked
             ? 'bg-stone-100 text-stone-300 cursor-not-allowed'
             : 'bg-[#fef9ec] text-[#b8941e] hover:bg-[#fdf3d8] border border-[#f0e2b6]/60'
         }`}
+        style={{ width: '2.5rem', height: '2.5rem' }}
       >
-        {isLocked ? <Lock className="w-3.5 h-3.5" /> : index + 1}
+        {isLocked ? (
+          <Lock className="w-3.5 h-3.5" />
+        ) : (
+          <span className="text-sm font-medium leading-none">{index + 1}</span>
+        )}
+        {isCompleted && typeof starCount === 'number' && (
+          <div className="flex items-center justify-center gap-px mt-0.5">
+            {[0, 1, 2].map((i) => (
+              <Star
+                key={i}
+                className={`w-2 h-2 ${
+                  i < starCount
+                    ? 'text-amber-400 fill-amber-400'
+                    : 'text-stone-300 fill-stone-300'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </motion.button>
     );
   };
@@ -94,14 +116,15 @@ function AllUnitsStep({
               {t.phase1}
             </h3>
             <div className="flex flex-wrap gap-2">
-              {phase1Units.map((unit, index) => 
+              {phase1Units.map((unit, index) =>
                 renderUnitCard(
-                  unit, 
-                  index, 
-                  index === currentPhase1Unit, 
+                  unit,
+                  index,
+                  index === currentPhase1Unit,
                   () => onPhase1UnitClick(index),
                   'phase1',
-                  isPhase1Unlocked(index)
+                  isPhase1Unlocked(index),
+                  1
                 )
               )}
             </div>
@@ -112,14 +135,15 @@ function AllUnitsStep({
               {t.phase2}
             </h3>
             <div className="flex flex-wrap gap-2">
-              {phase2Units.map((unit, index) => 
+              {phase2Units.map((unit, index) =>
                 renderUnitCard(
-                  unit, 
-                  index, 
-                  index === currentPhase2Unit, 
+                  unit,
+                  index,
+                  index === currentPhase2Unit,
                   () => onPhase2UnitClick(index),
                   'phase2',
-                  isPhase2Unlocked(index)
+                  isPhase2Unlocked(index),
+                  2
                 )
               )}
             </div>

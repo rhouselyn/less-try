@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ChevronRight, Trophy, Star, Sparkles, RotateCcw } from 'lucide-react'
 
-function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview, errorCount, hasWrongItems, t }) {
+function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview, errorCount, hasWrongItems, wrongItemsCount, t }) {
   const starCount = Math.max(0, 3 - Math.floor(errorCount / 3))
 
   return (
@@ -86,7 +86,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
               <span className="text-amber-800 font-medium">错题复习</span>
             </div>
             <p className="text-sm text-amber-700">
-              你有 {errorCount} 道错题需要复习，完成后才能继续
+              你有 {wrongItemsCount ?? errorCount} 道错题需要复习，完成后才能继续
             </p>
           </motion.div>
         )}

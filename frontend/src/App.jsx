@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
@@ -70,6 +70,8 @@ function App() {
   const [unitEndIndex, setUnitEndIndex] = useState(null)
   const [completedUnitId, setCompletedUnitId] = useState(null)
   const [completedPhase, setCompletedPhase] = useState(1)
+  const [unitStarCounts, setUnitStarCounts] = useState({})
+  const unitErrorCountRef = useRef(0)
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
@@ -329,6 +331,7 @@ function App() {
     if (!currentFileId) return
     
     setUnitErrorCount(0)
+    unitErrorCountRef.current = 0
     setWrongItems([])
     setReviewMode(false)
     setReviewIndex(0)
@@ -360,6 +363,8 @@ function App() {
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setCompletedUnitId(unitId)
         setCompletedPhase(1)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        setUnitStarCounts(prev => ({ ...prev, [`1-${unitId}`]: starCount }))
         setStep('unit-complete')
       } else {
         setLearningData(response)
@@ -536,26 +541,84 @@ function App() {
       setShowWordCard(true)
       if (reviewMode) {
         setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
       }
     } else {
-      setUnitErrorCount(prev => prev + 1)
-      if (!reviewMode) {
+      setUnitErrorCount(prev => {
+        const newCount = prev + 1
+        unitErrorCountRef.current = newCount
+        return newCount
+      })
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
         setWrongItems(prev => [...prev, { type: 'word', data: learningData }])
       }
     }
   }
 
+  const handleSentenceQuizAnswer = (isCorrect) => {
+    if (!isCorrect) {
+      setUnitErrorCount(prev => {
+        const newCount = prev + 1
+        unitErrorCountRef.current = newCount
+        return newCount
+      })
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
+        setWrongItems(prev => [...prev, { type: 'sentence_quiz', data: quizData }])
+      }
+    } else {
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
+      }
+    }
+  }
+
+  const handleListeningQuizAnswer = (isCorrect) => {
+    if (!isCorrect) {
+      setUnitErrorCount(prev => {
+        const newCount = prev + 1
+        unitErrorCountRef.current = newCount
+        return newCount
+      })
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
+        setWrongItems(prev => [...prev, { type: 'listening_quiz', data: listeningQuizData }])
+      }
+    } else {
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
+      }
+    }
+  }
+
   const goToNextReviewItem = () => {
-    const remaining = wrongItems.filter((_, i) => i !== reviewIndex || false)
-    if (remaining.length === 0) {
+    if (wrongItems.length === 0) {
       setReviewMode(false)
       setReviewIndex(0)
       setStep('unit-complete')
       return
     }
-    const nextItem = remaining[0]
-    setWrongItems(remaining)
-    setReviewIndex(0)
+    const nextIdx = Math.min(reviewIndex, wrongItems.length - 1)
+    setReviewIndex(nextIdx)
+    const nextItem = wrongItems[nextIdx]
     if (nextItem?.type === 'word') {
       setLearningData(nextItem.data)
       setShowWordCard(false)
@@ -588,8 +651,11 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setCompletedUnitId(phase1UnitsData.current_unit)
+        const completedUnit = phase1UnitsData.current_unit
+        setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        setUnitStarCounts(prev => ({ ...prev, [`1-${completedUnit}`]: starCount }))
         setStep('unit-complete')
         return
       }
@@ -632,8 +698,11 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setCompletedUnitId(phase1UnitsData.current_unit)
+        const completedUnit = phase1UnitsData.current_unit
+        setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        setUnitStarCounts(prev => ({ ...prev, [`1-${completedUnit}`]: starCount }))
         setStep('unit-complete')
       } else {
         setLearningData(response)
@@ -876,6 +945,7 @@ function App() {
               t={t}
               onOpenVocabList={handleOpenVocabList}
               sourceLang={sourceLang}
+              onAnswer={handleSentenceQuizAnswer}
             />
           )}
           
@@ -889,6 +959,7 @@ function App() {
               t={t}
               onOpenVocabList={handleOpenVocabList}
               sourceLang={sourceLang}
+              onAnswer={handleListeningQuizAnswer}
             />
           )}
           
@@ -900,6 +971,7 @@ function App() {
               phase={completedPhase}
               onContinue={() => {
                 setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
                 setWrongItems([])
                 setReviewMode(false)
                 setReviewIndex(0)
@@ -925,6 +997,7 @@ function App() {
               }}
               errorCount={unitErrorCount}
               hasWrongItems={wrongItems.length > 0}
+              wrongItemsCount={wrongItems.length}
               t={t}
             />
           )}
@@ -941,6 +1014,7 @@ function App() {
               onBack={() => setStep('dictionary')}
               loading={loading}
               t={t}
+              unitStarCounts={unitStarCounts}
             />
           )}
           

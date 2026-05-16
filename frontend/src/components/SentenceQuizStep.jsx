@@ -25,7 +25,7 @@ function speakText(text, sourceLang = 'en') {
   }
 }
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
@@ -78,6 +78,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
     const isCorrectAnswer = JSON.stringify(userTokens) === JSON.stringify(correctTokens)
     setIsCorrect(isCorrectAnswer)
     setIsChecked(true)
+    if (onAnswer) onAnswer(isCorrectAnswer)
   }
 
   const handleNextQuestion = () => {

@@ -496,6 +496,22 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                 if sentence_covered:
                     used_sentences.add(sentence)
                     
+                    covering_vocab_indices = []
+                    for word_item in unit_word_items:
+                        w_data = vocab[word_item["vocab_index"]]
+                        w_tokens = w_data.get("tokens", [w_data["word"]])
+                        word_covers = False
+                        for wt in w_tokens:
+                            for token in translation_tokens:
+                                if isinstance(token, dict) and "text" in token:
+                                    if wt.lower() == token["text"].lower() or wt.lower() in token["text"].lower() or token["text"].lower() in wt.lower():
+                                        word_covers = True
+                                        break
+                            if word_covers:
+                                break
+                        if word_covers:
+                            covering_vocab_indices.append(word_item["vocab_index"])
+                    
                     raw_translation = tr.get("tokenized_translation", "")
                     correct_translation = raw_translation.strip() if raw_translation else ""
                     
@@ -539,27 +555,67 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         "sentence": sentence,
                         "correct_translation": correct_translation,
                         "correct_tokens": correct_tokens,
-                        "tokens": all_tokens
+                        "tokens": all_tokens,
+                        "_covering_vocab_indices": covering_vocab_indices
                     })
                     
-                    listening_distractors = []
-                    for other_sent in sentences:
-                        other_sentence = other_sent.get("sentence", "")
-                        if other_sentence and other_sentence != sentence and other_sentence not in used_sentences and len(other_sentence.split()) <= MAX_SENTENCE_WORDS_FOR_QUIZ:
-                            listening_distractors.append(other_sentence)
-                            if len(listening_distractors) >= 3:
-                                break
+                    listening_correct_words = [vocab[vi]["word"] for vi in covering_vocab_indices]
+                    if not listening_correct_words:
+                        for vi in all_learned_vocab_indices:
+                            w_data = vocab[vi]
+                            w_tokens = w_data.get("tokens", [w_data["word"]])
+                            for wt in w_tokens:
+                                for token in translation_tokens:
+                                    if isinstance(token, dict) and "text" in token:
+                                        if wt.lower() == token["text"].lower() or wt.lower() in token["text"].lower() or token["text"].lower() in wt.lower():
+                                            if w_data["word"] not in listening_correct_words:
+                                                listening_correct_words.append(w_data["word"])
+                                            break
+                    
+                    listening_distractor_words = []
+                    used_indices = covering_vocab_indices if covering_vocab_indices else set()
+                    available = [i for i in range(len(vocab)) if i not in used_indices and vocab[i]["word"] not in listening_correct_words]
+                    random.shuffle(available)
+                    for vi in available:
+                        listening_distractor_words.append(vocab[vi]["word"])
+                        if len(listening_distractor_words) >= 2:
+                            break
+                    
+                    if not listening_correct_words:
+                        continue
                     
                     unit_quiz_items.append({
                         "type": "listening_quiz",
                         "sentence": sentence,
-                        "distractor_sentences": listening_distractors[:3]
+                        "correct_words": listening_correct_words,
+                        "distractor_words": listening_distractor_words[:2],
+                        "_covering_vocab_indices": covering_vocab_indices
                     })
         
         final_items = list(unit_word_items)
+        
+        quizzes_with_anchor = []
         for quiz in unit_quiz_items:
-            insert_pos = random.randint(len(unit_word_items), max(len(unit_word_items), len(final_items)))
+            covering = quiz.pop("_covering_vocab_indices", [])
+            if covering:
+                last_covering_idx = covering[-1]
+                anchor_pos = 0
+                for i, item in enumerate(final_items):
+                    if item.get("type") == "word" and item.get("vocab_index") == last_covering_idx:
+                        anchor_pos = i + 1
+                        break
+                quizzes_with_anchor.append((quiz, anchor_pos))
+            else:
+                quizzes_with_anchor.append((quiz, 0))
+        
+        quizzes_with_anchor.sort(key=lambda x: x[1])
+        
+        offset = 0
+        for quiz, anchor_pos in quizzes_with_anchor:
+            adjusted_anchor = anchor_pos + offset
+            insert_pos = random.randint(adjusted_anchor, max(adjusted_anchor, len(final_items)))
             final_items.insert(insert_pos, quiz)
+            offset += 1
         
         if final_items:
             plan.append({
@@ -694,18 +750,14 @@ async def get_random_word(file_id: str):
                 if current_item["type"] == "listening_quiz":
                     import random as rnd
                     correct_sentence = current_item["sentence"]
-                    correct_words = correct_sentence.split()
-                    distractors = list(current_item.get("distractor_sentences", []))
-                    distractor_words = []
-                    for ds in distractors:
-                        for w in ds.split():
-                            w_clean = w.strip()
-                            if w_clean and w_clean not in correct_words and w_clean not in distractor_words:
-                                distractor_words.append(w_clean)
-                                if len(distractor_words) >= 2:
-                                    break
-                        if len(distractor_words) >= 2:
-                            break
+                    correct_words = current_item.get("correct_words", correct_sentence.split())
+                    distractor_words = list(current_item.get("distractor_words", []))
+                    if not distractor_words:
+                        vocab_data = storage.load_vocab(file_id)
+                        all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
+                        available = [v["word"] for v in all_vocab if v["word"] not in correct_words and v["word"] not in distractor_words]
+                        rnd.shuffle(available)
+                        distractor_words = available[:2]
                     options = correct_words + distractor_words[:2]
                     rnd.shuffle(options)
                     return {
@@ -961,18 +1013,14 @@ async def next_word(file_id: str):
                 if next_item["type"] == "listening_quiz":
                     import random as rnd
                     correct_sentence = next_item["sentence"]
-                    correct_words = correct_sentence.split()
-                    distractors = list(next_item.get("distractor_sentences", []))
-                    distractor_words = []
-                    for ds in distractors:
-                        for w in ds.split():
-                            w_clean = w.strip()
-                            if w_clean and w_clean not in correct_words and w_clean not in distractor_words:
-                                distractor_words.append(w_clean)
-                                if len(distractor_words) >= 2:
-                                    break
-                        if len(distractor_words) >= 2:
-                            break
+                    correct_words = next_item.get("correct_words", correct_sentence.split())
+                    distractor_words = list(next_item.get("distractor_words", []))
+                    if not distractor_words:
+                        vocab_data = storage.load_vocab(file_id)
+                        all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
+                        available = [v["word"] for v in all_vocab if v["word"] not in correct_words and v["word"] not in distractor_words]
+                        rnd.shuffle(available)
+                        distractor_words = available[:2]
                     options = correct_words + distractor_words[:2]
                     rnd.shuffle(options)
                     return {
