@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2 } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, EyeOff } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 
@@ -11,6 +11,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [wordDetails, setWordDetails] = useState({})
   const [sentenceSearch, setSentenceSearch] = useState('')
   const [vocabSearch, setVocabSearch] = useState('')
+  const [hideTranslations, setHideTranslations] = useState(false)
+  const [hideMeanings, setHideMeanings] = useState(false)
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
@@ -205,7 +207,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const tr = item.translation_result
     const text = tr?.tokenized_translation || ''
     if (!text) return null
-    return <div className="text-stone-600 text-sm">{text}</div>
+    return <div className={`text-stone-600 text-sm ${hideTranslations ? 'invisible' : ''}`}>{text}</div>
   }
 
   return (
@@ -258,7 +260,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0">
-                  <Languages className="w-4 h-4 text-stone-500" />
+                  <Languages className={`w-4 h-4 transition-colors cursor-pointer ${hideTranslations ? 'text-amber-500' : 'text-stone-500 hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); setHideTranslations(v => !v) }} />
                   <h3 className="text-sm font-semibold text-stone-700">{t.sentTranslation}</h3>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                     {filteredSentences.length}
@@ -331,7 +333,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0">
-                  <BookOpen className="w-4 h-4 text-stone-500" />
+                  <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${hideMeanings ? 'text-amber-500' : 'text-stone-500 hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); setHideMeanings(v => !v) }} />
                   <h3 className="text-sm font-semibold text-stone-700">{t.vocabList}</h3>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                     {filteredVocab.length}
@@ -395,7 +397,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     {word.morphology}
                                   </span>
                                 )}
-                                <span className="text-[12px] text-stone-500 truncate">
+                                <span className={`text-[12px] text-stone-500 truncate ${hideMeanings ? 'invisible' : ''}`}>
                                   {word.enriched_meaning || word.context_meaning || word.translation}
                                 </span>
                               </div>

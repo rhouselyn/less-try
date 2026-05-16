@@ -47,9 +47,7 @@ function AllUnitsStep({
             ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
             : isLocked
             ? 'bg-stone-100 text-stone-300 cursor-not-allowed'
-            : isCurrent
-            ? 'bg-amber-500 text-white shadow-sm shadow-amber-200'
-            : 'bg-amber-50 text-amber-600 hover:bg-amber-100 border border-amber-200/60'
+            : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200/50'
         }`}
       >
         {isLocked ? <Lock className="w-3.5 h-3.5" /> : index + 1}
