@@ -332,11 +332,12 @@ class NvidiaAPI:
                         },
                         "translation": {
                             "type": "array",
+                            "description": "【极其重要】每个词的translation字段都不能为空！即使是冠词、介词、连词等也必须给出TARGET_LANG翻译。例如：the→这/那，a→一个，in→在…里，had→有/已经，to→到/为了",
                             "items": {
                                 "type": "object",
                                 "properties": {
                                     "text": {"type": "string"},
-                                    "translation": {"type": "string"},
+                                    "translation": {"type": "string", "description": "该词在TARGET_LANG中的翻译，绝不能为空字符串！即使是功能词也必须给出对应翻译"},
                                     "phonetic": {"type": "string"},
                                     "morphology": {"type": "string"}
                                 },
@@ -346,6 +347,13 @@ class NvidiaAPI:
                         "tokenized_translation": {
                             "type": "string",
                             "description": "完整自然的 TARGET_LANG 翻译，正常句子格式"
+                        },
+                        "translation_tokens": {
+                            "type": "array",
+                            "items": {"type": "string"},
+                            "description": "将tokenized_translation按语义切分为4-8个有意义的短语片段，用于翻译排序练习。切分规则：1)按语义单元切分，每个片段应是一个完整的语义单元（如主语短语、谓语短语、状语等）；2)每个片段长度2-8个汉字为宜；3)所有片段按顺序拼接后应等于tokenized_translation（去除标点后）；4)不要把单个虚词（的、了、地等）单独切分为一个片段，应与相邻实词合并；5)不要切分得太细（如每个字一个片段）或太粗（如整个句子一个片段）",
+                            "minItems": 2,
+                            "maxItems": 8
                         },
                         "grammar_explanation": {
                             "type": "string",
@@ -406,7 +414,7 @@ class NvidiaAPI:
                         }
                     },
                     "required": [
-                        "original", "translation", "tokenized_translation", 
+                        "original", "translation", "tokenized_translation", "translation_tokens",
                         "grammar_explanation", "redundant_tokens", "dictionary_entries"
                     ]
                 }
@@ -439,10 +447,18 @@ class NvidiaAPI:
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
   - text: 原词/标记（不带标点）
-  - translation: 这个词翻译成 TARGET_LANG
+  - translation: 这个词翻译成 TARGET_LANG。【极其重要】每个词的translation字段都不能为空字符串！即使是冠词(the→这/那)、介词(in→在…里/for→为了)、连词(although→虽然)、代词(they→他们/their→他们的)、助动词(had→已经/would→会/could→能够)、不定式标记(to→到/为了)等也必须给出对应翻译。不要用括号注释如"（引导从句）"代替翻译，要给出实际的翻译词！
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
+- translation_tokens: 将tokenized_translation按语义切分为4-8个有意义的短语片段数组，用于翻译排序练习。【极其重要】切分规则：
+  1) 按语义单元切分，每个片段应是一个完整的语义单元（如"主语短语"、"谓语+宾语"、"状语"等）
+  2) 每个片段长度2-8个汉字为宜
+  3) 所有片段按顺序拼接后应等于tokenized_translation（去除标点后）
+  4) 不要把单个虚词（的、了、地等）单独切分为一个片段，应与相邻实词合并
+  5) 不要切分得太细（如每个字一个片段）或太粗（如整个句子一个片段）
+  6) 示例：tokenized_translation="虽然研究人员已经不知疲倦地工作了数月" → translation_tokens=["虽然研究人员","已经不知疲倦地","工作了数月"]
+  7) 示例：tokenized_translation="猫坐在垫子上" → translation_tokens=["猫","坐在","垫子上"]
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
 

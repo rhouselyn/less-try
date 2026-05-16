@@ -278,6 +278,19 @@ class TextProcessor:
         
         existing_text_lower = [t['text'].lower() for t in existing_tokens]
         
+        dict_lookup = {}
+        dict_entries = translation_result.get('dictionary_entries', [])
+        if isinstance(dict_entries, str):
+            try:
+                import json
+                dict_entries = json.loads(dict_entries)
+            except (json.JSONDecodeError, TypeError):
+                dict_entries = []
+        if isinstance(dict_entries, list):
+            for entry in dict_entries:
+                if isinstance(entry, dict) and 'word' in entry:
+                    dict_lookup[entry['word'].lower()] = entry
+        
         completed_translation = []
         used_existing = set()
         
@@ -285,16 +298,31 @@ class TextProcessor:
             found = False
             for i, token in enumerate(existing_tokens):
                 if i not in used_existing and token['text'].lower() == orig_word.lower():
-                    completed_translation.append(token)
+                    t = dict(token)
+                    if not t.get('translation', '').strip():
+                        dict_entry = dict_lookup.get(orig_word.lower())
+                        if dict_entry:
+                            t['translation'] = dict_entry.get('translation', '') or dict_entry.get('context_meaning', '')
+                            if not t.get('phonetic', '').strip():
+                                t['phonetic'] = dict_entry.get('ipa', '')
+                    completed_translation.append(t)
                     used_existing.add(i)
                     found = True
                     break
             if not found:
+                dict_entry = dict_lookup.get(orig_word.lower())
+                translation_val = ''
+                phonetic_val = ''
+                morphology_val = ''
+                if dict_entry:
+                    translation_val = dict_entry.get('translation', '') or dict_entry.get('context_meaning', '')
+                    phonetic_val = dict_entry.get('ipa', '')
+                    morphology_val = dict_entry.get('morphology', '')
                 completed_translation.append({
                     'text': orig_word,
-                    'translation': '',
-                    'phonetic': '',
-                    'morphology': ''
+                    'translation': translation_val,
+                    'phonetic': phonetic_val,
+                    'morphology': morphology_val
                 })
         
         translation_result['translation'] = completed_translation
