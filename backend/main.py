@@ -498,15 +498,12 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     raw_translation = tr.get("tokenized_translation", "")
                     correct_translation = raw_translation.strip() if raw_translation else ""
                     
-                    correct_tokens = get_translation_phrases(tr, max_phrases=6)
-                    
-                    if len(correct_tokens) < 2:
-                        correct_tokens = []
-                        for token in translation_tokens:
-                            if isinstance(token, dict):
-                                trans = token.get("translation", "")
-                                if trans and trans.strip():
-                                    correct_tokens.append(trans.strip())
+                    correct_tokens = []
+                    for token in translation_tokens:
+                        if isinstance(token, dict):
+                            trans = token.get("translation", "")
+                            if trans and trans.strip():
+                                correct_tokens.append(trans.strip())
                     
                     if len(correct_tokens) < 2:
                         continue
@@ -526,15 +523,16 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             if other_sent.get("sentence") == sentence:
                                 continue
                             other_tr = other_sent.get("translation_result", {})
-                            other_tt = other_tr.get("tokenized_translation", "")
-                            if other_tt:
-                                other_phrases = split_translation_to_phrases(other_tt, max_phrases=10)
-                                for op in other_phrases:
-                                    if op not in existing_set and not is_source_lang_text(op, source_lang):
-                                        selected_distractors.append(op)
-                                        existing_set.add(op)
-                                        if len(selected_distractors) >= 4:
-                                            break
+                            other_translation_tokens = other_tr.get("translation", [])
+                            if other_translation_tokens:
+                                for ot in other_translation_tokens:
+                                    if isinstance(ot, dict):
+                                        ot_trans = ot.get("translation", "").strip()
+                                        if ot_trans and ot_trans not in existing_set and not is_source_lang_text(ot_trans, source_lang):
+                                            selected_distractors.append(ot_trans)
+                                            existing_set.add(ot_trans)
+                                            if len(selected_distractors) >= 4:
+                                                break
                                 if len(selected_distractors) >= 4:
                                     break
                     
@@ -1542,22 +1540,18 @@ async def generate_sentence_quiz(file_id: str):
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
-        correct_tokens = get_translation_phrases(translation_result, max_phrases=6)
-        print(f"[DEBUG] 正确短语片段: {correct_tokens}")
-        
-        if len(correct_tokens) < 2:
-            correct_tokens = []
-            if "translation" in translation_result:
-                for token in translation_result["translation"]:
-                    if isinstance(token, dict):
-                        trans = token.get("translation", "")
-                        if trans and trans.strip():
-                            correct_tokens.append(trans.strip())
+        correct_tokens = []
+        if "translation" in translation_result:
+            for token in translation_result["translation"]:
+                if isinstance(token, dict):
+                    trans = token.get("translation", "")
+                    if trans and trans.strip():
+                        correct_tokens.append(trans.strip())
+        print(f"[DEBUG] 正确单词tokens: {correct_tokens}")
         
         if len(correct_tokens) < 2:
             raise HTTPException(status_code=404, detail="Not enough translated tokens for quiz")
         
-        # 清理冗余词
         cleaned_redundant_tokens = []
         for token in redundant_tokens:
             rt_stripped = token.strip()
@@ -1575,15 +1569,16 @@ async def generate_sentence_quiz(file_id: str):
                 if other_sent.get("sentence") == original_sentence:
                     continue
                 other_tr = other_sent.get("translation_result", {})
-                other_tt = other_tr.get("tokenized_translation", "")
-                if other_tt:
-                    other_phrases = split_translation_to_phrases(other_tt, max_phrases=10)
-                    for op in other_phrases:
-                        if op not in existing_set and not is_source_lang_text(op, source_lang):
-                            selected_distractors.append(op)
-                            existing_set.add(op)
-                            if len(selected_distractors) >= 4:
-                                break
+                other_translation_tokens = other_tr.get("translation", [])
+                if other_translation_tokens:
+                    for ot in other_translation_tokens:
+                        if isinstance(ot, dict):
+                            ot_trans = ot.get("translation", "").strip()
+                            if ot_trans and ot_trans not in existing_set and not is_source_lang_text(ot_trans, source_lang):
+                                selected_distractors.append(ot_trans)
+                                existing_set.add(ot_trans)
+                                if len(selected_distractors) >= 4:
+                                    break
                     if len(selected_distractors) >= 4:
                         break
         

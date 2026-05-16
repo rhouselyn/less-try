@@ -1,6 +1,6 @@
-import { useState, useRef, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, ArrowUpDown } from 'lucide-react'
+import { useState, useRef, useCallback, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Shuffle, Loader2, Languages, BookOpen, ArrowUpDown, ChevronDown } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 
@@ -14,6 +14,25 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
+
+  const groupedVocab = useMemo(() => {
+    const groups = {}
+    vocab.forEach(word => {
+      const letter = word.word[0].toUpperCase()
+      if (!groups[letter]) groups[letter] = []
+      groups[letter].push(word)
+    })
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  }, [vocab])
+
+  const letterIndex = useMemo(() => {
+    return groupedVocab.map(([letter]) => letter)
+  }, [groupedVocab])
+
+  const scrollToLetter = (letter) => {
+    const el = document.getElementById(`dict-group-${letter}`)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   const fetchWordDetail = useCallback(async (wordKey) => {
     if (wordDetails[wordKey]) return wordDetails[wordKey]
@@ -255,70 +274,121 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               </motion.button>
             </div>
             <div className="flex-1 overflow-y-auto" ref={vocabListRef} style={{ maxHeight: '70vh' }}>
-              <div className="divide-y divide-stone-200/60">
-                {vocab.map((word, index) => {
-                  const wordKey = word.word
-                  const isExpanded = expandedWord === wordKey
-                  const isLoading = loadingWords[wordKey]
-                  const detail = wordDetails[wordKey]
+              <div className="space-y-3">
+                {groupedVocab.map(([letter, words], groupIdx) => (
+                  <div key={letter} id={`dict-group-${letter}`}>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: groupIdx * 0.04 }}
+                      className="sticky top-0 z-10 backdrop-blur-sm bg-stone-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
+                    >
+                      <span className="text-xs font-bold text-amber-600/80 tracking-widest">{letter}</span>
+                    </motion.div>
+                    <div className="space-y-px">
+                      {words.map((word, index) => {
+                        const wordKey = word.word
+                        const isExpanded = expandedWord === wordKey
+                        const isLoading = loadingWords[wordKey]
+                        const detail = wordDetails[wordKey]
 
-                  return (
-                    <div key={wordKey || index} ref={el => { wordRefs.current[wordKey] = el }}>
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.01 }}
-                        className={`p-4 cursor-pointer transition-colors ${
-                          isExpanded ? 'bg-amber-50/50' : 'hover:bg-amber-50/30'
-                        }`}
-                        onClick={() => handleVocabWordClick(word)}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div>
-                              <span className="font-medium text-stone-800">{word.word}</span>
-                              {word.ipa && (
-                                <span className="text-stone-400 text-sm ml-2 ipa-font">/{word.ipa}/</span>
+                        return (
+                          <motion.div
+                            key={wordKey}
+                            ref={el => { wordRefs.current[wordKey] = el }}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
+                            className="bg-white"
+                          >
+                            <button
+                              onClick={() => handleVocabWordClick(word)}
+                              className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-colors group"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-baseline gap-2.5">
+                                  <span className="text-[15px] font-semibold text-stone-800 tracking-tight">
+                                    {word.word}
+                                  </span>
+                                  {word.ipa && (
+                                    <span className="text-[12px] text-stone-400 ipa-font truncate">
+                                      /{word.ipa}/
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-[13px] text-stone-500 truncate">
+                                    {word.enriched_meaning || word.context_meaning || word.translation}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 shrink-0">
+                                {word.morphology && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide">
+                                    {word.morphology}
+                                  </span>
+                                )}
+                                <motion.div
+                                  animate={{ rotate: isExpanded ? 0 : -90 }}
+                                  transition={{ duration: 0.15 }}
+                                >
+                                  <ChevronDown className="w-3.5 h-3.5 text-stone-300 group-hover:text-stone-500 transition-colors" />
+                                </motion.div>
+                              </div>
+                            </button>
+
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="px-4 pb-3.5 border-t border-stone-100/80">
+                                    {isLoading ? (
+                                      <div className="pt-4 flex flex-col items-center justify-center gap-3">
+                                        <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+                                        <p className="text-[12px] text-stone-400">正在生成单词详解...</p>
+                                      </div>
+                                    ) : detail ? (
+                                      <div className="pt-3">
+                                        <WordDetail word={detail} t={t} />
+                                      </div>
+                                    ) : (
+                                      <div className="pt-3 text-center text-stone-400 text-[12px]">
+                                        暂无详情
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
                               )}
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-stone-600 text-sm">{word.context_meaning}</span>
-                            {word.morphology && (
-                              <span className="text-xs px-2 py-0.5 bg-stone-100 text-stone-500 rounded font-mono">
-                                {word.morphology}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                      {isExpanded && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          className="border-t border-stone-200/60 bg-stone-50/30"
-                        >
-                          {isLoading ? (
-                            <div className="p-8 flex flex-col items-center justify-center gap-3">
-                              <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
-                              <p className="text-sm text-stone-400">正在生成单词详解...</p>
-                            </div>
-                          ) : detail ? (
-                            <div className="p-4">
-                              <WordDetail word={detail} t={t} />
-                            </div>
-                          ) : (
-                            <div className="p-4 text-center text-stone-400 text-sm">
-                              暂无详情
-                            </div>
-                          )}
-                        </motion.div>
-                      )}
+                            </AnimatePresence>
+                          </motion.div>
+                        )
+                      })}
                     </div>
-                  )
-                })}
+                  </div>
+                ))}
               </div>
             </div>
+
+            {letterIndex.length > 3 && (
+              <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-t border-stone-200/60 bg-stone-50/40">
+                <div className="flex flex-wrap justify-center gap-0.5 px-2">
+                  {letterIndex.map(letter => (
+                    <button
+                      key={letter}
+                      onClick={() => scrollToLetter(letter)}
+                      className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                    >
+                      {letter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
