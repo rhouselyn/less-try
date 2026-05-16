@@ -3,17 +3,30 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, ChevronRight, BookOpen, Lightbulb } from 'lucide-react';
 import { useState } from 'react';
 
-function speakText(text) {
+const LANG_MAP = {
+  'en': 'en-US',
+  'zh': 'zh-CN',
+  'ja': 'ja-JP',
+  'ko': 'ko-KR',
+  'fr': 'fr-FR',
+  'de': 'de-DE',
+  'es': 'es-ES',
+  'it': 'it-IT',
+  'pt': 'pt-PT',
+  'ru': 'ru-RU',
+}
+
+function speakText(text, sourceLang = 'en') {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
+    utterance.lang = LANG_MAP[sourceLang] || 'en-US'
     utterance.rate = 0.9
     window.speechSynthesis.speak(utterance)
   }
 }
 
-function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview }) {
+function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang }) {
   const [selectedTokens, setSelectedTokens] = useState([]);
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -107,7 +120,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            onClick={() => speakText(data.original_tokens?.join(' ') || '')}
+            onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
             className="p-1.5 text-stone-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors shrink-0"
             title="点击发音"
           >

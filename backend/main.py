@@ -433,13 +433,14 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     vocab_pointer = 0
     
     while vocab_pointer < len(shuffled_indices):
-        unit_items = []
+        unit_word_items = []
+        unit_quiz_items = []
         
-        while vocab_pointer < len(shuffled_indices) and len(unit_items) < max_items_per_unit:
+        while vocab_pointer < len(shuffled_indices) and len(unit_word_items) < max_items_per_unit:
             vocab_idx = shuffled_indices[vocab_pointer]
             vocab_pointer += 1
             
-            unit_items.append({
+            unit_word_items.append({
                 "type": "word",
                 "vocab_index": vocab_idx
             })
@@ -461,8 +462,8 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     continue
                 
                 already_in_unit = any(
-                    item["type"] == "sentence_quiz" and item["sentence"] == sentence
-                    for item in unit_items
+                    item.get("sentence") == sentence
+                    for item in unit_quiz_items
                 )
                 if already_in_unit:
                     continue
@@ -493,9 +494,6 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             break
                 
                 if sentence_covered:
-                    if len(unit_items) >= max_items_per_unit:
-                        continue
-                    
                     used_sentences.add(sentence)
                     
                     raw_translation = tr.get("tokenized_translation", "")
@@ -536,18 +534,37 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     if not correct_translation.strip():
                         correct_translation = "".join(correct_tokens)
                     
-                    unit_items.append({
+                    unit_quiz_items.append({
                         "type": "sentence_quiz",
                         "sentence": sentence,
                         "correct_translation": correct_translation,
                         "correct_tokens": correct_tokens,
                         "tokens": all_tokens
                     })
+                    
+                    listening_distractors = []
+                    for other_sent in sentences:
+                        other_sentence = other_sent.get("sentence", "")
+                        if other_sentence and other_sentence != sentence and other_sentence not in used_sentences and len(other_sentence.split()) <= MAX_SENTENCE_WORDS_FOR_QUIZ:
+                            listening_distractors.append(other_sentence)
+                            if len(listening_distractors) >= 3:
+                                break
+                    
+                    unit_quiz_items.append({
+                        "type": "listening_quiz",
+                        "sentence": sentence,
+                        "distractor_sentences": listening_distractors[:3]
+                    })
         
-        if unit_items:
+        final_items = list(unit_word_items)
+        for quiz in unit_quiz_items:
+            insert_pos = random.randint(1, max(1, len(final_items)))
+            final_items.insert(insert_pos, quiz)
+        
+        if final_items:
             plan.append({
                 "unit_id": len(plan),
-                "items": unit_items
+                "items": final_items
             })
     
     storage.save_learning_plan(file_id, plan)
@@ -667,6 +684,25 @@ async def get_random_word(file_id: str):
                         "correct_translation": current_item.get("correct_translation", ""),
                         "correct_tokens": current_item.get("correct_tokens", []),
                         "tokens": tokens,
+                        "unit_end_index": unit_end_index,
+                        "current_index": current_index,
+                        "unit_start_index": unit_start_index,
+                        "total_items_in_unit": total_items_in_unit,
+                        "step_in_unit": step_in_unit
+                    }
+                
+                if current_item["type"] == "listening_quiz":
+                    import random as rnd
+                    correct_sentence = current_item["sentence"]
+                    distractors = list(current_item.get("distractor_sentences", []))
+                    options = [correct_sentence] + distractors
+                    rnd.shuffle(options)
+                    correct_index = options.index(correct_sentence)
+                    return {
+                        "type": "listening_quiz",
+                        "original_sentence": correct_sentence,
+                        "options": options,
+                        "correct_index": correct_index,
                         "unit_end_index": unit_end_index,
                         "current_index": current_index,
                         "unit_start_index": unit_start_index,
@@ -909,6 +945,24 @@ async def next_word(file_id: str):
                             "correct_translation": next_item.get("correct_translation", ""),
                             "correct_tokens": next_item.get("correct_tokens", []),
                             "tokens": tokens
+                        }
+                    }
+                
+                if next_item["type"] == "listening_quiz":
+                    import random as rnd
+                    correct_sentence = next_item["sentence"]
+                    distractors = list(next_item.get("distractor_sentences", []))
+                    options = [correct_sentence] + distractors
+                    rnd.shuffle(options)
+                    correct_index = options.index(correct_sentence)
+                    return {
+                        "success": True,
+                        "new_index": new_index,
+                        "unit_end_index": unit_end_index,
+                        "listening_quiz": {
+                            "original_sentence": correct_sentence,
+                            "options": options,
+                            "correct_index": correct_index
                         }
                     }
             

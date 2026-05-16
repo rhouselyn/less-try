@@ -9,6 +9,7 @@ import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
 import ProgressStep from './components/ProgressStep'
 import SentenceQuizStep from './components/SentenceQuizStep'
+import ListeningQuizStep from './components/ListeningQuizStep'
 import PhaseSelectorStep from './components/PhaseSelectorStep'
 import PhaseProgressStep from './components/PhaseProgressStep'
 import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
@@ -46,6 +47,7 @@ function App() {
   const [totalUnits, setTotalUnits] = useState(0)
   const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
   const [quizData, setQuizData] = useState(null)
+  const [listeningQuizData, setListeningQuizData] = useState(null)
   const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
   
   // New states for phases
@@ -333,6 +335,11 @@ function App() {
         setUnitEndIndex(response.unit_end_index)
         setLearningMode('sentence')
         setStep('sentence-quiz')
+      } else if (response.type === 'listening_quiz') {
+        setListeningQuizData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setLearningMode('listening')
+        setStep('listening-quiz')
       } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
@@ -553,12 +560,26 @@ function App() {
         return
       }
       
+      if (nextWordResponse.listening_quiz) {
+        const endIdx = nextWordResponse.unit_end_index || unitEndIndex
+        setListeningQuizData(nextWordResponse.listening_quiz)
+        setUnitEndIndex(endIdx)
+        setLearningMode('listening')
+        setStep('listening-quiz')
+        return
+      }
+      
       const response = await api.getRandomWord(currentFileId)
       if (response.type === 'sentence_quiz') {
         setQuizData(response)
         setUnitEndIndex(response.unit_end_index)
         setLearningMode('sentence')
         setStep('sentence-quiz')
+      } else if (response.type === 'listening_quiz') {
+        setListeningQuizData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setLearningMode('listening')
+        setStep('listening-quiz')
       } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
@@ -687,7 +708,7 @@ function App() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   onClick={() => {
-                    if (step === 'learning' || step === 'sentence-quiz' || step === 'progress') {
+                    if (step === 'learning' || step === 'sentence-quiz' || step === 'listening-quiz' || step === 'progress') {
                       setStep('dictionary');
                     } else {
                       setStep('input');
@@ -783,6 +804,7 @@ function App() {
               onOpenVocabList={handleOpenVocabList}
               loading={loading}
               t={t}
+              sourceLang={sourceLang}
             />
           )}
           
@@ -805,6 +827,20 @@ function App() {
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
+              sourceLang={sourceLang}
+            />
+          )}
+          
+          {step === 'listening-quiz' && (
+            <ListeningQuizStep
+              key="listening-quiz"
+              quizData={listeningQuizData}
+              onNextQuestion={handleNextSentenceQuiz}
+              onBack={() => setStep('all-units')}
+              loading={loading}
+              t={t}
+              onOpenVocabList={handleOpenVocabList}
+              sourceLang={sourceLang}
             />
           )}
           
@@ -886,6 +922,7 @@ function App() {
               exerciseIndexInUnit={currentExerciseData?.exercise_index_in_unit}
               totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
               sentencePreview={currentExerciseData?.sentence_preview}
+              sourceLang={sourceLang}
             />
           )}
           
@@ -914,6 +951,7 @@ function App() {
               exerciseIndexInUnit={currentExerciseData?.exercise_index_in_unit}
               totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
               sentencePreview={currentExerciseData?.sentence_preview}
+              sourceLang={sourceLang}
             />
           )}
           

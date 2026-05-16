@@ -2,22 +2,35 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain, BookOpen, Volume2 } from 'lucide-react'
 import { useEffect, useCallback } from 'react'
 
-function speakText(text) {
+const LANG_MAP = {
+  'en': 'en-US',
+  'zh': 'zh-CN',
+  'ja': 'ja-JP',
+  'ko': 'ko-KR',
+  'fr': 'fr-FR',
+  'de': 'de-DE',
+  'es': 'es-ES',
+  'it': 'it-IT',
+  'pt': 'pt-PT',
+  'ru': 'ru-RU',
+}
+
+function speakText(text, sourceLang = 'en') {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
+    utterance.lang = LANG_MAP[sourceLang] || 'en-US'
     utterance.rate = 0.9
     window.speechSynthesis.speak(utterance)
   }
 }
 
-function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t }) {
+function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t, sourceLang }) {
   const autoSpeak = useCallback(() => {
     if (learningData?.word) {
-      setTimeout(() => speakText(learningData.word), 300)
+      setTimeout(() => speakText(learningData.word, sourceLang), 300)
     }
-  }, [learningData?.word])
+  }, [learningData?.word, sourceLang])
 
   useEffect(() => {
     autoSpeak()
@@ -101,7 +114,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.9 }}
-                  onClick={(e) => { e.stopPropagation(); speakText(learningData.word) }}
+                  onClick={(e) => { e.stopPropagation(); speakText(learningData.word, sourceLang) }}
                   className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
                 >
                   <Volume2 className="w-6 h-6" />
@@ -175,7 +188,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     animate={{ opacity: 1, scale: 1 }}
                     whileHover={{ scale: 1.15 }}
                     whileTap={{ scale: 0.9 }}
-                    onClick={(e) => { e.stopPropagation(); speakText(learningData.word) }}
+                    onClick={(e) => { e.stopPropagation(); speakText(learningData.word, sourceLang) }}
                     className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
                   >
                     <Volume2 className="w-6 h-6" />
@@ -225,7 +238,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     <motion.button
                       whileHover={{ scale: 1.15 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={(e) => { e.stopPropagation(); speakText(learningData.context) }}
+                      onClick={(e) => { e.stopPropagation(); speakText(learningData.context, sourceLang) }}
                       className="p-1.5 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors shrink-0 mt-1"
                     >
                       <Volume2 className="w-4 h-4" />
@@ -285,7 +298,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                           <motion.button
                             whileHover={{ scale: 1.15 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={(e) => { e.stopPropagation(); speakText(example.sentence) }}
+                            onClick={(e) => { e.stopPropagation(); speakText(example.sentence, sourceLang) }}
                             className="p-1 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors shrink-0"
                           >
                             <Volume2 className="w-3.5 h-3.5" />

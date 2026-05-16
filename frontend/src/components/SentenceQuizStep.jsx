@@ -2,26 +2,39 @@ import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X, BookOpen, Volume2 } from 'lucide-react'
 
-function speakText(text) {
+const LANG_MAP = {
+  'en': 'en-US',
+  'zh': 'zh-CN',
+  'ja': 'ja-JP',
+  'ko': 'ko-KR',
+  'fr': 'fr-FR',
+  'de': 'de-DE',
+  'es': 'es-ES',
+  'it': 'it-IT',
+  'pt': 'pt-PT',
+  'ru': 'ru-RU',
+}
+
+function speakText(text, sourceLang = 'en') {
   if ('speechSynthesis' in window) {
     window.speechSynthesis.cancel()
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
+    utterance.lang = LANG_MAP[sourceLang] || 'en-US'
     utterance.rate = 0.9
     window.speechSynthesis.speak(utterance)
   }
 }
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
   const autoSpeak = useCallback(() => {
     if (quizData?.original_sentence) {
-      setTimeout(() => speakText(quizData.original_sentence), 300)
+      setTimeout(() => speakText(quizData.original_sentence, sourceLang), 300)
     }
-  }, [quizData?.original_sentence])
+  }, [quizData?.original_sentence, sourceLang])
 
   useEffect(() => {
     autoSpeak()
@@ -132,7 +145,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               animate={{ opacity: 1, scale: 1 }}
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
-              onClick={(e) => { e.stopPropagation(); speakText(quizData.original_sentence) }}
+              onClick={(e) => { e.stopPropagation(); speakText(quizData.original_sentence, sourceLang) }}
               className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors mb-6"
             >
               <Volume2 className="w-5 h-5" />
