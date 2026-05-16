@@ -17,6 +17,9 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
     )
   }
 
+  const stepInUnit = (learningData.step_in_unit ?? 0) + 1
+  const wordCountInUnit = learningData.word_count_in_unit ?? learningData.unit_end_index ?? 0
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,17 +38,24 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
           <ArrowLeft className="w-4 h-4" />
           {t.back}
         </motion.button>
-        {onOpenVocabList && (
-          <motion.button
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            onClick={onOpenVocabList}
-            className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
-          >
-            <BookOpen className="w-4 h-4" />
-            单词表
-          </motion.button>
-        )}
+        <div className="flex items-center gap-3">
+          {wordCountInUnit > 0 && (
+            <span className="text-sm text-stone-500 font-medium">
+              {stepInUnit} / {wordCountInUnit}
+            </span>
+          )}
+          {onOpenVocabList && (
+            <motion.button
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              onClick={onOpenVocabList}
+              className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+            >
+              <BookOpen className="w-4 h-4" />
+              单词表
+            </motion.button>
+          )}
+        </div>
       </div>
 
       <AnimatePresence mode="wait">

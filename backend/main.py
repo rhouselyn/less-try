@@ -647,7 +647,8 @@ async def get_random_word(file_id: str):
         if unit_id is not None:
             unit_plan = plan[unit_id]
             items = unit_plan.get("items", [])
-            _, unit_end_index = get_unit_flat_range(plan, unit_id)
+            unit_start_index, unit_end_index = get_unit_flat_range(plan, unit_id)
+            word_count_in_unit = sum(1 for item in items if item["type"] == "word")
             
             if step_in_unit < len(items):
                 current_item = items[step_in_unit]
@@ -662,14 +663,18 @@ async def get_random_word(file_id: str):
                         "correct_translation": current_item.get("correct_translation", ""),
                         "correct_tokens": current_item.get("correct_tokens", []),
                         "tokens": tokens,
-                        "unit_end_index": unit_end_index
+                        "unit_end_index": unit_end_index,
+                        "current_index": current_index,
+                        "unit_start_index": unit_start_index,
+                        "word_count_in_unit": word_count_in_unit,
+                        "step_in_unit": step_in_unit
                     }
                 
                 vocab_idx = current_item["vocab_index"]
                 random_word = vocab[vocab_idx]
                 word = random_word["word"]
             else:
-                return {"type": "unit_complete", "unit_end_index": unit_end_index}
+                return {"type": "unit_complete", "unit_end_index": unit_end_index, "current_index": current_index, "unit_start_index": unit_start_index, "word_count_in_unit": word_count_in_unit, "step_in_unit": step_in_unit}
         else:
             return {"type": "all_complete"}
         
@@ -702,7 +707,11 @@ async def get_random_word(file_id: str):
                 "variants_detail": cached_word.get("variants_detail", []),
                 "examples": cached_word.get("examples", []),
                 "memory_hint": cached_word.get("memory_hint", ""),
-                "unit_end_index": unit_end_index
+                "unit_end_index": unit_end_index,
+                "current_index": current_index,
+                "unit_start_index": unit_start_index,
+                "word_count_in_unit": word_count_in_unit,
+                "step_in_unit": step_in_unit
             }
         
         # 构建上下文（包含翻译）
@@ -771,7 +780,11 @@ async def get_random_word(file_id: str):
             "memory_hint": options_result.get("memory_hint", ""),
             "enriched_meaning": options_result.get("enriched_meaning", correct_meaning),
             "context_meaning": options_result.get("context_meaning", correct_meaning),
-            "unit_end_index": unit_end_index
+            "unit_end_index": unit_end_index,
+            "current_index": current_index,
+            "unit_start_index": unit_start_index,
+            "word_count_in_unit": word_count_in_unit,
+            "step_in_unit": step_in_unit
         }
         
         # 构建缓存数据
