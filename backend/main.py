@@ -18,98 +18,11 @@ load_dotenv()
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
-import re
-
-def is_source_lang_text(text, source_lang="en"):
-    if not text or not isinstance(text, str):
-        return False
-    if source_lang == "en":
-        latin_chars = len(re.findall(r'[a-zA-Z]', text))
-        cjk_chars = len(re.findall(r'[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]', text))
-        if latin_chars > 0 and cjk_chars == 0 and len(text.strip()) < 20:
-            return True
-    return False
-
-def _build_vocab_distractors(vocab, current_word=None):
-    distractors = []
-    current_lower = current_word.lower() if current_word else ""
-    for entry in vocab:
-        if entry.get("word", "").lower() == current_lower:
-            continue
-        for key in ("context_meaning", "translation", "meaning"):
-            val = entry.get(key, "")
-            if val and isinstance(val, str):
-                for part in re.split(r'[;；、，,]', val):
-                    p = part.strip()
-                    if p and p not in distractors:
-                        distractors.append(p)
-        enriched = entry.get("enriched_meaning", "")
-        if enriched and isinstance(enriched, str):
-            for part in re.split(r'[;；、，,]', enriched):
-                p = part.strip()
-                if p and p not in distractors:
-                    distractors.append(p)
-    random.shuffle(distractors)
-    return distractors[:30]
-
-_CHINESE_DISTRACTORS = [
-    "重要", "不同", "方法", "问题", "工作", "生活", "开始", "发展",
-    "社会", "经济", "文化", "历史", "科学", "技术", "教育", "环境",
-    "关系", "变化", "影响", "结果", "过程", "情况", "条件", "特点",
-    "能力", "水平", "质量", "效果", "意义", "价值", "作用", "地位",
-    "结构", "形式", "内容", "方向", "目标", "标准", "原则", "规则",
-    "概念", "理论", "观点", "态度", "经验", "知识", "信息", "数据",
-    "系统", "组织", "管理", "设计", "计划", "活动", "运动", "操作"
-]
-
-def fix_llm_options_result(result: dict, source_lang="en", vocab_distractors: list = None) -> dict:
+def fix_llm_options_result(result: dict) -> dict:
     if not isinstance(result, dict):
         return result
     mc = result.get("multiple_choice")
     if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-        correct_answer = mc.get("correct_answer", "")
-        correct_meanings = set()
-        enriched = result.get("enriched_meaning", "")
-        if enriched:
-            for part in re.split(r'[;；、，,]', enriched):
-                p = part.strip()
-                if p:
-                    correct_meanings.add(p)
-        if correct_answer:
-            correct_meanings.add(correct_answer)
-        ctx_meaning = result.get("context_meaning", "")
-        if ctx_meaning:
-            correct_meanings.add(ctx_meaning)
-
-        distractor_pool = []
-        if vocab_distractors:
-            for d in vocab_distractors:
-                if d not in correct_meanings and d not in distractor_pool:
-                    distractor_pool.append(d)
-        for d in _CHINESE_DISTRACTORS:
-            if d not in correct_meanings and d not in distractor_pool:
-                distractor_pool.append(d)
-
-        filtered_options = []
-        distractor_idx = 0
-        for opt in mc["options"]:
-            if isinstance(opt, dict) and "text" in opt:
-                if opt.get("is_correct") or not is_source_lang_text(opt["text"], source_lang):
-                    filtered_options.append(opt)
-                else:
-                    replacement = None
-                    while distractor_idx < len(distractor_pool):
-                        candidate = distractor_pool[distractor_idx]
-                        distractor_idx += 1
-                        existing_texts = [o["text"] for o in filtered_options if isinstance(o, dict)]
-                        if candidate not in existing_texts:
-                            replacement = candidate
-                            break
-                    if replacement:
-                        filtered_options.append({"text": replacement, "is_correct": False})
-                    else:
-                        filtered_options.append({"text": "其他释义", "is_correct": False})
-        mc["options"] = filtered_options
         return result
     if isinstance(mc, str) and not mc.strip():
         result.pop("multiple_choice", None)
@@ -459,7 +372,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         for w in learned_words:
                             w_tokens = w.get("tokens", [w["word"]])
                             for wt in w_tokens:
-                                if wt.lower() == token_text:
+                                if wt.lower() == token_text or wt.lower() in token_text or token_text in wt.lower():
                                     token_covered = True
                                     break
                             if token_covered:
@@ -591,7 +504,6 @@ async def get_random_word(file_id: str):
         
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
-        source_lang = language_settings.get("source_lang", "en")
         
         current_index = storage.load_learning_progress(file_id)
         
@@ -702,8 +614,7 @@ async def get_random_word(file_id: str):
             context,
             target_lang
         )
-        vocab_distractors = _build_vocab_distractors(vocab, word)
-        options_result = fix_llm_options_result(options_result, source_lang, vocab_distractors)
+        options_result = fix_llm_options_result(options_result)
         
         # 提取选项和正确索引
         options = []
@@ -827,7 +738,6 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
     try:
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
-        source_lang = language_settings.get("source_lang", "en")
         
         plan = storage.load_learning_plan(file_id)
         if not plan:
@@ -896,8 +806,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             context,
             target_lang
         )
-        vocab_distractors = _build_vocab_distractors(vocab, word)
-        options_result = fix_llm_options_result(options_result, source_lang, vocab_distractors)
+        options_result = fix_llm_options_result(options_result)
         
         # 构建缓存数据
         cache_data = dict(options_result)
@@ -1015,7 +924,6 @@ async def get_word_details(file_id: str, word: str):
         # 加载语言设置
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
-        source_lang = language_settings.get("source_lang", "en")
 
         correct_meaning = word_data.get("context_meaning", "")
 
@@ -1033,8 +941,7 @@ async def get_word_details(file_id: str, word: str):
             context,
             target_lang
         )
-        vocab_distractors = _build_vocab_distractors(vocab, word_data["word"])
-        options_result = fix_llm_options_result(options_result, source_lang, vocab_distractors)
+        options_result = fix_llm_options_result(options_result)
         
         # 提取选项和正确索引
         options = []
@@ -1142,7 +1049,6 @@ async def get_unit_words(file_id: str, unit_id: int):
         # 为每个单词生成学习数据
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
-        source_lang = language_settings.get("source_lang", "en")
         
         learning_words = []
         for word_data in unit_words:
@@ -1175,7 +1081,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                 context,
                 target_lang
             )
-            options_result = fix_llm_options_result(options_result, source_lang)
+            options_result = fix_llm_options_result(options_result)
             
             # 提取选项和正确索引
             options = []
@@ -1314,10 +1220,11 @@ async def check_coverage(file_id: str):
                     # 检查这些tokens是否在句子的tokens中
                     for lt in learned_word_tokens:
                         for st in sentence_tokens:
-                            if lt == st:
+                            if lt in st or st in lt:
                                 matched_count += 1
                                 matched_tokens.append((lt, st))
                                 print(f"[DEBUG] 匹配成功: {lt} <-> {st}")
+                                # 修改：只要有至少1个匹配就认为可以用（原来是2个）
                                 if matched_count >= 1:
                                     can_form = True
                                     break
@@ -1422,8 +1329,9 @@ async def generate_sentence_quiz(file_id: str):
                     # 检查这些tokens是否在句子的tokens中
                     for lt in learned_word_tokens:
                         for st in sentence_tokens:
-                            if lt == st:
+                            if lt in st or st in lt:
                                 matched_count += 1
+                                # 修改：只要有至少1个匹配就认为可以用
                                 if matched_count >= 1:
                                     eligible_sentences.append(sentence_data)
                                     print(f"[DEBUG] 句子符合条件: {sentence}")
