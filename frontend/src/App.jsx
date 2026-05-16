@@ -521,7 +521,7 @@ function App() {
     }
   }
 
-  const getNextWord = async () => {
+  const getNextWord = async (retryCount = 0) => {
     if (!currentFileId) return
     
     setLoading(true)
@@ -580,7 +580,14 @@ function App() {
       }
     } catch (error) {
       console.error('获取下一个单词错误:', error)
-      alert('无法获取下一个单词，请重试')
+      if (error.response && error.response.status === 401 && retryCount < 2) {
+        setTimeout(() => getNextWord(retryCount + 1), 1000)
+        return
+      }
+      if (error.response && (error.response.status === 401 || error.response.status === 502 || error.response.status === 503 || error.response.status === 504)) {
+        setTimeout(() => getNextWord(retryCount + 1), 2000)
+        return
+      }
     } finally {
       setLoading(false)
     }

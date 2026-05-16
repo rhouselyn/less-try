@@ -648,7 +648,7 @@ async def get_random_word(file_id: str):
             unit_plan = plan[unit_id]
             items = unit_plan.get("items", [])
             unit_start_index, unit_end_index = get_unit_flat_range(plan, unit_id)
-            word_count_in_unit = sum(1 for item in items if item["type"] == "word")
+            total_items_in_unit = len(items)
             
             if step_in_unit < len(items):
                 current_item = items[step_in_unit]
@@ -666,7 +666,7 @@ async def get_random_word(file_id: str):
                         "unit_end_index": unit_end_index,
                         "current_index": current_index,
                         "unit_start_index": unit_start_index,
-                        "word_count_in_unit": word_count_in_unit,
+                        "total_items_in_unit": total_items_in_unit,
                         "step_in_unit": step_in_unit
                     }
                 
@@ -674,7 +674,7 @@ async def get_random_word(file_id: str):
                 random_word = vocab[vocab_idx]
                 word = random_word["word"]
             else:
-                return {"type": "unit_complete", "unit_end_index": unit_end_index, "current_index": current_index, "unit_start_index": unit_start_index, "word_count_in_unit": word_count_in_unit, "step_in_unit": step_in_unit}
+                return {"type": "unit_complete", "unit_end_index": unit_end_index, "current_index": current_index, "unit_start_index": unit_start_index, "total_items_in_unit": total_items_in_unit, "step_in_unit": step_in_unit}
         else:
             return {"type": "all_complete"}
         
@@ -703,14 +703,17 @@ async def get_random_word(file_id: str):
                 "correct_meaning": cached_word.get("meaning", ""),
                 "options": options,
                 "correct_index": correct_index,
-                "context": "",
+                "context": cached_word.get("context", ""),
+                "context_sentences": cached_word.get("context_sentences", []),
                 "variants_detail": cached_word.get("variants_detail", []),
                 "examples": cached_word.get("examples", []),
                 "memory_hint": cached_word.get("memory_hint", ""),
+                "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
+                "context_meaning": cached_word.get("context_meaning", cached_word.get("meaning", "")),
                 "unit_end_index": unit_end_index,
                 "current_index": current_index,
                 "unit_start_index": unit_start_index,
-                "word_count_in_unit": word_count_in_unit,
+                "total_items_in_unit": total_items_in_unit,
                 "step_in_unit": step_in_unit
             }
         
@@ -783,7 +786,7 @@ async def get_random_word(file_id: str):
             "unit_end_index": unit_end_index,
             "current_index": current_index,
             "unit_start_index": unit_start_index,
-            "word_count_in_unit": word_count_in_unit,
+            "total_items_in_unit": total_items_in_unit,
             "step_in_unit": step_in_unit
         }
         
@@ -794,10 +797,12 @@ async def get_random_word(file_id: str):
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
         cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
         cache_data["examples"] = options_result.get("examples", [])
+        cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
         cache_data["morphology"] = random_word.get("morphology", "")
         cache_data["variants_detail"] = options_result.get("variants_detail", [])
         cache_data["memory_hint"] = options_result.get("memory_hint", "")
+        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
         cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
         if "context_translations" in cache_data:
             del cache_data["context_translations"]
@@ -976,10 +981,12 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
         cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
         cache_data["examples"] = options_result.get("examples", [])
+        cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
         cache_data["morphology"] = random_word.get("morphology", "")
         cache_data["variants_detail"] = options_result.get("variants_detail", [])
         cache_data["memory_hint"] = options_result.get("memory_hint", "")
+        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
         cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
         if "context_translations" in cache_data:
             del cache_data["context_translations"]
@@ -1717,12 +1724,17 @@ async def get_phase_units(file_id: str, phase_number: int):
                 }
             
             exercise_order = storage.load_exercise_order(file_id, phase_number)
-            expected_length = len(eligible_sentences) * 4
+            exercises_per_sent = []
+            for s in eligible_sentences:
+                wc = len(s.get("sentence", "").split())
+                exercises_per_sent.append(4 if wc >= 3 else 1)
+            expected_length = sum(exercises_per_sent)
             
             if exercise_order is None or len(exercise_order) != expected_length:
                 seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
                 exercise_order = text_processor.generate_interleaved_exercise_order(
-                    len(eligible_sentences), masks_per_sentence=3, seed=seed
+                    len(eligible_sentences), masks_per_sentence=3, seed=seed,
+                    exercises_per_sentence_list=exercises_per_sent
                 )
                 storage.save_exercise_order(file_id, phase_number, exercise_order)
             
@@ -1778,12 +1790,17 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 return {"unit_complete": True, "no_eligible_sentences": True}
             
             exercise_order = storage.load_exercise_order(file_id, phase_number)
-            expected_length = len(eligible_sentences) * 4
+            exercises_per_sent = []
+            for s in eligible_sentences:
+                wc = len(s.get("sentence", "").split())
+                exercises_per_sent.append(4 if wc >= 3 else 1)
+            expected_length = sum(exercises_per_sent)
             
             if exercise_order is None or len(exercise_order) != expected_length:
                 seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
                 exercise_order = text_processor.generate_interleaved_exercise_order(
-                    len(eligible_sentences), masks_per_sentence=3, seed=seed
+                    len(eligible_sentences), masks_per_sentence=3, seed=seed,
+                    exercises_per_sentence_list=exercises_per_sent
                 )
                 storage.save_exercise_order(file_id, phase_number, exercise_order)
             
@@ -1815,6 +1832,11 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             
             exercise_index_in_unit = current_exercise_index - exercise_start
             total_exercises_in_unit = exercise_end - exercise_start
+            
+            if type_idx < 3:
+                word_count = len(current_sentence.split())
+                if word_count < 3:
+                    type_idx = 3
             
             if type_idx < 3:
                 mask_seed = hash(current_sentence) + 1

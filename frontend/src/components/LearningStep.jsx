@@ -18,7 +18,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
   }
 
   const stepInUnit = (learningData.step_in_unit ?? 0) + 1
-  const wordCountInUnit = learningData.word_count_in_unit ?? learningData.unit_end_index ?? 0
+  const totalItemsInUnit = learningData.total_items_in_unit ?? learningData.word_count_in_unit ?? learningData.unit_end_index ?? 0
 
   return (
     <motion.div
@@ -39,9 +39,9 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
           {t.back}
         </motion.button>
         <div className="flex items-center gap-3">
-          {wordCountInUnit > 0 && (
+          {totalItemsInUnit > 0 && (
             <span className="text-sm text-stone-500 font-medium">
-              {stepInUnit} / {wordCountInUnit}
+              第 {stepInUnit} / {totalItemsInUnit} 题
             </span>
           )}
           {onOpenVocabList && (
@@ -151,10 +151,25 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             </div>
 
             <div className="space-y-6">
+              {learningData.context && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                >
+                  <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
+                    {t.context}
+                  </h3>
+                  <p className="text-lg text-stone-700 leading-relaxed italic">
+                    {learningData.context}
+                  </p>
+                </motion.div>
+              )}
+
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
+                transition={{ delay: 0.2 }}
               >
                 <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Brain className="w-4 h-4" />
@@ -170,21 +185,6 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   </div>
                 )}
               </motion.div>
-
-              {learningData.context && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3">
-                    {t.context}
-                  </h3>
-                  <p className="text-lg text-stone-700 leading-relaxed italic">
-                    {learningData.context}
-                  </p>
-                </motion.div>
-              )}
 
               {learningData.variants_detail && learningData.variants_detail.length > 0 && (
                 <motion.div

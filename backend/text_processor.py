@@ -460,17 +460,19 @@ class TextProcessor:
                 results.append(masked)
         return results
 
-    def generate_interleaved_exercise_order(self, num_sentences: int, masks_per_sentence: int = 3, seed: int = 42) -> List[List[int]]:
+    def generate_interleaved_exercise_order(self, num_sentences: int, masks_per_sentence: int = 3, seed: int = 42, exercises_per_sentence_list: List[int] = None) -> List[List[int]]:
         import random
         random.seed(seed)
         
-        exercises_per_sentence = masks_per_sentence + 1
+        if exercises_per_sentence_list is None:
+            exercises_per_sentence_list = [masks_per_sentence + 1] * num_sentences
+        
         next_type = [0] * num_sentences
         result = []
-        remaining = num_sentences * exercises_per_sentence
+        remaining = sum(exercises_per_sentence_list)
         
         while remaining > 0:
-            available = [i for i in range(num_sentences) if next_type[i] < exercises_per_sentence]
+            available = [i for i in range(num_sentences) if next_type[i] < exercises_per_sentence_list[i]]
             sent_idx = random.choice(available)
             result.append([sent_idx, next_type[sent_idx]])
             next_type[sent_idx] += 1

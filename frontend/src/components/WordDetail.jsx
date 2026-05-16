@@ -20,9 +20,6 @@ function WordDetail({ word, t }) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
           <h2 className="text-xl font-bold text-stone-800 tracking-tight">{word.word}</h2>
-          {word.ipa && (
-            <span className="text-[13px] text-stone-400 ipa-font">/{word.ipa}/</span>
-          )}
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
@@ -32,11 +29,6 @@ function WordDetail({ word, t }) {
             <Volume2 className={`w-3.5 h-3.5 ${isPlaying ? 'animate-pulse text-amber-500' : ''}`} />
           </motion.button>
         </div>
-        {word.morphology && (
-          <span className="px-2 py-0.5 bg-stone-100 text-stone-500 rounded-md text-[11px] font-medium tracking-wide">
-            {word.morphology}
-          </span>
-        )}
       </div>
 
       <div className="space-y-3">
