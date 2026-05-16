@@ -728,8 +728,6 @@ async def get_random_word(file_id: str):
                                     "translation": translation,
                                     "sentence_index": sent_idx
                                 })
-                                if len(rebuilt) >= 2:
-                                    break
                     context_sents = rebuilt
                     cached_word["context_sentences"] = rebuilt
                     storage.save_word_cache(file_id, word, cached_word)
@@ -773,8 +771,6 @@ async def get_random_word(file_id: str):
                             "translation": translation,
                             "sentence_index": sent_idx
                         })
-                        if len(context_sentences) >= 2:
-                            break
             if not context and sentences:
                 context = sentences[0].get("sentence", "")
         
@@ -987,8 +983,6 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
                             "translation": translation,
                             "sentence_index": sent_idx
                         })
-                        if len(context_sentences) >= 2:
-                            break
             if not context and sentences:
                 context = sentences[0].get("sentence", "")
         
@@ -1085,8 +1079,6 @@ async def get_word_details(file_id: str, word: str):
                                     "translation": translation,
                                     "sentence_index": sent_idx
                                 })
-                                if len(rebuilt) >= 3:
-                                    break
                     cached_word["context_sentences"] = rebuilt
                     storage.save_word_cache(file_id, word, cached_word)
             
@@ -1131,8 +1123,6 @@ async def get_word_details(file_id: str, word: str):
                             "translation": translation,
                             "sentence_index": sent_idx
                         })
-                        if len(context_sentences_with_translations) >= 3:
-                            break
             
             if context_sentences:
                 context = context_sentences[0]

@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Search, BookOpen, ChevronDown, ChevronRight, Volume2 } from 'lucide-react'
+import { ArrowLeft, Search, BookOpen, Volume2 } from 'lucide-react'
 
 function VocabListStep({ vocab, onBack, loading, t }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -160,39 +160,30 @@ function VocabListStep({ vocab, onBack, loading, t }) {
                         >
                           <button
                             onClick={() => handleWordClick(word)}
-                            className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-colors group"
+                            className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group"
                           >
-                            <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors" onClick={(e) => speakWord(word.word, e)} />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-baseline gap-2.5">
-                                <span className="text-[15px] font-semibold text-stone-800 tracking-tight">
-                                  {word.word}
+                            <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                              <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
+                                {word.word}
+                              </span>
+                              {word.ipa && (
+                                <span className="text-[11px] text-stone-400 ipa-font shrink-0">
+                                  {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
                                 </span>
-                                {word.ipa && (
-                                  <span className="text-[12px] text-stone-400 ipa-font truncate">
-                                    /{word.ipa}/
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[13px] text-stone-500 truncate">
-                                  {word.enriched_meaning || word.context_meaning || word.translation}
-                                </span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
+                              )}
                               {word.morphology && (
-                                <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide">
+                                <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide shrink-0">
                                   {word.morphology}
                                 </span>
                               )}
-                              <motion.div
-                                animate={{ rotate: isExpanded ? 0 : -90 }}
-                                transition={{ duration: 0.15 }}
-                              >
-                                <ChevronDown className="w-3.5 h-3.5 text-stone-300 group-hover:text-stone-500 transition-colors" />
-                              </motion.div>
+                              <span className="text-[12px] text-stone-500 truncate">
+                                {word.enriched_meaning || word.context_meaning || word.translation}
+                              </span>
                             </div>
+                            <Volume2
+                              className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                              onClick={(e) => speakWord(word.word, e)}
+                            />
                           </button>
 
                           <AnimatePresence>

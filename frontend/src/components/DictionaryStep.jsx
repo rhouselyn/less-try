@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, ArrowUpDown, ChevronDown, Volume2 } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2 } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 
@@ -9,6 +9,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
   const [wordDetails, setWordDetails] = useState({})
+  const [sentenceSearch, setSentenceSearch] = useState('')
+  const [vocabSearch, setVocabSearch] = useState('')
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
@@ -16,15 +18,38 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
 
+  const filteredSentences = useMemo(() => {
+    if (!sentenceSearch.trim()) return safeSentenceTranslations
+    const q = sentenceSearch.toLowerCase()
+    return safeSentenceTranslations.filter(item => {
+      const sentence = (item.sentence || '').toLowerCase()
+      const translation = (item.translation_result?.tokenized_translation || '').toLowerCase()
+      const tokens = item.translation_result?.translation || []
+      const tokenTexts = tokens.filter(t => typeof t === 'object' && t.text).map(t => t.text.toLowerCase()).join(' ')
+      return sentence.includes(q) || translation.includes(q) || tokenTexts.includes(q)
+    })
+  }, [safeSentenceTranslations, sentenceSearch])
+
+  const filteredVocab = useMemo(() => {
+    if (!vocabSearch.trim()) return vocab
+    const q = vocabSearch.toLowerCase()
+    return vocab.filter(w =>
+      w.word.toLowerCase().includes(q) ||
+      (w.enriched_meaning && w.enriched_meaning.toLowerCase().includes(q)) ||
+      (w.context_meaning && w.context_meaning.toLowerCase().includes(q)) ||
+      (w.translation && w.translation.toLowerCase().includes(q))
+    )
+  }, [vocab, vocabSearch])
+
   const groupedVocab = useMemo(() => {
     const groups = {}
-    vocab.forEach(word => {
+    filteredVocab.forEach(word => {
       const letter = word.word[0].toUpperCase()
       if (!groups[letter]) groups[letter] = []
       groups[letter].push(word)
     })
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
-  }, [vocab])
+  }, [filteredVocab])
 
   const letterIndex = useMemo(() => {
     return groupedVocab.map(([letter]) => letter)
@@ -230,54 +255,69 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       <div className="flex gap-6" style={{ minHeight: '70vh' }}>
         <div className="w-1/2 flex flex-col">
           <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
-            <div className="flex items-center gap-2 px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
-              <Languages className="w-4 h-4 text-stone-500" />
-              <h3 className="text-sm font-semibold text-stone-700">{t.sentTranslation}</h3>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                {safeSentenceTranslations.length}
-              </span>
+            <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
+              <div className="flex items-center gap-2 mb-2.5">
+                <Languages className="w-4 h-4 text-stone-500" />
+                <h3 className="text-sm font-semibold text-stone-700">{t.sentTranslation}</h3>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                  {filteredSentences.length}
+                </span>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
+                <input
+                  type="text"
+                  value={sentenceSearch}
+                  onChange={e => setSentenceSearch(e.target.value)}
+                  placeholder="搜索单词或释义..."
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-stone-200/80 rounded-lg text-[13px] text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
+                />
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto" style={{ maxHeight: '70vh' }}>
-              {safeSentenceTranslations.length > 0 ? (
+              {filteredSentences.length > 0 ? (
                 <div className="divide-y divide-stone-200/60">
-                  {safeSentenceTranslations.map((item, index) => (
-                    <div key={index} ref={el => { sentenceRefs.current[index] = el }}>
-                      <motion.div
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.02 }}
-                        className={`p-4 cursor-pointer transition-colors ${
-                          selectedSentence === index ? 'bg-amber-50/60' : 'hover:bg-amber-50/30'
-                        }`}
-                        onClick={() => onSentenceClick(index)}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="flex-1 min-w-0">
-                            {renderOriginalSentence(item)}
-                            {renderTranslation(item)}
-                          </div>
-                          <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 mt-1 transition-colors" onClick={(e) => speakWord(item.sentence || '', e)} />
-                        </div>
-                      </motion.div>
-                      {selectedSentence === index && (
+                  {filteredSentences.map((item, index) => {
+                    const originalIndex = safeSentenceTranslations.indexOf(item)
+                    return (
+                      <div key={originalIndex} ref={el => { sentenceRefs.current[originalIndex] = el }}>
                         <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          className="border-t border-stone-200/60 p-4 bg-stone-50/50"
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.02 }}
+                          className={`p-4 cursor-pointer transition-colors ${
+                            selectedSentence === originalIndex ? 'bg-amber-50/60' : 'hover:bg-amber-50/30'
+                          }`}
+                          onClick={() => onSentenceClick(originalIndex)}
                         >
-                          <SentenceDetail
-                            sentenceTranslation={safeSentenceTranslations[index]}
-                            t={t}
-                          />
+                          <div className="flex items-start gap-2">
+                            <div className="flex-1 min-w-0">
+                              {renderOriginalSentence(item)}
+                              {renderTranslation(item)}
+                            </div>
+                            <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 mt-1 transition-colors" onClick={(e) => speakWord(item.sentence || '', e)} />
+                          </div>
                         </motion.div>
-                      )}
-                    </div>
-                  ))}
+                        {selectedSentence === originalIndex && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            className="border-t border-stone-200/60 p-4 bg-stone-50/50"
+                          >
+                            <SentenceDetail
+                              sentenceTranslation={safeSentenceTranslations[originalIndex]}
+                              t={t}
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="py-16 text-center">
                   <Languages className="w-10 h-10 mx-auto mb-3 text-stone-200" />
-                  <p className="text-stone-400 text-sm">{t.loading}</p>
+                  <p className="text-stone-400 text-sm">{sentenceSearch ? '没有找到匹配的句子' : t.loading}</p>
                 </div>
               )}
             </div>
@@ -286,23 +326,24 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
         <div className="w-1/2 flex flex-col">
           <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
-              <div className="flex items-center gap-2">
+            <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
+              <div className="flex items-center gap-2 mb-2.5">
                 <BookOpen className="w-4 h-4 text-stone-500" />
                 <h3 className="text-sm font-semibold text-stone-700">{t.vocabList}</h3>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                  {vocab.length}
+                  {filteredVocab.length}
                 </span>
               </div>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={onToggleSort}
-                className="flex items-center gap-1 p-1.5 text-stone-400 hover:text-stone-700 hover:bg-amber-50 rounded-md transition-colors text-xs font-medium"
-              >
-                <ArrowUpDown className="w-3 h-3" />
-                {sortOrder === 'asc' ? t.aToZ : t.zToA}
-              </motion.button>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
+                <input
+                  type="text"
+                  value={vocabSearch}
+                  onChange={e => setVocabSearch(e.target.value)}
+                  placeholder="搜索单词或释义..."
+                  className="w-full pl-9 pr-3 py-2 bg-white border border-stone-200/80 rounded-lg text-[13px] text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
+                />
+              </div>
             </div>
             <div className="flex-1 overflow-y-auto" ref={vocabListRef} style={{ maxHeight: '70vh' }}>
               <div className="space-y-3">
@@ -334,39 +375,30 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           >
                             <button
                               onClick={() => handleVocabWordClick(word)}
-                              className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-colors group"
+                              className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group"
                             >
-                              <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors" onClick={(e) => speakWord(word.word, e)} />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-baseline gap-2.5">
-                                  <span className="text-[15px] font-semibold text-stone-800 tracking-tight">
-                                    {word.word}
+                              <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                                <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
+                                  {word.word}
+                                </span>
+                                {word.ipa && (
+                                  <span className="text-[11px] text-stone-400 ipa-font shrink-0">
+                                    {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
                                   </span>
-                                  {word.ipa && (
-                                    <span className="text-[12px] text-stone-400 ipa-font truncate">
-                                      {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-[13px] text-stone-500 truncate">
-                                    {word.enriched_meaning || word.context_meaning || word.translation}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 shrink-0">
+                                )}
                                 {word.morphology && (
-                                  <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide">
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide shrink-0">
                                     {word.morphology}
                                   </span>
                                 )}
-                                <motion.div
-                                  animate={{ rotate: isExpanded ? 0 : -90 }}
-                                  transition={{ duration: 0.15 }}
-                                >
-                                  <ChevronDown className="w-3.5 h-3.5 text-stone-300 group-hover:text-stone-500 transition-colors" />
-                                </motion.div>
+                                <span className="text-[12px] text-stone-500 truncate">
+                                  {word.enriched_meaning || word.context_meaning || word.translation}
+                                </span>
                               </div>
+                              <Volume2
+                                className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                onClick={(e) => speakWord(word.word, e)}
+                              />
                             </button>
 
                             <AnimatePresence>
