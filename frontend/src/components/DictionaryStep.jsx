@@ -312,7 +312,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   </span>
                                   {word.ipa && (
                                     <span className="text-[12px] text-stone-400 ipa-font truncate">
-                                      /{word.ipa}/
+                                      {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
                                     </span>
                                   )}
                                 </div>

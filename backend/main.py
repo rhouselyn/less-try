@@ -822,10 +822,11 @@ async def next_word(file_id: str):
             _, current_unit_end = get_unit_flat_range(plan, current_unit_id)
             
             if current_index + 1 >= current_unit_end:
+                storage.save_learning_progress(file_id, current_unit_end)
                 return {
                     "success": True,
                     "type": "unit_complete",
-                    "new_index": current_index,
+                    "new_index": current_unit_end,
                     "unit_end_index": current_unit_end
                 }
         
@@ -1803,14 +1804,15 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             total_exercises_in_unit = exercise_end - exercise_start
             
             if type_idx < 3:
-                mask_seed = hash(current_sentence) + type_idx + 1
+                mask_seed = hash(current_sentence) + 1
                 masked_exercise = text_processor.generate_masked_sentence(
                     current_sentence,
                     vocab,
                     translation_tokens,
                     sentences,
                     mask_seed=mask_seed,
-                    source_lang=source_lang
+                    source_lang=source_lang,
+                    mask_version=type_idx
                 )
                 
                 return {

@@ -72,7 +72,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   transition={{ delay: 0.1 }}
                   className="text-xl text-stone-500 ipa-font"
                 >
-                  /{learningData.ipa}/
+                  {learningData.ipa.startsWith('/') ? learningData.ipa : `/${learningData.ipa}/`}
                 </motion.p>
               )}
             </div>
@@ -134,7 +134,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     transition={{ delay: 0.1 }}
                     className="text-xl text-stone-500 ipa-font"
                   >
-                    /{learningData.ipa}/
+                    {learningData.ipa.startsWith('/') ? learningData.ipa : `/${learningData.ipa}/`}
                   </motion.p>
                 )}
               </div>

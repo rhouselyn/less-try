@@ -305,16 +305,7 @@ class TextProcessor:
         words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
         return words
     
-    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en") -> Dict[str, Any]:
-        """
-        生成蒙版填空练习
-        - 每8个单词蒙版1个
-        - 蒙版之间至少间隔3个词，不相邻
-        - 使用翻译token而非自动分词
-        - 集成备选词库
-        - 干扰词从其他句子或词库选择，不使用当前句子的单词
-        - mask_seed: 可选的种子，用于生成不同的蒙版模式
-        """
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0) -> Dict[str, Any]:
         if translation_tokens:
             words = translation_tokens
         else:
@@ -327,30 +318,39 @@ class TextProcessor:
         if num_masks > word_count // 2:
             num_masks = max(1, word_count // 2)
         
-        min_gap = 3
-        
         import random
         if mask_seed is not None:
             random.seed(mask_seed)
         else:
             random.seed(hash(sentence))
         
-        mask_indices = []
-        candidates = list(range(word_count))
-        random.shuffle(candidates)
+        all_candidates = list(range(word_count))
+        random.shuffle(all_candidates)
         
-        for idx in candidates:
-            if len(mask_indices) >= num_masks:
-                break
-            too_close = False
-            for existing in mask_indices:
-                if abs(idx - existing) <= min_gap:
-                    too_close = True
+        mask_groups = []
+        remaining = list(all_candidates)
+        
+        while remaining and len(mask_groups) < 3:
+            group = []
+            used = set()
+            for idx in remaining:
+                if len(group) >= num_masks:
                     break
-            if not too_close:
-                mask_indices.append(idx)
+                too_close = any(abs(idx - e) <= 2 for e in used)
+                if not too_close:
+                    group.append(idx)
+                    used.add(idx)
+            if group:
+                mask_groups.append(sorted(group))
+            remaining = [r for r in remaining if r not in used]
         
-        mask_indices.sort()
+        while len(mask_groups) < 3:
+            if mask_groups:
+                mask_groups.append(mask_groups[len(mask_groups) % len(mask_groups)])
+            else:
+                mask_groups.append([0])
+        
+        mask_indices = mask_groups[mask_version % len(mask_groups)]
         
         # 构建蒙版后的句子 - 使用LLM生成的tokens
         masked_tokens = []
