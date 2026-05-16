@@ -1,10 +1,36 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Search, BookOpen, ChevronDown, ChevronRight } from 'lucide-react'
 
 function VocabListStep({ vocab, onBack, loading, t }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedWord, setExpandedWord] = useState(null)
+  const listRef = useRef(null)
+  const wordRefs = useRef({})
+
+  const scrollToWord = useCallback((wordKey, delay = 100) => {
+    setTimeout(() => {
+      const el = wordRefs.current[wordKey]
+      if (el && listRef.current) {
+        const container = listRef.current
+        const containerRect = container.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        const scrollOffset = elRect.top - containerRect.top + container.scrollTop
+        container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+      }
+    }, delay)
+  }, [])
+
+  const handleWordClick = useCallback((word) => {
+    const wordKey = word.word
+    if (expandedWord === wordKey) {
+      setExpandedWord(null)
+      return
+    }
+    setExpandedWord(wordKey)
+    scrollToWord(wordKey, 100)
+    scrollToWord(wordKey, 300)
+  }, [expandedWord, scrollToWord])
 
   const filteredVocab = useMemo(() => {
     if (!searchQuery.trim()) return vocab
@@ -98,7 +124,7 @@ function VocabListStep({ vocab, onBack, loading, t }) {
       ) : (
         <div className="flex gap-4">
           <div className="flex-1 min-w-0">
-            <div className="space-y-3">
+            <div className="space-y-3" ref={listRef} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               {groupedVocab.map(([letter, words], groupIdx) => (
                 <div key={letter} id={`vocab-group-${letter}`}>
                   <motion.div
@@ -115,13 +141,14 @@ function VocabListStep({ vocab, onBack, loading, t }) {
                       return (
                         <motion.div
                           key={word.word}
+                          ref={el => { wordRefs.current[word.word] = el }}
                           initial={{ opacity: 0, y: 6 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
                           className="bg-white"
                         >
                           <button
-                            onClick={() => setExpandedWord(isExpanded ? null : word.word)}
+                            onClick={() => handleWordClick(word)}
                             className="w-full text-left px-4 py-3 flex items-center gap-3 hover:bg-amber-50/40 transition-colors group"
                           >
                             <div className="flex-1 min-w-0">
@@ -192,7 +219,10 @@ function VocabListStep({ vocab, onBack, loading, t }) {
                                         <div className="mt-1 space-y-1.5">
                                           {word.examples.slice(0, 2).map((ex, i) => (
                                             <div key={i} className="border-l-2 border-amber-200/60 pl-2.5">
-                                              <p className="text-[12px] text-stone-700 leading-snug">{ex}</p>
+                                              <p className="text-[12px] text-stone-700 leading-snug">{typeof ex === 'string' ? ex : ex.sentence}</p>
+                                              {typeof ex === 'object' && ex.translation && (
+                                                <p className="text-[11px] text-stone-400 leading-snug mt-0.5">{ex.translation}</p>
+                                              )}
                                             </div>
                                           ))}
                                         </div>

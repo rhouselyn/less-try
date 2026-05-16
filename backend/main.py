@@ -722,12 +722,12 @@ async def get_random_word(file_id: str):
         context = ""
         context_sentences = []
         if sentences:
-            # 找到包含该单词的句子
+            import re
+            word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
-                    if word in sentence_data["sentence"]:
+                    if word_pattern.search(sentence_data["sentence"]):
                         context = sentence_data["sentence"]
-                        # 获取翻译
                         translation = ""
                         if "translation_result" in sentence_data:
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
@@ -737,7 +737,6 @@ async def get_random_word(file_id: str):
                         })
                         break
             if not context and sentences:
-                # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
@@ -935,12 +934,12 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         context = ""
         context_sentences = []
         if sentences:
-            # 找到包含该单词的句子
+            import re
+            word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
             for sentence_data in sentences:
                 if "sentence" in sentence_data:
-                    if word in sentence_data["sentence"]:
+                    if word_pattern.search(sentence_data["sentence"]):
                         context = sentence_data["sentence"]
-                        # 获取翻译
                         translation = ""
                         if "translation_result" in sentence_data:
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
@@ -950,7 +949,6 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
                         })
                         break
             if not context and sentences:
-                # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
@@ -1044,49 +1042,27 @@ async def get_word_details(file_id: str, word: str):
         context_sentences = []
         context_sentences_with_translations = []
         if sentences:
-            # 优先使用sentence_index来找到包含该单词的句子
-            if "sentence_index" in word_data:
-                sentence_index = word_data["sentence_index"]
-                if sentence_index < len(sentences):
-                    sentence_data = sentences[sentence_index]
-                    if "sentence" in sentence_data:
-                        sentence = sentence_data["sentence"]
+            import re
+            word_pattern = re.compile(r'\b' + re.escape(word_data["word"]) + r'\b', re.IGNORECASE)
+            
+            for sent_idx, sentence_data in enumerate(sentences):
+                if "sentence" in sentence_data:
+                    sentence = sentence_data["sentence"]
+                    if word_pattern.search(sentence):
                         context_sentences.append(sentence)
-                        # 获取翻译
                         translation = ""
                         if "translation_result" in sentence_data:
                             translation = sentence_data["translation_result"].get("tokenized_translation", "")
                         context_sentences_with_translations.append({
                             "sentence": sentence,
-                            "translation": translation
+                            "translation": translation,
+                            "sentence_index": sent_idx
                         })
             
-            # 如果通过sentence_index没找到，或者没找到足够的句子，再使用字符串匹配
-            if len(context_sentences) < 2:
-                for sentence_data in sentences:
-                    if "sentence" in sentence_data:
-                        # 更智能的匹配方式，考虑大小写和缩写形式
-                        sentence = sentence_data["sentence"]
-                        current_word = word_data["word"]
-                        # 检查单词是否在句子中（不区分大小写）
-                        if current_word.lower() in sentence.lower():
-                            # 避免重复添加同一个句子
-                            if sentence not in [ctx["sentence"] for ctx in context_sentences_with_translations]:
-                                context_sentences.append(sentence)
-                                # 获取翻译
-                                translation = ""
-                                if "translation_result" in sentence_data:
-                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                                context_sentences_with_translations.append({
-                                    "sentence": sentence,
-                                    "translation": translation
-                                })
-                            # 最多添加2个句子
-                            if len(context_sentences) >= 2:
-                                break
+            if context_sentences:
+                context = context_sentences[0]
             
             if not context and sentences:
-                # 如果没找到，使用第一个句子作为上下文
                 context = sentences[0].get("sentence", "")
 
         # 加载语言设置
@@ -1737,6 +1713,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                     exercises_per_sentence_list=exercises_per_sent
                 )
                 storage.save_exercise_order(file_id, phase_number, exercise_order)
+                storage.save_phase2_progress(file_id, 0)
             
             unit_size = 10
             total_exercises = len(exercise_order)
@@ -1744,6 +1721,10 @@ async def get_phase_units(file_id: str, phase_number: int):
             
             max_exercise_index = storage.load_phase2_max_progress(file_id)
             current_exercise_index = storage.load_phase2_progress(file_id)
+            if max_exercise_index > total_exercises:
+                storage.save_phase2_progress(file_id, 0)
+                max_exercise_index = 0
+                current_exercise_index = 0
             
             units = []
             for i in range(num_units):
@@ -1803,9 +1784,15 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     exercises_per_sentence_list=exercises_per_sent
                 )
                 storage.save_exercise_order(file_id, phase_number, exercise_order)
+                storage.save_phase2_progress(file_id, 0)
             
             unit_size = 10
             current_exercise_index = storage.load_phase2_progress(file_id)
+            total_exercises = len(exercise_order)
+            max_exercise_index = storage.load_phase2_max_progress(file_id)
+            if max_exercise_index > total_exercises:
+                storage.save_phase2_progress(file_id, 0)
+                current_exercise_index = 0
             current_unit = current_exercise_index // unit_size
             
             exercise_start = unit_id * unit_size

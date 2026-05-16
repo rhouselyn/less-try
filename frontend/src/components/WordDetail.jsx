@@ -1,14 +1,7 @@
-import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Volume2, Brain, Lightbulb, BookText, GitBranch } from 'lucide-react'
+import { Brain, Lightbulb, BookText, GitBranch } from 'lucide-react'
 
-function WordDetail({ word, t }) {
-  const [isPlaying, setIsPlaying] = useState(false)
-
-  const handlePlayAudio = () => {
-    setIsPlaying(true)
-    setTimeout(() => setIsPlaying(false), 1000)
-  }
+function WordDetail({ word, t, onSentenceClick }) {
 
   return (
     <motion.div
@@ -17,20 +10,6 @@ function WordDetail({ word, t }) {
       transition={{ duration: 0.2 }}
       className="px-4 py-3.5"
     >
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-xl font-bold text-stone-800 tracking-tight">{word.word}</h2>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={handlePlayAudio}
-            className="p-1 text-stone-300 hover:text-stone-600 rounded-full transition-colors"
-          >
-            <Volume2 className={`w-3.5 h-3.5 ${isPlaying ? 'animate-pulse text-amber-500' : ''}`} />
-          </motion.button>
-        </div>
-      </div>
-
       <div className="space-y-3">
         <div>
           <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
@@ -102,11 +81,18 @@ function WordDetail({ word, t }) {
                 let translation = null;
                 if (typeof sentenceObj === 'object' && sentenceObj.translation) {
                   translation = sentenceObj.translation;
-                } else if (word.context_translations && word.context_translations[index]) {
-                  translation = word.context_translations[index];
                 }
+                const sentIdx = typeof sentenceObj === 'object' ? sentenceObj.sentence_index : undefined
                 return (
-                  <div key={index} className="border-l-[1.5px] border-stone-300 pl-2.5">
+                  <div
+                    key={index}
+                    className={`border-l-[1.5px] border-stone-300 pl-2.5 ${sentIdx !== undefined && onSentenceClick ? 'cursor-pointer hover:bg-amber-50/50 rounded-r-md' : ''}`}
+                    onClick={() => {
+                      if (sentIdx !== undefined && onSentenceClick) {
+                        onSentenceClick(sentIdx)
+                      }
+                    }}
+                  >
                     <p className="text-stone-700 text-[13px] italic leading-snug">{sentence}</p>
                     {translation && (
                       <p className="text-stone-400 text-[11px] leading-snug mt-0.5">{translation}</p>

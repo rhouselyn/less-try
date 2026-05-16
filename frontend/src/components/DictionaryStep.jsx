@@ -11,6 +11,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [wordDetails, setWordDetails] = useState({})
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
+  const sentenceRefs = useRef({})
 
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
@@ -95,8 +96,22 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       return
     }
     setExpandedWord(wordKey)
-    fetchWordDetail(wordKey)
-  }, [expandedWord, fetchWordDetail])
+    scrollToWord(wordKey, 100)
+    const detail = await fetchWordDetail(wordKey)
+    if (detail) {
+      scrollToWord(wordKey, 300)
+    }
+  }, [expandedWord, fetchWordDetail, scrollToWord])
+
+  const handleSentenceJump = useCallback((sentenceIndex) => {
+    onSentenceClick(sentenceIndex)
+    setTimeout(() => {
+      const el = sentenceRefs.current[sentenceIndex]
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 300)
+  }, [onSentenceClick])
 
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
@@ -215,7 +230,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               {safeSentenceTranslations.length > 0 ? (
                 <div className="divide-y divide-stone-200/60">
                   {safeSentenceTranslations.map((item, index) => (
-                    <div key={index}>
+                    <div key={index} ref={el => { sentenceRefs.current[index] = el }}>
                       <motion.div
                         initial={{ opacity: 0, y: -5 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -354,7 +369,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       </div>
                                     ) : detail ? (
                                       <div className="pt-3">
-                                        <WordDetail word={detail} t={t} />
+                                        <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} />
                                       </div>
                                     ) : (
                                       <div className="pt-3 text-center text-stone-400 text-[12px]">
