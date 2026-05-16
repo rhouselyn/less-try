@@ -32,6 +32,24 @@ def is_source_lang_text(text, source_lang="en"):
 
 ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
 
+MAX_SENTENCE_WORDS_FOR_QUIZ = 8
+
+def get_translation_phrases(translation_result, max_phrases=6):
+    if not translation_result or not isinstance(translation_result, dict):
+        return []
+    
+    llm_phrases = translation_result.get("translation_phrases", [])
+    if isinstance(llm_phrases, list) and len(llm_phrases) >= 2:
+        valid = [p.strip() for p in llm_phrases if isinstance(p, str) and p.strip()]
+        if len(valid) >= 2:
+            return valid[:max_phrases]
+    
+    raw_translation = translation_result.get("tokenized_translation", "")
+    if raw_translation and isinstance(raw_translation, str):
+        return split_translation_to_phrases(raw_translation, max_phrases)
+    
+    return []
+
 def split_translation_to_phrases(translation, max_phrases=8):
     if not translation or not isinstance(translation, str):
         return [translation] if translation else []
@@ -39,6 +57,11 @@ def split_translation_to_phrases(translation, max_phrases=8):
     import re
     parts = re.split(r'[，。、；：！？,;:!?]', translation)
     parts = [p.strip() for p in parts if p.strip()]
+    
+    if not parts:
+        chars = list(translation)
+        chunk_size = max(1, len(chars) // max_phrases)
+        parts = [''.join(chars[i:i+chunk_size]) for i in range(0, len(chars), chunk_size)]
     
     if len(parts) <= max_phrases:
         return parts
@@ -433,6 +456,10 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                 if sentence in used_sentences:
                     continue
                 
+                word_count = len(sentence.split())
+                if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
+                    continue
+                
                 already_in_unit = any(
                     item["type"] == "sentence_quiz" and item["sentence"] == sentence
                     for item in unit_items
@@ -471,7 +498,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     raw_translation = tr.get("tokenized_translation", "")
                     correct_translation = raw_translation.strip() if raw_translation else ""
                     
-                    correct_tokens = split_translation_to_phrases(raw_translation, max_phrases=6) if raw_translation else []
+                    correct_tokens = get_translation_phrases(tr, max_phrases=6)
                     
                     if len(correct_tokens) < 2:
                         correct_tokens = []
@@ -1309,13 +1336,15 @@ async def check_coverage(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 
-                # 检查句子单词数量，至少需要2个单词才参与句子练习
-                word_count = sentence_data.get("word_count", 0)
-                if word_count < 2:
+                word_count = len(sentence.split())
+                if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
+                    continue
+                
+                word_count_check = sentence_data.get("word_count", 0)
+                if word_count_check < 2:
                     if "translation_result" in sentence_data and "translation" in sentence_data["translation_result"]:
-                        word_count = len(sentence_data["translation_result"]["translation"])
-                    if word_count < 2:
-                        print(f"[DEBUG] 句子单词数不足2，跳过: {sentence} (word_count={word_count})")
+                        word_count_check = len(sentence_data["translation_result"]["translation"])
+                    if word_count_check < 2:
                         continue
                 
                 print(f"[DEBUG] 检查句子: {sentence} (word_count={word_count})")
@@ -1513,8 +1542,7 @@ async def generate_sentence_quiz(file_id: str):
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
-        # 生成正确答案 - 使用短语片段
-        correct_tokens = split_translation_to_phrases(tokenized_translation, max_phrases=6) if tokenized_translation else []
+        correct_tokens = get_translation_phrases(translation_result, max_phrases=6)
         print(f"[DEBUG] 正确短语片段: {correct_tokens}")
         
         if len(correct_tokens) < 2:
