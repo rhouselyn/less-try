@@ -41,43 +41,27 @@ def split_translation_to_phrases(translation, max_phrases=8):
     parts = [p.strip() for p in parts if p.strip()]
     
     if len(parts) <= max_phrases:
-        needs_split = []
-        for p in parts:
-            if len(p) > 12:
-                needs_split.append(p)
-        if not needs_split:
-            return parts
+        return parts
     
     result = []
+    current = ""
     for p in parts:
-        if len(p) <= 12 or len(result) >= max_phrases:
-            result.append(p)
-        else:
-            sub_parts = re.split(r'(的|了|地|得|着|过|而|却|又|也|都|就|才|还|已|将|会|能|可|要|应|在|有|和|与|但|并|及|或)', p)
-            sub_parts = [sp.strip() for sp in sub_parts if sp.strip()]
-            
-            if len(sub_parts) <= 1:
-                chunk_size = max(4, len(p) // max(1, max_phrases - len(result)))
-                i = 0
-                while i < len(p) and len(result) < max_phrases:
-                    end = min(i + chunk_size, len(p))
-                    result.append(p[i:end])
-                    i = end
+        if current:
+            candidate = current + "，" + p
+            if len(result) + 1 + (1 if candidate else 0) <= max_phrases:
+                current = candidate
             else:
-                current = ""
-                for sp in sub_parts:
-                    if sp in {'的', '了', '地', '得', '着', '过'}:
-                        current += sp
-                    else:
-                        if current and len(current) > 2:
-                            result.append(current)
-                        current = sp
-                if current and len(current) > 2:
-                    result.append(current)
+                result.append(current)
+                current = p
+        else:
+            current = p
+    
+    if current:
+        result.append(current)
     
     while len(result) > max_phrases:
         last = result.pop()
-        result[-1] = result[-1] + last
+        result[-1] = result[-1] + "，" + last
     
     return result
 
@@ -446,10 +430,6 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                 
                 sentence = sentence_data["sentence"]
                 
-                sentence_word_count = len(sentence.split())
-                if sentence_word_count > 8:
-                    continue
-                
                 if sentence in used_sentences:
                     continue
                 
@@ -491,15 +471,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     raw_translation = tr.get("tokenized_translation", "")
                     correct_translation = raw_translation.strip() if raw_translation else ""
                     
-                    llm_tokens = tr.get("translation_tokens", [])
-                    if isinstance(llm_tokens, list) and len(llm_tokens) >= 2:
-                        valid_llm_tokens = [t.strip() for t in llm_tokens if isinstance(t, str) and t.strip()]
-                        if len(valid_llm_tokens) >= 2:
-                            correct_tokens = valid_llm_tokens
-                        else:
-                            correct_tokens = split_translation_to_phrases(raw_translation, max_phrases=6) if raw_translation else []
-                    else:
-                        correct_tokens = split_translation_to_phrases(raw_translation, max_phrases=6) if raw_translation else []
+                    correct_tokens = split_translation_to_phrases(raw_translation, max_phrases=6) if raw_translation else []
                     
                     if len(correct_tokens) < 2:
                         correct_tokens = []
@@ -527,16 +499,6 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             if other_sent.get("sentence") == sentence:
                                 continue
                             other_tr = other_sent.get("translation_result", {})
-                            other_llm_tokens = other_tr.get("translation_tokens", [])
-                            if isinstance(other_llm_tokens, list) and len(other_llm_tokens) >= 2:
-                                for op in other_llm_tokens:
-                                    if isinstance(op, str) and op.strip() and op.strip() not in existing_set and not is_source_lang_text(op.strip(), source_lang):
-                                        selected_distractors.append(op.strip())
-                                        existing_set.add(op.strip())
-                                        if len(selected_distractors) >= 4:
-                                            break
-                            if len(selected_distractors) >= 4:
-                                break
                             other_tt = other_tr.get("tokenized_translation", "")
                             if other_tt:
                                 other_phrases = split_translation_to_phrases(other_tt, max_phrases=10)
@@ -1347,10 +1309,6 @@ async def check_coverage(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 
-                sentence_word_count = len(sentence.split())
-                if sentence_word_count > 8:
-                    continue
-                
                 # 检查句子单词数量，至少需要2个单词才参与句子练习
                 word_count = sentence_data.get("word_count", 0)
                 if word_count < 2:
@@ -1468,10 +1426,6 @@ async def generate_sentence_quiz(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 
-                sentence_word_count = len(sentence.split())
-                if sentence_word_count > 8:
-                    continue
-                
                 # 检查句子单词数量，至少需要2个单词才参与句子练习
                 word_count = sentence_data.get("word_count", 0)
                 if word_count < 2:
@@ -1554,22 +1508,14 @@ async def generate_sentence_quiz(file_id: str):
         redundant_tokens = translation_result.get("redundant_tokens", [])
         print(f"[DEBUG] 翻译结果: {tokenized_translation}")
         
+        # 过滤掉标点符号，只保留文字
         import re
         def clean_token(token):
             return re.sub(r'[^\w\s]', '', token)
         
-        llm_tokens = translation_result.get("translation_tokens", [])
-        if isinstance(llm_tokens, list) and len(llm_tokens) >= 2:
-            valid_llm_tokens = [t.strip() for t in llm_tokens if isinstance(t, str) and t.strip()]
-            if len(valid_llm_tokens) >= 2:
-                correct_tokens = valid_llm_tokens
-                print(f"[DEBUG] 使用LLM输出的translation_tokens: {correct_tokens}")
-            else:
-                correct_tokens = split_translation_to_phrases(tokenized_translation, max_phrases=6) if tokenized_translation else []
-                print(f"[DEBUG] LLM tokens无效，使用split_translation_to_phrases: {correct_tokens}")
-        else:
-            correct_tokens = split_translation_to_phrases(tokenized_translation, max_phrases=6) if tokenized_translation else []
-            print(f"[DEBUG] 无LLM tokens，使用split_translation_to_phrases: {correct_tokens}")
+        # 生成正确答案 - 使用短语片段
+        correct_tokens = split_translation_to_phrases(tokenized_translation, max_phrases=6) if tokenized_translation else []
+        print(f"[DEBUG] 正确短语片段: {correct_tokens}")
         
         if len(correct_tokens) < 2:
             correct_tokens = []
@@ -1601,16 +1547,6 @@ async def generate_sentence_quiz(file_id: str):
                 if other_sent.get("sentence") == original_sentence:
                     continue
                 other_tr = other_sent.get("translation_result", {})
-                other_llm_tokens = other_tr.get("translation_tokens", [])
-                if isinstance(other_llm_tokens, list) and len(other_llm_tokens) >= 2:
-                    for op in other_llm_tokens:
-                        if isinstance(op, str) and op.strip() and op.strip() not in existing_set and not is_source_lang_text(op.strip(), source_lang):
-                            selected_distractors.append(op.strip())
-                            existing_set.add(op.strip())
-                            if len(selected_distractors) >= 4:
-                                break
-                if len(selected_distractors) >= 4:
-                    break
                 other_tt = other_tr.get("tokenized_translation", "")
                 if other_tt:
                     other_phrases = split_translation_to_phrases(other_tt, max_phrases=10)
