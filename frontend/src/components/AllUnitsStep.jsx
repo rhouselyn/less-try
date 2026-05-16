@@ -44,10 +44,10 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`w-10 h-10 rounded-lg transition-all flex items-center justify-center text-sm font-medium ${
           isCompleted
-            ? 'bg-emerald-100 text-emerald-700 border border-emerald-200/50'
+            ? 'bg-[#eef2e8] text-[#5a6e48] border border-[#d4dcc8]/60'
             : isLocked
             ? 'bg-stone-100 text-stone-300 cursor-not-allowed'
-            : 'bg-amber-100 text-amber-700 hover:bg-amber-200 border border-amber-200/50'
+            : 'bg-[#f5ebe4] text-[#b85a3a] hover:bg-[#efe0d6] border border-[#e0cfc4]/60'
         }`}
       >
         {isLocked ? <Lock className="w-3.5 h-3.5" /> : index + 1}
