@@ -765,6 +765,7 @@ async def get_random_word(file_id: str):
             items = unit_plan.get("items", [])
             unit_start_index, unit_end_index = get_unit_flat_range(plan, unit_id)
             total_items_in_unit = len(items)
+            listening_count_in_unit = sum(1 for it in items if it.get("type") == "listening_quiz")
             
             if step_in_unit < len(items):
                 current_item = items[step_in_unit]
@@ -783,6 +784,7 @@ async def get_random_word(file_id: str):
                         "current_index": current_index,
                         "unit_start_index": unit_start_index,
                         "total_items_in_unit": total_items_in_unit,
+                        "listening_count_in_unit": listening_count_in_unit,
                         "step_in_unit": step_in_unit
                     }
                 
@@ -842,6 +844,7 @@ async def get_random_word(file_id: str):
                         "current_index": current_index,
                         "unit_start_index": unit_start_index,
                         "total_items_in_unit": total_items_in_unit,
+                        "listening_count_in_unit": listening_count_in_unit,
                         "step_in_unit": step_in_unit
                     }
                 
@@ -849,7 +852,8 @@ async def get_random_word(file_id: str):
                 random_word = vocab[vocab_idx]
                 word = random_word["word"]
             else:
-                return {"type": "unit_complete", "unit_end_index": unit_end_index, "current_index": current_index, "unit_start_index": unit_start_index, "total_items_in_unit": total_items_in_unit, "step_in_unit": step_in_unit}
+                return {"type": "unit_complete", "unit_end_index": unit_end_index, "current_index": current_index, "unit_start_index": unit_start_index, "total_items_in_unit": total_items_in_unit,
+                        "listening_count_in_unit": listening_count_in_unit, "step_in_unit": step_in_unit}
         else:
             return {"type": "all_complete"}
         
@@ -920,6 +924,7 @@ async def get_random_word(file_id: str):
                 "current_index": current_index,
                 "unit_start_index": unit_start_index,
                 "total_items_in_unit": total_items_in_unit,
+                        "listening_count_in_unit": listening_count_in_unit,
                 "step_in_unit": step_in_unit
             }
         
@@ -992,6 +997,7 @@ async def get_random_word(file_id: str):
             "current_index": current_index,
             "unit_start_index": unit_start_index,
             "total_items_in_unit": total_items_in_unit,
+                        "listening_count_in_unit": listening_count_in_unit,
             "step_in_unit": step_in_unit
         }
         
@@ -1079,7 +1085,10 @@ async def next_word(file_id: str):
                             "original_sentence": next_item["sentence"],
                             "correct_translation": next_item.get("correct_translation", ""),
                             "correct_tokens": next_item.get("correct_tokens", []),
-                            "tokens": tokens
+                            "tokens": tokens,
+                            "step_in_unit": step_in_unit,
+                            "total_items_in_unit": len(items),
+                            "listening_count_in_unit": sum(1 for it in items if it.get("type") == "listening_quiz")
                         }
                     }
                 
@@ -1137,7 +1146,10 @@ async def next_word(file_id: str):
                         "listening_quiz": {
                             "original_sentence": correct_sentence,
                             "correct_words": correct_words,
-                            "options": options
+                            "options": options,
+                            "step_in_unit": step_in_unit,
+                            "total_items_in_unit": len(items),
+                            "listening_count_in_unit": sum(1 for it in items if it.get("type") == "listening_quiz")
                         }
                     }
             
@@ -2304,6 +2316,84 @@ async def set_phase_progress(file_id: str, phase_number: int, request: dict):
             exercise_type_index = request.get("exercise_type_index", 0)
             storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index, exercise_type_index)
             return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/word-list")
+async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional[str] = None):
+    try:
+        records = storage.load_history()
+        if source_lang:
+            records = [r for r in records if r.get("source_lang") == source_lang]
+        if target_lang:
+            records = [r for r in records if r.get("target_lang") == target_lang]
+
+        merged = {}
+        for record in records:
+            file_id = record.get("file_id")
+            if not file_id:
+                continue
+            vocab = storage.load_vocab(file_id)
+            if not vocab:
+                continue
+            for entry in vocab:
+                word_key = entry.get("word", "").lower()
+                if not word_key:
+                    continue
+                if word_key not in merged:
+                    merged[word_key] = {"entry": dict(entry), "file_id": file_id}
+                else:
+                    existing = merged[word_key]["entry"]
+                    existing_detail = sum(1 for v in existing.values() if v)
+                    new_detail = sum(1 for v in entry.values() if v)
+                    if new_detail > existing_detail:
+                        merged[word_key] = {"entry": dict(entry), "file_id": file_id}
+
+        result = []
+        for word_key, data in merged.items():
+            entry = data["entry"]
+            file_id = data["file_id"]
+            word = entry.get("word", word_key)
+
+            cached = storage.load_word_cache(file_id, word)
+
+            ipa = entry.get("ipa", "")
+            meaning = entry.get("context_meaning", "") or entry.get("translation", "")
+            part_of_speech = entry.get("morphology", "")
+            examples = []
+            memory_hint = ""
+            variants_detail = []
+            context_sentences = []
+
+            if cached:
+                if cached.get("ipa"):
+                    ipa = cached["ipa"]
+                meaning = cached.get("enriched_meaning", "") or cached.get("meaning", "") or meaning
+                if cached.get("context_meaning") and not meaning:
+                    meaning = cached["context_meaning"]
+                if cached.get("examples"):
+                    examples = cached["examples"]
+                if cached.get("memory_hint"):
+                    memory_hint = cached["memory_hint"]
+                if cached.get("variants_detail"):
+                    variants_detail = cached["variants_detail"]
+                if cached.get("context_sentences"):
+                    context_sentences = cached["context_sentences"]
+
+            result.append({
+                "word": word,
+                "ipa": ipa,
+                "meaning": meaning,
+                "part_of_speech": part_of_speech,
+                "examples": examples,
+                "memory_hint": memory_hint,
+                "variants_detail": variants_detail,
+                "context_sentences": context_sentences,
+            })
+
+        result.sort(key=lambda x: x["word"].lower())
+        return {"words": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -150,5 +150,13 @@ export const api = {
   saveUnitStars: async (fileId, stars) => {
     const response = await axios.post(`${baseUrl}/api/learn/${fileId}/unit-stars`, { stars });
     return response.data;
+  },
+
+  getWordList: async (sourceLang, targetLang) => {
+    const params = {};
+    if (sourceLang) params.source_lang = sourceLang;
+    if (targetLang) params.target_lang = targetLang;
+    const response = await axios.get(`${baseUrl}/api/word-list`, { params });
+    return response.data;
   }
 };

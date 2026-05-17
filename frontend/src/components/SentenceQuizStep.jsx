@@ -3,13 +3,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X, BookOpen, Volume2, Languages } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
   const stepInUnit = (quizData?.step_in_unit ?? 0) + 1
-  const totalItemsInUnit = quizData?.total_items_in_unit ?? 0
+  const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
+  const rawTotalItemsInUnit = quizData?.total_items_in_unit ?? 0
+  const totalItemsInUnit = skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit
 
   const autoSpeak = useCallback(() => {
     if (quizData?.original_sentence) {

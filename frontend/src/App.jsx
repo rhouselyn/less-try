@@ -965,6 +965,7 @@ function App() {
               loading={loading}
               t={t}
               sourceLang={sourceLang}
+              skipListening={skipListening}
             />
           )}
           
@@ -989,6 +990,7 @@ function App() {
               onOpenVocabList={handleOpenVocabList}
               sourceLang={sourceLang}
               onAnswer={handleSentenceQuizAnswer}
+              skipListening={skipListening}
             />
           )}
           
@@ -1003,6 +1005,7 @@ function App() {
               onOpenVocabList={handleOpenVocabList}
               sourceLang={sourceLang}
               onAnswer={handleListeningQuizAnswer}
+              skipListening={skipListening}
             />
           )}
           

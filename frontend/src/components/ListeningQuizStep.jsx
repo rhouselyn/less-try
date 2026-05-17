@@ -3,13 +3,15 @@ import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volu
 import { useState, useEffect, useCallback } from 'react'
 import { speakText } from '../utils/speech'
 
-function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer }) {
+function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening }) {
   const [selectedWords, setSelectedWords] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
   const stepInUnit = (quizData?.step_in_unit ?? 0) + 1
-  const totalItemsInUnit = quizData?.total_items_in_unit ?? 0
+  const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
+  const rawTotalItemsInUnit = quizData?.total_items_in_unit ?? 0
+  const totalItemsInUnit = skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit
 
   const autoSpeak = useCallback(() => {
     if (quizData?.original_sentence) {
