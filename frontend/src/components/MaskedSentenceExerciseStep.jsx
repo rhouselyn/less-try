@@ -2,29 +2,7 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Loader2, ChevronRight, BookOpen, Lightbulb } from 'lucide-react';
 import { useState } from 'react';
-
-const LANG_MAP = {
-  'en': 'en-US',
-  'zh': 'zh-CN',
-  'ja': 'ja-JP',
-  'ko': 'ko-KR',
-  'fr': 'fr-FR',
-  'de': 'de-DE',
-  'es': 'es-ES',
-  'it': 'it-IT',
-  'pt': 'pt-PT',
-  'ru': 'ru-RU',
-}
-
-function speakText(text, sourceLang = 'en') {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = LANG_MAP[sourceLang] || 'en-US'
-    utterance.rate = 0.9
-    window.speechSynthesis.speak(utterance)
-  }
-}
+import { speakText } from '../utils/speech';
 
 function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang }) {
   const [selectedWords, setSelectedWords] = useState([]);

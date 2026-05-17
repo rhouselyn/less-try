@@ -522,10 +522,12 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     
                     redundant_tokens = tr.get("redundant_tokens", [])
                     cleaned_redundant = []
+                    correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
                     for rt in redundant_tokens:
                         rt_stripped = rt.strip()
-                        if rt_stripped and rt_stripped not in correct_tokens and not is_source_lang_text(rt_stripped, source_lang):
-                            cleaned_redundant.append(rt_stripped)
+                        if rt_stripped and rt_stripped not in correct_tokens:
+                            if correct_has_source_lang or not is_source_lang_text(rt_stripped, source_lang):
+                                cleaned_redundant.append(rt_stripped)
                     
                     selected_distractors = list(dict.fromkeys(cleaned_redundant))[:4]
                     
@@ -537,11 +539,12 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             other_tr = other_sent.get("translation_result", {})
                             other_phrases = get_translation_phrases(other_tr, max_phrases=10)
                             for op in other_phrases:
-                                if op not in existing_set and not is_source_lang_text(op, source_lang):
-                                    selected_distractors.append(op)
-                                    existing_set.add(op)
-                                    if len(selected_distractors) >= 4:
-                                        break
+                                if op not in existing_set:
+                                    if correct_has_source_lang or not is_source_lang_text(op, source_lang):
+                                        selected_distractors.append(op)
+                                        existing_set.add(op)
+                                        if len(selected_distractors) >= 4:
+                                            break
                             if len(selected_distractors) >= 4:
                                 break
                     
@@ -572,6 +575,18 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                                                 listening_correct_words.append(w_data["word"])
                                             break
                     
+                    sentence_word_list = sentence.split()
+                    ordered_correct_words = []
+                    used_correct = set()
+                    for sw in sentence_word_list:
+                        for cw in listening_correct_words:
+                            if cw not in used_correct and (sw.lower() == cw.lower() or sw.lower() in cw.lower() or cw.lower() in sw.lower()):
+                                ordered_correct_words.append(cw)
+                                used_correct.add(cw)
+                                break
+                    if len(ordered_correct_words) == len(listening_correct_words):
+                        listening_correct_words = ordered_correct_words
+                    
                     listening_distractor_words = []
                     used_indices = covering_vocab_indices if covering_vocab_indices else set()
                     available = [i for i in range(len(vocab)) if i not in used_indices and vocab[i]["word"] not in listening_correct_words]
@@ -580,6 +595,27 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         listening_distractor_words.append(vocab[vi]["word"])
                         if len(listening_distractor_words) >= 2:
                             break
+                    
+                    if len(listening_distractor_words) < 2:
+                        for other_sent in sentences:
+                            other_sentence = other_sent.get("sentence", "")
+                            if other_sentence and other_sentence != sentence:
+                                for w in other_sentence.split():
+                                    w_clean = w.strip()
+                                    if w_clean and w_clean not in listening_correct_words and w_clean not in listening_distractor_words:
+                                        listening_distractor_words.append(w_clean)
+                                        if len(listening_distractor_words) >= 2:
+                                            break
+                            if len(listening_distractor_words) >= 2:
+                                break
+                    
+                    if len(listening_distractor_words) < 2:
+                        for rt in tr.get("redundant_tokens", []):
+                            rt_stripped = rt.strip()
+                            if rt_stripped and rt_stripped not in listening_correct_words and rt_stripped not in listening_distractor_words:
+                                listening_distractor_words.append(rt_stripped)
+                                if len(listening_distractor_words) >= 2:
+                                    break
                     
                     if not listening_correct_words:
                         continue
@@ -752,12 +788,42 @@ async def get_random_word(file_id: str):
                     correct_sentence = current_item["sentence"]
                     correct_words = current_item.get("correct_words", correct_sentence.split())
                     distractor_words = list(current_item.get("distractor_words", []))
-                    if not distractor_words:
+                    if len(distractor_words) < 2:
                         vocab_data = storage.load_vocab(file_id)
                         all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
                         available = [v["word"] for v in all_vocab if v["word"] not in correct_words and v["word"] not in distractor_words]
                         rnd.shuffle(available)
-                        distractor_words = available[:2]
+                        for w in available:
+                            distractor_words.append(w)
+                            if len(distractor_words) >= 2:
+                                break
+                    if len(distractor_words) < 2:
+                        pipeline_data = storage.load_pipeline_data(file_id)
+                        all_sentences = pipeline_data.get("data", []) if isinstance(pipeline_data, dict) else []
+                        for sd in all_sentences:
+                            other_s = sd.get("sentence", "")
+                            if other_s and other_s != correct_sentence:
+                                for w in other_s.split():
+                                    w_clean = w.strip()
+                                    if w_clean and w_clean not in correct_words and w_clean not in distractor_words:
+                                        distractor_words.append(w_clean)
+                                        if len(distractor_words) >= 2:
+                                            break
+                            if len(distractor_words) >= 2:
+                                break
+                    if len(distractor_words) < 2:
+                        pipeline_data = storage.load_pipeline_data(file_id)
+                        all_sentences = pipeline_data.get("data", []) if isinstance(pipeline_data, dict) else []
+                        for sd in all_sentences:
+                            if sd.get("sentence") == correct_sentence:
+                                tr = sd.get("translation_result", {})
+                                for rt in tr.get("redundant_tokens", []):
+                                    rt_stripped = rt.strip()
+                                    if rt_stripped and rt_stripped not in correct_words and rt_stripped not in distractor_words:
+                                        distractor_words.append(rt_stripped)
+                                        if len(distractor_words) >= 2:
+                                            break
+                                break
                     options = correct_words + distractor_words[:2]
                     rnd.shuffle(options)
                     return {
@@ -1015,12 +1081,42 @@ async def next_word(file_id: str):
                     correct_sentence = next_item["sentence"]
                     correct_words = next_item.get("correct_words", correct_sentence.split())
                     distractor_words = list(next_item.get("distractor_words", []))
-                    if not distractor_words:
+                    if len(distractor_words) < 2:
                         vocab_data = storage.load_vocab(file_id)
                         all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
                         available = [v["word"] for v in all_vocab if v["word"] not in correct_words and v["word"] not in distractor_words]
                         rnd.shuffle(available)
-                        distractor_words = available[:2]
+                        for w in available:
+                            distractor_words.append(w)
+                            if len(distractor_words) >= 2:
+                                break
+                    if len(distractor_words) < 2:
+                        pipeline_data = storage.load_pipeline_data(file_id)
+                        all_sentences = pipeline_data.get("data", []) if isinstance(pipeline_data, dict) else []
+                        for sd in all_sentences:
+                            other_s = sd.get("sentence", "")
+                            if other_s and other_s != correct_sentence:
+                                for w in other_s.split():
+                                    w_clean = w.strip()
+                                    if w_clean and w_clean not in correct_words and w_clean not in distractor_words:
+                                        distractor_words.append(w_clean)
+                                        if len(distractor_words) >= 2:
+                                            break
+                            if len(distractor_words) >= 2:
+                                break
+                    if len(distractor_words) < 2:
+                        pipeline_data = storage.load_pipeline_data(file_id)
+                        all_sentences = pipeline_data.get("data", []) if isinstance(pipeline_data, dict) else []
+                        for sd in all_sentences:
+                            if sd.get("sentence") == correct_sentence:
+                                tr = sd.get("translation_result", {})
+                                for rt in tr.get("redundant_tokens", []):
+                                    rt_stripped = rt.strip()
+                                    if rt_stripped and rt_stripped not in correct_words and rt_stripped not in distractor_words:
+                                        distractor_words.append(rt_stripped)
+                                        if len(distractor_words) >= 2:
+                                            break
+                                break
                     options = correct_words + distractor_words[:2]
                     rnd.shuffle(options)
                     return {

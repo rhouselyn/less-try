@@ -1,29 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain, BookOpen, Volume2 } from 'lucide-react'
 import { useEffect, useCallback } from 'react'
-
-const LANG_MAP = {
-  'en': 'en-US',
-  'zh': 'zh-CN',
-  'ja': 'ja-JP',
-  'ko': 'ko-KR',
-  'fr': 'fr-FR',
-  'de': 'de-DE',
-  'es': 'es-ES',
-  'it': 'it-IT',
-  'pt': 'pt-PT',
-  'ru': 'ru-RU',
-}
-
-function speakText(text, sourceLang = 'en') {
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel()
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = LANG_MAP[sourceLang] || 'en-US'
-    utterance.rate = 0.9
-    window.speechSynthesis.speak(utterance)
-  }
-}
+import { speakText } from '../utils/speech'
 
 function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t, sourceLang }) {
   const autoSpeak = useCallback(() => {
