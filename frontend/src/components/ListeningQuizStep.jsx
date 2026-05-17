@@ -8,6 +8,9 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
+  const stepInUnit = (quizData?.step_in_unit ?? 0) + 1
+  const totalItemsInUnit = quizData?.total_items_in_unit ?? 0
+
   const autoSpeak = useCallback(() => {
     if (quizData?.original_sentence) {
       setTimeout(() => speakText(quizData.original_sentence, sourceLang), 300)
@@ -33,8 +36,6 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
     )
   }
 
-  const stepInUnit = (quizData.step_in_unit ?? 0) + 1
-  const totalItemsInUnit = quizData.total_items_in_unit ?? 0
   const correctWords = quizData.correct_words || []
   const options = quizData.options || []
 
@@ -75,26 +76,24 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
     >
       <div className="flex items-center justify-between mb-8">
         <motion.button
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
           onClick={onBack}
           className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+          whileHover={{ scale: 1.05, x: -2 }}
+          whileTap={{ scale: 0.95 }}
         >
           <ArrowLeft className="w-4 h-4" />
           {t.back}
         </motion.button>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-stone-500 font-medium">
-              第 {stepInUnit} / {totalItemsInUnit} 题
-            </span>
+            <span className="text-sm text-stone-500 font-medium">第 {stepInUnit} / {totalItemsInUnit} 题</span>
           )}
           {onOpenVocabList && (
             <motion.button
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
               onClick={onOpenVocabList}
               className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+              whileHover={{ scale: 1.05, x: 2 }}
+              whileTap={{ scale: 0.95 }}
             >
               <BookOpen className="w-4 h-4" />
               单词表
@@ -114,31 +113,21 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <Headphones className="w-4 h-4" />
             听力题
           </motion.div>
-          <motion.h2
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-2xl font-semibold text-stone-800 mb-4"
-          >
-            听一听，选出听到的单词
-          </motion.h2>
           <div className="flex items-center justify-center gap-2">
             <motion.button
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => speakText(quizData.original_sentence, sourceLang)}
-              className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
+              className="p-3 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
             >
-              <Volume2 className="w-6 h-6" />
+              <Volume2 className="w-8 h-8" />
             </motion.button>
             <span className="text-sm text-stone-400">点击播放</span>
           </div>
         </div>
 
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">
-            你的答案
-          </h3>
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-lg min-h-16 flex flex-wrap gap-2 items-center bg-stone-50">
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
             <AnimatePresence>
               {selectedWords.map((item, pos) => (
                 <motion.div
@@ -147,13 +136,13 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0 }}
                   whileHover={{ scale: 1.05 }}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer ${
                     isChecked
                       ? isCorrect
                         ? 'bg-green-100 text-green-800 border border-green-300'
                         : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
-                        ? 'bg-green-100 text-green-800 border border-green-300'
-                        : 'bg-red-100 text-red-800 border border-red-300'
+                          ? 'bg-green-100 text-green-800 border border-green-300'
+                          : 'bg-red-100 text-red-800 border border-red-300'
                       : 'bg-stone-800 text-white'
                   }`}
                   onClick={() => handleRemoveWord(pos)}
@@ -169,9 +158,6 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
 
         <div className="mb-8">
-          <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">
-            选择单词
-          </h3>
           <div className="flex flex-wrap gap-2">
             {options.map((word, index) => {
               const isSelected = selectedWords.some(w => w.index === index)
@@ -202,11 +188,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}
           >
             <div className="flex items-center gap-3 mb-2">
-              {isCorrect ? (
-                <CheckCircle2 className="w-6 h-6 text-green-600" />
-              ) : (
-                <XCircle className="w-6 h-6 text-red-600" />
-              )}
+              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <XCircle className="w-6 h-6 text-red-600" />}
               <span className={`font-semibold text-lg ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
                 {isCorrect ? t.correct : t.incorrect}
               </span>
@@ -226,7 +208,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               whileTap={{ scale: 0.98 }}
               onClick={checkAnswer}
               disabled={selectedWords.length === 0}
-              className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}
             </motion.button>

@@ -72,6 +72,7 @@ function App() {
   const [completedPhase, setCompletedPhase] = useState(1)
   const [unitStarCounts, setUnitStarCounts] = useState({})
   const unitErrorCountRef = useRef(0)
+  const [skipListening, setSkipListening] = useState(false)
   
   const updateUnitStars = (key, starCount) => {
     setUnitStarCounts(prev => {
@@ -361,6 +362,10 @@ function App() {
         setLearningMode('sentence')
         setStep('sentence-quiz')
       } else if (response.type === 'listening_quiz') {
+        if (skipListening) {
+          setLoading(false)
+          return getNextWord(0)
+        }
         setListeningQuizData(response)
         setUnitEndIndex(response.unit_end_index)
         setLearningMode('listening')
@@ -702,6 +707,9 @@ function App() {
       }
       
       if (nextWordResponse.listening_quiz) {
+        if (skipListening) {
+          return getNextWord(retryCount)
+        }
         const endIdx = nextWordResponse.unit_end_index || unitEndIndex
         setListeningQuizData(nextWordResponse.listening_quiz)
         setUnitEndIndex(endIdx)
@@ -717,6 +725,9 @@ function App() {
         setLearningMode('sentence')
         setStep('sentence-quiz')
       } else if (response.type === 'listening_quiz') {
+        if (skipListening) {
+          return getNextWord(0)
+        }
         setListeningQuizData(response)
         setUnitEndIndex(response.unit_end_index)
         setLearningMode('listening')
@@ -1047,6 +1058,8 @@ function App() {
               loading={loading}
               t={t}
               unitStarCounts={unitStarCounts}
+              skipListening={skipListening}
+              onSkipListeningChange={setSkipListening}
             />
           )}
           

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock, Star } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones } from 'lucide-react';
 
 function AllUnitsStep({
   phase1Units,
@@ -13,7 +13,9 @@ function AllUnitsStep({
   onBack,
   loading,
   t,
-  unitStarCounts
+  unitStarCounts,
+  skipListening,
+  onSkipListeningChange
 }) {
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
@@ -94,7 +96,7 @@ function AllUnitsStep({
         {t.back}
       </motion.button>
 
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 relative">
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -103,6 +105,23 @@ function AllUnitsStep({
           学习单元
         </motion.h2>
         <p className="text-base text-stone-400">按顺序完成单元，解锁下一单元</p>
+        
+        <label className="absolute right-0 top-1 flex items-center gap-2 cursor-pointer select-none group">
+          <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
+            <Headphones className="w-3.5 h-3.5" />
+            跳过听力
+          </span>
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={skipListening || false}
+              onChange={(e) => onSkipListeningChange?.(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-8 h-[18px] bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors"></div>
+            <div className="absolute left-[2px] top-[2px] bg-white w-[14px] h-[14px] rounded-full transition-transform peer-checked:translate-x-[14px] shadow-sm"></div>
+          </div>
+        </label>
       </div>
 
       {loading ? (

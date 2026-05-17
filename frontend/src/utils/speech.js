@@ -12,8 +12,9 @@ const LANG_MAP = {
 }
 
 let voicesLoaded = false
+let voicesReadyPromise = null
 
-if ('speechSynthesis' in window) {
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   const loadVoices = () => {
     const voices = window.speechSynthesis.getVoices()
     if (voices.length > 0) {
@@ -21,39 +22,63 @@ if ('speechSynthesis' in window) {
     }
   }
   loadVoices()
-  window.speechSynthesis.onvoiceschanged = loadVoices
+
+  voicesReadyPromise = new Promise((resolve) => {
+    if (voicesLoaded) {
+      resolve()
+      return
+    }
+    const handler = () => {
+      voicesLoaded = true
+      resolve()
+    }
+    window.speechSynthesis.onvoiceschanged = handler
+    setTimeout(() => {
+      loadVoices()
+      resolve()
+    }, 1000)
+  })
 }
 
 function speakText(text, sourceLang = 'en') {
-  if (!('speechSynthesis' in window)) return
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+  if (!text) return
 
   window.speechSynthesis.cancel()
 
-  const speak = () => {
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = LANG_MAP[sourceLang] || 'en-US'
-    utterance.rate = 0.9
+  const doSpeak = () => {
+    try {
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = LANG_MAP[sourceLang] || 'en-US'
+      utterance.rate = 0.9
+      utterance.volume = 1
 
-    const voices = window.speechSynthesis.getVoices()
-    const targetLang = LANG_MAP[sourceLang] || 'en-US'
-    const langPrefix = targetLang.split('-')[0]
-    const matchedVoice = voices.find(v => v.lang.startsWith(langPrefix))
-    if (matchedVoice) {
-      utterance.voice = matchedVoice
+      const voices = window.speechSynthesis.getVoices()
+      const targetLang = LANG_MAP[sourceLang] || 'en-US'
+      const langPrefix = targetLang.split('-')[0]
+      const matchedVoice = voices.find(v => v.lang.startsWith(langPrefix))
+      if (matchedVoice) {
+        utterance.voice = matchedVoice
+      }
+
+      utterance.onerror = (e) => {
+        if (e.error !== 'canceled') {
+          console.warn('Speech synthesis error:', e.error)
+        }
+      }
+
+      window.speechSynthesis.speak(utterance)
+    } catch (e) {
+      console.warn('Speech synthesis failed:', e)
     }
-
-    window.speechSynthesis.speak(utterance)
   }
 
   if (voicesLoaded) {
-    speak()
+    doSpeak()
+  } else if (voicesReadyPromise) {
+    voicesReadyPromise.then(doSpeak)
   } else {
-    window.speechSynthesis.onvoiceschanged = () => {
-      voicesLoaded = true
-      speak()
-    }
-    window.speechSynthesis.getVoices()
-    setTimeout(speak, 200)
+    setTimeout(doSpeak, 300)
   }
 }
 
