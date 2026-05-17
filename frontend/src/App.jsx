@@ -73,6 +73,18 @@ function App() {
   const [unitStarCounts, setUnitStarCounts] = useState({})
   const unitErrorCountRef = useRef(0)
   
+  const updateUnitStars = (key, starCount) => {
+    setUnitStarCounts(prev => {
+      const updated = { ...prev, [key]: Math.max(prev[key] || 0, starCount) }
+      if (currentFileId) {
+        api.saveUnitStars(currentFileId, { [key]: updated[key] }).catch(err => {
+          console.error('Failed to save stars:', err)
+        })
+      }
+      return updated
+    })
+  }
+  
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
 
@@ -280,16 +292,17 @@ function App() {
     
     setLoading(true)
     try {
-      // 同时获取两个阶段的单元
-      const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+      const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
         api.getPhaseUnits(currentFileId, 1),
-        api.getPhaseUnits(currentFileId, 2)
+        api.getPhaseUnits(currentFileId, 2),
+        api.getUnitStars(currentFileId)
       ])
       
       setPhase1Units(phase1UnitsData.units)
       setPhase2Units(phase2UnitsData.units)
       setCurrentPhase1Unit(phase1UnitsData.current_unit)
       setCurrentPhase2Unit(phase2UnitsData.current_unit)
+      setUnitStarCounts(starsData.stars || {})
       setStep('all-units')
     } catch (error) {
       console.error('获取单元错误:', error)
@@ -364,7 +377,7 @@ function App() {
         setCompletedUnitId(unitId)
         setCompletedPhase(1)
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
-        setUnitStarCounts(prev => ({ ...prev, [`1-${unitId}`]: starCount }))
+        updateUnitStars(`1-${unitId}`, starCount)
         setStep('unit-complete')
       } else {
         setLearningData(response)
@@ -386,6 +399,9 @@ function App() {
   const handlePhase2UnitClick = async (unitId) => {
     if (!currentFileId) return
     
+    setUnitErrorCount(0)
+    unitErrorCountRef.current = 0
+    
     setLoading(true)
     try {
       setCurrentPhase(2)
@@ -402,6 +418,8 @@ function App() {
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setCompletedUnitId(unitId)
         setCompletedPhase(2)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        updateUnitStars(`2-${unitId}`, starCount)
         setStep('unit-complete')
       } else {
         setExerciseType(exerciseData.exercise_type)
@@ -474,6 +492,8 @@ function App() {
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setCompletedUnitId(currentPhaseUnit)
         setCompletedPhase(currentPhase)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount)
         setStep('unit-complete')
       } else {
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
@@ -488,6 +508,8 @@ function App() {
           setCurrentPhase2Unit(phase2UnitsData.current_unit)
           setCompletedUnitId(currentPhaseUnit)
           setCompletedPhase(currentPhase)
+          const starCount2 = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+          updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount2)
           setStep('unit-complete')
         } else {
           setExerciseType(exerciseData.exercise_type)
@@ -609,6 +631,16 @@ function App() {
     }
   }
 
+  const handlePhase2Answer = (isCorrect) => {
+    if (!isCorrect) {
+      setUnitErrorCount(prev => {
+        const newCount = prev + 1
+        unitErrorCountRef.current = newCount
+        return newCount
+      })
+    }
+  }
+
   const goToNextReviewItem = () => {
     if (wrongItems.length === 0) {
       setReviewMode(false)
@@ -655,7 +687,7 @@ function App() {
         setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
-        setUnitStarCounts(prev => ({ ...prev, [`1-${completedUnit}`]: starCount }))
+        updateUnitStars(`1-${completedUnit}`, starCount)
         setStep('unit-complete')
         return
       }
@@ -702,7 +734,7 @@ function App() {
         setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
-        setUnitStarCounts(prev => ({ ...prev, [`1-${completedUnit}`]: starCount }))
+        updateUnitStars(`1-${completedUnit}`, starCount)
         setStep('unit-complete')
       } else {
         setLearningData(response)
@@ -1060,6 +1092,8 @@ function App() {
                 setCurrentPhase2Unit(phase2UnitsData.current_unit)
                 setCompletedUnitId(currentPhaseUnit)
                 setCompletedPhase(currentPhase)
+                const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+                updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount)
                 setStep('unit-complete')
               }}
               loading={loading}
@@ -1071,6 +1105,7 @@ function App() {
               totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
               sentencePreview={currentExerciseData?.sentence_preview}
               sourceLang={sourceLang}
+              onAnswer={handlePhase2Answer}
             />
           )}
           
@@ -1091,6 +1126,8 @@ function App() {
                 setCurrentPhase2Unit(phase2UnitsData.current_unit)
                 setCompletedUnitId(currentPhaseUnit)
                 setCompletedPhase(currentPhase)
+                const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+                updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount)
                 setStep('unit-complete')
               }}
               loading={loading}
@@ -1100,6 +1137,7 @@ function App() {
               totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
               sentencePreview={currentExerciseData?.sentence_preview}
               sourceLang={sourceLang}
+              onAnswer={handlePhase2Answer}
             />
           )}
           

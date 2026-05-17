@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, ChevronRight, BookOpen, Lightbulb } from 'lucide-re
 import { useState } from 'react';
 import { speakText } from '../utils/speech';
 
-function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang }) {
+function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer }) {
   const [selectedTokens, setSelectedTokens] = useState([]);
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -37,6 +37,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
     
     setIsCorrect(correct);
     setAnswerChecked(true);
+    if (onAnswer) onAnswer(correct);
   };
 
   const handleNext = () => {

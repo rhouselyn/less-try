@@ -109,13 +109,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (!matchedWord) return
 
     const wordKey = matchedWord.word
+    if (expandedWord === wordKey) {
+      setExpandedWord(null)
+      return
+    }
     setExpandedWord(wordKey)
     scrollToWord(wordKey, 100)
     const detail = await fetchWordDetail(wordKey)
     if (detail) {
       scrollToWord(wordKey, 300)
     }
-  }, [vocab, scrollToWord, fetchWordDetail])
+  }, [vocab, expandedWord, scrollToWord, fetchWordDetail])
 
   const handleVocabWordClick = useCallback(async (word) => {
     const wordKey = word.word

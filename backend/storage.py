@@ -334,6 +334,29 @@ class Storage:
             return True
         return False
 
+    def save_unit_stars(self, file_id: str, stars_data: Dict):
+        file_dir = self.get_file_dir(file_id)
+        stars_path = file_dir / "unit_stars.json"
+        existing = {}
+        if stars_path.exists():
+            with open(stars_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+        for key, count in stars_data.items():
+            if key in existing:
+                existing[key] = max(existing[key], count)
+            else:
+                existing[key] = count
+        with open(stars_path, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+
+    def load_unit_stars(self, file_id: str) -> Dict:
+        file_dir = self.get_file_dir(file_id)
+        stars_path = file_dir / "unit_stars.json"
+        if stars_path.exists():
+            with open(stars_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
+
     def rename_history_record(self, file_id: str, new_title: str) -> bool:
         records = self.load_history()
         for r in records:

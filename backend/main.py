@@ -588,11 +588,11 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         listening_correct_words = ordered_correct_words
                     
                     listening_distractor_words = []
-                    used_indices = covering_vocab_indices if covering_vocab_indices else set()
-                    available = [i for i in range(len(vocab)) if i not in used_indices and vocab[i]["word"] not in listening_correct_words]
+                    listening_correct_lower = set(w.lower() for w in listening_correct_words)
+                    available = [v["word"] for v in vocab if v["word"].lower() not in listening_correct_lower]
                     random.shuffle(available)
-                    for vi in available:
-                        listening_distractor_words.append(vocab[vi]["word"])
+                    for w in available:
+                        listening_distractor_words.append(w)
                         if len(listening_distractor_words) >= 2:
                             break
                     
@@ -602,7 +602,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             if other_sentence and other_sentence != sentence:
                                 for w in other_sentence.split():
                                     w_clean = w.strip()
-                                    if w_clean and w_clean not in listening_correct_words and w_clean not in listening_distractor_words:
+                                    if w_clean and w_clean.lower() not in listening_correct_lower and w_clean not in listening_distractor_words:
                                         listening_distractor_words.append(w_clean)
                                         if len(listening_distractor_words) >= 2:
                                             break
@@ -610,12 +610,15 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                                 break
                     
                     if len(listening_distractor_words) < 2:
-                        for rt in tr.get("redundant_tokens", []):
-                            rt_stripped = rt.strip()
-                            if rt_stripped and rt_stripped not in listening_correct_words and rt_stripped not in listening_distractor_words:
-                                listening_distractor_words.append(rt_stripped)
-                                if len(listening_distractor_words) >= 2:
-                                    break
+                        backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
+                        backup_distractors = list(backup_vocab_list)
+                        random.shuffle(backup_distractors)
+                        idx = 0
+                        while len(listening_distractor_words) < 2:
+                            bd = backup_distractors[idx % len(backup_distractors)]
+                            if bd.lower() not in listening_correct_lower and bd not in listening_distractor_words:
+                                listening_distractor_words.append(bd)
+                            idx += 1
                     
                     if not listening_correct_words:
                         continue
@@ -787,44 +790,48 @@ async def get_random_word(file_id: str):
                     import random as rnd
                     correct_sentence = current_item["sentence"]
                     correct_words = current_item.get("correct_words", correct_sentence.split())
-                    distractor_words = list(current_item.get("distractor_words", []))
-                    if len(distractor_words) < 2:
-                        vocab_data = storage.load_vocab(file_id)
-                        all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
-                        available = [v["word"] for v in all_vocab if v["word"] not in correct_words and v["word"] not in distractor_words]
-                        rnd.shuffle(available)
-                        for w in available:
-                            distractor_words.append(w)
-                            if len(distractor_words) >= 2:
-                                break
-                    if len(distractor_words) < 2:
+                    correct_lower_set = set(w.lower() for w in correct_words)
+                    distractor_words = []
+                    max_distractors = 2
+                    
+                    vocab_data = storage.load_vocab(file_id)
+                    all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
+                    available = [v["word"] for v in all_vocab if v["word"].lower() not in correct_lower_set]
+                    rnd.shuffle(available)
+                    for w in available:
+                        distractor_words.append(w)
+                        if len(distractor_words) >= max_distractors:
+                            break
+                    
+                    if len(distractor_words) < max_distractors:
                         pipeline_data = storage.load_pipeline_data(file_id)
-                        all_sentences = pipeline_data.get("data", []) if isinstance(pipeline_data, dict) else []
+                        all_sentences = pipeline_data if isinstance(pipeline_data, list) else pipeline_data.get("data", [])
                         for sd in all_sentences:
                             other_s = sd.get("sentence", "")
                             if other_s and other_s != correct_sentence:
                                 for w in other_s.split():
                                     w_clean = w.strip()
-                                    if w_clean and w_clean not in correct_words and w_clean not in distractor_words:
+                                    if w_clean and w_clean.lower() not in correct_lower_set and w_clean not in distractor_words:
                                         distractor_words.append(w_clean)
-                                        if len(distractor_words) >= 2:
+                                        if len(distractor_words) >= max_distractors:
                                             break
-                            if len(distractor_words) >= 2:
+                            if len(distractor_words) >= max_distractors:
                                 break
-                    if len(distractor_words) < 2:
-                        pipeline_data = storage.load_pipeline_data(file_id)
-                        all_sentences = pipeline_data.get("data", []) if isinstance(pipeline_data, dict) else []
-                        for sd in all_sentences:
-                            if sd.get("sentence") == correct_sentence:
-                                tr = sd.get("translation_result", {})
-                                for rt in tr.get("redundant_tokens", []):
-                                    rt_stripped = rt.strip()
-                                    if rt_stripped and rt_stripped not in correct_words and rt_stripped not in distractor_words:
-                                        distractor_words.append(rt_stripped)
-                                        if len(distractor_words) >= 2:
-                                            break
-                                break
-                    options = correct_words + distractor_words[:2]
+                    
+                    if len(distractor_words) < max_distractors:
+                        language_settings = storage.load_language_settings(file_id)
+                        source_lang = language_settings.get("source_lang", "en")
+                        backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
+                        backup_distractors = list(backup_vocab_list)
+                        rnd.shuffle(backup_distractors)
+                        idx = 0
+                        while len(distractor_words) < max_distractors:
+                            bd = backup_distractors[idx % len(backup_distractors)]
+                            if bd.lower() not in correct_lower_set and bd not in distractor_words:
+                                distractor_words.append(bd)
+                            idx += 1
+                    
+                    options = correct_words + distractor_words
                     rnd.shuffle(options)
                     return {
                         "type": "listening_quiz",
@@ -1080,44 +1087,48 @@ async def next_word(file_id: str):
                     import random as rnd
                     correct_sentence = next_item["sentence"]
                     correct_words = next_item.get("correct_words", correct_sentence.split())
-                    distractor_words = list(next_item.get("distractor_words", []))
-                    if len(distractor_words) < 2:
-                        vocab_data = storage.load_vocab(file_id)
-                        all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
-                        available = [v["word"] for v in all_vocab if v["word"] not in correct_words and v["word"] not in distractor_words]
-                        rnd.shuffle(available)
-                        for w in available:
-                            distractor_words.append(w)
-                            if len(distractor_words) >= 2:
-                                break
-                    if len(distractor_words) < 2:
+                    correct_lower_set = set(w.lower() for w in correct_words)
+                    distractor_words = []
+                    max_distractors = 2
+                    
+                    vocab_data = storage.load_vocab(file_id)
+                    all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
+                    available = [v["word"] for v in all_vocab if v["word"].lower() not in correct_lower_set]
+                    rnd.shuffle(available)
+                    for w in available:
+                        distractor_words.append(w)
+                        if len(distractor_words) >= max_distractors:
+                            break
+                    
+                    if len(distractor_words) < max_distractors:
                         pipeline_data = storage.load_pipeline_data(file_id)
-                        all_sentences = pipeline_data.get("data", []) if isinstance(pipeline_data, dict) else []
+                        all_sentences = pipeline_data if isinstance(pipeline_data, list) else pipeline_data.get("data", [])
                         for sd in all_sentences:
                             other_s = sd.get("sentence", "")
                             if other_s and other_s != correct_sentence:
                                 for w in other_s.split():
                                     w_clean = w.strip()
-                                    if w_clean and w_clean not in correct_words and w_clean not in distractor_words:
+                                    if w_clean and w_clean.lower() not in correct_lower_set and w_clean not in distractor_words:
                                         distractor_words.append(w_clean)
-                                        if len(distractor_words) >= 2:
+                                        if len(distractor_words) >= max_distractors:
                                             break
-                            if len(distractor_words) >= 2:
+                            if len(distractor_words) >= max_distractors:
                                 break
-                    if len(distractor_words) < 2:
-                        pipeline_data = storage.load_pipeline_data(file_id)
-                        all_sentences = pipeline_data.get("data", []) if isinstance(pipeline_data, dict) else []
-                        for sd in all_sentences:
-                            if sd.get("sentence") == correct_sentence:
-                                tr = sd.get("translation_result", {})
-                                for rt in tr.get("redundant_tokens", []):
-                                    rt_stripped = rt.strip()
-                                    if rt_stripped and rt_stripped not in correct_words and rt_stripped not in distractor_words:
-                                        distractor_words.append(rt_stripped)
-                                        if len(distractor_words) >= 2:
-                                            break
-                                break
-                    options = correct_words + distractor_words[:2]
+                    
+                    if len(distractor_words) < max_distractors:
+                        language_settings = storage.load_language_settings(file_id)
+                        source_lang = language_settings.get("source_lang", "en")
+                        backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
+                        backup_distractors = list(backup_vocab_list)
+                        rnd.shuffle(backup_distractors)
+                        idx = 0
+                        while len(distractor_words) < max_distractors:
+                            bd = backup_distractors[idx % len(backup_distractors)]
+                            if bd.lower() not in correct_lower_set and bd not in distractor_words:
+                                distractor_words.append(bd)
+                            idx += 1
+                    
+                    options = correct_words + distractor_words
                     rnd.shuffle(options)
                     return {
                         "success": True,
@@ -1150,6 +1161,23 @@ async def set_progress(file_id: str, request: dict):
         return {"success": True, "index": index}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error setting progress: {str(e)}")
+
+@app.get("/api/learn/{file_id}/unit-stars")
+async def get_unit_stars(file_id: str):
+    try:
+        stars = storage.load_unit_stars(file_id)
+        return {"stars": stars}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error loading stars: {str(e)}")
+
+@app.post("/api/learn/{file_id}/unit-stars")
+async def save_unit_stars(file_id: str, request: dict):
+    try:
+        stars_data = request.get("stars", {})
+        storage.save_unit_stars(file_id, stars_data)
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving stars: {str(e)}")
 
 async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: int):
     try:

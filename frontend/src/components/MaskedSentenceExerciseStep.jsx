@@ -4,7 +4,7 @@ import { ArrowLeft, Loader2, ChevronRight, BookOpen, Lightbulb } from 'lucide-re
 import { useState } from 'react';
 import { speakText } from '../utils/speech';
 
-function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang }) {
+function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer }) {
   const [selectedWords, setSelectedWords] = useState([]);
   const [answerChecked, setAnswerChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
@@ -42,6 +42,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
     
     setIsCorrect(correct);
     setAnswerChecked(true);
+    if (onAnswer) onAnswer(correct);
   };
 
   const handleNext = () => {

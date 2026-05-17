@@ -140,5 +140,15 @@ export const api = {
   renameHistory: async (fileId, title) => {
     const response = await axios.put(`${baseUrl}/api/history/${fileId}`, { title });
     return response.data;
+  },
+
+  getUnitStars: async (fileId) => {
+    const response = await axios.get(`${baseUrl}/api/learn/${fileId}/unit-stars`);
+    return response.data;
+  },
+
+  saveUnitStars: async (fileId, stars) => {
+    const response = await axios.post(`${baseUrl}/api/learn/${fileId}/unit-stars`, { stars });
+    return response.data;
   }
 };
