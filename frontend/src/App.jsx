@@ -41,6 +41,12 @@ function App() {
   const [learningData, setLearningData] = useState(null)
   const [showWordCard, setShowWordCard] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [rpm, setRpm] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('lesslingo_settings'))
+      return saved?.rpm || 20
+    } catch { return 20 }
+  })
   const [selectedOption, setSelectedOption] = useState(null)
   const [isCorrect, setIsCorrect] = useState(null)
   const [units, setUnits] = useState([])
@@ -96,6 +102,13 @@ function App() {
       sortVocab()
     }
   }, [vocab, sortOrder])
+
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('lesslingo_settings')) || {}
+      localStorage.setItem('lesslingo_settings', JSON.stringify({ ...saved, rpm, targetLang }))
+    } catch {}
+  }, [rpm, targetLang])
 
   // 轮询处理状态
   useEffect(() => {
@@ -243,7 +256,7 @@ function App() {
     
     try {
       console.log('开始处理文本，长度:', text.length)
-      const response = await api.processText(text, sourceLang, targetLang)
+      const response = await api.processText(text, sourceLang, targetLang, rpm)
       
       console.log('API响应:', response)
       if (response && response.file_id) {
@@ -920,8 +933,6 @@ function App() {
                       setText={setText}
                       sourceLang={sourceLang}
                       setSourceLang={setSourceLang}
-                      targetLang={targetLang}
-                      setTargetLang={setTargetLang}
                       loading={loading}
                       onProcess={handleProcess}
                       t={t}
@@ -1188,7 +1199,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} rpm={rpm} onRpmChange={setRpm} />
     </div>
   )
 }
