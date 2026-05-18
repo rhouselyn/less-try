@@ -183,7 +183,6 @@ class TextProcessor:
         return chunks
 
     def split_sentences(self, text: str) -> List[str]:
-        """句子分割，支持中英文标点，保留原始空格"""
         sentence_endings = {'.', '!', '?', '。', '！', '？'}
         sentences = []
         current_sentence = ""
@@ -193,9 +192,7 @@ class TextProcessor:
             char = text[i]
             current_sentence += char
             
-            # 检查是否是句子结束符
             if char in sentence_endings:
-                # 跳过连续的句子结束符
                 j = i + 1
                 while j < len(text) and text[j] in sentence_endings:
                     current_sentence += text[j]
@@ -211,9 +208,17 @@ class TextProcessor:
         if current_sentence.strip():
             sentences.append(current_sentence)
         
-        # 最终过滤：确保没有空句子
         sentences = [s for s in sentences if s.strip()]
-        return sentences
+        
+        merged = []
+        for s in sentences:
+            word_count = len(s.strip().split())
+            if word_count < 2 and merged:
+                merged[-1] = merged[-1].rstrip() + " " + s.lstrip()
+            else:
+                merged.append(s)
+        
+        return [s for s in merged if s.strip()]
 
     def process_word_variants(self, word_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """处理单词变体，确保变体前面有类型标注"""

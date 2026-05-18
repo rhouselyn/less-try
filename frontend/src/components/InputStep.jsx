@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight } from 'lucide-react'
 
 const LANGUAGES = [
   { value: 'en', native: 'English', en: 'English', zh: '英语', family: 'indo-european', flag: '🇬🇧' },
@@ -362,6 +362,20 @@ function LanguageSelector({ value, onChange, targetLang }) {
   )
 }
 
+const stagger = {
+  container: {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+    },
+  },
+  item: {
+    hidden: { opacity: 0, y: 12 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] } },
+  },
+}
+
 function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t }) {
   const [isFocused, setIsFocused] = useState(false)
 
@@ -370,109 +384,149 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
       className="max-w-xl mx-auto"
     >
-      <div className="bg-white rounded-xl border border-stone-200 shadow-lg shadow-stone-200/20 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-stone-800">
-          {t.startLearning}
-        </h2>
+      <div className="relative bg-gradient-to-b from-amber-50/40 via-white to-stone-50/60 rounded-2xl border border-stone-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_rgba(180,140,80,0.08)] overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600" />
 
-        <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1.5 uppercase tracking-wide">
-            {t.learnLang}
-          </label>
-          <LanguageSelector
-            value={sourceLang}
-            onChange={setSourceLang}
-            targetLang={targetLang}
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1.5 uppercase tracking-wide">
-            {t.nativeLang}
-          </label>
-          <div className="inline-flex rounded-lg border border-stone-200 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setTargetLang('zh')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
-                targetLang === 'zh'
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-white text-stone-600 hover:bg-stone-50'
-              }`}
-            >
-              中文
-            </button>
-            <button
-              type="button"
-              onClick={() => setTargetLang('en')}
-              className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-stone-200 ${
-                targetLang === 'en'
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-white text-stone-600 hover:bg-stone-50'
-              }`}
-            >
-              English
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-stone-500 mb-1.5 uppercase tracking-wide">
-            {t.inputText}
-          </label>
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            placeholder={t.placeholder}
-            className={`w-full h-36 px-4 py-3 rounded-lg border text-sm text-stone-800 placeholder-stone-400 focus:outline-none resize-none leading-relaxed transition-colors ${
-              isFocused
-                ? 'border-amber-400 bg-amber-50/30'
-                : 'border-stone-200 bg-white'
-            }`}
-          />
-        </div>
-
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onProcess}
-          disabled={loading || !text.trim()}
-          className={`w-full py-3 font-semibold rounded-lg flex items-center justify-center gap-2 text-sm transition-all duration-300 ${
-            loading || !text.trim()
-              ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-              : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/25 hover:shadow-lg hover:shadow-amber-500/35 hover:from-amber-600 hover:to-amber-700'
-          }`}
+        <motion.div
+          variants={stagger.container}
+          initial="hidden"
+          animate="show"
+          className="p-6 space-y-4"
         >
-          <AnimatePresence mode="wait">
-            {loading ? (
-              <motion.span
-                key="loading"
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                className="flex items-center gap-2"
-              >
-                <Loader2 className="w-4 h-4 animate-spin" />
-                {t.processing}
-              </motion.span>
-            ) : (
-              <motion.span
-                key="ready"
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                className="flex items-center gap-2"
-              >
-                <Sparkles className="w-4 h-4" />
-                {t.generateMaterials}
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </motion.button>
+          <motion.div variants={stagger.item} className="flex items-center gap-2.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+            <h2 className="text-xl font-semibold text-stone-800 tracking-tight">
+              {t.startLearning}
+            </h2>
+          </motion.div>
+
+          <motion.div
+            variants={stagger.item}
+            className="rounded-xl bg-white/60 border border-stone-100 p-3.5 space-y-3"
+          >
+            <div>
+              <label className="block text-[11px] font-semibold text-stone-400 mb-1.5 uppercase tracking-widest">
+                {t.learnLang}
+              </label>
+              <LanguageSelector
+                value={sourceLang}
+                onChange={setSourceLang}
+                targetLang={targetLang}
+              />
+            </div>
+
+            <div>
+              <label className="block text-[11px] font-semibold text-stone-400 mb-1.5 uppercase tracking-widest">
+                {t.nativeLang}
+              </label>
+              <div className="inline-flex rounded-lg border border-stone-200 overflow-hidden shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => setTargetLang('zh')}
+                  className={`px-3.5 py-1.5 text-xs font-medium transition-all duration-200 ${
+                    targetLang === 'zh'
+                      ? 'bg-amber-500 text-white shadow-inner'
+                      : 'bg-white text-stone-500 hover:bg-stone-50'
+                  }`}
+                >
+                  中文
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTargetLang('en')}
+                  className={`px-3.5 py-1.5 text-xs font-medium transition-all duration-200 border-l border-stone-200 ${
+                    targetLang === 'en'
+                      ? 'bg-amber-500 text-white shadow-inner'
+                      : 'bg-white text-stone-500 hover:bg-stone-50'
+                  }`}
+                >
+                  English
+                </button>
+              </div>
+            </div>
+          </motion.div>
+
+          <motion.div variants={stagger.item}>
+            <label className="block text-[11px] font-semibold text-stone-400 mb-1.5 uppercase tracking-widest">
+              {t.inputText}
+            </label>
+            <div className="relative">
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                placeholder={t.placeholder}
+                className={`w-full h-32 px-4 py-3 rounded-xl border text-sm text-stone-800 placeholder-stone-400 focus:outline-none resize-none leading-relaxed transition-all duration-300 ${
+                  isFocused
+                    ? 'border-amber-300 bg-amber-50/40 shadow-[0_0_0_3px_rgba(245,158,11,0.08)]'
+                    : 'border-stone-200 bg-white/70 hover:border-stone-300'
+                }`}
+              />
+              {isFocused && (
+                <motion.div
+                  layoutId="textarea-glow"
+                  className="absolute inset-0 rounded-xl pointer-events-none border border-amber-200/50"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                />
+              )}
+            </div>
+          </motion.div>
+
+          <motion.div variants={stagger.item}>
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onProcess}
+              disabled={loading || !text.trim()}
+              className={`relative w-full py-3 font-semibold rounded-xl flex items-center justify-center gap-2.5 text-sm transition-all duration-300 overflow-hidden ${
+                loading || !text.trim()
+                  ? 'bg-stone-100 text-stone-400 cursor-not-allowed border border-stone-200'
+                  : 'bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 text-white shadow-[0_2px_8px_rgba(245,158,11,0.3),0_1px_2px_rgba(245,158,11,0.2)] hover:shadow-[0_4px_16px_rgba(245,158,11,0.4),0_2px_4px_rgba(245,158,11,0.25)]'
+              }`}
+            >
+              {!(loading || !text.trim()) && (
+                <span className="absolute inset-0 bg-gradient-to-r from-amber-400/0 via-amber-300/20 to-amber-400/0 animate-shimmer" />
+              )}
+              <AnimatePresence mode="wait">
+                {loading ? (
+                  <motion.span
+                    key="loading"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="relative flex items-center gap-2"
+                  >
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    {t.processing}
+                  </motion.span>
+                ) : (
+                  <motion.span
+                    key="ready"
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="relative flex items-center gap-2"
+                  >
+                    <motion.span
+                      animate={{ rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                    >
+                      <Sparkles className="w-4 h-4" />
+                    </motion.span>
+                    {t.generateMaterials}
+                    <ArrowRight className="w-3.5 h-3.5 opacity-70" />
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.button>
+          </motion.div>
+        </motion.div>
       </div>
     </motion.div>
   )

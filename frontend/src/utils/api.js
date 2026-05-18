@@ -158,5 +158,10 @@ export const api = {
     if (targetLang) params.target_lang = targetLang;
     const response = await axios.get(`${baseUrl}/api/word-list`, { params });
     return response.data;
+  },
+
+  getWordDetail: async (word, sourceLang, targetLang) => {
+    const response = await axios.get(`${baseUrl}/api/word-detail`, { params: { word, source_lang: sourceLang, target_lang: targetLang } });
+    return response.data;
   }
 };

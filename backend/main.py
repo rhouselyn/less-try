@@ -20,6 +20,16 @@ app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
 import re
 
+PUNCTUATION_CHARS = set('.,!?:;，。！？：；、')
+
+def is_punctuation_only(text):
+    if not text or not isinstance(text, str):
+        return False
+    stripped = text.strip()
+    if not stripped:
+        return True
+    return all(ch in PUNCTUATION_CHARS for ch in stripped)
+
 def is_source_lang_text(text, source_lang="en"):
     if not text or not isinstance(text, str):
         return False
@@ -40,7 +50,7 @@ def get_translation_phrases(translation_result, max_phrases=6):
     
     llm_phrases = translation_result.get("translation_phrases", [])
     if isinstance(llm_phrases, list) and len(llm_phrases) >= 2:
-        valid = [p.strip() for p in llm_phrases if isinstance(p, str) and p.strip()]
+        valid = [p.strip() for p in llm_phrases if isinstance(p, str) and p.strip() and not is_punctuation_only(p)]
         if len(valid) >= 2:
             return valid[:max_phrases]
     
@@ -56,7 +66,7 @@ def split_translation_to_phrases(translation, max_phrases=8):
     
     import re
     parts = re.split(r'[，。、；：！？,;:!?]', translation)
-    parts = [p.strip() for p in parts if p.strip()]
+    parts = [p.strip() for p in parts if p.strip() and not is_punctuation_only(p)]
     
     if not parts:
         chars = list(translation)
@@ -516,6 +526,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     correct_translation = raw_translation.strip() if raw_translation else ""
                     
                     correct_tokens = get_translation_phrases(tr, max_phrases=6)
+                    correct_tokens = [ct for ct in correct_tokens if not is_punctuation_only(ct)]
                     
                     if len(correct_tokens) < 2:
                         continue
@@ -525,7 +536,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
                     for rt in redundant_tokens:
                         rt_stripped = rt.strip()
-                        if rt_stripped and rt_stripped not in correct_tokens:
+                        if rt_stripped and rt_stripped not in correct_tokens and not is_punctuation_only(rt_stripped):
                             if correct_has_source_lang or not is_source_lang_text(rt_stripped, source_lang):
                                 cleaned_redundant.append(rt_stripped)
                     
@@ -2320,6 +2331,62 @@ async def set_phase_progress(file_id: str, phase_number: int, request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/word-detail")
+async def get_word_detail(word: str, source_lang: str = "en", target_lang: str = "zh"):
+    try:
+        records = storage.load_history()
+        matching = [r for r in records if r.get("source_lang") == source_lang]
+        
+        for record in matching:
+            file_id = record.get("file_id")
+            if not file_id:
+                continue
+            cached = storage.load_word_cache(file_id, word)
+            if cached:
+                return {
+                    "word": cached.get("word", word),
+                    "ipa": cached.get("ipa", ""),
+                    "meaning": cached.get("enriched_meaning", "") or cached.get("meaning", ""),
+                    "enriched_meaning": cached.get("enriched_meaning", ""),
+                    "part_of_speech": cached.get("morphology", ""),
+                    "examples": cached.get("examples", []),
+                    "memory_hint": cached.get("memory_hint", ""),
+                    "variants_detail": cached.get("variants_detail", []),
+                }
+        
+        options_result = await nvidia_api.generate_multiple_choice(
+            word, "", "", target_lang
+        )
+        options_result = fix_llm_options_result(options_result, source_lang)
+        
+        result = {
+            "word": options_result.get("word", word),
+            "ipa": options_result.get("ipa", ""),
+            "meaning": options_result.get("enriched_meaning", ""),
+            "enriched_meaning": options_result.get("enriched_meaning", ""),
+            "part_of_speech": options_result.get("morphology", ""),
+            "examples": options_result.get("examples", []),
+            "memory_hint": options_result.get("memory_hint", ""),
+            "variants_detail": options_result.get("variants_detail", []),
+        }
+        
+        if matching:
+            file_id = matching[0].get("file_id")
+            if file_id:
+                cache_data = dict(options_result)
+                cache_data["word"] = options_result.get("word", word)
+                cache_data["meaning"] = options_result.get("enriched_meaning", "")
+                cache_data["context"] = ""
+                cache_data["context_sentences"] = []
+                cache_data["morphology"] = options_result.get("morphology", "")
+                cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+                storage.save_word_cache(file_id, word, cache_data)
+        
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/word-list")
 async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional[str] = None):
     try:
@@ -2343,12 +2410,6 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
                     continue
                 if word_key not in merged:
                     merged[word_key] = {"entry": dict(entry), "file_id": file_id}
-                else:
-                    existing = merged[word_key]["entry"]
-                    existing_detail = sum(1 for v in existing.values() if v)
-                    new_detail = sum(1 for v in entry.values() if v)
-                    if new_detail > existing_detail:
-                        merged[word_key] = {"entry": dict(entry), "file_id": file_id}
 
         result = []
         for word_key, data in merged.items():
@@ -2364,7 +2425,6 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
             examples = []
             memory_hint = ""
             variants_detail = []
-            context_sentences = []
 
             if cached:
                 if cached.get("ipa"):
@@ -2378,8 +2438,6 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
                     memory_hint = cached["memory_hint"]
                 if cached.get("variants_detail"):
                     variants_detail = cached["variants_detail"]
-                if cached.get("context_sentences"):
-                    context_sentences = cached["context_sentences"]
 
             result.append({
                 "word": word,
@@ -2389,7 +2447,6 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
                 "examples": examples,
                 "memory_hint": memory_hint,
                 "variants_detail": variants_detail,
-                "context_sentences": context_sentences,
             })
 
         result.sort(key=lambda x: x["word"].lower())
