@@ -30,30 +30,3 @@ body {
     text-wrap: balance;
   }
 }
-
-@keyframes constellation-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes constellation-counter-spin {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(-360deg); }
-}
-
-.constellation-spin {
-  animation: constellation-spin linear infinite;
-}
-
-.constellation-counter-spin {
-  animation: constellation-counter-spin linear infinite;
-}
-
-.constellation-drift {
-  animation-timing-function: ease-in-out;
-  animation-iteration-count: infinite;
-}
-
-.constellation-paused {
-  animation-play-state: paused !important;
-}
