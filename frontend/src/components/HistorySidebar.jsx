@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2, MessageSquare, BookOpen, Volume2, Search, X, ChevronDown, Loader2, Brain, Lightbulb, GitBranch, Tag } from 'lucide-react'
 import { api } from '../utils/api'
+import { speakText } from '../utils/speech'
 
 const LANG_LABELS = {
   en: 'English',
@@ -9,7 +10,21 @@ const LANG_LABELS = {
   es: 'Español',
   de: 'Deutsch',
   fr: 'Français',
-  ja: '日本語'
+  ja: '日本語',
+  ko: '한국어',
+  pt: 'Português',
+  ru: 'Русский',
+  it: 'Italiano',
+  ar: 'العربية',
+  hi: 'हिन्दी',
+  th: 'ไทย',
+  vi: 'Tiếng Việt',
+  id: 'Bahasa',
+  tr: 'Türkçe',
+  nl: 'Nederlands',
+  sv: 'Svenska',
+  pl: 'Polski',
+  uk: 'Українська'
 }
 
 const LANG_ICONS = {
@@ -18,7 +33,125 @@ const LANG_ICONS = {
   es: '🇪🇸',
   de: '🇩🇪',
   fr: '🇫🇷',
-  ja: '🇯🇵'
+  ja: '🇯🇵',
+  ko: '🇰🇷',
+  pt: '🇧🇷',
+  ru: '🇷🇺',
+  it: '🇮🇹',
+  ar: '🇸🇦',
+  hi: '🇮🇳',
+  th: '🇹🇭',
+  vi: '🇻🇳',
+  id: '🇮🇩',
+  tr: '🇹🇷',
+  nl: '🇳🇱',
+  sv: '🇸🇪',
+  pl: '🇵🇱',
+  uk: '🇺🇦'
+}
+
+function CompactWordDetail({ word, sourceLang }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: 'auto' }}
+      exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2, ease: 'easeInOut' }}
+      className="overflow-hidden"
+    >
+      <div className="px-3 pb-2.5 pt-1.5 space-y-2 border-t border-stone-100">
+        {word.meaning && (
+          <div>
+            <div className="flex items-center gap-1 mb-0.5">
+              <Brain className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">释义</span>
+            </div>
+            <p className="text-[11px] text-stone-700 leading-relaxed pl-4">{word.meaning}</p>
+          </div>
+        )}
+
+        {word.context_sentences && word.context_sentences.length > 0 && (
+          <div>
+            <div className="flex items-center gap-1 mb-0.5">
+              <BookOpen className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">例句</span>
+            </div>
+            <div className="pl-4 space-y-1">
+              {word.context_sentences.slice(0, 2).map((cs, i) => (
+                <div key={i} className="text-[11px]">
+                  <div className="flex items-start gap-1">
+                    <p className="text-stone-700 flex-1">{cs.sentence || cs}</p>
+                    {cs.sentence && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); speakText(cs.sentence, sourceLang) }}
+                        className="p-0.5 text-amber-400 hover:text-amber-600 rounded transition-colors shrink-0"
+                      >
+                        <Volume2 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                  {cs.translation && (
+                    <p className="text-stone-500 text-[10px] mt-0.5">{cs.translation}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {word.ipa && (
+          <div>
+            <div className="flex items-center gap-1 mb-0.5">
+              <Tag className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">音标</span>
+            </div>
+            <p className="text-[11px] text-stone-700 pl-4 ipa-font">
+              {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
+            </p>
+          </div>
+        )}
+
+        {word.part_of_speech && (
+          <div>
+            <div className="flex items-center gap-1 mb-0.5">
+              <Tag className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">词性</span>
+            </div>
+            <p className="text-[11px] text-stone-700 pl-4">{word.part_of_speech}</p>
+          </div>
+        )}
+
+        {word.memory_hint && (
+          <div>
+            <div className="flex items-center gap-1 mb-0.5">
+              <Lightbulb className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">记忆辅助</span>
+            </div>
+            <p className="text-[11px] text-stone-700 pl-4 bg-amber-50/60 p-1.5 rounded border border-amber-100/60">
+              {word.memory_hint}
+            </p>
+          </div>
+        )}
+
+        {word.variants_detail && word.variants_detail.length > 0 && (
+          <div>
+            <div className="flex items-center gap-1 mb-0.5">
+              <GitBranch className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">变体</span>
+            </div>
+            <div className="pl-4 flex flex-wrap gap-1">
+              {word.variants_detail.map((v, i) => (
+                <span key={i} className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-stone-100 text-stone-700 rounded text-[10px]">
+                  <span className="text-stone-400 font-medium">{v.type}</span>
+                  <span>{v.form}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  )
 }
 
 function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
@@ -138,6 +271,11 @@ function HistorySidebar({ onNavigateToRecord, t }) {
   const [menuState, setMenuState] = useState({ open: false, fileId: null, x: 0, y: 0 })
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
+  const [wordListLang, setWordListLang] = useState(null)
+  const [words, setWords] = useState([])
+  const [wordsLoading, setWordsLoading] = useState(false)
+  const [wordSearch, setWordSearch] = useState('')
+  const [expandedWord, setExpandedWord] = useState(null)
 
   useEffect(() => {
     loadHistory()
@@ -203,6 +341,36 @@ function HistorySidebar({ onNavigateToRecord, t }) {
     setMenuState(prev => ({ ...prev, open: false }))
   }, [])
 
+  const toggleWordList = useCallback(async (lang) => {
+    if (wordListLang === lang) {
+      setWordListLang(null)
+      setWords([])
+      setWordSearch('')
+      setExpandedWord(null)
+      return
+    }
+    setWordListLang(lang)
+    setWords([])
+    setWordSearch('')
+    setExpandedWord(null)
+    setWordsLoading(true)
+    try {
+      const data = await api.getWordList(lang)
+      setWords(data.words || [])
+    } catch (err) {
+      console.error('Failed to load word list:', err)
+    } finally {
+      setWordsLoading(false)
+    }
+  }, [wordListLang])
+
+  const filteredWords = wordSearch.trim()
+    ? words.filter(w =>
+        w.word.toLowerCase().includes(wordSearch.toLowerCase()) ||
+        (w.meaning && w.meaning.toLowerCase().includes(wordSearch.toLowerCase()))
+      )
+    : words
+
   return (
     <>
       <div className="flex h-full">
@@ -245,8 +413,120 @@ function HistorySidebar({ onNavigateToRecord, t }) {
                       <span className="text-[11px] font-medium text-stone-400 tracking-wide">
                         {LANG_LABELS[lang] || lang}
                       </span>
-                      <span className="text-[10px] text-stone-300 ml-auto">{items.length}</span>
+                      <span className="text-[10px] text-stone-300">{items.length}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); toggleWordList(lang) }}
+                        className={`ml-auto p-0.5 rounded transition-colors ${wordListLang === lang ? 'text-amber-500 hover:text-amber-600' : 'text-stone-300 hover:text-amber-500'}`}
+                        title="Word list"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                      </button>
                     </div>
+
+                    <AnimatePresence>
+                      {wordListLang === lang && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <div className="mx-2 mb-1.5 bg-white/80 rounded-lg border border-stone-200/60 shadow-sm">
+                            <div className="p-2 border-b border-stone-100">
+                              <div className="relative">
+                                <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-stone-400" />
+                                <input
+                                  type="text"
+                                  value={wordSearch}
+                                  onChange={(e) => setWordSearch(e.target.value)}
+                                  placeholder="搜索单词..."
+                                  className="w-full pl-6 pr-6 py-1.5 text-[11px] bg-stone-50 border border-stone-200/80 rounded-md focus:outline-none focus:ring-1.5 focus:ring-amber-400 focus:border-transparent placeholder-stone-400 transition-all"
+                                />
+                                {wordSearch && (
+                                  <button
+                                    onClick={() => setWordSearch('')}
+                                    className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 text-stone-400 hover:text-stone-600 transition-colors"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                              <div className="mt-1">
+                                <span className="text-[10px] text-stone-400">
+                                  {wordsLoading ? '加载中...' : `${filteredWords.length} 词`}
+                                </span>
+                              </div>
+                            </div>
+
+                            {wordsLoading ? (
+                              <div className="flex items-center justify-center py-6">
+                                <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                                <span className="ml-1.5 text-[11px] text-stone-400">加载中...</span>
+                              </div>
+                            ) : filteredWords.length === 0 ? (
+                              <div className="py-6 text-center">
+                                <BookOpen className="w-5 h-5 text-stone-200 mx-auto mb-1" />
+                                <p className="text-[11px] text-stone-400">
+                                  {wordSearch ? '未找到匹配的单词' : '暂无单词'}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="max-h-[280px] overflow-y-auto">
+                                {filteredWords.map((word) => (
+                                  <div key={word.word} className="border-b border-stone-50 last:border-b-0">
+                                    <button
+                                      onClick={() => setExpandedWord(prev => prev === word.word ? null : word.word)}
+                                      className="w-full flex items-center gap-1.5 px-2.5 py-1.5 hover:bg-stone-50/80 transition-colors text-left"
+                                    >
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                          <span className="text-[11px] font-semibold text-stone-800">{word.word}</span>
+                                          {word.ipa && (
+                                            <span className="text-[10px] text-stone-400 ipa-font">
+                                              {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
+                                            </span>
+                                          )}
+                                          {word.part_of_speech && (
+                                            <span className="text-[9px] px-1 py-px bg-stone-100 text-stone-500 rounded font-medium">
+                                              {word.part_of_speech}
+                                            </span>
+                                          )}
+                                        </div>
+                                        {word.meaning && (
+                                          <p className="text-[10px] text-stone-500 mt-0.5 truncate">{word.meaning}</p>
+                                        )}
+                                      </div>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); speakText(word.word, lang) }}
+                                          className="p-0.5 text-stone-300 hover:text-amber-500 rounded-full transition-colors"
+                                        >
+                                          <Volume2 className="w-3 h-3" />
+                                        </button>
+                                        <motion.div
+                                          animate={{ rotate: expandedWord === word.word ? 180 : 0 }}
+                                          transition={{ duration: 0.2 }}
+                                        >
+                                          <ChevronDown className="w-3 h-3 text-stone-300" />
+                                        </motion.div>
+                                      </div>
+                                    </button>
+
+                                    <AnimatePresence>
+                                      {expandedWord === word.word && (
+                                        <CompactWordDetail word={word} sourceLang={lang} />
+                                      )}
+                                    </AnimatePresence>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
                     <div className="space-y-0.5 px-0.5">
                       {items.map((record) => (
                         <HistoryItem
