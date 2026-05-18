@@ -1,140 +1,140 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Languages, Loader2, ArrowLeftRight, Sparkles, BookOpen, Search, X, ChevronDown, ChevronRight } from 'lucide-react'
+import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight } from 'lucide-react'
 
 const LANGUAGES = [
-  { value: 'en', native: 'English', zh: '英语', family: 'indo-european', flag: '🇬🇧' },
-  { value: 'fr', native: 'Français', zh: '法语', family: 'indo-european', flag: '🇫🇷' },
-  { value: 'pt', native: 'Português', zh: '葡萄牙语', family: 'indo-european', flag: '🇵🇹' },
-  { value: 'de', native: 'Deutsch', zh: '德语', family: 'indo-european', flag: '🇩🇪' },
-  { value: 'ro', native: 'Română', zh: '罗马尼亚语', family: 'indo-european', flag: '🇷🇴' },
-  { value: 'sv', native: 'Svenska', zh: '瑞典语', family: 'indo-european', flag: '🇸🇪' },
-  { value: 'da', native: 'Dansk', zh: '丹麦语', family: 'indo-european', flag: '🇩🇰' },
-  { value: 'bg', native: 'Български', zh: '保加利亚语', family: 'indo-european', flag: '🇧🇬' },
-  { value: 'ru', native: 'Русский', zh: '俄语', family: 'indo-european', flag: '🇷🇺' },
-  { value: 'cs', native: 'Čeština', zh: '捷克语', family: 'indo-european', flag: '🇨🇿' },
-  { value: 'el', native: 'Ελληνικά', zh: '希腊语', family: 'indo-european', flag: '🇬🇷' },
-  { value: 'uk', native: 'Українська', zh: '乌克兰语', family: 'indo-european', flag: '🇺🇦' },
-  { value: 'es', native: 'Español', zh: '西班牙语', family: 'indo-european', flag: '🇪🇸' },
-  { value: 'nl', native: 'Nederlands', zh: '荷兰语', family: 'indo-european', flag: '🇳🇱' },
-  { value: 'sk', native: 'Slovenčina', zh: '斯洛伐克语', family: 'indo-european', flag: '🇸🇰' },
-  { value: 'hr', native: 'Hrvatski', zh: '克罗地亚语', family: 'indo-european', flag: '🇭🇷' },
-  { value: 'pl', native: 'Polski', zh: '波兰语', family: 'indo-european', flag: '🇵🇱' },
-  { value: 'lt', native: 'Lietuvių', zh: '立陶宛语', family: 'indo-european', flag: '🇱🇹' },
-  { value: 'nb', native: 'Norsk Bokmål', zh: '挪威布克莫尔语', family: 'indo-european', flag: '🇳🇴' },
-  { value: 'nn', native: 'Norsk Nynorsk', zh: '挪威尼诺斯克语', family: 'indo-european', flag: '🇳🇴' },
-  { value: 'fa', native: 'فارسی', zh: '波斯语', family: 'indo-european', flag: '🇮🇷' },
-  { value: 'sl', native: 'Slovenščina', zh: '斯洛文尼亚语', family: 'indo-european', flag: '🇸🇮' },
-  { value: 'gu', native: 'ગુજરાતી', zh: '古吉拉特语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'lv', native: 'Latviešu', zh: '拉脱维亚语', family: 'indo-european', flag: '🇱🇻' },
-  { value: 'it', native: 'Italiano', zh: '意大利语', family: 'indo-european', flag: '🇮🇹' },
-  { value: 'oc', native: 'Occitan', zh: '奥克语', family: 'indo-european', flag: '🇫🇷' },
-  { value: 'ne', native: 'नेपाली', zh: '尼泊尔语', family: 'indo-european', flag: '🇳🇵' },
-  { value: 'mr', native: 'मराठी', zh: '马拉地语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'be', native: 'Беларуская', zh: '白俄罗斯语', family: 'indo-european', flag: '🇧🇾' },
-  { value: 'sr', native: 'Српски', zh: '塞尔维亚语', family: 'indo-european', flag: '🇷🇸' },
-  { value: 'lb', native: 'Lëtzebuergesch', zh: '卢森堡语', family: 'indo-european', flag: '🇱🇺' },
-  { value: 'vec', native: 'Vèneto', zh: '威尼斯语', family: 'indo-european', flag: '🇮🇹' },
-  { value: 'as', native: 'অসমীয়া', zh: '阿萨姆语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'cy', native: 'Cymraeg', zh: '威尔士语', family: 'indo-european', flag: '🇬🇧' },
-  { value: 'szl', native: 'Ślōnski', zh: '西里西亚语', family: 'indo-european', flag: '🇵🇱' },
-  { value: 'ast', native: 'Asturianu', zh: '阿斯图里亚斯语', family: 'indo-european', flag: '🇪🇸' },
-  { value: 'hne', native: 'छत्तीसगढ़ी', zh: '恰蒂斯加尔语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'awa', native: 'अवधी', zh: '阿瓦迪语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'mai', native: 'मैथिली', zh: '迈蒂利语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'bho', native: 'भोजपुरी', zh: '博杰普尔语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'sd', native: 'سنڌي', zh: '信德语', family: 'indo-european', flag: '🇵🇰' },
-  { value: 'ga', native: 'Gaeilge', zh: '爱尔兰语', family: 'indo-european', flag: '🇮🇪' },
-  { value: 'fo', native: 'Føroyskt', zh: '法罗语', family: 'indo-european', flag: '🇫🇴' },
-  { value: 'hi', native: 'हिन्दी', zh: '印地语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'pa', native: 'ਪੰਜਾਬੀ', zh: '旁遮普语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'bn', native: 'বাংলা', zh: '孟加拉语', family: 'indo-european', flag: '🇧🇩' },
-  { value: 'or', native: 'ଓଡ଼ିଆ', zh: '奥里亚语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'tg', native: 'Тоҷикӣ', zh: '塔吉克语', family: 'indo-european', flag: '🇹🇯' },
-  { value: 'yi', native: 'ייִדיש', zh: '意第绪语', family: 'indo-european', flag: '🇮🇱' },
-  { value: 'lmo', native: 'Lombard', zh: '伦巴第语', family: 'indo-european', flag: '🇮🇹' },
-  { value: 'lij', native: 'Lìgure', zh: '利古里亚语', family: 'indo-european', flag: '🇮🇹' },
-  { value: 'scn', native: 'Sicilianu', zh: '西西里语', family: 'indo-european', flag: '🇮🇹' },
-  { value: 'fur', native: 'Furlan', zh: '弗留利语', family: 'indo-european', flag: '🇮🇹' },
-  { value: 'sc', native: 'Sardu', zh: '撒丁语', family: 'indo-european', flag: '🇮🇹' },
-  { value: 'gl', native: 'Galego', zh: '加利西亚语', family: 'indo-european', flag: '🇪🇸' },
-  { value: 'ca', native: 'Català', zh: '加泰罗尼亚语', family: 'indo-european', flag: '🇪🇸' },
-  { value: 'is', native: 'Íslenska', zh: '冰岛语', family: 'indo-european', flag: '🇮🇸' },
-  { value: 'sq', native: 'Shqip', zh: '阿尔巴尼亚语', family: 'indo-european', flag: '🇦🇱' },
-  { value: 'li', native: 'Limburgs', zh: '林堡语', family: 'indo-european', flag: '🇳🇱' },
-  { value: 'prs', native: 'دری', zh: '达里语', family: 'indo-european', flag: '🇦🇫' },
-  { value: 'af', native: 'Afrikaans', zh: '南非荷兰语', family: 'indo-european', flag: '🇿🇦' },
-  { value: 'mk', native: 'Македонски', zh: '马其顿语', family: 'indo-european', flag: '🇲🇰' },
-  { value: 'si', native: 'සිංහල', zh: '僧伽罗语', family: 'indo-european', flag: '🇱🇰' },
-  { value: 'ur', native: 'اردو', zh: '乌尔都语', family: 'indo-european', flag: '🇵🇰' },
-  { value: 'mag', native: 'मगही', zh: '马加伊语', family: 'indo-european', flag: '🇮🇳' },
-  { value: 'bs', native: 'Bosanski', zh: '波斯尼亚语', family: 'indo-european', flag: '🇧🇦' },
-  { value: 'hy', native: 'Հայերեն', zh: '亚美尼亚语', family: 'indo-european', flag: '🇦🇲' },
-  { value: 'zh', native: '简体中文', zh: '简体中文', family: 'sino-tibetan', flag: '🇨🇳' },
-  { value: 'zh-TW', native: '繁體中文', zh: '繁体中文', family: 'sino-tibetan', flag: '🇹🇼' },
-  { value: 'yue', native: '粵語', zh: '粤语', family: 'sino-tibetan', flag: '🇭🇰' },
-  { value: 'my', native: 'မြန်မာ', zh: '缅甸语', family: 'sino-tibetan', flag: '🇲🇲' },
-  { value: 'ar', native: 'العربية', zh: '标准阿拉伯语', family: 'afro-asiatic', flag: '🇸🇦' },
-  { value: 'ars', native: 'نجدي', zh: '内志阿拉伯语', family: 'afro-asiatic', flag: '🇸🇦' },
-  { value: 'apc', native: 'شامي', zh: '黎凡特阿拉伯语', family: 'afro-asiatic', flag: '🇱🇧' },
-  { value: 'arz', native: 'مصري', zh: '埃及阿拉伯语', family: 'afro-asiatic', flag: '🇪🇬' },
-  { value: 'ary', native: 'الدارجة', zh: '摩洛哥阿拉伯语', family: 'afro-asiatic', flag: '🇲🇦' },
-  { value: 'acm', native: 'العراقية', zh: '美索不达米亚阿拉伯语', family: 'afro-asiatic', flag: '🇮🇶' },
-  { value: 'acq', native: 'يمني', zh: '塔伊兹-亚丁阿拉伯语', family: 'afro-asiatic', flag: '🇾🇪' },
-  { value: 'aeb', native: 'تونسي', zh: '突尼斯阿拉伯语', family: 'afro-asiatic', flag: '🇹🇳' },
-  { value: 'he', native: 'עברית', zh: '希伯来语', family: 'afro-asiatic', flag: '🇮🇱' },
-  { value: 'mt', native: 'Malti', zh: '马耳他语', family: 'afro-asiatic', flag: '🇲🇹' },
-  { value: 'id', native: 'Bahasa Indonesia', zh: '印尼语', family: 'austronesian', flag: '🇮🇩' },
-  { value: 'ms', native: 'Bahasa Melayu', zh: '马来语', family: 'austronesian', flag: '🇲🇾' },
-  { value: 'tl', native: 'Tagalog', zh: '他加禄语', family: 'austronesian', flag: '🇵🇭' },
-  { value: 'ceb', native: 'Cebuano', zh: '宿务语', family: 'austronesian', flag: '🇵🇭' },
-  { value: 'jv', native: 'Basa Jawa', zh: '爪哇语', family: 'austronesian', flag: '🇮🇩' },
-  { value: 'su', native: 'Basa Sunda', zh: '巽他语', family: 'austronesian', flag: '🇮🇩' },
-  { value: 'min', native: 'Baso Minangkabau', zh: '米南加保语', family: 'austronesian', flag: '🇮🇩' },
-  { value: 'ban', native: 'Basa Bali', zh: '巴厘语', family: 'austronesian', flag: '🇮🇩' },
-  { value: 'bjn', native: 'Bahasa Banjar', zh: '班加尔语', family: 'austronesian', flag: '🇮🇩' },
-  { value: 'pag', native: 'Pangasinan', zh: '邦阿西楠语', family: 'austronesian', flag: '🇵🇭' },
-  { value: 'ilo', native: 'Ilokano', zh: '伊洛卡诺语', family: 'austronesian', flag: '🇵🇭' },
-  { value: 'war', native: 'Waray', zh: '瓦瑞语', family: 'austronesian', flag: '🇵🇭' },
-  { value: 'ta', native: 'தமிழ்', zh: '泰米尔语', family: 'dravidian', flag: '🇮🇳' },
-  { value: 'te', native: 'తెలుగు', zh: '泰卢固语', family: 'dravidian', flag: '🇮🇳' },
-  { value: 'kn', native: 'ಕನ್ನಡ', zh: '卡纳达语', family: 'dravidian', flag: '🇮🇳' },
-  { value: 'ml', native: 'മലയാളം', zh: '马拉雅拉姆语', family: 'dravidian', flag: '🇮🇳' },
-  { value: 'tr', native: 'Türkçe', zh: '土耳其语', family: 'turkic', flag: '🇹🇷' },
-  { value: 'az', native: 'Azərbaycan', zh: '阿塞拜疆语', family: 'turkic', flag: '🇦🇿' },
-  { value: 'uz', native: 'Oʻzbek', zh: '乌兹别克语', family: 'turkic', flag: '🇺🇿' },
-  { value: 'kk', native: 'Қазақ', zh: '哈萨克语', family: 'turkic', flag: '🇰🇿' },
-  { value: 'ba', native: 'Башҡорт', zh: '巴什基尔语', family: 'turkic', flag: '🇷🇺' },
-  { value: 'tt', native: 'Татар', zh: '鞑靼语', family: 'turkic', flag: '🇷🇺' },
-  { value: 'th', native: 'ไทย', zh: '泰语', family: 'tai-kadai', flag: '🇹🇭' },
-  { value: 'lo', native: 'ລາວ', zh: '老挝语', family: 'tai-kadai', flag: '🇱🇦' },
-  { value: 'fi', native: 'Suomi', zh: '芬兰语', family: 'uralic', flag: '🇫🇮' },
-  { value: 'et', native: 'Eesti', zh: '爱沙尼亚语', family: 'uralic', flag: '🇪🇪' },
-  { value: 'hu', native: 'Magyar', zh: '匈牙利语', family: 'uralic', flag: '🇭🇺' },
-  { value: 'vi', native: 'Tiếng Việt', zh: '越南语', family: 'austroasiatic', flag: '🇻🇳' },
-  { value: 'km', native: 'ភាសាខ្មែរ', zh: '高棉语', family: 'austroasiatic', flag: '🇰🇭' },
-  { value: 'ja', native: '日本語', zh: '日语', family: 'other', flag: '🇯🇵' },
-  { value: 'ko', native: '한국어', zh: '韩语', family: 'other', flag: '🇰🇷' },
-  { value: 'ka', native: 'ქართული', zh: '格鲁吉亚语', family: 'other', flag: '🇬🇪' },
-  { value: 'eu', native: 'Euskara', zh: '巴斯克语', family: 'other', flag: '🇪🇸' },
-  { value: 'ht', native: 'Kreyòl Ayisyen', zh: '海地语', family: 'other', flag: '🇭🇹' },
-  { value: 'pap', native: 'Papiamentu', zh: '帕皮阿门托语', family: 'other', flag: '🇦🇼' },
-  { value: 'kea', native: 'Kabuverdianu', zh: '佛得角语', family: 'other', flag: '🇨🇻' },
-  { value: 'tpi', native: 'Tok Pisin', zh: '托克皮辛语', family: 'other', flag: '🇵🇬' },
-  { value: 'sw', native: 'Kiswahili', zh: '斯瓦希里语', family: 'other', flag: '🇰🇪' },
+  { value: 'en', native: 'English', en: 'English', zh: '英语', family: 'indo-european', flag: '🇬🇧' },
+  { value: 'fr', native: 'Français', en: 'French', zh: '法语', family: 'indo-european', flag: '🇫🇷' },
+  { value: 'pt', native: 'Português', en: 'Portuguese', zh: '葡萄牙语', family: 'indo-european', flag: '🇵🇹' },
+  { value: 'de', native: 'Deutsch', en: 'German', zh: '德语', family: 'indo-european', flag: '🇩🇪' },
+  { value: 'ro', native: 'Română', en: 'Romanian', zh: '罗马尼亚语', family: 'indo-european', flag: '🇷🇴' },
+  { value: 'sv', native: 'Svenska', en: 'Swedish', zh: '瑞典语', family: 'indo-european', flag: '🇸🇪' },
+  { value: 'da', native: 'Dansk', en: 'Danish', zh: '丹麦语', family: 'indo-european', flag: '🇩🇰' },
+  { value: 'bg', native: 'Български', en: 'Bulgarian', zh: '保加利亚语', family: 'indo-european', flag: '🇧🇬' },
+  { value: 'ru', native: 'Русский', en: 'Russian', zh: '俄语', family: 'indo-european', flag: '🇷🇺' },
+  { value: 'cs', native: 'Čeština', en: 'Czech', zh: '捷克语', family: 'indo-european', flag: '🇨🇿' },
+  { value: 'el', native: 'Ελληνικά', en: 'Greek', zh: '希腊语', family: 'indo-european', flag: '🇬🇷' },
+  { value: 'uk', native: 'Українська', en: 'Ukrainian', zh: '乌克兰语', family: 'indo-european', flag: '🇺🇦' },
+  { value: 'es', native: 'Español', en: 'Spanish', zh: '西班牙语', family: 'indo-european', flag: '🇪🇸' },
+  { value: 'nl', native: 'Nederlands', en: 'Dutch', zh: '荷兰语', family: 'indo-european', flag: '🇳🇱' },
+  { value: 'sk', native: 'Slovenčina', en: 'Slovak', zh: '斯洛伐克语', family: 'indo-european', flag: '🇸🇰' },
+  { value: 'hr', native: 'Hrvatski', en: 'Croatian', zh: '克罗地亚语', family: 'indo-european', flag: '🇭🇷' },
+  { value: 'pl', native: 'Polski', en: 'Polish', zh: '波兰语', family: 'indo-european', flag: '🇵🇱' },
+  { value: 'lt', native: 'Lietuvių', en: 'Lithuanian', zh: '立陶宛语', family: 'indo-european', flag: '🇱🇹' },
+  { value: 'nb', native: 'Norsk Bokmål', en: 'Norwegian Bokmål', zh: '挪威布克莫尔语', family: 'indo-european', flag: '🇳🇴' },
+  { value: 'nn', native: 'Norsk Nynorsk', en: 'Norwegian Nynorsk', zh: '挪威尼诺斯克语', family: 'indo-european', flag: '🇳🇴' },
+  { value: 'fa', native: 'فارسی', en: 'Persian', zh: '波斯语', family: 'indo-european', flag: '🇮🇷' },
+  { value: 'sl', native: 'Slovenščina', en: 'Slovenian', zh: '斯洛文尼亚语', family: 'indo-european', flag: '🇸🇮' },
+  { value: 'gu', native: 'ગુજરાતી', en: 'Gujarati', zh: '古吉拉特语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'lv', native: 'Latviešu', en: 'Latvian', zh: '拉脱维亚语', family: 'indo-european', flag: '🇱🇻' },
+  { value: 'it', native: 'Italiano', en: 'Italian', zh: '意大利语', family: 'indo-european', flag: '🇮🇹' },
+  { value: 'oc', native: 'Occitan', en: 'Occitan', zh: '奥克语', family: 'indo-european', flag: '🇫🇷' },
+  { value: 'ne', native: 'नेपाली', en: 'Nepali', zh: '尼泊尔语', family: 'indo-european', flag: '🇳🇵' },
+  { value: 'mr', native: 'मराठी', en: 'Marathi', zh: '马拉地语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'be', native: 'Беларуская', en: 'Belarusian', zh: '白俄罗斯语', family: 'indo-european', flag: '🇧🇾' },
+  { value: 'sr', native: 'Српски', en: 'Serbian', zh: '塞尔维亚语', family: 'indo-european', flag: '🇷🇸' },
+  { value: 'lb', native: 'Lëtzebuergesch', en: 'Luxembourgish', zh: '卢森堡语', family: 'indo-european', flag: '🇱🇺' },
+  { value: 'vec', native: 'Vèneto', en: 'Venetian', zh: '威尼斯语', family: 'indo-european', flag: '🇮🇹' },
+  { value: 'as', native: 'অসমীয়া', en: 'Assamese', zh: '阿萨姆语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'cy', native: 'Cymraeg', en: 'Welsh', zh: '威尔士语', family: 'indo-european', flag: '🇬🇧' },
+  { value: 'szl', native: 'Ślōnski', en: 'Silesian', zh: '西里西亚语', family: 'indo-european', flag: '🇵🇱' },
+  { value: 'ast', native: 'Asturianu', en: 'Asturian', zh: '阿斯图里亚斯语', family: 'indo-european', flag: '🇪🇸' },
+  { value: 'hne', native: 'छत्तीसगढ़ी', en: 'Chhattisgarhi', zh: '恰蒂斯加尔语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'awa', native: 'अवधी', en: 'Awadhi', zh: '阿瓦迪语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'mai', native: 'मैथिली', en: 'Maithili', zh: '迈蒂利语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'bho', native: 'भोजपुरी', en: 'Bhojpuri', zh: '博杰普尔语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'sd', native: 'سنڌي', en: 'Sindhi', zh: '信德语', family: 'indo-european', flag: '🇵🇰' },
+  { value: 'ga', native: 'Gaeilge', en: 'Irish', zh: '爱尔兰语', family: 'indo-european', flag: '🇮🇪' },
+  { value: 'fo', native: 'Føroyskt', en: 'Faroese', zh: '法罗语', family: 'indo-european', flag: '🇫🇴' },
+  { value: 'hi', native: 'हिन्दी', en: 'Hindi', zh: '印地语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'pa', native: 'ਪੰਜਾਬੀ', en: 'Punjabi', zh: '旁遮普语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'bn', native: 'বাংলা', en: 'Bengali', zh: '孟加拉语', family: 'indo-european', flag: '🇧🇩' },
+  { value: 'or', native: 'ଓଡ଼ିଆ', en: 'Odia', zh: '奥里亚语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'tg', native: 'Тоҷикӣ', en: 'Tajik', zh: '塔吉克语', family: 'indo-european', flag: '🇹🇯' },
+  { value: 'yi', native: 'ייִדיש', en: 'Yiddish', zh: '意第绪语', family: 'indo-european', flag: '🇮🇱' },
+  { value: 'lmo', native: 'Lombard', en: 'Lombard', zh: '伦巴第语', family: 'indo-european', flag: '🇮🇹' },
+  { value: 'lij', native: 'Lìgure', en: 'Ligurian', zh: '利古里亚语', family: 'indo-european', flag: '🇮🇹' },
+  { value: 'scn', native: 'Sicilianu', en: 'Sicilian', zh: '西西里语', family: 'indo-european', flag: '🇮🇹' },
+  { value: 'fur', native: 'Furlan', en: 'Friulian', zh: '弗留利语', family: 'indo-european', flag: '🇮🇹' },
+  { value: 'sc', native: 'Sardu', en: 'Sardinian', zh: '撒丁语', family: 'indo-european', flag: '🇮🇹' },
+  { value: 'gl', native: 'Galego', en: 'Galician', zh: '加利西亚语', family: 'indo-european', flag: '🇪🇸' },
+  { value: 'ca', native: 'Català', en: 'Catalan', zh: '加泰罗尼亚语', family: 'indo-european', flag: '🇪🇸' },
+  { value: 'is', native: 'Íslenska', en: 'Icelandic', zh: '冰岛语', family: 'indo-european', flag: '🇮🇸' },
+  { value: 'sq', native: 'Shqip', en: 'Albanian', zh: '阿尔巴尼亚语', family: 'indo-european', flag: '🇦🇱' },
+  { value: 'li', native: 'Limburgs', en: 'Limburgish', zh: '林堡语', family: 'indo-european', flag: '🇳🇱' },
+  { value: 'prs', native: 'دری', en: 'Dari', zh: '达里语', family: 'indo-european', flag: '🇦🇫' },
+  { value: 'af', native: 'Afrikaans', en: 'Afrikaans', zh: '南非荷兰语', family: 'indo-european', flag: '🇿🇦' },
+  { value: 'mk', native: 'Македонски', en: 'Macedonian', zh: '马其顿语', family: 'indo-european', flag: '🇲🇰' },
+  { value: 'si', native: 'සිංහල', en: 'Sinhala', zh: '僧伽罗语', family: 'indo-european', flag: '🇱🇰' },
+  { value: 'ur', native: 'اردو', en: 'Urdu', zh: '乌尔都语', family: 'indo-european', flag: '🇵🇰' },
+  { value: 'mag', native: 'मगही', en: 'Magahi', zh: '马加伊语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'bs', native: 'Bosanski', en: 'Bosnian', zh: '波斯尼亚语', family: 'indo-european', flag: '🇧🇦' },
+  { value: 'hy', native: 'Հայերեն', en: 'Armenian', zh: '亚美尼亚语', family: 'indo-european', flag: '🇦🇲' },
+  { value: 'zh', native: '简体中文', en: 'Chinese (Simplified)', zh: '简体中文', family: 'sino-tibetan', flag: '🇨🇳' },
+  { value: 'zh-TW', native: '繁體中文', en: 'Chinese (Traditional)', zh: '繁体中文', family: 'sino-tibetan', flag: '🇹🇼' },
+  { value: 'yue', native: '粵語', en: 'Cantonese', zh: '粤语', family: 'sino-tibetan', flag: '🇭🇰' },
+  { value: 'my', native: 'မြန်မာ', en: 'Burmese', zh: '缅甸语', family: 'sino-tibetan', flag: '🇲🇲' },
+  { value: 'ar', native: 'العربية', en: 'Arabic (Standard)', zh: '标准阿拉伯语', family: 'afro-asiatic', flag: '🇸🇦' },
+  { value: 'ars', native: 'نجدي', en: 'Arabic (Najdi)', zh: '内志阿拉伯语', family: 'afro-asiatic', flag: '🇸🇦' },
+  { value: 'apc', native: 'شامي', en: 'Arabic (Levantine)', zh: '黎凡特阿拉伯语', family: 'afro-asiatic', flag: '🇱🇧' },
+  { value: 'arz', native: 'مصري', en: 'Arabic (Egyptian)', zh: '埃及阿拉伯语', family: 'afro-asiatic', flag: '🇪🇬' },
+  { value: 'ary', native: 'الدارجة', en: 'Arabic (Moroccan)', zh: '摩洛哥阿拉伯语', family: 'afro-asiatic', flag: '🇲🇦' },
+  { value: 'acm', native: 'العراقية', en: 'Arabic (Mesopotamian)', zh: '美索不达米亚阿拉伯语', family: 'afro-asiatic', flag: '🇮🇶' },
+  { value: 'acq', native: 'يمني', en: 'Arabic (Ta\'izzi-Adeni)', zh: '塔伊兹-亚丁阿拉伯语', family: 'afro-asiatic', flag: '🇾🇪' },
+  { value: 'aeb', native: 'تونسي', en: 'Arabic (Tunisian)', zh: '突尼斯阿拉伯语', family: 'afro-asiatic', flag: '🇹🇳' },
+  { value: 'he', native: 'עברית', en: 'Hebrew', zh: '希伯来语', family: 'afro-asiatic', flag: '🇮🇱' },
+  { value: 'mt', native: 'Malti', en: 'Maltese', zh: '马耳他语', family: 'afro-asiatic', flag: '🇲🇹' },
+  { value: 'id', native: 'Bahasa Indonesia', en: 'Indonesian', zh: '印尼语', family: 'austronesian', flag: '🇮🇩' },
+  { value: 'ms', native: 'Bahasa Melayu', en: 'Malay', zh: '马来语', family: 'austronesian', flag: '🇲🇾' },
+  { value: 'tl', native: 'Tagalog', en: 'Tagalog', zh: '他加禄语', family: 'austronesian', flag: '🇵🇭' },
+  { value: 'ceb', native: 'Cebuano', en: 'Cebuano', zh: '宿务语', family: 'austronesian', flag: '🇵🇭' },
+  { value: 'jv', native: 'Basa Jawa', en: 'Javanese', zh: '爪哇语', family: 'austronesian', flag: '🇮🇩' },
+  { value: 'su', native: 'Basa Sunda', en: 'Sundanese', zh: '巽他语', family: 'austronesian', flag: '🇮🇩' },
+  { value: 'min', native: 'Baso Minangkabau', en: 'Minangkabau', zh: '米南加保语', family: 'austronesian', flag: '🇮🇩' },
+  { value: 'ban', native: 'Basa Bali', en: 'Balinese', zh: '巴厘语', family: 'austronesian', flag: '🇮🇩' },
+  { value: 'bjn', native: 'Bahasa Banjar', en: 'Banjar', zh: '班加尔语', family: 'austronesian', flag: '🇮🇩' },
+  { value: 'pag', native: 'Pangasinan', en: 'Pangasinan', zh: '邦阿西楠语', family: 'austronesian', flag: '🇵🇭' },
+  { value: 'ilo', native: 'Ilokano', en: 'Ilokano', zh: '伊洛卡诺语', family: 'austronesian', flag: '🇵🇭' },
+  { value: 'war', native: 'Waray', en: 'Waray', zh: '瓦瑞语', family: 'austronesian', flag: '🇵🇭' },
+  { value: 'ta', native: 'தமிழ்', en: 'Tamil', zh: '泰米尔语', family: 'dravidian', flag: '🇮🇳' },
+  { value: 'te', native: 'తెలుగు', en: 'Telugu', zh: '泰卢固语', family: 'dravidian', flag: '🇮🇳' },
+  { value: 'kn', native: 'ಕನ್ನಡ', en: 'Kannada', zh: '卡纳达语', family: 'dravidian', flag: '🇮🇳' },
+  { value: 'ml', native: 'മലയാളം', en: 'Malayalam', zh: '马拉雅拉姆语', family: 'dravidian', flag: '🇮🇳' },
+  { value: 'tr', native: 'Türkçe', en: 'Turkish', zh: '土耳其语', family: 'turkic', flag: '🇹🇷' },
+  { value: 'az', native: 'Azərbaycan', en: 'Azerbaijani', zh: '阿塞拜疆语', family: 'turkic', flag: '🇦🇿' },
+  { value: 'uz', native: 'Oʻzbek', en: 'Uzbek', zh: '乌兹别克语', family: 'turkic', flag: '🇺🇿' },
+  { value: 'kk', native: 'Қазақ', en: 'Kazakh', zh: '哈萨克语', family: 'turkic', flag: '🇰🇿' },
+  { value: 'ba', native: 'Башҡорт', en: 'Bashkir', zh: '巴什基尔语', family: 'turkic', flag: '🇷🇺' },
+  { value: 'tt', native: 'Татар', en: 'Tatar', zh: '鞑靼语', family: 'turkic', flag: '🇷🇺' },
+  { value: 'th', native: 'ไทย', en: 'Thai', zh: '泰语', family: 'tai-kadai', flag: '🇹🇭' },
+  { value: 'lo', native: 'ລາວ', en: 'Lao', zh: '老挝语', family: 'tai-kadai', flag: '🇱🇦' },
+  { value: 'fi', native: 'Suomi', en: 'Finnish', zh: '芬兰语', family: 'uralic', flag: '🇫🇮' },
+  { value: 'et', native: 'Eesti', en: 'Estonian', zh: '爱沙尼亚语', family: 'uralic', flag: '🇪🇪' },
+  { value: 'hu', native: 'Magyar', en: 'Hungarian', zh: '匈牙利语', family: 'uralic', flag: '🇭🇺' },
+  { value: 'vi', native: 'Tiếng Việt', en: 'Vietnamese', zh: '越南语', family: 'austroasiatic', flag: '🇻🇳' },
+  { value: 'km', native: 'ភាសាខ្មែរ', en: 'Khmer', zh: '高棉语', family: 'austroasiatic', flag: '🇰🇭' },
+  { value: 'ja', native: '日本語', en: 'Japanese', zh: '日语', family: 'other', flag: '🇯🇵' },
+  { value: 'ko', native: '한국어', en: 'Korean', zh: '韩语', family: 'other', flag: '🇰🇷' },
+  { value: 'ka', native: 'ქართული', en: 'Georgian', zh: '格鲁吉亚语', family: 'other', flag: '🇬🇪' },
+  { value: 'eu', native: 'Euskara', en: 'Basque', zh: '巴斯克语', family: 'other', flag: '🇪🇸' },
+  { value: 'ht', native: 'Kreyòl Ayisyen', en: 'Haitian Creole', zh: '海地语', family: 'other', flag: '🇭🇹' },
+  { value: 'pap', native: 'Papiamentu', en: 'Papiamento', zh: '帕皮阿门托语', family: 'other', flag: '🇦🇼' },
+  { value: 'kea', native: 'Kabuverdianu', en: 'Kabuverdianu', zh: '佛得角语', family: 'other', flag: '🇨🇻' },
+  { value: 'tpi', native: 'Tok Pisin', en: 'Tok Pisin', zh: '托克皮辛语', family: 'other', flag: '🇵🇬' },
+  { value: 'sw', native: 'Kiswahili', en: 'Swahili', zh: '斯瓦希里语', family: 'other', flag: '🇰🇪' },
 ]
 
 const FAMILIES = {
-  'indo-european': { native: 'Indo-European', zh: '印欧语系' },
-  'sino-tibetan': { native: 'Sino-Tibetan', zh: '汉藏语系' },
-  'afro-asiatic': { native: 'Afro-Asiatic', zh: '亚非语系' },
-  'austronesian': { native: 'Austronesian', zh: '南岛语系' },
-  'dravidian': { native: 'Dravidian', zh: '达罗毗荼语系' },
-  'turkic': { native: 'Turkic', zh: '突厥语系' },
-  'tai-kadai': { native: 'Tai-Kadai', zh: '壮侗语系' },
-  'uralic': { native: 'Uralic', zh: '乌拉尔语系' },
-  'austroasiatic': { native: 'Austroasiatic', zh: '南亚语系' },
-  'other': { native: 'Other', zh: '其他' },
+  'indo-european': 'Indo-European',
+  'sino-tibetan': 'Sino-Tibetan',
+  'afro-asiatic': 'Afro-Asiatic',
+  'austronesian': 'Austronesian',
+  'dravidian': 'Dravidian',
+  'turkic': 'Turkic',
+  'tai-kadai': 'Tai-Kadai',
+  'uralic': 'Uralic',
+  'austroasiatic': 'Austroasiatic',
+  'other': 'Other',
 }
 
 const FAMILY_ORDER = [
@@ -149,65 +149,6 @@ const FAMILY_ORDER = [
   'austroasiatic',
   'other',
 ]
-
-const NATIVE_LANGUAGES = [
-  { value: 'zh', label: '中文' },
-  { value: 'en', label: 'English' },
-]
-
-function FloatingOrb({ className, delay = 0 }) {
-  return (
-    <motion.div
-      className={`absolute rounded-full blur-3xl opacity-20 pointer-events-none ${className}`}
-      animate={{
-        y: [0, -20, 0],
-        scale: [1, 1.1, 1],
-      }}
-      transition={{
-        duration: 6,
-        repeat: Infinity,
-        ease: 'easeInOut',
-        delay,
-      }}
-    />
-  )
-}
-
-function FloatingDot({ x, y, delay = 0, size = 4 }) {
-  return (
-    <motion.div
-      className="absolute rounded-full bg-amber-400/30 pointer-events-none"
-      style={{ left: x, top: y, width: size, height: size }}
-      animate={{ opacity: [0.3, 0.8, 0.3], scale: [1, 1.3, 1] }}
-      transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut', delay }}
-    />
-  )
-}
-
-function LanguagePill({ label, value, selected, onClick, groupId }) {
-  return (
-    <motion.button
-      type="button"
-      whileHover={{ scale: 1.04 }}
-      whileTap={{ scale: 0.96 }}
-      onClick={onClick}
-      className={`relative px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
-        selected
-          ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
-          : 'bg-stone-100 text-stone-600 hover:bg-stone-200 hover:text-stone-800'
-      }`}
-    >
-      {selected && (
-        <motion.div
-          layoutId={groupId}
-          className="absolute inset-0 bg-amber-500 rounded-full"
-          transition={{ type: 'spring', bounce: 0.2, duration: 0.5 }}
-        />
-      )}
-      <span className="relative z-10">{label}</span>
-    </motion.button>
-  )
-}
 
 function LanguageSelector({ value, onChange, targetLang }) {
   const [open, setOpen] = useState(false)
@@ -241,13 +182,23 @@ function LanguageSelector({ value, onChange, targetLang }) {
 
   const selectedLang = LANGUAGES.find((l) => l.value === value)
 
-  const getLabel = (lang) => (targetLang === 'zh' ? lang.zh : lang.native)
+  const getLabel = (lang) => {
+    if (targetLang === 'zh') return lang.zh
+    return lang.en
+  }
+
+  const getSecondary = (lang) => {
+    const primary = getLabel(lang)
+    if (lang.native !== primary) return lang.native
+    return null
+  }
 
   const filteredLanguages = LANGUAGES.filter((l) => {
     if (!search) return true
     const s = search.toLowerCase()
     return (
       l.native.toLowerCase().includes(s) ||
+      l.en.toLowerCase().includes(s) ||
       l.zh.includes(search) ||
       l.value.toLowerCase().includes(s)
     )
@@ -269,31 +220,28 @@ function LanguageSelector({ value, onChange, targetLang }) {
     setSearch('')
   }
 
-  const familyLabel = (family) =>
-    FAMILIES[family][targetLang === 'zh' ? 'zh' : 'native']
+  const familyLabel = (family) => FAMILIES[family]
 
   return (
     <div ref={containerRef} className="relative">
-      <motion.button
+      <button
         type="button"
-        whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all duration-200 ${
+        className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border transition-all duration-200 text-sm ${
           open
-            ? 'border-amber-400 bg-amber-50/50 shadow-sm shadow-amber-200/30'
-            : 'border-stone-200 bg-white hover:border-amber-300 hover:shadow-sm'
+            ? 'border-amber-400 bg-amber-50/50'
+            : 'border-stone-200 bg-white hover:border-amber-300'
         }`}
       >
-        <span className="flex items-center gap-2.5">
+        <span className="flex items-center gap-2">
           {selectedLang && (
-            <span className="text-lg leading-none">{selectedLang.flag}</span>
+            <span className="text-base leading-none">{selectedLang.flag}</span>
           )}
-          <span className="text-sm font-medium text-stone-700">
+          <span className="font-medium text-stone-700">
             {selectedLang ? getLabel(selectedLang) : value}
           </span>
-          {targetLang === 'zh' && selectedLang && selectedLang.native !== selectedLang.zh && (
-            <span className="text-xs text-stone-400">{selectedLang.native}</span>
+          {selectedLang && getSecondary(selectedLang) && (
+            <span className="text-xs text-stone-400">{getSecondary(selectedLang)}</span>
           )}
         </span>
         <ChevronDown
@@ -301,7 +249,7 @@ function LanguageSelector({ value, onChange, targetLang }) {
             open ? 'rotate-180' : ''
           }`}
         />
-      </motion.button>
+      </button>
 
       <AnimatePresence>
         {open && (
@@ -393,12 +341,11 @@ function LanguageSelector({ value, onChange, targetLang }) {
                               >
                                 {getLabel(lang)}
                               </span>
-                              {targetLang === 'zh' &&
-                                lang.native !== lang.zh && (
-                                  <span className="text-xs text-stone-400">
-                                    {lang.native}
-                                  </span>
-                                )}
+                              {getSecondary(lang) && (
+                                <span className="text-xs text-stone-400">
+                                  {getSecondary(lang)}
+                                </span>
+                              )}
                             </button>
                           ))}
                         </motion.div>
@@ -418,179 +365,114 @@ function LanguageSelector({ value, onChange, targetLang }) {
 function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t }) {
   const [isFocused, setIsFocused] = useState(false)
 
-  const handleSwap = () => {
-    const temp = sourceLang
-    setSourceLang(targetLang)
-    setTargetLang(temp)
-  }
-
-  const isSwappable = sourceLang === 'zh' || sourceLang === 'en'
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-3xl mx-auto relative"
+      className="max-w-xl mx-auto"
     >
-      <FloatingOrb className="w-72 h-72 bg-amber-300 -top-20 -left-32" delay={0} />
-      <FloatingOrb className="w-56 h-56 bg-amber-200 -top-10 -right-24" delay={2} />
-      <FloatingOrb className="w-48 h-48 bg-stone-300 top-40 -right-20" delay={4} />
+      <div className="bg-white rounded-xl border border-stone-200 shadow-lg shadow-stone-200/20 p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-stone-800">
+          {t.startLearning}
+        </h2>
 
-      <FloatingDot x="8%" y="12%" delay={0} size={5} />
-      <FloatingDot x="92%" y="8%" delay={0.8} size={4} />
-      <FloatingDot x="85%" y="25%" delay={1.6} size={6} />
-      <FloatingDot x="5%" y="35%" delay={2.4} size={3} />
-      <FloatingDot x="95%" y="55%" delay={1.2} size={5} />
-      <FloatingDot x="3%" y="65%" delay={3.0} size={4} />
-
-      <div className="relative z-10">
-        <div className="text-center mb-14">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-50 border border-amber-200/60 mb-6"
-          >
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span className="text-sm font-medium text-amber-700">少邻国 / Lesslingo</span>
-          </motion.div>
-
-          <motion.h2
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-5xl font-bold text-stone-800 mb-4 tracking-tight"
-          >
-            {t.startLearning}
-          </motion.h2>
-
-          <motion.p
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-lg text-stone-500 max-w-md mx-auto leading-relaxed"
-          >
-            {t.inputHint}
-          </motion.p>
+        <div>
+          <label className="block text-xs font-medium text-stone-500 mb-1.5 uppercase tracking-wide">
+            {t.learnLang}
+          </label>
+          <LanguageSelector
+            value={sourceLang}
+            onChange={setSourceLang}
+            targetLang={targetLang}
+          />
         </div>
 
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.35, duration: 0.5 }}
-          className="bg-white/80 backdrop-blur-sm rounded-2xl border border-stone-200/60 shadow-xl shadow-stone-200/30 p-8 space-y-8"
-        >
-          <div className="space-y-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <BookOpen className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-semibold text-stone-700 tracking-wide uppercase">{t.learnLang}</span>
-              </div>
-              <LanguageSelector
-                value={sourceLang}
-                onChange={setSourceLang}
-                targetLang={targetLang}
-              />
-            </div>
-
-            <div className="flex items-center justify-center">
-              <motion.button
-                type="button"
-                whileHover={{ scale: 1.1, rotate: 180 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={handleSwap}
-                disabled={!isSwappable}
-                className={`p-2.5 rounded-full border transition-all duration-200 ${
-                  isSwappable
-                    ? 'border-stone-200 bg-stone-50 text-stone-500 hover:border-amber-300 hover:bg-amber-50 hover:text-amber-600'
-                    : 'border-stone-100 bg-stone-50 text-stone-300 cursor-not-allowed'
-                }`}
-              >
-                <ArrowLeftRight className="w-4 h-4" />
-              </motion.button>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <Languages className="w-4 h-4 text-amber-500" />
-                <span className="text-sm font-semibold text-stone-700 tracking-wide uppercase">{t.nativeLang}</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {NATIVE_LANGUAGES.map((lang) => (
-                  <LanguagePill
-                    key={lang.value}
-                    label={lang.label}
-                    value={lang.value}
-                    selected={targetLang === lang.value}
-                    onClick={() => setTargetLang(lang.value)}
-                    groupId="target-pill"
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="flex items-center gap-2 mb-3">
-              <span className="text-sm font-semibold text-stone-700 tracking-wide uppercase">{t.inputText}</span>
-            </label>
-            <div
-              className={`relative rounded-2xl p-[2px] transition-all duration-300 ${
-                isFocused
-                  ? 'bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 shadow-lg shadow-amber-500/20'
-                  : 'bg-gradient-to-r from-stone-200 via-stone-200 to-stone-200'
+        <div>
+          <label className="block text-xs font-medium text-stone-500 mb-1.5 uppercase tracking-wide">
+            {t.nativeLang}
+          </label>
+          <div className="inline-flex rounded-lg border border-stone-200 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setTargetLang('zh')}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                targetLang === 'zh'
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-white text-stone-600 hover:bg-stone-50'
               }`}
             >
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                placeholder={t.placeholder}
-                className="w-full h-56 px-5 py-4 rounded-[14px] bg-white text-stone-800 placeholder-stone-400 focus:outline-none resize-none text-base leading-relaxed"
-              />
-            </div>
+              中文
+            </button>
+            <button
+              type="button"
+              onClick={() => setTargetLang('en')}
+              className={`px-3 py-1.5 text-xs font-medium transition-colors border-l border-stone-200 ${
+                targetLang === 'en'
+                  ? 'bg-amber-500 text-white'
+                  : 'bg-white text-stone-600 hover:bg-stone-50'
+              }`}
+            >
+              English
+            </button>
           </div>
+        </div>
 
-          <motion.button
-            whileHover={{ scale: 1.01, y: -1 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onProcess}
-            disabled={loading || !text.trim()}
-            className={`w-full py-4 font-semibold rounded-2xl flex items-center justify-center gap-2.5 text-base transition-all duration-300 ${
-              loading || !text.trim()
-                ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
-                : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/30 hover:shadow-xl hover:shadow-amber-500/40 hover:from-amber-600 hover:to-amber-700'
+        <div>
+          <label className="block text-xs font-medium text-stone-500 mb-1.5 uppercase tracking-wide">
+            {t.inputText}
+          </label>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder={t.placeholder}
+            className={`w-full h-36 px-4 py-3 rounded-lg border text-sm text-stone-800 placeholder-stone-400 focus:outline-none resize-none leading-relaxed transition-colors ${
+              isFocused
+                ? 'border-amber-400 bg-amber-50/30'
+                : 'border-stone-200 bg-white'
             }`}
-          >
-            <AnimatePresence mode="wait">
-              {loading ? (
-                <motion.span
-                  key="loading"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="flex items-center gap-2.5"
-                >
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  {t.processing}
-                </motion.span>
-              ) : (
-                <motion.span
-                  key="ready"
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -5 }}
-                  className="flex items-center gap-2.5"
-                >
-                  <Sparkles className="w-5 h-5" />
-                  {t.generateMaterials}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </motion.button>
-        </motion.div>
+          />
+        </div>
+
+        <motion.button
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onProcess}
+          disabled={loading || !text.trim()}
+          className={`w-full py-3 font-semibold rounded-lg flex items-center justify-center gap-2 text-sm transition-all duration-300 ${
+            loading || !text.trim()
+              ? 'bg-stone-200 text-stone-400 cursor-not-allowed'
+              : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-500/25 hover:shadow-lg hover:shadow-amber-500/35 hover:from-amber-600 hover:to-amber-700'
+          }`}
+        >
+          <AnimatePresence mode="wait">
+            {loading ? (
+              <motion.span
+                key="loading"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="flex items-center gap-2"
+              >
+                <Loader2 className="w-4 h-4 animate-spin" />
+                {t.processing}
+              </motion.span>
+            ) : (
+              <motion.span
+                key="ready"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                className="flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4" />
+                {t.generateMaterials}
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </motion.button>
       </div>
     </motion.div>
   )

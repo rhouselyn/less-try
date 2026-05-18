@@ -18,6 +18,7 @@ import AllUnitsStep from './components/AllUnitsStep'
 import UnitCompleteStep from './components/UnitCompleteStep'
 import VocabListStep from './components/VocabListStep'
 import HistorySidebar from './components/HistorySidebar'
+import WordListPanel from './components/WordListPanel'
 import SettingsModal from './components/SettingsModal'
 
 function App() {
@@ -73,6 +74,7 @@ function App() {
   const [unitStarCounts, setUnitStarCounts] = useState({})
   const unitErrorCountRef = useRef(0)
   const [skipListening, setSkipListening] = useState(false)
+  const [wordListLang, setWordListLang] = useState(null)
   
   const updateUnitStars = (key, starCount) => {
     setUnitStarCounts(prev => {
@@ -824,6 +826,10 @@ function App() {
     }
   }
 
+  const handleOpenWordList = (lang) => {
+    setWordListLang(prev => prev === lang ? null : lang)
+  }
+
   const handleNextSentenceQuiz = async () => {
     if (reviewMode) {
       goToNextReviewItem()
@@ -888,30 +894,41 @@ function App() {
       <main>
         {step === 'input' ? (
           <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
-            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} />
+            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
             <div className="flex-1 min-w-0 relative">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowSettings(true)}
-                className="absolute top-0 right-0 p-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors z-10"
-              >
-                <Settings className="w-5 h-5" />
-              </motion.button>
-              <AnimatePresence mode="wait">
-                <InputStep
-                  key="input"
-                  text={text}
-                  setText={setText}
-                  sourceLang={sourceLang}
-                  setSourceLang={setSourceLang}
+              {wordListLang ? (
+                <WordListPanel
+                  sourceLang={wordListLang}
                   targetLang={targetLang}
-                  setTargetLang={setTargetLang}
-                  loading={loading}
-                  onProcess={handleProcess}
                   t={t}
+                  onBack={() => setWordListLang(null)}
                 />
-              </AnimatePresence>
+              ) : (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowSettings(true)}
+                    className="absolute top-0 right-0 p-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors z-10"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </motion.button>
+                  <AnimatePresence mode="wait">
+                    <InputStep
+                      key="input"
+                      text={text}
+                      setText={setText}
+                      sourceLang={sourceLang}
+                      setSourceLang={setSourceLang}
+                      targetLang={targetLang}
+                      setTargetLang={setTargetLang}
+                      loading={loading}
+                      onProcess={handleProcess}
+                      t={t}
+                    />
+                  </AnimatePresence>
+                </>
+              )}
             </div>
           </div>
         ) : (
