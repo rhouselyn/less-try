@@ -241,6 +241,7 @@ storage = Storage()
 
 # 存储处理状态
 processing_status = {}
+word_gen_state = {}
 
 
 @app.get("/")
@@ -445,7 +446,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         
         if all_vocab:
             generate_and_save_learning_plan(file_id, all_vocab, sentence_translations)
-            asyncio.create_task(auto_generate_word_details(file_id, all_vocab, rpm))
         
         processing_status[file_id] = {
             "status": "completed",
@@ -464,80 +464,113 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         }
 
 
-async def auto_generate_word_details(file_id: str, vocab: List[Dict], rpm: int):
+async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang):
+    state = word_gen_state.get(file_id)
+    if not state:
+        return
+    processing = state.get("processing_words", set())
+    if word_to_gen.lower() in {w.lower() for w in processing}:
+        return
+    processing.add(word_to_gen)
     try:
-        language_settings = storage.load_language_settings(file_id)
-        target_lang = language_settings["target_lang"]
-        source_lang = language_settings.get("source_lang", "en")
-        rate_limiter = RateLimiter(rpm)
-        
-        for word_entry in vocab:
-            word = word_entry.get("word", "")
-            if not word:
-                continue
-            cached = storage.load_word_cache(file_id, word)
-            if cached:
-                continue
-            
-            sentences = storage.load_pipeline_data(file_id)
-            context = ""
-            context_sentences = []
-            if sentences:
-                word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
-                for sent_idx, sentence_data in enumerate(sentences):
-                    if "sentence" in sentence_data:
-                        if word_pattern.search(sentence_data["sentence"]):
-                            context = sentence_data["sentence"]
-                            translation = ""
-                            if "translation_result" in sentence_data:
-                                translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                            context_sentences.append({
-                                "sentence": sentence_data["sentence"],
-                                "translation": translation,
-                                "sentence_index": sent_idx
-                            })
-                if not context and sentences:
-                    context = sentences[0].get("sentence", "")
-            
-            correct_meaning = word_entry.get("context_meaning", "")
-            if not correct_meaning:
-                if "translation" in word_entry:
-                    correct_meaning = word_entry["translation"]
-                elif "meaning" in word_entry:
-                    correct_meaning = word_entry["meaning"]
-            
-            await rate_limiter.acquire()
-            print(f"[DEBUG] 自动生成单词详情: {word}")
-            options_result = await nvidia_api.generate_multiple_choice(
-                word,
-                correct_meaning,
-                context,
-                target_lang
-            )
-            options_result = fix_llm_options_result(options_result, source_lang)
-            
-            cache_data = dict(options_result)
-            cache_data["word"] = options_result.get("word", word)
-            cache_data["ipa"] = options_result.get("ipa", word_entry.get("ipa", ""))
-            cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-            cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
-            cache_data["examples"] = options_result.get("examples", [])
-            cache_data["context"] = context
-            cache_data["context_sentences"] = context_sentences
-            cache_data["morphology"] = word_entry.get("morphology", "")
-            cache_data["variants_detail"] = options_result.get("variants_detail", [])
-            cache_data["memory_hint"] = options_result.get("memory_hint", "")
-            cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-            cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
-            if "context_translations" in cache_data:
-                del cache_data["context_translations"]
-            
-            storage.save_word_cache(file_id, word, cache_data)
-            print(f"[DEBUG] 自动缓存单词详情: {word}")
+        if storage.load_word_cache(file_id, word_to_gen):
+            return
+        word_entry = None
+        for v in vocab:
+            if v.get("word", "").lower() == word_to_gen.lower():
+                word_entry = v
+                break
+        if not word_entry:
+            return
+        sentences = storage.load_pipeline_data(file_id)
+        context = ""
+        context_sentences = []
+        if sentences:
+            word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
+            for sent_idx, sentence_data in enumerate(sentences):
+                if "sentence" in sentence_data:
+                    if word_pattern.search(sentence_data["sentence"]):
+                        context = sentence_data["sentence"]
+                        translation = ""
+                        if "translation_result" in sentence_data:
+                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                        context_sentences.append({
+                            "sentence": sentence_data["sentence"],
+                            "translation": translation,
+                            "sentence_index": sent_idx
+                        })
+            if not context and sentences:
+                context = sentences[0].get("sentence", "")
+        correct_meaning = word_entry.get("context_meaning", "")
+        if not correct_meaning:
+            if "translation" in word_entry:
+                correct_meaning = word_entry["translation"]
+            elif "meaning" in word_entry:
+                correct_meaning = word_entry["meaning"]
+        print(f"[DEBUG] Background word gen: {word_to_gen}")
+        options_result = await nvidia_api.generate_multiple_choice(
+            word_to_gen,
+            correct_meaning,
+            context,
+            target_lang
+        )
+        options_result = fix_llm_options_result(options_result, source_lang)
+        cache_data = dict(options_result)
+        cache_data["word"] = options_result.get("word", word_to_gen)
+        cache_data["ipa"] = options_result.get("ipa", word_entry.get("ipa", ""))
+        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
+        cache_data["examples"] = options_result.get("examples", [])
+        cache_data["context"] = context
+        cache_data["context_sentences"] = context_sentences
+        cache_data["morphology"] = word_entry.get("morphology", "")
+        cache_data["variants_detail"] = options_result.get("variants_detail", [])
+        cache_data["memory_hint"] = options_result.get("memory_hint", "")
+        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+        if "context_translations" in cache_data:
+            del cache_data["context_translations"]
+        storage.save_word_cache(file_id, word_to_gen, cache_data)
+        print(f"[DEBUG] Cached word gen: {word_to_gen}")
     except Exception as e:
-        print(f"[ERROR] 自动生成单词详情失败: {str(e)}")
-        import traceback
-        traceback.print_exc()
+        print(f"[ERROR] Word gen failed for {word_to_gen}: {e}")
+    finally:
+        processing.discard(word_to_gen)
+
+
+async def background_word_gen(file_id: str):
+    state = word_gen_state.get(file_id)
+    if not state:
+        return
+    language_settings = storage.load_language_settings(file_id)
+    target_lang = language_settings["target_lang"]
+    source_lang = language_settings.get("source_lang", "en")
+    vocab = state["vocab"]
+
+    while state["running"]:
+        word_to_gen = None
+        if state["priority_queue"]:
+            word_to_gen = state["priority_queue"].pop(0)
+        elif state["position"] < len(vocab):
+            word_entry = vocab[state["position"]]
+            word_to_gen = word_entry.get("word", "")
+            state["position"] += 1
+
+        if not word_to_gen:
+            await asyncio.sleep(1)
+            continue
+
+        if storage.load_word_cache(file_id, word_to_gen):
+            continue
+
+        processing = state.get("processing_words", set())
+        if word_to_gen.lower() in {w.lower() for w in processing}:
+            continue
+
+        asyncio.create_task(process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang))
+        await asyncio.sleep(3.0)
+
+    state["task"] = None
 
 
 def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: List[Dict]):
@@ -849,6 +882,104 @@ async def get_status(file_id: str):
     if file_id not in processing_status:
         raise HTTPException(status_code=404, detail="File not found")
     return processing_status[file_id]
+
+
+@app.post("/api/learn/{file_id}/start-word-gen")
+async def start_word_gen(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+
+        if file_id not in word_gen_state:
+            word_gen_state[file_id] = {
+                "running": False,
+                "position": 0,
+                "vocab": vocab,
+                "priority_queue": [],
+                "task": None,
+                "processing_words": set()
+            }
+
+        state = word_gen_state[file_id]
+        state["vocab"] = vocab
+        if "processing_words" not in state:
+            state["processing_words"] = set()
+
+        for i, word_entry in enumerate(vocab):
+            word = word_entry.get("word", "")
+            if word and not storage.load_word_cache(file_id, word):
+                state["position"] = i
+                break
+        else:
+            state["position"] = len(vocab)
+
+        if state["running"]:
+            return {"status": "already_running"}
+
+        state["running"] = True
+        state["task"] = asyncio.create_task(background_word_gen(file_id))
+        return {"status": "started"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/learn/{file_id}/stop-word-gen")
+async def stop_word_gen(file_id: str):
+    try:
+        state = word_gen_state.get(file_id)
+        if not state or not state["running"]:
+            return {"status": "stopped"}
+
+        state["running"] = False
+        if state["task"]:
+            state["task"].cancel()
+            state["task"] = None
+        return {"status": "stopped"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/learn/{file_id}/priority-word-gen")
+async def priority_word_gen(file_id: str, request: dict):
+    try:
+        word = request.get("word", "")
+        if not word:
+            raise HTTPException(status_code=400, detail="Word is required")
+
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            raise HTTPException(status_code=404, detail="Vocab not found")
+
+        if file_id not in word_gen_state:
+            word_gen_state[file_id] = {
+                "running": False,
+                "position": 0,
+                "vocab": vocab,
+                "priority_queue": [],
+                "task": None,
+                "processing_words": set()
+            }
+
+        state = word_gen_state[file_id]
+        state["vocab"] = vocab
+        if "processing_words" not in state:
+            state["processing_words"] = set()
+
+        if word not in state["priority_queue"]:
+            state["priority_queue"].append(word)
+
+        if not state["running"]:
+            state["running"] = True
+            state["task"] = asyncio.create_task(background_word_gen(file_id))
+
+        return {"status": "queued"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/api/vocab/{file_id}")

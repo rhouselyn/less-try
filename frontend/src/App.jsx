@@ -75,6 +75,17 @@ function App() {
   const unitErrorCountRef = useRef(0)
   const [skipListening, setSkipListening] = useState(false)
   const [wordListLang, setWordListLang] = useState(null)
+
+  const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
+
+  useEffect(() => {
+    if (!currentFileId) return
+    if (learningSteps.includes(step)) {
+      api.startWordGen(currentFileId).catch(() => {})
+    } else if (step === 'input') {
+      api.stopWordGen(currentFileId).catch(() => {})
+    }
+  }, [step, currentFileId])
   
   const updateUnitStars = (key, starCount) => {
     setUnitStarCounts(prev => {
@@ -1185,9 +1196,9 @@ function App() {
               key="vocab-list"
               vocab={vocab}
               onBack={() => setStep(previousStep || 'all-units')}
-              onWordClick={() => setStep(previousStep || 'all-units')}
               loading={loading}
               t={t}
+              currentFileId={currentFileId}
             />
           )}
         </AnimatePresence>

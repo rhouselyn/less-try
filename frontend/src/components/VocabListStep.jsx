@@ -1,10 +1,13 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Search, BookOpen, Volume2 } from 'lucide-react'
+import { api } from '../utils/api'
 
-function VocabListStep({ vocab, onBack, loading, t, onWordClick }) {
+function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedWord, setExpandedWord] = useState(null)
+  const [enrichedWords, setEnrichedWords] = useState({})
+  const [loadingWord, setLoadingWord] = useState(null)
   const listRef = useRef(null)
   const wordRefs = useRef({})
 
@@ -22,17 +25,28 @@ function VocabListStep({ vocab, onBack, loading, t, onWordClick }) {
     }, delay)
   }, [])
 
-  const handleWordClick = useCallback((word) => {
+  const handleWordClick = useCallback(async (word) => {
     const wordKey = word.word
     if (expandedWord === wordKey) {
       setExpandedWord(null)
-      if (onWordClick) onWordClick(word)
       return
     }
     setExpandedWord(wordKey)
     scrollToWord(wordKey, 100)
     scrollToWord(wordKey, 300)
-  }, [expandedWord, scrollToWord, onWordClick])
+
+    if (currentFileId && !enrichedWords[wordKey]) {
+      setLoadingWord(wordKey)
+      try {
+        const details = await api.getWordDetails(currentFileId, wordKey)
+        setEnrichedWords(prev => ({ ...prev, [wordKey]: details }))
+      } catch (e) {
+        console.error('Failed to fetch word details:', e)
+      } finally {
+        setLoadingWord(null)
+      }
+    }
+  }, [expandedWord, scrollToWord, currentFileId, enrichedWords])
 
   const filteredVocab = useMemo(() => {
     if (!searchQuery.trim()) return vocab
@@ -74,6 +88,8 @@ function VocabListStep({ vocab, onBack, loading, t, onWordClick }) {
     const el = document.getElementById(`vocab-group-${letter}`)
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
+
+  const getEnriched = (word) => enrichedWords[word] || {}
 
   return (
     <motion.div
@@ -151,6 +167,8 @@ function VocabListStep({ vocab, onBack, loading, t, onWordClick }) {
                   <div className="space-y-px">
                     {words.map((word, index) => {
                       const isExpanded = expandedWord === word.word
+                      const enriched = getEnriched(word.word)
+                      const displayMeaning = enriched.enriched_meaning || word.enriched_meaning || word.context_meaning || word.translation
                       return (
                         <motion.div
                           key={word.word}
@@ -168,18 +186,18 @@ function VocabListStep({ vocab, onBack, loading, t, onWordClick }) {
                               <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
                                 {word.word}
                               </span>
-                              {word.ipa && (
+                              {(enriched.ipa || word.ipa) && (
                                 <span className="text-[11px] text-stone-400 ipa-font shrink-0">
-                                  {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
+                                  {(enriched.ipa || word.ipa).startsWith('/') ? (enriched.ipa || word.ipa) : `/${enriched.ipa || word.ipa}/`}
                                 </span>
                               )}
-                              {word.morphology && (
+                              {(enriched.morphology || word.morphology) && (
                                 <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide shrink-0">
-                                  {word.morphology}
+                                  {enriched.morphology || word.morphology}
                                 </span>
                               )}
-                              <span className="text-[12px] text-stone-500 truncate">
-                                {word.enriched_meaning || word.context_meaning || word.translation}
+                              <span className="text-[12px] text-stone-500">
+                                {displayMeaning}
                               </span>
                             </div>
                             <Volume2
@@ -199,40 +217,71 @@ function VocabListStep({ vocab, onBack, loading, t, onWordClick }) {
                               >
                                 <div className="px-4 pb-3.5 border-t border-stone-100/80">
                                   <div className="pt-3 space-y-2.5">
-                                    {word.grammar && (
+                                    {displayMeaning && (
                                       <div>
-                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">语法</span>
-                                        <p className="text-[12px] text-stone-600 mt-0.5 leading-relaxed">{word.grammar}</p>
+                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">释义</span>
+                                        <p className="text-[12px] text-stone-700 leading-snug mt-1">{displayMeaning}</p>
                                       </div>
                                     )}
-                                    {word.variants && word.variants.length > 0 && (
-                                      <div>
-                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">词形变化</span>
-                                        <div className="flex flex-wrap gap-1.5 mt-1">
-                                          {word.variants.map((v, i) => (
-                                            <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-md border border-amber-100/80">
-                                              <span className="text-amber-500/70">{v.type}</span>
-                                              <span className="font-medium">{v.form}</span>
-                                            </span>
-                                          ))}
+
+                                    {(() => {
+                                      const variants = enriched.variants_detail || word.variants_detail
+                                      return variants && variants.length > 0 ? (
+                                        <div>
+                                          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">词形变化</span>
+                                          <div className="flex flex-wrap gap-1.5 mt-1">
+                                            {variants.map((v, i) => (
+                                              <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-md border border-amber-100/80">
+                                                <span className="text-amber-500/70">{v.type}</span>
+                                                <span className="font-medium">{v.form}</span>
+                                              </span>
+                                            ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
-                                    {word.examples && word.examples.length > 0 && (
-                                      <div>
-                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">例句</span>
-                                        <div className="mt-1 space-y-1.5">
-                                          {word.examples.slice(0, 2).map((ex, i) => (
-                                            <div key={i} className="border-l-2 border-amber-200/60 pl-2.5">
-                                              <p className="text-[12px] text-stone-700 leading-snug">{typeof ex === 'string' ? ex : ex.sentence}</p>
-                                              {typeof ex === 'object' && ex.translation && (
-                                                <p className="text-[11px] text-stone-400 leading-snug mt-0.5">{ex.translation}</p>
-                                              )}
+                                      ) : null
+                                    })()}
+
+                                    {(() => {
+                                      const examples = enriched.examples || word.examples
+                                      if (examples && examples.length > 0) {
+                                        return (
+                                          <div>
+                                            <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">例句</span>
+                                            <div className="mt-1 space-y-1.5">
+                                              {examples.slice(0, 2).map((ex, i) => (
+                                                <div key={i} className="border-l-2 border-amber-200/60 pl-2.5">
+                                                  <p className="text-[12px] text-stone-700 leading-snug">{typeof ex === 'string' ? ex : ex.sentence}</p>
+                                                  {typeof ex === 'object' && ex.translation && (
+                                                    <p className="text-[11px] text-stone-400 leading-snug mt-0.5">{ex.translation}</p>
+                                                  )}
+                                                </div>
+                                              ))}
                                             </div>
-                                          ))}
+                                          </div>
+                                        )
+                                      }
+                                      if (loadingWord === word.word) {
+                                        return (
+                                          <div className="flex items-center gap-2">
+                                            <div className="w-3 h-3 border border-amber-300 border-t-amber-600 rounded-full animate-spin" />
+                                            <span className="text-[11px] text-stone-400">加载中...</span>
+                                          </div>
+                                        )
+                                      }
+                                      return null
+                                    })()}
+
+                                    {(() => {
+                                      const memoryHint = enriched.memory_hint || word.memory_hint
+                                      return memoryHint ? (
+                                        <div>
+                                          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">记忆辅助</span>
+                                          <p className="text-[12px] text-stone-600 leading-snug mt-1 bg-amber-50/70 px-2.5 py-1.5 rounded-lg border border-amber-100">
+                                            {memoryHint}
+                                          </p>
                                         </div>
-                                      </div>
-                                    )}
+                                      ) : null
+                                    })()}
                                   </div>
                                 </div>
                               </motion.div>

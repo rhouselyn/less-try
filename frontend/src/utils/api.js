@@ -173,5 +173,17 @@ export const api = {
   saveAppSettings: async (settings) => {
     const response = await axios.post(`${baseUrl}/api/app-settings`, settings)
     return response.data
+  },
+
+  startWordGen: async (fileId) => {
+    await axios.post(`${baseUrl}/api/learn/${fileId}/start-word-gen`)
+  },
+
+  stopWordGen: async (fileId) => {
+    await axios.post(`${baseUrl}/api/learn/${fileId}/stop-word-gen`)
+  },
+
+  priorityWordGen: async (fileId, word) => {
+    await axios.post(`${baseUrl}/api/learn/${fileId}/priority-word-gen`, { word })
   }
 };

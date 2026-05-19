@@ -17,7 +17,7 @@ function WordDetail({ word, t, onSentenceClick }) {
             {t.definition}
           </h3>
           <p className="text-[13px] text-stone-700 leading-relaxed">
-            {word.meaning || word.context_meaning}
+            {word.enriched_meaning || word.meaning || word.context_meaning}
           </p>
         </div>
 
@@ -69,40 +69,6 @@ function WordDetail({ word, t, onSentenceClick }) {
           </div>
         )}
 
-        {word.context_sentences && word.context_sentences.length > 0 && (
-          <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-              <BookText className="w-3 h-3" />
-              {t.originalSent}
-            </h3>
-            <div className="space-y-1.5">
-              {word.context_sentences.map((sentenceObj, index) => {
-                let sentence = typeof sentenceObj === 'string' ? sentenceObj : sentenceObj.sentence;
-                let translation = null;
-                if (typeof sentenceObj === 'object' && sentenceObj.translation) {
-                  translation = sentenceObj.translation;
-                }
-                const sentIdx = typeof sentenceObj === 'object' ? sentenceObj.sentence_index : undefined
-                return (
-                  <div
-                    key={index}
-                    className={`border-l-[1.5px] border-stone-300 pl-2.5 ${sentIdx !== undefined && onSentenceClick ? 'cursor-pointer hover:bg-amber-50/50 rounded-r-md' : ''}`}
-                    onClick={() => {
-                      if (sentIdx !== undefined && onSentenceClick) {
-                        onSentenceClick(sentIdx)
-                      }
-                    }}
-                  >
-                    <p className="text-stone-700 text-[13px] italic leading-snug">{sentence}</p>
-                    {translation && (
-                      <p className="text-stone-400 text-[11px] leading-snug mt-0.5">{translation}</p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
     </motion.div>
   )
