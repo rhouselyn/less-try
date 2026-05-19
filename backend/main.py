@@ -679,50 +679,48 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     correct_tokens = get_translation_phrases(tr, max_phrases=6)
                     correct_tokens = [ct for ct in correct_tokens if not is_punctuation_only(ct)]
                     
-                    if len(correct_tokens) < 2:
-                        continue
-                    
-                    redundant_tokens = tr.get("redundant_tokens", [])
-                    cleaned_redundant = []
-                    correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
-                    for rt in redundant_tokens:
-                        rt_stripped = rt.strip()
-                        if rt_stripped and rt_stripped not in correct_tokens and not is_punctuation_only(rt_stripped):
-                            if correct_has_source_lang or not is_source_lang_text(rt_stripped, source_lang):
-                                cleaned_redundant.append(rt_stripped)
-                    
-                    selected_distractors = list(dict.fromkeys(cleaned_redundant))[:4]
-                    
-                    if len(selected_distractors) < 4:
-                        existing_set = set(correct_tokens) | set(selected_distractors)
-                        for other_sent in sentences:
-                            if other_sent.get("sentence") == sentence:
-                                continue
-                            other_tr = other_sent.get("translation_result", {})
-                            other_phrases = get_translation_phrases(other_tr, max_phrases=10)
-                            for op in other_phrases:
-                                if op not in existing_set:
-                                    if correct_has_source_lang or not is_source_lang_text(op, source_lang):
-                                        selected_distractors.append(op)
-                                        existing_set.add(op)
-                                        if len(selected_distractors) >= 4:
-                                            break
-                            if len(selected_distractors) >= 4:
-                                break
-                    
-                    all_tokens = correct_tokens + selected_distractors
-                    
-                    if not correct_translation.strip():
-                        correct_translation = "".join(correct_tokens)
-                    
-                    unit_quiz_items.append({
-                        "type": "sentence_quiz",
-                        "sentence": sentence,
-                        "correct_translation": correct_translation,
-                        "correct_tokens": correct_tokens,
-                        "tokens": all_tokens,
-                        "_covering_vocab_indices": covering_vocab_indices
-                    })
+                    if len(correct_tokens) >= 2:
+                        redundant_tokens = tr.get("redundant_tokens", [])
+                        cleaned_redundant = []
+                        correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
+                        for rt in redundant_tokens:
+                            rt_stripped = rt.strip()
+                            if rt_stripped and rt_stripped not in correct_tokens and not is_punctuation_only(rt_stripped):
+                                if correct_has_source_lang or not is_source_lang_text(rt_stripped, source_lang):
+                                    cleaned_redundant.append(rt_stripped)
+                        
+                        selected_distractors = list(dict.fromkeys(cleaned_redundant))[:4]
+                        
+                        if len(selected_distractors) < 4:
+                            existing_set = set(correct_tokens) | set(selected_distractors)
+                            for other_sent in sentences:
+                                if other_sent.get("sentence") == sentence:
+                                    continue
+                                other_tr = other_sent.get("translation_result", {})
+                                other_phrases = get_translation_phrases(other_tr, max_phrases=10)
+                                for op in other_phrases:
+                                    if op not in existing_set:
+                                        if correct_has_source_lang or not is_source_lang_text(op, source_lang):
+                                            selected_distractors.append(op)
+                                            existing_set.add(op)
+                                            if len(selected_distractors) >= 4:
+                                                break
+                                if len(selected_distractors) >= 4:
+                                    break
+                        
+                        all_tokens = correct_tokens + selected_distractors
+                        
+                        if not correct_translation.strip():
+                            correct_translation = "".join(correct_tokens)
+                        
+                        unit_quiz_items.append({
+                            "type": "sentence_quiz",
+                            "sentence": sentence,
+                            "correct_translation": correct_translation,
+                            "correct_tokens": correct_tokens,
+                            "tokens": all_tokens,
+                            "_covering_vocab_indices": covering_vocab_indices
+                        })
                     
                     listening_correct_words = [vocab[vi]["word"] for vi in covering_vocab_indices]
                     if not listening_correct_words:

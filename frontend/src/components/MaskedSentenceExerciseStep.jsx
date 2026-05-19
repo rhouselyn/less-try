@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, PenLine } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, PenLine } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
 function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer }) {
@@ -104,14 +104,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             >
               {data.masked_sentence}
             </motion.p>
-            <motion.button
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''), sourceLang)}
-              className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
-            >
-              <Volume2 className="w-5 h-5" />
-            </motion.button>
           </div>
         </div>
 
@@ -142,6 +134,15 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                 </motion.div>
               )
             })}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''), sourceLang)}
+              className="ml-auto p-2 text-amber-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+              title="播放提示"
+            >
+              <Lightbulb className="w-5 h-5" />
+            </motion.button>
           </div>
         </div>
 

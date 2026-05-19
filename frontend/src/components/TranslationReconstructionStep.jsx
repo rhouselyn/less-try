@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, Languages } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
 function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer }) {
@@ -99,14 +99,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             >
               {data.native_translation}
             </motion.p>
-            <motion.button
-              whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
-              className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
-            >
-              <Volume2 className="w-5 h-5" />
-            </motion.button>
           </div>
         </div>
 
@@ -142,6 +134,15 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             {selectedTokens.length === 0 && (
               <span className="italic text-stone-400 text-sm">按顺序点击下方词语还原句子</span>
             )}
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
+              className="ml-auto p-2 text-amber-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+              title="播放提示"
+            >
+              <Lightbulb className="w-5 h-5" />
+            </motion.button>
           </div>
         </div>
 
