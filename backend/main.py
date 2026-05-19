@@ -296,6 +296,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     for entry in dict_entries:
                         if isinstance(entry, dict) and "word" in entry:
                             dict_entry_words.add(entry["word"].lower())
+                            for t in entry.get("tokens", []):
+                                dict_entry_words.add(t.lower())
             
             missing_words = [w for w in sentence_words if w.lower() not in dict_entry_words]
             

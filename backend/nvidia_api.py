@@ -366,7 +366,7 @@ class NvidiaAPI:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "word": {"type": "string"},
+                                    "word": {"type": "string", "description": "The word or phrase. Fixed collocations must be kept as one entry (e.g. 'what's up', 'run out of')"},
                                     "ipa": {"type": "string"},
                                     "context_meaning": {"type": "string"},
                                     "variants": {
@@ -396,7 +396,8 @@ class NvidiaAPI:
                                     "translation": {"type": "string"},
                                     "tokens": {
                                         "type": "array",
-                                        "items": {"type": "string"}
+                                        "items": {"type": "string"},
+                                        "description": "Component words of this entry. For fixed collocations, list each component (e.g. 'what's up' -> ['what's', 'up'])"
                                     },
                                     "morphology": {
                                         "type": "string",
@@ -457,17 +458,17 @@ class NvidiaAPI:
 - 固定搭配的text字段应该包含整个短语，如 "what's up" 而不是分开的 "what's" 和 "up"
 - 对于缩写形式（如 what's, don't, he's 等）也要作为一个整体处理，不要拆分！！！
 
-同时，为文本中出现的【每一个单词】生成完整词典条目（dictionary_entries）：
+同时，为文本中出现的词汇生成完整词典条目（dictionary_entries）：
 
-【极其重要！！！dictionary_entries必须包含文本中的每一个单词！！！】
-- 必须为文本中出现的每一个单词都生成词典条目，一个都不能遗漏！
-- 这包括但不限于：介词（如 on, in, at, with, of, for, to）、冠词（如 a, an, the）、连词（如 and, or, but）、代词（如 your, their, it）、简单动词（如 is, do, has）、限定词（如 this, that, some）等
-- 即使是看似简单的词（如 on, your, of, with）也必须生成完整的词典条目
-- 不要因为某个词"太简单"或"太常见"就跳过它
-- 请在生成后逐一核对：文本中的每个单词是否都在dictionary_entries中有对应条目
+【极其重要！！！dictionary_entries的分组规则！！！】
+- 固定搭配、习语、短语动词必须作为单个词典条目，不要拆分！例如 "what's up" 必须是一个条目（word="what's up"），不能拆成 "what's" 和 "up" 两个条目
+- 缩写形式（如 what's, don't, he's）也必须作为单个条目，不要拆分
+- 其他普通单词各自作为独立条目
+- 每个条目的 tokens 字段列出该条目包含的原文单词（如 word="what's up" 则 tokens=["what's", "up"]）
+- 【极其重要】文本中的每一个单词都必须被某个条目的 tokens 覆盖，一个都不能遗漏！
 
-为每个单词提供：
-1. word: The word itself
+为每个条目提供：
+1. word: The word or phrase itself (固定搭配用完整短语，如 "what's up")
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
@@ -475,7 +476,7 @@ class NvidiaAPI:
 6. options: 4 options for the meaning (1 correct, 3 incorrect) - 错误答案必须是该单词所没有的意思，而不是非句子中的意思
 7. grammar: Grammar explanation for the word
 8. translation: Translation of the word to TARGET_LANG
-9. tokens: Split the word into tokens if applicable
+9. tokens: Split the word into tokens if applicable (固定搭配列出组成单词，如 "what's up" -> ["what's", "up"])
 10. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】
