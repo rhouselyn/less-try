@@ -346,32 +346,6 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
               </label>
               <LanguageSelector value={sourceLang} onChange={setSourceLang} targetLang={targetLang} />
             </div>
-
-            <div>
-              <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
-                {t.nativeLang}
-              </label>
-              <div className="flex gap-2">
-                {[
-                  { value: 'zh', label: '中文', flag: '🇨🇳' },
-                  { value: 'en', label: 'English', flag: '🇬🇧' },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setTargetLang(opt.value)}
-                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                      targetLang === opt.value
-                        ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-                        : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
-                    }`}
-                  >
-                    <span className="text-base leading-none">{opt.flag}</span>
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
           </motion.div>
 
           <motion.div

@@ -6,6 +6,7 @@ import os
 import json
 import random
 import asyncio
+import time
 from dotenv import load_dotenv
 from pathlib import Path
 import re
@@ -21,6 +22,24 @@ app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 import re
 
 PUNCTUATION_CHARS = set('.,!?:;，。！？：；、')
+
+class RateLimiter:
+    def __init__(self, rpm):
+        self.rpm = rpm
+        self.interval = 60.0 / rpm if rpm > 0 else 0
+        self.last_call = 0
+        self.lock = asyncio.Lock()
+    
+    async def acquire(self):
+        async with self.lock:
+            now = time.time()
+            elapsed = now - self.last_call
+            if elapsed < self.interval:
+                wait_time = self.interval - elapsed
+                if elapsed < 0.5:
+                    wait_time += 0.5 - elapsed
+                await asyncio.sleep(wait_time)
+            self.last_call = time.time()
 
 def is_punctuation_only(text):
     if not text or not isinstance(text, str):
@@ -229,111 +248,133 @@ async def root():
     return {"message": "少邻国 - Lesslingo API"}
 
 
-async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str):
+async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str, rpm: int = 20):
     try:
-        print(f"[DEBUG] 开始处理文件 {file_id}")
+        print(f"[DEBUG] 开始处理文件 {file_id}, RPM={rpm}")
         processing_status[file_id] = {"status": "processing", "progress": 0}
         
-        storage.save_language_settings(file_id, source_lang, target_lang)
+        storage.save_language_settings(file_id, source_lang, target_lang, rpm)
         
         sentences = text_processor.split_sentences(text)
         total_sentences = len(sentences)
         print(f"[DEBUG] 分割为 {total_sentences} 个句子: {sentences}")
         
-        all_vocab = []
-        sentence_translations = []
-        unique_partial = []
+        rate_limiter = RateLimiter(rpm)
+        results_dict = {}
+        completed_indices = set()
         
-        for i, sentence in enumerate(sentences):
-            print(f"[DEBUG] 正在处理第 {i+1}/{total_sentences} 个句子: {repr(sentence)}")
-            if sentence.strip():
-                print(f"[DEBUG] 正在翻译句子: {repr(sentence)}")
-                sentence_translation_result = await text_processor.process_translation(
-                    sentence,
-                    source_lang,
-                    target_lang,
-                    nvidia_api
+        async def process_single_sentence(idx, sentence):
+            if not sentence.strip():
+                return idx, None
+            await rate_limiter.acquire()
+            print(f"[DEBUG] 正在翻译句子 {idx+1}/{total_sentences}: {repr(sentence)}")
+            sentence_translation_result = await text_processor.process_translation(
+                sentence,
+                source_lang,
+                target_lang,
+                nvidia_api
+            )
+            print(f"[DEBUG] 句子 {idx+1} 翻译完成")
+            
+            sentence_translation_result = text_processor.validate_and_complete_translation(
+                sentence, sentence_translation_result, source_lang
+            )
+            
+            sentence_words = text_processor.extract_words(sentence, source_lang)
+            dict_entry_words = set()
+            if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
+                dict_entries = sentence_translation_result["dictionary_entries"]
+                if isinstance(dict_entries, str):
+                    try:
+                        dict_entries = json.loads(dict_entries)
+                        sentence_translation_result["dictionary_entries"] = dict_entries
+                    except:
+                        dict_entries = []
+                        sentence_translation_result["dictionary_entries"] = []
+                if isinstance(dict_entries, list):
+                    for entry in dict_entries:
+                        if isinstance(entry, dict) and "word" in entry:
+                            dict_entry_words.add(entry["word"].lower())
+            
+            missing_words = [w for w in sentence_words if w.lower() not in dict_entry_words]
+            
+            if missing_words:
+                print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
+                await rate_limiter.acquire()
+                remaining_entries = await nvidia_api.process_remaining_words(
+                    missing_words, source_lang, target_lang, sentence
                 )
-                print(f"[DEBUG] 句子翻译完成")
-                
-                sentence_translation_result = text_processor.validate_and_complete_translation(
-                    sentence, sentence_translation_result, source_lang
-                )
-                
-                sentence_words = text_processor.extract_words(sentence, source_lang)
-                dict_entry_words = set()
-                if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
-                    dict_entries = sentence_translation_result["dictionary_entries"]
-                    if isinstance(dict_entries, str):
-                        try:
-                            dict_entries = json.loads(dict_entries)
-                            sentence_translation_result["dictionary_entries"] = dict_entries
-                        except:
-                            dict_entries = []
+                if remaining_entries:
+                    if isinstance(sentence_translation_result, dict):
+                        if "dictionary_entries" not in sentence_translation_result:
                             sentence_translation_result["dictionary_entries"] = []
-                    if isinstance(dict_entries, list):
-                        for entry in dict_entries:
-                            if isinstance(entry, dict) and "word" in entry:
-                                dict_entry_words.add(entry["word"].lower())
-                
-                missing_words = [w for w in sentence_words if w.lower() not in dict_entry_words]
-                
-                if missing_words:
-                    print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
-                    remaining_entries = await nvidia_api.process_remaining_words(
-                        missing_words, source_lang, target_lang, sentence
-                    )
-                    if remaining_entries:
-                        if isinstance(sentence_translation_result, dict):
-                            if "dictionary_entries" not in sentence_translation_result:
-                                sentence_translation_result["dictionary_entries"] = []
-                            
-                            if not isinstance(sentence_translation_result["dictionary_entries"], list):
-                                try:
-                                    parsed = json.loads(sentence_translation_result["dictionary_entries"])
-                                    if isinstance(parsed, list):
-                                        sentence_translation_result["dictionary_entries"] = parsed
-                                    else:
-                                        sentence_translation_result["dictionary_entries"] = []
-                                except:
-                                    sentence_translation_result["dictionary_entries"] = []
-                            
-                            if isinstance(sentence_translation_result["dictionary_entries"], list):
-                                existing_words_lower = {e.get("word", "").lower() for e in sentence_translation_result["dictionary_entries"] if isinstance(e, dict)}
-                                for entry in remaining_entries:
-                                    if isinstance(entry, dict) and "word" in entry:
-                                        if entry["word"].lower() not in existing_words_lower:
-                                            sentence_translation_result["dictionary_entries"].append(entry)
-                                            existing_words_lower.add(entry["word"].lower())
                         
-                        if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
-                            translation_text_lower = []
-                            for token in sentence_translation_result["translation"]:
-                                if isinstance(token, dict) and "text" in token:
-                                    translation_text_lower.append(token["text"].lower())
-                            
+                        if not isinstance(sentence_translation_result["dictionary_entries"], list):
+                            try:
+                                parsed = json.loads(sentence_translation_result["dictionary_entries"])
+                                if isinstance(parsed, list):
+                                    sentence_translation_result["dictionary_entries"] = parsed
+                                else:
+                                    sentence_translation_result["dictionary_entries"] = []
+                            except:
+                                sentence_translation_result["dictionary_entries"] = []
+                        
+                        if isinstance(sentence_translation_result["dictionary_entries"], list):
+                            existing_words_lower = {e.get("word", "").lower() for e in sentence_translation_result["dictionary_entries"] if isinstance(e, dict)}
                             for entry in remaining_entries:
                                 if isinstance(entry, dict) and "word" in entry:
-                                    word = entry["word"]
-                                    if word.lower() not in translation_text_lower:
-                                        sentence_translation_result["translation"].append({
-                                            "text": word,
-                                            "translation": entry.get("translation", ""),
-                                            "phonetic": entry.get("ipa", ""),
-                                            "morphology": entry.get("morphology", "")
-                                        })
-                                        translation_text_lower.append(word.lower())
+                                    if entry["word"].lower() not in existing_words_lower:
+                                        sentence_translation_result["dictionary_entries"].append(entry)
+                                        existing_words_lower.add(entry["word"].lower())
+                    
+                    if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
+                        translation_text_lower = []
+                        for token in sentence_translation_result["translation"]:
+                            if isinstance(token, dict) and "text" in token:
+                                translation_text_lower.append(token["text"].lower())
                         
-                        print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
-                
-                sentence_data = {
-                    "sentence": sentence,
-                    "translation_result": sentence_translation_result
-                }
-                sentence_translations.append(sentence_data)
+                        for entry in remaining_entries:
+                            if isinstance(entry, dict) and "word" in entry:
+                                word = entry["word"]
+                                if word.lower() not in translation_text_lower:
+                                    sentence_translation_result["translation"].append({
+                                        "text": word,
+                                        "translation": entry.get("translation", ""),
+                                        "phonetic": entry.get("ipa", ""),
+                                        "morphology": entry.get("morphology", "")
+                                    })
+                                    translation_text_lower.append(word.lower())
+                    
+                    print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
+            
+            sentence_data = {
+                "sentence": sentence,
+                "translation_result": sentence_translation_result
+            }
+            return idx, sentence_data
+        
+        tasks = [asyncio.create_task(process_single_sentence(i, s)) for i, s in enumerate(sentences)]
+        
+        for coro in asyncio.as_completed(tasks):
+            idx, sentence_data = await coro
+            if sentence_data is not None:
+                results_dict[idx] = sentence_data
+            completed_indices.add(idx)
+            
+            max_sequential = -1
+            for ci in sorted(completed_indices):
+                if ci == max_sequential + 1:
+                    max_sequential = ci
+                else:
+                    break
+            
+            ordered_translations = []
+            for si in range(max_sequential + 1):
+                if si in results_dict:
+                    ordered_translations.append(results_dict[si])
             
             partial_vocab = []
-            for si, sd in enumerate(sentence_translations):
+            for si, sd in enumerate(ordered_translations):
                 tr = sd.get("translation_result", {})
                 if isinstance(tr, dict) and "dictionary_entries" in tr:
                     de = tr["dictionary_entries"]
@@ -358,16 +399,18 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     unique_partial.append(entry)
             unique_partial.sort(key=lambda x: x["word"].lower())
             
-            progress = int((i + 1) / total_sentences * 100)
+            progress = int(len(completed_indices) / total_sentences * 100)
             processing_status[file_id] = {
                 "status": "processing",
                 "progress": progress,
-                "current_sentence": i + 1,
+                "current_sentence": len(completed_indices),
                 "total_sentences": total_sentences,
                 "vocab": unique_partial,
-                "sentence_translations": list(sentence_translations)
+                "sentence_translations": ordered_translations
             }
-            print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(sentence_translations)} 个句子, 词汇 {len(unique_partial)} 个")
+            print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(completed_indices)} 个句子, 词汇 {len(unique_partial)} 个")
+        
+        sentence_translations = [results_dict.get(i, {"sentence": sentences[i], "translation_result": {}}) for i in range(total_sentences)]
         
         all_vocab = []
         for i, sentence_data in enumerate(sentence_translations):
@@ -376,7 +419,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 dictionary_entries = translation_result["dictionary_entries"]
                 if isinstance(dictionary_entries, str):
                     try:
-                        import json
                         dictionary_entries = json.loads(dictionary_entries)
                     except:
                         continue
@@ -403,7 +445,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         
         if all_vocab:
             generate_and_save_learning_plan(file_id, all_vocab, sentence_translations)
-            asyncio.create_task(pre_generate_next_word(file_id, all_vocab, 0))
+            asyncio.create_task(auto_generate_word_details(file_id, all_vocab, rpm))
         
         processing_status[file_id] = {
             "status": "completed",
@@ -420,6 +462,82 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             "status": "error",
             "error": str(e)
         }
+
+
+async def auto_generate_word_details(file_id: str, vocab: List[Dict], rpm: int):
+    try:
+        language_settings = storage.load_language_settings(file_id)
+        target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
+        rate_limiter = RateLimiter(rpm)
+        
+        for word_entry in vocab:
+            word = word_entry.get("word", "")
+            if not word:
+                continue
+            cached = storage.load_word_cache(file_id, word)
+            if cached:
+                continue
+            
+            sentences = storage.load_pipeline_data(file_id)
+            context = ""
+            context_sentences = []
+            if sentences:
+                word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
+                for sent_idx, sentence_data in enumerate(sentences):
+                    if "sentence" in sentence_data:
+                        if word_pattern.search(sentence_data["sentence"]):
+                            context = sentence_data["sentence"]
+                            translation = ""
+                            if "translation_result" in sentence_data:
+                                translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                            context_sentences.append({
+                                "sentence": sentence_data["sentence"],
+                                "translation": translation,
+                                "sentence_index": sent_idx
+                            })
+                if not context and sentences:
+                    context = sentences[0].get("sentence", "")
+            
+            correct_meaning = word_entry.get("context_meaning", "")
+            if not correct_meaning:
+                if "translation" in word_entry:
+                    correct_meaning = word_entry["translation"]
+                elif "meaning" in word_entry:
+                    correct_meaning = word_entry["meaning"]
+            
+            await rate_limiter.acquire()
+            print(f"[DEBUG] 自动生成单词详情: {word}")
+            options_result = await nvidia_api.generate_multiple_choice(
+                word,
+                correct_meaning,
+                context,
+                target_lang
+            )
+            options_result = fix_llm_options_result(options_result, source_lang)
+            
+            cache_data = dict(options_result)
+            cache_data["word"] = options_result.get("word", word)
+            cache_data["ipa"] = options_result.get("ipa", word_entry.get("ipa", ""))
+            cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
+            cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
+            cache_data["examples"] = options_result.get("examples", [])
+            cache_data["context"] = context
+            cache_data["context_sentences"] = context_sentences
+            cache_data["morphology"] = word_entry.get("morphology", "")
+            cache_data["variants_detail"] = options_result.get("variants_detail", [])
+            cache_data["memory_hint"] = options_result.get("memory_hint", "")
+            cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
+            cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+            if "context_translations" in cache_data:
+                del cache_data["context_translations"]
+            
+            storage.save_word_cache(file_id, word, cache_data)
+            print(f"[DEBUG] 自动缓存单词详情: {word}")
+    except Exception as e:
+        print(f"[ERROR] 自动生成单词详情失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
 
 
 def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: List[Dict]):
@@ -708,11 +826,14 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         now = datetime.datetime.now()
         file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
         
+        app_settings = storage.load_app_settings()
+        rpm = app_settings.get("rpm", 20)
+        
         title = await generate_title(text, source_lang)
         text_preview = text.strip()[:100]
         storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
         
-        background_tasks.add_task(process_text_background, file_id, text, source_lang, target_lang)
+        background_tasks.add_task(process_text_background, file_id, text, source_lang, target_lang, rpm)
         
         return {
             "file_id": file_id,
@@ -2505,6 +2626,34 @@ async def update_llm_settings(req: SettingsUpdate):
             "model": new_settings.get("model", ""),
             "has_key": bool(new_settings.get("api_key", ""))
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/app-settings")
+async def get_app_settings():
+    try:
+        settings = storage.load_app_settings()
+        return settings
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class AppSettingsUpdate(BaseModel):
+    rpm: Optional[int] = None
+    target_lang: Optional[str] = None
+
+
+@app.post("/api/app-settings")
+async def update_app_settings(req: AppSettingsUpdate):
+    try:
+        current = storage.load_app_settings()
+        if req.rpm is not None:
+            current["rpm"] = req.rpm
+        if req.target_lang is not None:
+            current["target_lang"] = req.target_lang
+        storage.save_app_settings(current)
+        return current
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

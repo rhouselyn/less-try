@@ -92,6 +92,12 @@ function App() {
   const t = translations[targetLang] || translations.zh;
 
   useEffect(() => {
+    api.getAppSettings().then(data => {
+      if (data.target_lang) setTargetLang(data.target_lang)
+    }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
     if (vocab.length > 0) {
       sortVocab()
     }
@@ -1188,7 +1194,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} />
     </div>
   )
 }

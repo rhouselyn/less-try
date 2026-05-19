@@ -163,5 +163,15 @@ export const api = {
   getWordDetail: async (word, sourceLang, targetLang) => {
     const response = await axios.get(`${baseUrl}/api/word-detail`, { params: { word, source_lang: sourceLang, target_lang: targetLang } });
     return response.data;
+  },
+
+  getAppSettings: async () => {
+    const response = await axios.get(`${baseUrl}/api/app-settings`)
+    return response.data
+  },
+
+  saveAppSettings: async (settings) => {
+    const response = await axios.post(`${baseUrl}/api/app-settings`, settings)
+    return response.data
   }
 };
