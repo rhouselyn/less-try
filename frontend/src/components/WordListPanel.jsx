@@ -214,9 +214,12 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
               </div>
               {groupWords.map((word) => (
                 <div key={word.word} className="border-b border-stone-50 last:border-b-0">
-                  <button
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleWordClick(word.word)}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-stone-50/80 transition-colors text-left"
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleWordClick(word.word) }}
+                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-stone-50/80 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -250,7 +253,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                         <ChevronDown className="w-3.5 h-3.5 text-stone-300" />
                       </motion.div>
                     </div>
-                  </button>
+                  </div>
 
                   <AnimatePresence>
                     {expandedWord === word.word && (
