@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, PenLine } from 'lucide-react'
+import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, Globe2, PenLine } from 'lucide-react'
 
 const LANGUAGES = [
   { value: 'en', native: 'English', en: 'English', zh: '英语', family: 'indo-european', flag: '🇬🇧' },
@@ -150,8 +150,6 @@ const FAMILY_ORDER = [
   'other',
 ]
 
-const POPULAR_LANGUAGES = ['en', 'ja', 'ko', 'fr', 'de', 'es', 'ru', 'it', 'pt', 'th', 'vi', 'ar']
-
 function LanguageSelector({ value, onChange, targetLang }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
@@ -207,6 +205,25 @@ function LanguageSelector({ value, onChange, targetLang }) {
 
   return (
     <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 text-left group ${
+          open
+            ? 'border-amber-400/80 bg-amber-50/30 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
+            : 'border-stone-200/80 bg-white hover:border-stone-300 hover:shadow-sm'
+        }`}
+      >
+        <span className="text-xl leading-none">{selectedLang?.flag}</span>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-medium text-stone-800">{selectedLang ? getLabel(selectedLang) : value}</span>
+          {selectedLang && getSecondary(selectedLang) && (
+            <span className="text-xs text-stone-400 ml-2">{getSecondary(selectedLang)}</span>
+          )}
+        </div>
+        <ChevronDown className={`w-4 h-4 text-stone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+      </button>
+
       <AnimatePresence>
         {open && (
           <motion.div
@@ -214,7 +231,7 @@ function LanguageSelector({ value, onChange, targetLang }) {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className="absolute z-50 w-full mt-1 bg-white rounded-xl border border-stone-200/80 shadow-xl shadow-stone-900/8 overflow-hidden"
+            className="absolute z-50 w-full mt-2 bg-white rounded-xl border border-stone-200/80 shadow-xl shadow-stone-900/8 overflow-hidden"
           >
             <div className="p-3 border-b border-stone-100">
               <div className="relative">
@@ -292,11 +309,7 @@ function LanguageSelector({ value, onChange, targetLang }) {
   )
 }
 
-function InputStep({ text, setText, sourceLang, setSourceLang, loading, onProcess, t }) {
-  const [showMoreLangs, setShowMoreLangs] = useState(false)
-  const selectedLang = LANGUAGES.find((l) => l.value === sourceLang)
-  const popularLangs = POPULAR_LANGUAGES.map((code) => LANGUAGES.find((l) => l.value === code)).filter(Boolean)
-
+function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -313,67 +326,51 @@ function InputStep({ text, setText, sourceLang, setSourceLang, loading, onProces
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05, duration: 0.4 }}
-            className="text-center"
+            className="flex items-center gap-3"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-50 to-amber-100/80 border border-amber-200/40 mb-3">
-              <span className="text-4xl leading-none">{selectedLang?.flag || '🌍'}</span>
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm shadow-amber-500/20">
+              <Globe2 className="w-4.5 h-4.5 text-white" />
             </div>
-            <h2 className="text-2xl font-bold text-stone-800 tracking-tight">
-              {selectedLang?.native || sourceLang}
-            </h2>
-            <p className="text-sm text-stone-400 mt-0.5">
-              {selectedLang ? (sourceLang === 'zh' ? selectedLang.zh : selectedLang.en) : sourceLang}
-            </p>
+            <h2 className="text-lg font-semibold text-stone-800 tracking-tight">{t.startLearning}</h2>
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
+            className="space-y-3"
           >
-            <label className="block text-[11px] font-medium text-stone-500 mb-2 uppercase tracking-wider">
-              {t.learnLang}
-            </label>
-            <div className="grid grid-cols-4 gap-2">
-              {popularLangs.map((lang) => (
-                <motion.button
-                  key={lang.value}
-                  type="button"
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => setSourceLang(lang.value)}
-                  className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border transition-all duration-200 ${
-                    sourceLang === lang.value
-                      ? 'border-amber-400/80 bg-amber-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-                      : 'border-stone-200/80 bg-white hover:border-stone-300 hover:shadow-sm'
-                  }`}
-                >
-                  <span className="text-xl leading-none">{lang.flag}</span>
-                  <span className={`text-[11px] leading-tight ${
-                    sourceLang === lang.value ? 'font-semibold text-amber-700' : 'font-medium text-stone-600'
-                  }`}>
-                    {lang.native.length > 8 ? (sourceLang === 'zh' ? lang.zh : lang.en) : lang.native}
-                  </span>
-                </motion.button>
-              ))}
+            <div>
+              <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
+                {t.learnLang}
+              </label>
+              <LanguageSelector value={sourceLang} onChange={setSourceLang} targetLang={targetLang} />
             </div>
 
-            <div className="mt-2 relative">
-              <button
-                type="button"
-                onClick={() => setShowMoreLangs(!showMoreLangs)}
-                className={`w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium transition-all duration-200 ${
-                  showMoreLangs
-                    ? 'border-amber-400/80 bg-amber-50 text-amber-700'
-                    : 'border-stone-200/80 bg-white text-stone-400 hover:border-stone-300 hover:text-stone-600'
-                }`}
-              >
-                <span>{showMoreLangs ? '收起' : '更多语言'}</span>
-                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showMoreLangs ? 'rotate-180' : ''}`} />
-              </button>
-              {showMoreLangs && (
-                <LanguageSelector value={sourceLang} onChange={(v) => { setSourceLang(v); setShowMoreLangs(false) }} targetLang={sourceLang === 'zh' ? 'zh' : 'en'} />
-              )}
+            <div>
+              <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
+                {t.nativeLang}
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { value: 'zh', label: '中文', flag: '🇨🇳' },
+                  { value: 'en', label: 'English', flag: '🇬🇧' },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setTargetLang(opt.value)}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                      targetLang === opt.value
+                        ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
+                        : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
+                    }`}
+                  >
+                    <span className="text-base leading-none">{opt.flag}</span>
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </motion.div>
 

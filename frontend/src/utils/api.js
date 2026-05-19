@@ -10,12 +10,11 @@ export const api = {
   baseUrl: baseUrl,
   
   // 处理文本
-  processText: async (text, sourceLang, targetLang, rpm) => {
+  processText: async (text, sourceLang, targetLang) => {
     const response = await axios.post(`${baseUrl}/api/process-text`, {
       text: text.trim(),
       source_language: sourceLang,
       target_language: targetLang,
-      rpm: rpm || 20,
     });
     return response.data;
   },
