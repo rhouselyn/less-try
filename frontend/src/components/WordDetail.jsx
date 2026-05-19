@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
-import { Brain, Lightbulb, BookText, GitBranch } from 'lucide-react'
+import { Brain, Lightbulb, BookText, GitBranch, Volume2 } from 'lucide-react'
+import { speakText } from '../utils/speech'
 
 function WordDetail({ word, t, onSentenceClick }) {
 
@@ -49,7 +50,17 @@ function WordDetail({ word, t, onSentenceClick }) {
             <div className="space-y-1.5">
               {word.examples.map((example, index) => (
                 <div key={index} className="border-l-[1.5px] border-stone-300 pl-2.5">
-                  <p className="text-stone-700 text-[13px] leading-snug">{example.sentence}</p>
+                  <div className="flex items-start gap-1.5">
+                    <p className="text-stone-700 text-[13px] leading-snug flex-1">{example.sentence}</p>
+                    {example.sentence && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); speakText(example.sentence) }}
+                        className="p-1 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors shrink-0"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                   <p className="text-stone-400 text-[11px] leading-snug mt-0.5">{example.translation}</p>
                 </div>
               ))}

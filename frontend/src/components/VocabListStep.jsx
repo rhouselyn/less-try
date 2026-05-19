@@ -2,6 +2,7 @@ import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Search, BookOpen, Volume2 } from 'lucide-react'
 import { api } from '../utils/api'
+import { speakText } from '../utils/speech'
 
 function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -75,13 +76,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
 
   const speakWord = useCallback((text, e) => {
     if (e) e.stopPropagation()
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'en-US'
-      utterance.rate = 0.9
-      window.speechSynthesis.speak(utterance)
-    }
+    speakText(text)
   }, [])
 
   const scrollToLetter = (letter) => {
@@ -217,13 +212,6 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
                               >
                                 <div className="px-4 pb-3.5 border-t border-stone-100/80">
                                   <div className="pt-3 space-y-2.5">
-                                    {displayMeaning && (
-                                      <div>
-                                        <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">释义</span>
-                                        <p className="text-[12px] text-stone-700 leading-snug mt-1">{displayMeaning}</p>
-                                      </div>
-                                    )}
-
                                     {(() => {
                                       const variants = enriched.variants_detail || word.variants_detail
                                       return variants && variants.length > 0 ? (
@@ -250,7 +238,17 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
                                             <div className="mt-1 space-y-1.5">
                                               {examples.slice(0, 2).map((ex, i) => (
                                                 <div key={i} className="border-l-2 border-amber-200/60 pl-2.5">
-                                                  <p className="text-[12px] text-stone-700 leading-snug">{typeof ex === 'string' ? ex : ex.sentence}</p>
+                                                  <div className="flex items-start gap-1.5">
+                                                    <p className="text-[12px] text-stone-700 leading-snug flex-1">{typeof ex === 'string' ? ex : ex.sentence}</p>
+                                                    {((typeof ex === 'string' ? ex : ex.sentence)) && (
+                                                      <button
+                                                        onClick={(e) => { e.stopPropagation(); speakText(typeof ex === 'string' ? ex : ex.sentence) }}
+                                                        className="p-1 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors shrink-0"
+                                                      >
+                                                        <Volume2 className="w-3 h-3" />
+                                                      </button>
+                                                    )}
+                                                  </div>
                                                   {typeof ex === 'object' && ex.translation && (
                                                     <p className="text-[11px] text-stone-400 leading-snug mt-0.5">{ex.translation}</p>
                                                   )}

@@ -2437,13 +2437,39 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 tokenized_translation = translation_result.get("tokenized_translation", "")
                 
                 original_tokens = []
-                if "translation" in translation_result:
-                    for token in translation_result["translation"]:
-                        if isinstance(token, dict) and "text" in token:
-                            original_tokens.append(token["text"])
+                dict_entries = translation_result.get("dictionary_entries", [])
+                if dict_entries and isinstance(dict_entries, list):
+                    translation_token_texts = []
+                    if "translation" in translation_result:
+                        for token in translation_result["translation"]:
+                            if isinstance(token, dict) and "text" in token:
+                                translation_token_texts.append(token["text"].lower())
+                    
+                    covered_tokens = set()
+                    for entry in dict_entries:
+                        if isinstance(entry, dict) and "word" in entry:
+                            entry_tokens = entry.get("tokens", [entry["word"]])
+                            entry_covers = [t.lower() for t in entry_tokens if t.lower() in translation_token_texts]
+                            if len(entry_covers) > 1:
+                                original_tokens.append(entry["word"])
+                                for t in entry_covers:
+                                    covered_tokens.add(t)
+                    
+                    for tt in translation_token_texts:
+                        if tt not in covered_tokens:
+                            for token in translation_result["translation"]:
+                                if isinstance(token, dict) and token.get("text", "").lower() == tt:
+                                    original_tokens.append(token["text"])
+                                    break
                 
                 if not original_tokens:
-                    original_tokens = text_processor.tokenize_sentence(current_sentence)
+                    if "translation" in translation_result:
+                        for token in translation_result["translation"]:
+                            if isinstance(token, dict) and "text" in token:
+                                original_tokens.append(token["text"])
+                    
+                    if not original_tokens:
+                        original_tokens = text_processor.tokenize_sentence(current_sentence)
                 
                 import random
                 distractors = []
@@ -2695,10 +2721,12 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
                 "word": word,
                 "ipa": ipa,
                 "meaning": meaning,
+                "enriched_meaning": cached.get("enriched_meaning", "") or meaning if cached else meaning,
                 "part_of_speech": part_of_speech,
                 "examples": examples,
                 "memory_hint": memory_hint,
                 "variants_detail": variants_detail,
+                "context_sentences": cached.get("context_sentences", []) if cached else [],
             })
 
         result.sort(key=lambda x: x["word"].lower())
