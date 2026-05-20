@@ -183,37 +183,59 @@ class TextProcessor:
         return chunks
 
     def split_sentences(self, text: str) -> List[str]:
-        """句子分割，支持中英文标点，保留原始空格"""
-        sentence_endings = {'.', '!', '?', '。', '！', '？'}
+        sentence_endings = {
+            '.', '!', '?',
+            '。', '！', '？',
+            '…', '⋯',
+            '।', '॥',
+            '။', ' ။',
+            '።', '፣',
+            '។', '៕',
+            'ດ',
+            '᪩', '᪪',
+            '⳹', '⳾',
+            '𐩖', '𐩗',
+            '꘎', '꛳',
+            ';', '；',
+        }
         sentences = []
         current_sentence = ""
-        
+
         i = 0
         while i < len(text):
             char = text[i]
+
+            if char == '\n':
+                if current_sentence.strip():
+                    sentences.append(current_sentence.strip())
+                current_sentence = ""
+                i += 1
+                continue
+
             current_sentence += char
-            
-            # 检查是否是句子结束符
+
             if char in sentence_endings:
-                # 跳过连续的句子结束符
                 j = i + 1
                 while j < len(text) and text[j] in sentence_endings:
                     current_sentence += text[j]
                     j += 1
+                if j < len(text) and text[j] == ' ':
+                    current_sentence += text[j]
+                    j += 1
                 i = j
-                
+
                 if current_sentence.strip():
-                    sentences.append(current_sentence)
+                    sentences.append(current_sentence.strip())
                 current_sentence = ""
             else:
                 i += 1
-        
+
         if current_sentence.strip():
-            sentences.append(current_sentence)
-        
-        # 最终过滤：确保没有空句子
+            sentences.append(current_sentence.strip())
+
         sentences = [s for s in sentences if s.strip()]
-        return sentences
+
+        return [s for s in sentences if s.strip()]
 
     def process_word_variants(self, word_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """处理单词变体，确保变体前面有类型标注"""
@@ -396,6 +418,8 @@ class TextProcessor:
         
         exclude_lower = set(answer_lower) | current_sentence_words_lower
         
+        max_distractors = 2
+        
         if all_sentences:
             for sent_data in all_sentences:
                 if "sentence" in sent_data and sent_data["sentence"] != sentence:
@@ -403,24 +427,23 @@ class TextProcessor:
                         for token in sent_data["translation_result"]["translation"]:
                             if isinstance(token, dict) and "text" in token:
                                 token_text = token["text"]
-                                if token_text.lower() not in exclude_lower and token_text not in distractors and len(distractors) < 3 * num_masks:
+                                if token_text.lower() not in exclude_lower and token_text not in distractors and len(distractors) < max_distractors:
                                     distractors.append(token_text)
         
-        if len(distractors) < 3 * num_masks:
+        if len(distractors) < max_distractors:
             vocab_words = [v["word"] for v in vocab]
             random.shuffle(vocab_words)
             for vw in vocab_words:
-                if vw.lower() not in exclude_lower and vw not in distractors and len(distractors) < 3 * num_masks:
+                if vw.lower() not in exclude_lower and vw not in distractors and len(distractors) < max_distractors:
                     distractors.append(vw)
         
-        if len(distractors) < 3 * num_masks:
-            fallback_needed = 3 * num_masks - len(distractors)
+        if len(distractors) < max_distractors:
+            fallback_needed = max_distractors - len(distractors)
             fallback_distractors = self.get_fallback_distractors(fallback_needed, list(exclude_lower) + distractors, source_lang)
             distractors.extend(fallback_distractors)
         
-        # 打乱干扰项
         random.shuffle(distractors)
-        options += distractors[:3 * num_masks]
+        options += distractors[:max_distractors]
         
         # 打乱所有选项
         random.shuffle(options)

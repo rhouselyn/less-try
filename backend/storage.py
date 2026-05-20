@@ -78,27 +78,29 @@ class Storage:
             import shutil
             shutil.rmtree(cache_dir)
     
-    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str):
-        """保存语言设置"""
+    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str, rpm: int = 20):
         file_dir = self.get_file_dir(file_id)
         settings_path = file_dir / "language_settings.json"
         with open(settings_path, 'w', encoding='utf-8') as f:
             json.dump({
                 "source_lang": source_lang,
-                "target_lang": target_lang
+                "target_lang": target_lang,
+                "rpm": rpm
             }, f, ensure_ascii=False, indent=2)
     
     def load_language_settings(self, file_id: str) -> Dict[str, str]:
-        """加载语言设置"""
         file_dir = self.get_file_dir(file_id)
         settings_path = file_dir / "language_settings.json"
         if settings_path.exists():
             with open(settings_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        # 默认返回中文和英文
+                data = json.load(f)
+                if "rpm" not in data:
+                    data["rpm"] = 20
+                return data
         return {
             "source_lang": "en",
-            "target_lang": "zh"
+            "target_lang": "zh",
+            "rpm": 20
         }
     
     def save_learning_progress(self, file_id: str, current_index: int):
@@ -334,6 +336,29 @@ class Storage:
             return True
         return False
 
+    def save_unit_stars(self, file_id: str, stars_data: Dict):
+        file_dir = self.get_file_dir(file_id)
+        stars_path = file_dir / "unit_stars.json"
+        existing = {}
+        if stars_path.exists():
+            with open(stars_path, 'r', encoding='utf-8') as f:
+                existing = json.load(f)
+        for key, count in stars_data.items():
+            if key in existing:
+                existing[key] = max(existing[key], count)
+            else:
+                existing[key] = count
+        with open(stars_path, 'w', encoding='utf-8') as f:
+            json.dump(existing, f, ensure_ascii=False, indent=2)
+
+    def load_unit_stars(self, file_id: str) -> Dict:
+        file_dir = self.get_file_dir(file_id)
+        stars_path = file_dir / "unit_stars.json"
+        if stars_path.exists():
+            with open(stars_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {}
+
     def rename_history_record(self, file_id: str, new_title: str) -> bool:
         records = self.load_history()
         for r in records:
@@ -342,3 +367,15 @@ class Storage:
                 self.save_history(records)
                 return True
         return False
+
+    def save_app_settings(self, settings: Dict):
+        settings_path = self.base_dir / "app_settings.json"
+        with open(settings_path, 'w', encoding='utf-8') as f:
+            json.dump(settings, f, ensure_ascii=False, indent=2)
+
+    def load_app_settings(self) -> Dict:
+        settings_path = self.base_dir / "app_settings.json"
+        if settings_path.exists():
+            with open(settings_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return {"rpm": 20, "target_lang": "zh"}

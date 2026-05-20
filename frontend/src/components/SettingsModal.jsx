@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, Key, Globe, Cpu, Check, Loader2 } from 'lucide-react'
+import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages } from 'lucide-react'
+import { api } from '../utils/api'
 
-function SettingsModal({ isOpen, onClose }) {
+function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
   const [apiKey, setApiKey] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [model, setModel] = useState('')
@@ -11,22 +12,26 @@ function SettingsModal({ isOpen, onClose }) {
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [maskedKey, setMaskedKey] = useState('')
+  const [rpm, setRpm] = useState(20)
+  const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
 
   useEffect(() => {
     if (isOpen) {
       setLoading(true)
       setSaved(false)
-      fetch('/api/settings')
-        .then(res => res.json())
-        .then(data => {
-          setBaseUrl(data.base_url || '')
-          setModel(data.model || '')
-          setHasKey(data.has_key || false)
-          setMaskedKey(data.api_key || '')
-          setApiKey('')
-          setLoading(false)
-        })
-        .catch(() => setLoading(false))
+      Promise.all([
+        fetch('/api/settings').then(res => res.json()),
+        api.getAppSettings().catch(() => ({}))
+      ]).then(([data, appData]) => {
+        setBaseUrl(data.base_url || '')
+        setModel(data.model || '')
+        setHasKey(data.has_key || false)
+        setMaskedKey(data.api_key || '')
+        setApiKey('')
+        if (appData.rpm) setRpm(appData.rpm)
+        if (appData.target_lang) setLocalTargetLang(appData.target_lang)
+        setLoading(false)
+      }).catch(() => setLoading(false))
     }
   }, [isOpen])
 
@@ -49,6 +54,13 @@ function SettingsModal({ isOpen, onClose }) {
       setHasKey(data.has_key || false)
       setMaskedKey(data.api_key || '')
       setApiKey('')
+
+      await api.saveAppSettings({ rpm, target_lang: localTargetLang })
+
+      if (onTargetLangChange && localTargetLang !== targetLang) {
+        onTargetLangChange(localTargetLang)
+      }
+
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } catch (e) {
@@ -57,6 +69,8 @@ function SettingsModal({ isOpen, onClose }) {
       setSaving(false)
     }
   }
+
+  const rpmPercent = ((rpm - 5) / (60 - 5)) * 100
 
   if (!isOpen) return null
 
@@ -74,13 +88,13 @@ function SettingsModal({ isOpen, onClose }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15 }}
-          className="bg-white rounded-xl shadow-2xl border border-stone-200/80 w-[340px] overflow-hidden mt-2"
+          className="bg-white rounded-xl shadow-2xl border border-stone-200/80 w-[340px] overflow-hidden mt-2 max-h-[90vh] overflow-y-auto"
           onClick={e => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
             <div className="flex items-center gap-2.5">
               <Settings className="w-4 h-4 text-stone-500" />
-              <h2 className="text-sm font-semibold text-stone-800">API 设置</h2>
+              <h2 className="text-sm font-semibold text-stone-800">设置</h2>
             </div>
             <button
               onClick={onClose}
@@ -140,6 +154,63 @@ function SettingsModal({ isOpen, onClose }) {
                   placeholder="Qwen/Qwen3.6-27B"
                   className="w-full px-3 py-2 text-sm bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
                 />
+              </div>
+
+              <div className="pt-1">
+                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                  <Gauge className="w-3 h-3" />
+                  LLM 速率
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-stone-400">每分钟 LLM 请求次数</span>
+                    <span className="text-xs font-semibold text-amber-600">{rpm} RPM</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min={5}
+                      max={60}
+                      value={rpm}
+                      onChange={e => setRpm(Number(e.target.value))}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer bg-stone-100"
+                      style={{
+                        background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${rpmPercent}%, #f5f5f4 ${rpmPercent}%, #f5f5f4 100%)`
+                      }}
+                    />
+                    <div className="flex justify-between mt-1">
+                      <span className="text-[10px] text-stone-300">5</span>
+                      <span className="text-[10px] text-stone-300">60</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                  <Languages className="w-3 h-3" />
+                  母语
+                </label>
+                <div className="flex gap-2">
+                  {[
+                    { value: 'zh', label: '中文', flag: '🇨🇳' },
+                    { value: 'en', label: 'English', flag: '🇬🇧' },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setLocalTargetLang(opt.value)}
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                        localTargetLang === opt.value
+                          ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
+                          : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
+                      }`}
+                    >
+                      <span className="text-base leading-none">{opt.flag}</span>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <motion.button

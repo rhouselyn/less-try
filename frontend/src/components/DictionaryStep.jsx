@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, EyeOff } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
+import { speakText } from '../utils/speech'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang }) {
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
@@ -109,13 +110,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (!matchedWord) return
 
     const wordKey = matchedWord.word
+    if (expandedWord === wordKey) {
+      setExpandedWord(null)
+      return
+    }
     setExpandedWord(wordKey)
     scrollToWord(wordKey, 100)
     const detail = await fetchWordDetail(wordKey)
     if (detail) {
       scrollToWord(wordKey, 300)
     }
-  }, [vocab, scrollToWord, fetchWordDetail])
+  }, [vocab, expandedWord, scrollToWord, fetchWordDetail])
 
   const handleVocabWordClick = useCallback(async (word) => {
     const wordKey = word.word
@@ -143,14 +148,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const speakWord = useCallback((text, e) => {
     if (e) e.stopPropagation()
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.cancel()
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'en-US'
-      utterance.rate = 0.9
-      window.speechSynthesis.speak(utterance)
-    }
-  }, [])
+    speakText(text, sourceLang)
+  }, [sourceLang])
 
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
@@ -399,7 +398,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   </span>
                                 )}
                                 <span className={`text-[12px] text-stone-500 truncate ${hideMeanings ? 'invisible' : ''}`}>
-                                  {word.enriched_meaning || word.context_meaning || word.translation}
+                                  {word.context_meaning || word.translation}
                                 </span>
                               </div>
                               <Volume2
@@ -425,7 +424,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       </div>
                                     ) : detail ? (
                                       <div className="pt-3">
-                                        <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} />
+                                        <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} />
                                       </div>
                                     ) : (
                                       <div className="pt-3 text-center text-stone-400 text-[12px]">

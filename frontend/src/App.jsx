@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
+import { BookOpen, ArrowLeft, Settings, Home } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 
@@ -9,6 +9,7 @@ import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
 import ProgressStep from './components/ProgressStep'
 import SentenceQuizStep from './components/SentenceQuizStep'
+import ListeningQuizStep from './components/ListeningQuizStep'
 import PhaseSelectorStep from './components/PhaseSelectorStep'
 import PhaseProgressStep from './components/PhaseProgressStep'
 import MaskedSentenceExerciseStep from './components/MaskedSentenceExerciseStep'
@@ -17,6 +18,7 @@ import AllUnitsStep from './components/AllUnitsStep'
 import UnitCompleteStep from './components/UnitCompleteStep'
 import VocabListStep from './components/VocabListStep'
 import HistorySidebar from './components/HistorySidebar'
+import WordListPanel from './components/WordListPanel'
 import SettingsModal from './components/SettingsModal'
 
 function App() {
@@ -46,7 +48,12 @@ function App() {
   const [totalUnits, setTotalUnits] = useState(0)
   const [allUnitsCompleted, setAllUnitsCompleted] = useState(false)
   const [quizData, setQuizData] = useState(null)
-  const [learningMode, setLearningMode] = useState('word') // 'word' or 'sentence'
+  const [listeningQuizData, setListeningQuizData] = useState(null)
+  const [learningMode, setLearningMode] = useState('word')
+  const [unitErrorCount, setUnitErrorCount] = useState(0)
+  const [wrongItems, setWrongItems] = useState([])
+  const [reviewMode, setReviewMode] = useState(false)
+  const [reviewIndex, setReviewIndex] = useState(0) // 'word' or 'sentence'
   
   // New states for phases
   const [phases, setPhases] = useState([])
@@ -64,9 +71,42 @@ function App() {
   const [unitEndIndex, setUnitEndIndex] = useState(null)
   const [completedUnitId, setCompletedUnitId] = useState(null)
   const [completedPhase, setCompletedPhase] = useState(1)
+  const [unitStarCounts, setUnitStarCounts] = useState({})
+  const unitErrorCountRef = useRef(0)
+  const [skipListening, setSkipListening] = useState(false)
+  const [wordListLang, setWordListLang] = useState(null)
+
+  const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
+
+  useEffect(() => {
+    if (!currentFileId) return
+    if (learningSteps.includes(step)) {
+      api.startWordGen(currentFileId).catch(() => {})
+    } else if (step === 'input') {
+      api.stopWordGen(currentFileId).catch(() => {})
+    }
+  }, [step, currentFileId])
+  
+  const updateUnitStars = (key, starCount) => {
+    setUnitStarCounts(prev => {
+      const updated = { ...prev, [key]: Math.max(prev[key] || 0, starCount) }
+      if (currentFileId) {
+        api.saveUnitStars(currentFileId, { [key]: updated[key] }).catch(err => {
+          console.error('Failed to save stars:', err)
+        })
+      }
+      return updated
+    })
+  }
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
+
+  useEffect(() => {
+    api.getAppSettings().then(data => {
+      if (data.target_lang) setTargetLang(data.target_lang)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -272,16 +312,17 @@ function App() {
     
     setLoading(true)
     try {
-      // 同时获取两个阶段的单元
-      const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+      const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
         api.getPhaseUnits(currentFileId, 1),
-        api.getPhaseUnits(currentFileId, 2)
+        api.getPhaseUnits(currentFileId, 2),
+        api.getUnitStars(currentFileId)
       ])
       
       setPhase1Units(phase1UnitsData.units)
       setPhase2Units(phase2UnitsData.units)
       setCurrentPhase1Unit(phase1UnitsData.current_unit)
       setCurrentPhase2Unit(phase2UnitsData.current_unit)
+      setUnitStarCounts(starsData.stars || {})
       setStep('all-units')
     } catch (error) {
       console.error('获取单元错误:', error)
@@ -322,6 +363,12 @@ function App() {
   const handlePhase1UnitClick = async (unitId) => {
     if (!currentFileId) return
     
+    setUnitErrorCount(0)
+    unitErrorCountRef.current = 0
+    setWrongItems([])
+    setReviewMode(false)
+    setReviewIndex(0)
+    
     setLoading(true)
     try {
       const unit = phase1Units[unitId]
@@ -333,6 +380,15 @@ function App() {
         setUnitEndIndex(response.unit_end_index)
         setLearningMode('sentence')
         setStep('sentence-quiz')
+      } else if (response.type === 'listening_quiz') {
+        if (skipListening) {
+          setLoading(false)
+          return getNextWord(0)
+        }
+        setListeningQuizData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setLearningMode('listening')
+        setStep('listening-quiz')
       } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
@@ -344,6 +400,8 @@ function App() {
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setCompletedUnitId(unitId)
         setCompletedPhase(1)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        updateUnitStars(`1-${unitId}`, starCount)
         setStep('unit-complete')
       } else {
         setLearningData(response)
@@ -365,6 +423,9 @@ function App() {
   const handlePhase2UnitClick = async (unitId) => {
     if (!currentFileId) return
     
+    setUnitErrorCount(0)
+    unitErrorCountRef.current = 0
+    
     setLoading(true)
     try {
       setCurrentPhase(2)
@@ -381,6 +442,8 @@ function App() {
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setCompletedUnitId(unitId)
         setCompletedPhase(2)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        updateUnitStars(`2-${unitId}`, starCount)
         setStep('unit-complete')
       } else {
         setExerciseType(exerciseData.exercise_type)
@@ -453,6 +516,8 @@ function App() {
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
         setCompletedUnitId(currentPhaseUnit)
         setCompletedPhase(currentPhase)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount)
         setStep('unit-complete')
       } else {
         const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
@@ -467,6 +532,8 @@ function App() {
           setCurrentPhase2Unit(phase2UnitsData.current_unit)
           setCompletedUnitId(currentPhaseUnit)
           setCompletedPhase(currentPhase)
+          const starCount2 = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+          updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount2)
           setStep('unit-complete')
         } else {
           setExerciseType(exerciseData.exercise_type)
@@ -518,6 +585,108 @@ function App() {
     setIsCorrect(isCorrectAnswer)
     if (isCorrectAnswer) {
       setShowWordCard(true)
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
+      }
+    } else {
+      setUnitErrorCount(prev => {
+        const newCount = prev + 1
+        unitErrorCountRef.current = newCount
+        return newCount
+      })
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
+        setWrongItems(prev => [...prev, { type: 'word', data: learningData }])
+      }
+    }
+  }
+
+  const handleSentenceQuizAnswer = (isCorrect) => {
+    if (!isCorrect) {
+      setUnitErrorCount(prev => {
+        const newCount = prev + 1
+        unitErrorCountRef.current = newCount
+        return newCount
+      })
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
+        setWrongItems(prev => [...prev, { type: 'sentence_quiz', data: quizData }])
+      }
+    } else {
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
+      }
+    }
+  }
+
+  const handleListeningQuizAnswer = (isCorrect) => {
+    if (!isCorrect) {
+      setUnitErrorCount(prev => {
+        const newCount = prev + 1
+        unitErrorCountRef.current = newCount
+        return newCount
+      })
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
+        setWrongItems(prev => [...prev, { type: 'listening_quiz', data: listeningQuizData }])
+      }
+    } else {
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
+      }
+    }
+  }
+
+  const handlePhase2Answer = (isCorrect) => {
+    if (!isCorrect) {
+      setUnitErrorCount(prev => {
+        const newCount = prev + 1
+        unitErrorCountRef.current = newCount
+        return newCount
+      })
+    }
+  }
+
+  const goToNextReviewItem = () => {
+    if (wrongItems.length === 0) {
+      setReviewMode(false)
+      setReviewIndex(0)
+      setStep('unit-complete')
+      return
+    }
+    const nextIdx = Math.min(reviewIndex, wrongItems.length - 1)
+    setReviewIndex(nextIdx)
+    const nextItem = wrongItems[nextIdx]
+    if (nextItem?.type === 'word') {
+      setLearningData(nextItem.data)
+      setShowWordCard(false)
+      setSelectedOption(null)
+      setIsCorrect(null)
+      setStep('learning')
+    } else if (nextItem?.type === 'sentence_quiz') {
+      setQuizData(nextItem.data)
+      setStep('sentence-quiz')
+    } else if (nextItem?.type === 'listening_quiz') {
+      setListeningQuizData(nextItem.data)
+      setStep('listening-quiz')
     }
   }
 
@@ -538,8 +707,11 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setCompletedUnitId(phase1UnitsData.current_unit)
+        const completedUnit = phase1UnitsData.current_unit
+        setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        updateUnitStars(`1-${completedUnit}`, starCount)
         setStep('unit-complete')
         return
       }
@@ -553,12 +725,32 @@ function App() {
         return
       }
       
+      if (nextWordResponse.listening_quiz) {
+        if (skipListening) {
+          return getNextWord(retryCount)
+        }
+        const endIdx = nextWordResponse.unit_end_index || unitEndIndex
+        setListeningQuizData(nextWordResponse.listening_quiz)
+        setUnitEndIndex(endIdx)
+        setLearningMode('listening')
+        setStep('listening-quiz')
+        return
+      }
+      
       const response = await api.getRandomWord(currentFileId)
       if (response.type === 'sentence_quiz') {
         setQuizData(response)
         setUnitEndIndex(response.unit_end_index)
         setLearningMode('sentence')
         setStep('sentence-quiz')
+      } else if (response.type === 'listening_quiz') {
+        if (skipListening) {
+          return getNextWord(0)
+        }
+        setListeningQuizData(response)
+        setUnitEndIndex(response.unit_end_index)
+        setLearningMode('listening')
+        setStep('listening-quiz')
       } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
           api.getPhaseUnits(currentFileId, 1),
@@ -568,8 +760,11 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setCompletedUnitId(phase1UnitsData.current_unit)
+        const completedUnit = phase1UnitsData.current_unit
+        setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
+        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+        updateUnitStars(`1-${completedUnit}`, starCount)
         setStep('unit-complete')
       } else {
         setLearningData(response)
@@ -648,7 +843,16 @@ function App() {
     }
   }
 
+  const handleOpenWordList = (lang) => {
+    setWordListLang(prev => prev === lang ? null : lang)
+  }
+
   const handleNextSentenceQuiz = async () => {
+    if (reviewMode) {
+      goToNextReviewItem()
+      setLoading(false)
+      return
+    }
     setLoading(true)
     try {
       await getNextWord()
@@ -687,16 +891,12 @@ function App() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   onClick={() => {
-                    if (step === 'learning' || step === 'sentence-quiz' || step === 'progress') {
-                      setStep('dictionary');
-                    } else {
-                      setStep('input');
-                    }
+                    setStep('input');
                   }}
-                  className="flex items-center gap-2 px-4 py-2 text-stone-500 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100"
+                  className="p-2 text-stone-500 hover:text-amber-600 transition-colors rounded-lg hover:bg-amber-50"
+                  title="主页面"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  {t.back}
+                  <Home className="w-5 h-5" />
                 </motion.button>
               )}
             </AnimatePresence>
@@ -707,30 +907,41 @@ function App() {
       <main>
         {step === 'input' ? (
           <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
-            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} />
+            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
             <div className="flex-1 min-w-0 relative">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setShowSettings(true)}
-                className="absolute top-0 right-0 p-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors z-10"
-              >
-                <Settings className="w-5 h-5" />
-              </motion.button>
-              <AnimatePresence mode="wait">
-                <InputStep
-                  key="input"
-                  text={text}
-                  setText={setText}
-                  sourceLang={sourceLang}
-                  setSourceLang={setSourceLang}
+              {wordListLang ? (
+                <WordListPanel
+                  sourceLang={wordListLang}
                   targetLang={targetLang}
-                  setTargetLang={setTargetLang}
-                  loading={loading}
-                  onProcess={handleProcess}
                   t={t}
+                  onBack={() => setWordListLang(null)}
                 />
-              </AnimatePresence>
+              ) : (
+                <>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowSettings(true)}
+                    className="absolute top-0 right-0 p-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors z-10"
+                  >
+                    <Settings className="w-5 h-5" />
+                  </motion.button>
+                  <AnimatePresence mode="wait">
+                    <InputStep
+                      key="input"
+                      text={text}
+                      setText={setText}
+                      sourceLang={sourceLang}
+                      setSourceLang={setSourceLang}
+                      targetLang={targetLang}
+                      setTargetLang={setTargetLang}
+                      loading={loading}
+                      onProcess={handleProcess}
+                      t={t}
+                    />
+                  </AnimatePresence>
+                </>
+              )}
             </div>
           </div>
         ) : (
@@ -754,6 +965,7 @@ function App() {
               loading={loading}
               t={t}
               currentFileId={currentFileId}
+              sourceLang={sourceLang}
             />
           )}
           
@@ -778,11 +990,13 @@ function App() {
               selectedOption={selectedOption}
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
-              onNextWord={getNextWord}
+              onNextWord={reviewMode ? goToNextReviewItem : getNextWord}
               onBack={() => setStep('all-units')}
               onOpenVocabList={handleOpenVocabList}
               loading={loading}
               t={t}
+              sourceLang={sourceLang}
+              skipListening={skipListening}
             />
           )}
           
@@ -805,6 +1019,24 @@ function App() {
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
+              sourceLang={sourceLang}
+              onAnswer={handleSentenceQuizAnswer}
+              skipListening={skipListening}
+            />
+          )}
+          
+          {step === 'listening-quiz' && (
+            <ListeningQuizStep
+              key="listening-quiz"
+              quizData={listeningQuizData}
+              onNextQuestion={handleNextSentenceQuiz}
+              onBack={() => setStep('all-units')}
+              loading={loading}
+              t={t}
+              onOpenVocabList={handleOpenVocabList}
+              sourceLang={sourceLang}
+              onAnswer={handleListeningQuizAnswer}
+              skipListening={skipListening}
             />
           )}
           
@@ -814,7 +1046,35 @@ function App() {
               unitNumber={completedUnitId || 0}
               totalUnits={phase1Units.length || 1}
               phase={completedPhase}
-              onContinue={() => setStep('all-units')}
+              onContinue={() => {
+                setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
+                setWrongItems([])
+                setReviewMode(false)
+                setReviewIndex(0)
+                setStep('all-units')
+              }}
+              onReview={() => {
+                setReviewMode(true)
+                setReviewIndex(0)
+                const firstWrong = wrongItems[0]
+                if (firstWrong?.type === 'word') {
+                  setLearningData(firstWrong.data)
+                  setShowWordCard(false)
+                  setSelectedOption(null)
+                  setIsCorrect(null)
+                  setStep('learning')
+                } else if (firstWrong?.type === 'sentence_quiz') {
+                  setQuizData(firstWrong.data)
+                  setStep('sentence-quiz')
+                } else if (firstWrong?.type === 'listening_quiz') {
+                  setListeningQuizData(firstWrong.data)
+                  setStep('listening-quiz')
+                }
+              }}
+              errorCount={unitErrorCount}
+              hasWrongItems={wrongItems.length > 0}
+              wrongItemsCount={wrongItems.length}
               t={t}
             />
           )}
@@ -831,6 +1091,9 @@ function App() {
               onBack={() => setStep('dictionary')}
               loading={loading}
               t={t}
+              unitStarCounts={unitStarCounts}
+              skipListening={skipListening}
+              onSkipListeningChange={setSkipListening}
             />
           )}
           
@@ -876,6 +1139,8 @@ function App() {
                 setCurrentPhase2Unit(phase2UnitsData.current_unit)
                 setCompletedUnitId(currentPhaseUnit)
                 setCompletedPhase(currentPhase)
+                const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+                updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount)
                 setStep('unit-complete')
               }}
               loading={loading}
@@ -886,6 +1151,8 @@ function App() {
               exerciseIndexInUnit={currentExerciseData?.exercise_index_in_unit}
               totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
               sentencePreview={currentExerciseData?.sentence_preview}
+              sourceLang={sourceLang}
+              onAnswer={handlePhase2Answer}
             />
           )}
           
@@ -906,6 +1173,8 @@ function App() {
                 setCurrentPhase2Unit(phase2UnitsData.current_unit)
                 setCompletedUnitId(currentPhaseUnit)
                 setCompletedPhase(currentPhase)
+                const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+                updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount)
                 setStep('unit-complete')
               }}
               loading={loading}
@@ -914,6 +1183,8 @@ function App() {
               exerciseIndexInUnit={currentExerciseData?.exercise_index_in_unit}
               totalExercisesInUnit={currentExerciseData?.total_exercises_in_unit}
               sentencePreview={currentExerciseData?.sentence_preview}
+              sourceLang={sourceLang}
+              onAnswer={handlePhase2Answer}
             />
           )}
           
@@ -924,13 +1195,15 @@ function App() {
               onBack={() => setStep(previousStep || 'all-units')}
               loading={loading}
               t={t}
+              currentFileId={currentFileId}
+              sourceLang={sourceLang}
             />
           )}
         </AnimatePresence>
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} />
     </div>
   )
 }

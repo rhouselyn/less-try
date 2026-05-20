@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2, MessageSquare } from 'lucide-react'
+import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2, MessageSquare, BookOpen } from 'lucide-react'
 import { api } from '../utils/api'
 
 const LANG_LABELS = {
@@ -9,7 +9,21 @@ const LANG_LABELS = {
   es: 'Español',
   de: 'Deutsch',
   fr: 'Français',
-  ja: '日本語'
+  ja: '日本語',
+  ko: '한국어',
+  pt: 'Português',
+  ru: 'Русский',
+  it: 'Italiano',
+  ar: 'العربية',
+  hi: 'हिन्दी',
+  th: 'ไทย',
+  vi: 'Tiếng Việt',
+  id: 'Bahasa',
+  tr: 'Türkçe',
+  nl: 'Nederlands',
+  sv: 'Svenska',
+  pl: 'Polski',
+  uk: 'Українська'
 }
 
 const LANG_ICONS = {
@@ -18,7 +32,21 @@ const LANG_ICONS = {
   es: '🇪🇸',
   de: '🇩🇪',
   fr: '🇫🇷',
-  ja: '🇯🇵'
+  ja: '🇯🇵',
+  ko: '🇰🇷',
+  pt: '🇧🇷',
+  ru: '🇷🇺',
+  it: '🇮🇹',
+  ar: '🇸🇦',
+  hi: '🇮🇳',
+  th: '🇹🇭',
+  vi: '🇻🇳',
+  id: '🇮🇩',
+  tr: '🇹🇷',
+  nl: '🇳🇱',
+  sv: '🇸🇪',
+  pl: '🇵🇱',
+  uk: '🇺🇦'
 }
 
 function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
@@ -132,7 +160,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
   )
 }
 
-function HistorySidebar({ onNavigateToRecord, t }) {
+function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListLang }) {
   const [expanded, setExpanded] = useState(true)
   const [records, setRecords] = useState([])
   const [menuState, setMenuState] = useState({ open: false, fileId: null, x: 0, y: 0 })
@@ -245,8 +273,16 @@ function HistorySidebar({ onNavigateToRecord, t }) {
                       <span className="text-[11px] font-medium text-stone-400 tracking-wide">
                         {LANG_LABELS[lang] || lang}
                       </span>
-                      <span className="text-[10px] text-stone-300 ml-auto">{items.length}</span>
+                      <span className="text-[10px] text-stone-300">{items.length}</span>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
+                        className={`ml-auto p-0.5 rounded transition-colors ${activeWordListLang === lang ? 'text-amber-500 hover:text-amber-600' : 'text-stone-300 hover:text-amber-500'}`}
+                        title="Word list"
+                      >
+                        <BookOpen className="w-3.5 h-3.5" />
+                      </button>
                     </div>
+
                     <div className="space-y-0.5 px-0.5">
                       {items.map((record) => (
                         <HistoryItem

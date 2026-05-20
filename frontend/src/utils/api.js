@@ -140,5 +140,50 @@ export const api = {
   renameHistory: async (fileId, title) => {
     const response = await axios.put(`${baseUrl}/api/history/${fileId}`, { title });
     return response.data;
+  },
+
+  getUnitStars: async (fileId) => {
+    const response = await axios.get(`${baseUrl}/api/learn/${fileId}/unit-stars`);
+    return response.data;
+  },
+
+  saveUnitStars: async (fileId, stars) => {
+    const response = await axios.post(`${baseUrl}/api/learn/${fileId}/unit-stars`, { stars });
+    return response.data;
+  },
+
+  getWordList: async (sourceLang, targetLang) => {
+    const params = {};
+    if (sourceLang) params.source_lang = sourceLang;
+    if (targetLang) params.target_lang = targetLang;
+    const response = await axios.get(`${baseUrl}/api/word-list`, { params });
+    return response.data;
+  },
+
+  getWordDetail: async (word, sourceLang, targetLang) => {
+    const response = await axios.get(`${baseUrl}/api/word-detail`, { params: { word, source_lang: sourceLang, target_lang: targetLang } });
+    return response.data;
+  },
+
+  getAppSettings: async () => {
+    const response = await axios.get(`${baseUrl}/api/app-settings`)
+    return response.data
+  },
+
+  saveAppSettings: async (settings) => {
+    const response = await axios.post(`${baseUrl}/api/app-settings`, settings)
+    return response.data
+  },
+
+  startWordGen: async (fileId) => {
+    await axios.post(`${baseUrl}/api/learn/${fileId}/start-word-gen`)
+  },
+
+  stopWordGen: async (fileId) => {
+    await axios.post(`${baseUrl}/api/learn/${fileId}/stop-word-gen`)
+  },
+
+  priorityWordGen: async (fileId, word) => {
+    await axios.post(`${baseUrl}/api/learn/${fileId}/priority-word-gen`, { word })
   }
 };

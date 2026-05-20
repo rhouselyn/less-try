@@ -1,53 +1,72 @@
-import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, PenLine } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
 import { speakText } from '../utils/speech'
 
-function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer }) {
+function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening }) {
   const [selectedWords, setSelectedWords] = useState([])
-  const [answerChecked, setAnswerChecked] = useState(false)
+  const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
-  const stepInUnit = (exerciseIndexInUnit ?? 0) + 1
-  const totalItemsInUnit = totalExercisesInUnit ?? 0
-  const isLastExercise = stepInUnit >= (totalExercisesInUnit ?? 10)
+  const stepInUnit = (quizData?.step_in_unit ?? 0) + 1
+  const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
+  const rawTotalItemsInUnit = quizData?.total_items_in_unit ?? 0
+  const totalItemsInUnit = skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit
 
-  const handleWordSelect = (word, index) => {
-    if (answerChecked) return
-    const newSelected = [...selectedWords]
-    const emptyIndex = newSelected.findIndex(w => w === null || w === undefined)
-    if (emptyIndex !== -1) {
-      newSelected[emptyIndex] = { word, index }
-    } else {
-      newSelected.push({ word, index })
+  const autoSpeak = useCallback(() => {
+    if (quizData?.original_sentence) {
+      setTimeout(() => speakText(quizData.original_sentence, sourceLang), 300)
     }
-    setSelectedWords(newSelected)
+  }, [quizData?.original_sentence, sourceLang])
+
+  useEffect(() => {
+    autoSpeak()
+  }, [autoSpeak])
+
+  if (!quizData) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-3xl mx-auto"
+      >
+        <div className="text-center py-16">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-stone-400" />
+          <p className="text-lg text-stone-600">{t.loading}</p>
+        </div>
+      </motion.div>
+    )
   }
 
-  const handleRemoveWord = (index) => {
-    if (answerChecked) return
+  const correctWords = quizData.correct_words || []
+  const options = quizData.options || []
+
+  const handleWordSelect = (word, index) => {
+    if (isChecked) return
+    setSelectedWords([...selectedWords, { word, index }])
+  }
+
+  const handleRemoveWord = (pos) => {
+    if (isChecked) return
     const newSelected = [...selectedWords]
-    newSelected[index] = null
+    newSelected.splice(pos, 1)
     setSelectedWords(newSelected)
   }
 
   const checkAnswer = () => {
-    const userAnswerWords = selectedWords.filter(w => w).map(w => w.word.toLowerCase())
-    const correctAnswerWords = data.answer_words.map(w => w.toLowerCase())
-
-    const correct = userAnswerWords.length === correctAnswerWords.length &&
-      userAnswerWords.every((word, index) => word === correctAnswerWords[index])
-
+    const userWords = selectedWords.map(w => w.word.toLowerCase())
+    const correct = userWords.length === correctWords.length &&
+      userWords.every((w, i) => w === correctWords[i].toLowerCase())
     setIsCorrect(correct)
-    setAnswerChecked(true)
+    setIsChecked(true)
     if (onAnswer) onAnswer(correct)
   }
 
-  const handleNext = () => {
+  const handleNextQuestion = () => {
     setSelectedWords([])
-    setAnswerChecked(false)
+    setIsChecked(false)
     setIsCorrect(false)
-    onNext()
+    onNextQuestion()
   }
 
   return (
@@ -93,72 +112,66 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full text-sm font-medium mb-4"
           >
-            <PenLine className="w-4 h-4" />
-            选词填空
+            <Headphones className="w-4 h-4" />
+            听力题
           </motion.div>
           <div className="flex items-center justify-center gap-2">
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-lg text-stone-700"
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => speakText(quizData.original_sentence, sourceLang)}
+              className="p-3 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
             >
-              {data.masked_sentence}
-            </motion.p>
+              <Volume2 className="w-8 h-8" />
+            </motion.button>
+            <span className="text-sm text-stone-400">点击播放</span>
           </div>
         </div>
 
         <div className="mb-8">
           <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
-            {data.answer_words.map((answerWord, idx) => {
-              const filled = selectedWords[idx]
-              const isSlotCorrect = filled && filled.word.toLowerCase() === answerWord.toLowerCase()
-              return (
+            <AnimatePresence>
+              {selectedWords.map((item, pos) => (
                 <motion.div
-                  key={`slot-${idx}`}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  key={`sel-${item.index}-${pos}`}
+                  initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium min-w-[80px] text-center transition-all ${
-                    filled
-                      ? answerChecked
-                        ? isCorrect
+                  exit={{ opacity: 0, scale: 0 }}
+                  whileHover={{ scale: 1.05 }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer ${
+                    isChecked
+                      ? isCorrect
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
                           ? 'bg-green-100 text-green-800 border border-green-300'
-                          : isSlotCorrect
-                            ? 'bg-green-100 text-green-800 border border-green-300'
-                            : 'bg-red-100 text-red-800 border border-red-300'
-                        : 'bg-stone-800 text-white cursor-pointer'
-                      : 'border-2 border-dashed border-stone-300 text-stone-400'
+                          : 'bg-red-100 text-red-800 border border-red-300'
+                      : 'bg-stone-800 text-white'
                   }`}
-                  onClick={() => filled && !answerChecked && handleRemoveWord(idx)}
+                  onClick={() => handleRemoveWord(pos)}
                 >
-                  {filled ? filled.word : '____'}
+                  {item.word}
                 </motion.div>
-              )
-            })}
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''), sourceLang)}
-              className="ml-auto p-2 text-amber-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
-              title="播放提示"
-            >
-              <Lightbulb className="w-5 h-5" />
-            </motion.button>
+              ))}
+            </AnimatePresence>
+            {selectedWords.length === 0 && (
+              <span className="italic text-stone-400 text-sm">按顺序点击下方单词组成句子</span>
+            )}
           </div>
         </div>
 
         <div className="mb-8">
           <div className="flex flex-wrap gap-2">
-            {data.options.map((word, idx) => {
-              const isSelected = selectedWords.some(w => w && w.index === idx)
+            {options.map((word, index) => {
+              const isSelected = selectedWords.some(w => w.index === index)
               return (
                 <motion.button
-                  key={`opt-${idx}`}
-                  whileHover={!answerChecked && !isSelected ? { scale: 1.05 } : {}}
-                  whileTap={!answerChecked && !isSelected ? { scale: 0.95 } : {}}
-                  onClick={() => handleWordSelect(word, idx)}
-                  disabled={isSelected || answerChecked}
+                  key={`opt-${index}`}
+                  whileHover={!isChecked && !isSelected ? { scale: 1.05 } : {}}
+                  whileTap={!isChecked && !isSelected ? { scale: 0.95 } : {}}
+                  onClick={() => handleWordSelect(word, index)}
+                  disabled={isSelected || isChecked}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    isSelected || answerChecked
+                    isSelected || isChecked
                       ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
                       : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
                   }`}
@@ -170,7 +183,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           </div>
         </div>
 
-        {answerChecked && (
+        {isChecked && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -178,37 +191,34 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           >
             <div className="flex items-center gap-3 mb-2">
               {isCorrect ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <XCircle className="w-6 h-6 text-red-600" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{isCorrect ? t.correct : t.incorrect}</span>
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
+                {isCorrect ? t.correct : t.incorrect}
+              </span>
             </div>
             {!isCorrect && (
               <p className="text-stone-700 font-medium">
-                正确答案：{data.answer_words.join(' ')}
-              </p>
-            )}
-            {isCorrect && isLastExercise && (
-              <p className="font-medium mt-3 text-lg text-green-700">
-                🎉 该单元学习已完成！
+                正确答案：{correctWords.join(' ')}
               </p>
             )}
           </motion.div>
         )}
 
         <div className="flex gap-4">
-          {!answerChecked ? (
+          {!isChecked ? (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
               onClick={checkAnswer}
-              disabled={selectedWords.filter(w => w).length === 0}
+              disabled={selectedWords.length === 0}
               className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}
             </motion.button>
           ) : (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
-              onClick={handleNext}
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={handleNextQuestion}
               disabled={loading}
               className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
@@ -217,11 +227,9 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                   <Loader2 className="w-5 h-5 animate-spin" />
                   {t.loading}
                 </>
-              ) : isLastExercise ? (
-                '完成'
               ) : (
                 <>
-                  下一题
+                  {t.nextQuestion}
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}
@@ -233,4 +241,4 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
   )
 }
 
-export default MaskedSentenceExerciseStep
+export default ListeningQuizStep

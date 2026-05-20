@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion'
-import { ChevronRight, Trophy, Star, Sparkles } from 'lucide-react'
+import { ChevronRight, Trophy, Star, Sparkles, RotateCcw } from 'lucide-react'
 
-function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, t }) {
+function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview, errorCount, hasWrongItems, wrongItemsCount, t }) {
+  const starCount = Math.max(0, 3 - Math.floor(errorCount / 3))
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -43,7 +45,9 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, t }) {
           transition={{ delay: 0.5 }}
           className="text-base text-stone-500 mb-8"
         >
-          你已完成本单元的所有学习内容，继续加油！
+          {errorCount === 0
+            ? '太棒了！全部答对，完美表现！'
+            : `答错 ${errorCount} 题，再接再厉！`}
         </motion.p>
 
         <motion.div
@@ -59,10 +63,33 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, t }) {
               animate={{ scale: 1, rotate: 0 }}
               transition={{ type: 'spring', stiffness: 400, damping: 10, delay: 0.7 + i * 0.15 }}
             >
-              <Star className="w-8 h-8 text-amber-400 fill-amber-400" />
+              <Star
+                className={`w-8 h-8 transition-colors ${
+                  i < starCount
+                    ? 'text-amber-400 fill-amber-400'
+                    : 'text-stone-200 fill-stone-200'
+                }`}
+              />
             </motion.div>
           ))}
         </motion.div>
+
+        {hasWrongItems && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-xl"
+          >
+            <div className="flex items-center gap-2 justify-center mb-2">
+              <RotateCcw className="w-4 h-4 text-amber-600" />
+              <span className="text-amber-800 font-medium">错题复习</span>
+            </div>
+            <p className="text-sm text-amber-700">
+              你有 {wrongItemsCount ?? errorCount} 道错题需要复习，完成后才能继续
+            </p>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -79,18 +106,34 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, t }) {
           <Sparkles className="w-5 h-5 text-amber-500" />
         </motion.div>
 
-        <motion.button
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0 }}
-          whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-          whileTap={{ scale: 0.97, y: 0 }}
-          onClick={onContinue}
-          className="mt-10 px-10 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2 mx-auto"
+          className="mt-10 flex items-center justify-center gap-4"
         >
-          继续学习
-          <ChevronRight className="w-5 h-5" />
-        </motion.button>
+          {hasWrongItems ? (
+            <motion.button
+              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
+              whileTap={{ scale: 0.97, y: 0 }}
+              onClick={onReview}
+              className="px-10 py-4 bg-amber-500 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              <RotateCcw className="w-5 h-5" />
+              开始错题复习
+            </motion.button>
+          ) : (
+            <motion.button
+              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
+              whileTap={{ scale: 0.97, y: 0 }}
+              onClick={onContinue}
+              className="px-10 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2"
+            >
+              继续学习
+              <ChevronRight className="w-5 h-5" />
+            </motion.button>
+          )}
+        </motion.div>
       </div>
     </motion.div>
   )
