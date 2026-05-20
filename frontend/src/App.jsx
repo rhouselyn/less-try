@@ -425,6 +425,9 @@ function App() {
     
     setUnitErrorCount(0)
     unitErrorCountRef.current = 0
+    setWrongItems([])
+    setReviewMode(false)
+    setReviewIndex(0)
     
     setLoading(true)
     try {
@@ -655,13 +658,27 @@ function App() {
     }
   }
 
-  const handlePhase2Answer = (isCorrect) => {
+  const handlePhase2Answer = (isCorrect, exerciseType, exerciseData) => {
     if (!isCorrect) {
       setUnitErrorCount(prev => {
         const newCount = prev + 1
         unitErrorCountRef.current = newCount
         return newCount
       })
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
+        setWrongItems(prev => [...prev, { type: exerciseType, data: exerciseData }])
+      }
+    } else {
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
+      }
     }
   }
 
@@ -687,6 +704,14 @@ function App() {
     } else if (nextItem?.type === 'listening_quiz') {
       setListeningQuizData(nextItem.data)
       setStep('listening-quiz')
+    } else if (nextItem?.type === 'masked_sentence') {
+      setExerciseType('masked_sentence')
+      setCurrentExerciseData(nextItem.data)
+      setStep('phase-exercise')
+    } else if (nextItem?.type === 'translation_reconstruction') {
+      setExerciseType('translation_reconstruction')
+      setCurrentExerciseData(nextItem.data)
+      setStep('phase-exercise')
     }
   }
 
@@ -1070,6 +1095,14 @@ function App() {
                 } else if (firstWrong?.type === 'listening_quiz') {
                   setListeningQuizData(firstWrong.data)
                   setStep('listening-quiz')
+                } else if (firstWrong?.type === 'masked_sentence') {
+                  setExerciseType('masked_sentence')
+                  setCurrentExerciseData(firstWrong.data)
+                  setStep('phase-exercise')
+                } else if (firstWrong?.type === 'translation_reconstruction') {
+                  setExerciseType('translation_reconstruction')
+                  setCurrentExerciseData(firstWrong.data)
+                  setStep('phase-exercise')
                 }
               }}
               errorCount={unitErrorCount}
@@ -1126,7 +1159,7 @@ function App() {
             <MaskedSentenceExerciseStep
               key="masked-exercise"
               data={currentExerciseData}
-              onNext={handleNextPhaseExercise}
+              onNext={reviewMode ? goToNextReviewItem : handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
@@ -1160,7 +1193,7 @@ function App() {
             <TranslationReconstructionStep
               key="reconstruction-exercise"
               data={currentExerciseData}
-              onNext={handleNextPhaseExercise}
+              onNext={reviewMode ? goToNextReviewItem : handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([

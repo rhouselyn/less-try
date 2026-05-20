@@ -364,17 +364,12 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 results_dict[idx] = sentence_data
             completed_indices.add(idx)
             
-            max_sequential = -1
-            for ci in sorted(completed_indices):
-                if ci == max_sequential + 1:
-                    max_sequential = ci
-                else:
-                    break
-            
             ordered_translations = []
-            for si in range(max_sequential + 1):
+            for si in range(total_sentences):
                 if si in results_dict:
                     ordered_translations.append(results_dict[si])
+                else:
+                    ordered_translations.append({"sentence": sentences[si], "translation_result": {}})
             
             partial_vocab = []
             for si, sd in enumerate(ordered_translations):
@@ -594,6 +589,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     used_sentences = set()
     
     vocab_pointer = 0
+    quiz_type_counter = 0
     
     while vocab_pointer < len(shuffled_indices):
         unit_word_items = []
@@ -681,117 +677,121 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     correct_tokens = get_translation_phrases(tr, max_phrases=6)
                     correct_tokens = [ct for ct in correct_tokens if not is_punctuation_only(ct)]
                     
-                    if len(correct_tokens) >= 2:
-                        redundant_tokens = tr.get("redundant_tokens", [])
-                        cleaned_redundant = []
-                        correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
-                        for rt in redundant_tokens:
-                            rt_stripped = rt.strip()
-                            if rt_stripped and rt_stripped not in correct_tokens and not is_punctuation_only(rt_stripped):
-                                if correct_has_source_lang or not is_source_lang_text(rt_stripped, source_lang):
-                                    cleaned_redundant.append(rt_stripped)
-                        
-                        selected_distractors = list(dict.fromkeys(cleaned_redundant))[:4]
-                        
-                        if len(selected_distractors) < 4:
-                            existing_set = set(correct_tokens) | set(selected_distractors)
-                            for other_sent in sentences:
-                                if other_sent.get("sentence") == sentence:
-                                    continue
-                                other_tr = other_sent.get("translation_result", {})
-                                other_phrases = get_translation_phrases(other_tr, max_phrases=10)
-                                for op in other_phrases:
-                                    if op not in existing_set:
-                                        if correct_has_source_lang or not is_source_lang_text(op, source_lang):
-                                            selected_distractors.append(op)
-                                            existing_set.add(op)
-                                            if len(selected_distractors) >= 4:
+                    if quiz_type_counter % 2 == 0:
+                        if len(correct_tokens) >= 2:
+                            redundant_tokens = tr.get("redundant_tokens", [])
+                            cleaned_redundant = []
+                            correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
+                            for rt in redundant_tokens:
+                                rt_stripped = rt.strip()
+                                if rt_stripped and rt_stripped not in correct_tokens and not is_punctuation_only(rt_stripped):
+                                    if correct_has_source_lang or not is_source_lang_text(rt_stripped, source_lang):
+                                        cleaned_redundant.append(rt_stripped)
+                            
+                            selected_distractors = list(dict.fromkeys(cleaned_redundant))[:4]
+                            
+                            if len(selected_distractors) < 4:
+                                existing_set = set(correct_tokens) | set(selected_distractors)
+                                for other_sent in sentences:
+                                    if other_sent.get("sentence") == sentence:
+                                        continue
+                                    other_tr = other_sent.get("translation_result", {})
+                                    other_phrases = get_translation_phrases(other_tr, max_phrases=10)
+                                    for op in other_phrases:
+                                        if op not in existing_set:
+                                            if correct_has_source_lang or not is_source_lang_text(op, source_lang):
+                                                selected_distractors.append(op)
+                                                existing_set.add(op)
+                                                if len(selected_distractors) >= 4:
+                                                    break
+                                    if len(selected_distractors) >= 4:
+                                        break
+                            
+                            all_tokens = correct_tokens + selected_distractors
+                            
+                            if not correct_translation.strip():
+                                correct_translation = "".join(correct_tokens)
+                            
+                            unit_quiz_items.append({
+                                "type": "sentence_quiz",
+                                "sentence": sentence,
+                                "correct_translation": correct_translation,
+                                "correct_tokens": correct_tokens,
+                                "tokens": all_tokens,
+                                "_covering_vocab_indices": covering_vocab_indices
+                            })
+                    else:
+                        listening_correct_words = [vocab[vi]["word"] for vi in covering_vocab_indices]
+                        if not listening_correct_words:
+                            for vi in all_learned_vocab_indices:
+                                w_data = vocab[vi]
+                                w_tokens = w_data.get("tokens", [w_data["word"]])
+                                for wt in w_tokens:
+                                    for token in translation_tokens:
+                                        if isinstance(token, dict) and "text" in token:
+                                            if wt.lower() == token["text"].lower() or wt.lower() in token["text"].lower() or token["text"].lower() in wt.lower():
+                                                if w_data["word"] not in listening_correct_words:
+                                                    listening_correct_words.append(w_data["word"])
                                                 break
-                                if len(selected_distractors) >= 4:
+                        
+                        sentence_word_list = sentence.split()
+                        ordered_correct_words = []
+                        used_correct = set()
+                        for sw in sentence_word_list:
+                            for cw in listening_correct_words:
+                                if cw not in used_correct and (sw.lower() == cw.lower() or sw.lower() in cw.lower() or cw.lower() in sw.lower()):
+                                    ordered_correct_words.append(cw)
+                                    used_correct.add(cw)
+                                    break
+                        if len(ordered_correct_words) == len(listening_correct_words):
+                            listening_correct_words = ordered_correct_words
+                        
+                        listening_distractor_words = []
+                        listening_correct_lower = set(w.lower() for w in listening_correct_words)
+                        available = [v["word"] for v in vocab if v["word"].lower() not in listening_correct_lower]
+                        random.shuffle(available)
+                        for w in available:
+                            listening_distractor_words.append(w)
+                            if len(listening_distractor_words) >= 2:
+                                break
+                        
+                        if len(listening_distractor_words) < 2:
+                            for other_sent in sentences:
+                                other_sentence = other_sent.get("sentence", "")
+                                if other_sentence and other_sentence != sentence:
+                                    for w in other_sentence.split():
+                                        w_clean = w.strip()
+                                        if w_clean and w_clean.lower() not in listening_correct_lower and w_clean not in listening_distractor_words:
+                                            listening_distractor_words.append(w_clean)
+                                            if len(listening_distractor_words) >= 2:
+                                                break
+                                if len(listening_distractor_words) >= 2:
                                     break
                         
-                        all_tokens = correct_tokens + selected_distractors
+                        if len(listening_distractor_words) < 2:
+                            backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
+                            backup_distractors = list(backup_vocab_list)
+                            random.shuffle(backup_distractors)
+                            idx = 0
+                            while len(listening_distractor_words) < 2:
+                                bd = backup_distractors[idx % len(backup_distractors)]
+                                if bd.lower() not in listening_correct_lower and bd not in listening_distractor_words:
+                                    listening_distractor_words.append(bd)
+                                idx += 1
                         
-                        if not correct_translation.strip():
-                            correct_translation = "".join(correct_tokens)
+                        if not listening_correct_words:
+                            quiz_type_counter += 1
+                            continue
                         
                         unit_quiz_items.append({
-                            "type": "sentence_quiz",
+                            "type": "listening_quiz",
                             "sentence": sentence,
-                            "correct_translation": correct_translation,
-                            "correct_tokens": correct_tokens,
-                            "tokens": all_tokens,
+                            "correct_words": listening_correct_words,
+                            "distractor_words": listening_distractor_words[:2],
                             "_covering_vocab_indices": covering_vocab_indices
                         })
                     
-                    listening_correct_words = [vocab[vi]["word"] for vi in covering_vocab_indices]
-                    if not listening_correct_words:
-                        for vi in all_learned_vocab_indices:
-                            w_data = vocab[vi]
-                            w_tokens = w_data.get("tokens", [w_data["word"]])
-                            for wt in w_tokens:
-                                for token in translation_tokens:
-                                    if isinstance(token, dict) and "text" in token:
-                                        if wt.lower() == token["text"].lower() or wt.lower() in token["text"].lower() or token["text"].lower() in wt.lower():
-                                            if w_data["word"] not in listening_correct_words:
-                                                listening_correct_words.append(w_data["word"])
-                                            break
-                    
-                    sentence_word_list = sentence.split()
-                    ordered_correct_words = []
-                    used_correct = set()
-                    for sw in sentence_word_list:
-                        for cw in listening_correct_words:
-                            if cw not in used_correct and (sw.lower() == cw.lower() or sw.lower() in cw.lower() or cw.lower() in sw.lower()):
-                                ordered_correct_words.append(cw)
-                                used_correct.add(cw)
-                                break
-                    if len(ordered_correct_words) == len(listening_correct_words):
-                        listening_correct_words = ordered_correct_words
-                    
-                    listening_distractor_words = []
-                    listening_correct_lower = set(w.lower() for w in listening_correct_words)
-                    available = [v["word"] for v in vocab if v["word"].lower() not in listening_correct_lower]
-                    random.shuffle(available)
-                    for w in available:
-                        listening_distractor_words.append(w)
-                        if len(listening_distractor_words) >= 2:
-                            break
-                    
-                    if len(listening_distractor_words) < 2:
-                        for other_sent in sentences:
-                            other_sentence = other_sent.get("sentence", "")
-                            if other_sentence and other_sentence != sentence:
-                                for w in other_sentence.split():
-                                    w_clean = w.strip()
-                                    if w_clean and w_clean.lower() not in listening_correct_lower and w_clean not in listening_distractor_words:
-                                        listening_distractor_words.append(w_clean)
-                                        if len(listening_distractor_words) >= 2:
-                                            break
-                            if len(listening_distractor_words) >= 2:
-                                break
-                    
-                    if len(listening_distractor_words) < 2:
-                        backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
-                        backup_distractors = list(backup_vocab_list)
-                        random.shuffle(backup_distractors)
-                        idx = 0
-                        while len(listening_distractor_words) < 2:
-                            bd = backup_distractors[idx % len(backup_distractors)]
-                            if bd.lower() not in listening_correct_lower and bd not in listening_distractor_words:
-                                listening_distractor_words.append(bd)
-                            idx += 1
-                    
-                    if not listening_correct_words:
-                        continue
-                    
-                    unit_quiz_items.append({
-                        "type": "listening_quiz",
-                        "sentence": sentence,
-                        "correct_words": listening_correct_words,
-                        "distractor_words": listening_distractor_words[:2],
-                        "_covering_vocab_indices": covering_vocab_indices
-                    })
+                    quiz_type_counter += 1
         
         final_items = list(unit_word_items)
         

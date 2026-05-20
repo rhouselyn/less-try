@@ -40,7 +40,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
 
     setIsCorrect(correct)
     setAnswerChecked(true)
-    if (onAnswer) onAnswer(correct)
+    if (onAnswer) onAnswer(correct, 'masked_sentence', { masked_sentence: data.masked_sentence, original_sentence: data.original_sentence, answer_words: data.answer_words, options: data.options, mask_version: maskVersion, total_masks: totalMasks, exercise_index_in_unit: exerciseIndexInUnit, total_exercises_in_unit: totalExercisesInUnit, sentence_preview: sentencePreview })
   }
 
   const handleNext = () => {

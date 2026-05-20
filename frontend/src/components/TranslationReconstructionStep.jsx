@@ -35,7 +35,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
 
     setIsCorrect(correct)
     setAnswerChecked(true)
-    if (onAnswer) onAnswer(correct)
+    if (onAnswer) onAnswer(correct, 'translation_reconstruction', { native_translation: data.native_translation, original_tokens: data.original_tokens, options: data.options, exercise_index_in_unit: exerciseIndexInUnit, total_exercises_in_unit: totalExercisesInUnit, sentence_preview: sentencePreview })
   }
 
   const handleNext = () => {
