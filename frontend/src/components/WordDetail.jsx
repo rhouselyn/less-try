@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { Brain, Lightbulb, BookText, GitBranch, Volume2 } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
-function WordDetail({ word, t, onSentenceClick }) {
+function WordDetail({ word, t, onSentenceClick, sourceLang }) {
 
   return (
     <motion.div
@@ -54,7 +54,7 @@ function WordDetail({ word, t, onSentenceClick }) {
                     <p className="text-stone-700 text-[13px] leading-snug flex-1">{example.sentence}</p>
                     {example.sentence && (
                       <button
-                        onClick={(e) => { e.stopPropagation(); speakText(example.sentence) }}
+                        onClick={(e) => { e.stopPropagation(); speakText(example.sentence, sourceLang) }}
                         className="p-1 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors shrink-0"
                       >
                         <Volume2 className="w-3.5 h-3.5" />

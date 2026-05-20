@@ -4,7 +4,7 @@ import { ArrowLeft, Search, BookOpen, Volume2 } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 
-function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
+function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedWord, setExpandedWord] = useState(null)
   const [enrichedWords, setEnrichedWords] = useState({})
@@ -76,8 +76,8 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
 
   const speakWord = useCallback((text, e) => {
     if (e) e.stopPropagation()
-    speakText(text)
-  }, [])
+    speakText(text, sourceLang)
+  }, [sourceLang])
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`vocab-group-${letter}`)
@@ -242,7 +242,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
                                                     <p className="text-[12px] text-stone-700 leading-snug flex-1">{typeof ex === 'string' ? ex : ex.sentence}</p>
                                                     {((typeof ex === 'string' ? ex : ex.sentence)) && (
                                                       <button
-                                                        onClick={(e) => { e.stopPropagation(); speakText(typeof ex === 'string' ? ex : ex.sentence) }}
+                                                        onClick={(e) => { e.stopPropagation(); speakText(typeof ex === 'string' ? ex : ex.sentence, sourceLang) }}
                                                         className="p-1 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors shrink-0"
                                                       >
                                                         <Volume2 className="w-3 h-3" />
