@@ -891,16 +891,12 @@ function App() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   onClick={() => {
-                    if (step === 'learning' || step === 'sentence-quiz' || step === 'listening-quiz' || step === 'progress') {
-                      setStep('dictionary');
-                    } else {
-                      setStep('input');
-                    }
+                    setStep('input');
                   }}
                   className="flex items-center gap-2 px-4 py-2 text-stone-500 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  {t.back}
+                  主页面
                 </motion.button>
               )}
             </AnimatePresence>
@@ -978,7 +974,7 @@ function App() {
               units={units}
               currentUnit={currentUnit}
               onUnitClick={handleUnitClick}
-              onBack={() => setStep('dictionary')}
+              onBack={() => setStep('input')}
               loading={loading}
               t={t}
               allUnitsCompleted={allUnitsCompleted}
@@ -994,7 +990,7 @@ function App() {
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
               onNextWord={reviewMode ? goToNextReviewItem : getNextWord}
-              onBack={() => setStep('all-units')}
+              onBack={() => setStep('input')}
               onOpenVocabList={handleOpenVocabList}
               loading={loading}
               t={t}
@@ -1008,7 +1004,7 @@ function App() {
               key="sentence-quiz"
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('all-units')}
+              onBack={() => setStep('input')}
               onComplete={async () => {
                 if (currentFileId && currentPhase) {
                   const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
@@ -1033,7 +1029,7 @@ function App() {
               key="listening-quiz"
               quizData={listeningQuizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('all-units')}
+              onBack={() => setStep('input')}
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
@@ -1091,7 +1087,7 @@ function App() {
               currentPhase2Unit={currentPhase2Unit}
               onPhase1UnitClick={handlePhase1UnitClick}
               onPhase2UnitClick={handlePhase2UnitClick}
-              onBack={() => setStep('dictionary')}
+              onBack={() => setStep('input')}
               loading={loading}
               t={t}
               unitStarCounts={unitStarCounts}
@@ -1106,7 +1102,7 @@ function App() {
               phases={phases}
               currentFileId={currentFileId}
               onPhaseSelect={handlePhaseSelect}
-              onBack={() => setStep('dictionary')}
+              onBack={() => setStep('input')}
               loading={loading}
               t={t}
             />
@@ -1119,7 +1115,7 @@ function App() {
               currentUnit={currentPhaseUnit}
               phaseNumber={currentPhase}
               onUnitClick={handlePhaseUnitClick}
-              onBack={() => setStep('all-units')}
+              onBack={() => setStep('input')}
               loading={loading}
               t={t}
             />
@@ -1130,7 +1126,7 @@ function App() {
               key="masked-exercise"
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('all-units')}
+              onBack={() => setStep('input')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
@@ -1164,7 +1160,7 @@ function App() {
               key="reconstruction-exercise"
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('all-units')}
+              onBack={() => setStep('input')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
@@ -1195,7 +1191,7 @@ function App() {
             <VocabListStep
               key="vocab-list"
               vocab={vocab}
-              onBack={() => setStep(previousStep || 'all-units')}
+              onBack={() => setStep('input')}
               loading={loading}
               t={t}
               currentFileId={currentFileId}

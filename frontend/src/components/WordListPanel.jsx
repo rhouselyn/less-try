@@ -25,7 +25,7 @@ function WordDetailCard({ word, sourceLang, detailLoading }) {
           <div>
             <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
               <GitBranch className="w-3 h-3" />
-              变体
+              词形变化
             </h3>
             <div className="pl-5 flex flex-wrap gap-x-3 gap-y-1">
               {word.variants_detail.map((variant, index) => (
@@ -279,7 +279,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-amber-50/50 to-white">
           <div className="flex items-center gap-2.5">
             <BookOpen className="w-5 h-5 text-amber-500" />
-            <span className="text-base font-semibold text-stone-800">单词总表</span>
+            <span className="text-base font-semibold text-stone-800">词汇总览</span>
             {!loading && words.length > 0 && (
               <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} 词</span>
             )}
@@ -331,7 +331,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
       >
         <div className="flex items-center gap-2.5">
           <BookOpen className="w-4 h-4 text-amber-500" />
-          <span className="text-sm font-semibold text-stone-700">单词总表</span>
+          <span className="text-sm font-semibold text-stone-700">词汇总览</span>
           {!isOpen && words.length > 0 && (
             <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} 词</span>
           )}

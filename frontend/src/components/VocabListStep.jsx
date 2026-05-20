@@ -163,7 +163,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId }) {
                     {words.map((word, index) => {
                       const isExpanded = expandedWord === word.word
                       const enriched = getEnriched(word.word)
-                      const displayMeaning = enriched.enriched_meaning || word.enriched_meaning || word.context_meaning || word.translation
+                      const displayMeaning = word.enriched_meaning || word.context_meaning || word.translation
                       return (
                         <motion.div
                           key={word.word}

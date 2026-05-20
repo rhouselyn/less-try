@@ -403,7 +403,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   </span>
                                 )}
                                 <span className={`text-[12px] text-stone-500 truncate ${hideMeanings ? 'invisible' : ''}`}>
-                                  {word.enriched_meaning || word.context_meaning || word.translation}
+                                  {word.context_meaning || word.translation}
                                 </span>
                               </div>
                               <Volume2
