@@ -183,42 +183,59 @@ class TextProcessor:
         return chunks
 
     def split_sentences(self, text: str) -> List[str]:
-        sentence_endings = {'.', '!', '?', '。', '！', '？'}
+        sentence_endings = {
+            '.', '!', '?',
+            '。', '！', '？',
+            '…', '⋯',
+            '।', '॥',
+            '။', ' ။',
+            '።', '፣',
+            '។', '៕',
+            'ດ',
+            '᪩', '᪪',
+            '⳹', '⳾',
+            '𐩖', '𐩗',
+            '꘎', '꛳',
+            ';', '；',
+        }
         sentences = []
         current_sentence = ""
-        
+
         i = 0
         while i < len(text):
             char = text[i]
+
+            if char == '\n':
+                if current_sentence.strip():
+                    sentences.append(current_sentence.strip())
+                current_sentence = ""
+                i += 1
+                continue
+
             current_sentence += char
-            
+
             if char in sentence_endings:
                 j = i + 1
                 while j < len(text) and text[j] in sentence_endings:
                     current_sentence += text[j]
                     j += 1
+                if j < len(text) and text[j] == ' ':
+                    current_sentence += text[j]
+                    j += 1
                 i = j
-                
+
                 if current_sentence.strip():
-                    sentences.append(current_sentence)
+                    sentences.append(current_sentence.strip())
                 current_sentence = ""
             else:
                 i += 1
-        
+
         if current_sentence.strip():
-            sentences.append(current_sentence)
-        
+            sentences.append(current_sentence.strip())
+
         sentences = [s for s in sentences if s.strip()]
-        
-        merged = []
-        for s in sentences:
-            word_count = len(s.strip().split())
-            if word_count < 2 and merged:
-                merged[-1] = merged[-1].rstrip() + " " + s.lstrip()
-            else:
-                merged.append(s)
-        
-        return [s for s in merged if s.strip()]
+
+        return [s for s in sentences if s.strip()]
 
     def process_word_variants(self, word_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """处理单词变体，确保变体前面有类型标注"""
