@@ -986,7 +986,33 @@ async def priority_word_gen(file_id: str, request: dict):
 async def get_vocab(file_id: str):
     try:
         vocab = storage.load_vocab(file_id)
-        return {"vocab": vocab}
+        if isinstance(vocab, dict) and "vocab" in vocab:
+            vocab_list = vocab["vocab"]
+        elif isinstance(vocab, list):
+            vocab_list = vocab
+        else:
+            vocab_list = []
+        
+        enriched_list = []
+        for entry in vocab_list:
+            enriched_entry = dict(entry)
+            cached = storage.load_word_cache(file_id, entry.get("word", ""))
+            if cached:
+                if cached.get("enriched_meaning"):
+                    enriched_entry["enriched_meaning"] = cached["enriched_meaning"]
+                if cached.get("ipa"):
+                    enriched_entry["ipa"] = cached["ipa"]
+                if cached.get("morphology"):
+                    enriched_entry["morphology"] = cached["morphology"]
+                if cached.get("variants_detail"):
+                    enriched_entry["variants_detail"] = cached["variants_detail"]
+                if cached.get("examples"):
+                    enriched_entry["examples"] = cached["examples"]
+                if cached.get("memory_hint"):
+                    enriched_entry["memory_hint"] = cached["memory_hint"]
+            enriched_list.append(enriched_entry)
+        
+        return {"vocab": enriched_list}
     except Exception as e:
         raise HTTPException(status_code=404, detail=f"Vocab not found: {str(e)}")
 
