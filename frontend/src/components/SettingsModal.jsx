@@ -12,7 +12,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [maskedKey, setMaskedKey] = useState('')
-  const [rpm, setRpm] = useState(20)
+  const [rpm, setRpm] = useState(60)
   const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
 
   useEffect(() => {

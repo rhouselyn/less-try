@@ -1023,7 +1023,7 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
         
         app_settings = storage.load_app_settings()
-        rpm = app_settings.get("rpm", 20)
+        rpm = app_settings.get("rpm", 60)
         
         t_title_start = time.time()
         title = await generate_title(text, source_lang)

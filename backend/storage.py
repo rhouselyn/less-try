@@ -78,7 +78,7 @@ class Storage:
             import shutil
             shutil.rmtree(cache_dir)
     
-    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str, rpm: int = 20):
+    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str, rpm: int = 60):
         file_dir = self.get_file_dir(file_id)
         settings_path = file_dir / "language_settings.json"
         with open(settings_path, 'w', encoding='utf-8') as f:
@@ -95,12 +95,12 @@ class Storage:
             with open(settings_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 if "rpm" not in data:
-                    data["rpm"] = 20
+                    data["rpm"] = 60
                 return data
         return {
             "source_lang": "en",
             "target_lang": "zh",
-            "rpm": 20
+            "rpm": 60
         }
     
     def save_learning_progress(self, file_id: str, current_index: int):
@@ -378,4 +378,4 @@ class Storage:
         if settings_path.exists():
             with open(settings_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        return {"rpm": 20, "target_lang": "zh"}
+        return {"rpm": 60, "target_lang": "zh"}
