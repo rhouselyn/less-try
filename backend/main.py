@@ -484,6 +484,20 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 unique_vocab.append(entry)
         all_vocab = unique_vocab
         
+        all_words_lower = set(entry.get("word", "").lower() for entry in all_vocab)
+        deduplicated = []
+        for entry in all_vocab:
+            tokens = entry.get("tokens", [])
+            if tokens and len(tokens) >= 2:
+                all_tokens_covered = all(
+                    any(t.lower() == w.lower() for w in all_words_lower if w != entry.get("word", "").lower())
+                    for t in tokens
+                )
+                if all_tokens_covered:
+                    continue
+            deduplicated.append(entry)
+        all_vocab = deduplicated
+        
         all_vocab.sort(key=vocab_sort_key)
         print(f"[DEBUG] 从所有句子中提取词典条目，共 {len(all_vocab)} 个单词: {[word['word'] for word in all_vocab]}")
         
