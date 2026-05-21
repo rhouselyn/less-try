@@ -633,8 +633,7 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
         
         placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
         enriched = options_result.get("enriched_meaning", "")
-        ctx_meaning = options_result.get("context_meaning", "")
-        if placeholder_pattern.search(enriched) or placeholder_pattern.search(ctx_meaning):
+        if placeholder_pattern.search(enriched):
             print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
             options_result = await nvidia_api.generate_multiple_choice(
                 word_to_gen,
@@ -643,20 +642,17 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                 target_lang
             )
             enriched = options_result.get("enriched_meaning", "")
-            ctx_meaning = options_result.get("context_meaning", "")
-            if placeholder_pattern.search(enriched) or placeholder_pattern.search(ctx_meaning):
+            if placeholder_pattern.search(enriched):
                 print(f"[WARN] Still placeholder text after retry for '{word_to_gen}', using fallback")
                 if placeholder_pattern.search(enriched):
                     options_result["enriched_meaning"] = correct_meaning
-                if placeholder_pattern.search(ctx_meaning):
-                    options_result["context_meaning"] = correct_meaning
         
         options_result = fix_llm_options_result(options_result, source_lang)
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word_to_gen)
-        cache_data["ipa"] = options_result.get("ipa", word_entry.get("ipa", ""))
+        cache_data["ipa"] = word_entry.get("ipa", "")
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
+        cache_data["context_meaning"] = correct_meaning
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
@@ -1465,7 +1461,7 @@ async def get_random_word(file_id: str):
         # 构建响应数据
         response_data = {
             "word": options_result.get("word", word),
-            "ipa": options_result.get("ipa", random_word.get("ipa", "")),
+            "ipa": random_word.get("ipa", ""),
             "correct_meaning": options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning)),
             "options": options,
             "correct_index": correct_index,
@@ -1474,7 +1470,7 @@ async def get_random_word(file_id: str):
             "examples": options_result.get("examples", []),
             "memory_hint": options_result.get("memory_hint", ""),
             "enriched_meaning": options_result.get("enriched_meaning", correct_meaning),
-            "context_meaning": options_result.get("context_meaning", correct_meaning),
+            "context_meaning": correct_meaning,
             "unit_end_index": unit_end_index,
             "current_index": current_index,
             "unit_start_index": unit_start_index,
@@ -1486,9 +1482,9 @@ async def get_random_word(file_id: str):
         # 构建缓存数据
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word)
-        cache_data["ipa"] = options_result.get("ipa", random_word.get("ipa", ""))
+        cache_data["ipa"] = random_word.get("ipa", "")
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
+        cache_data["context_meaning"] = correct_meaning
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
@@ -1750,9 +1746,9 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         # 构建缓存数据
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word)
-        cache_data["ipa"] = options_result.get("ipa", random_word.get("ipa", ""))
+        cache_data["ipa"] = random_word.get("ipa", "")
         cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
+        cache_data["context_meaning"] = correct_meaning
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
@@ -1913,11 +1909,11 @@ async def get_word_details(file_id: str, word: str):
         # 先构建 response_data 完全 manually, to avoid issues
         response_data = {}
         response_data["word"] = options_result.get("word", word_data["word"])
-        response_data["ipa"] = options_result.get("ipa", word_data.get("ipa", ""))
+        response_data["ipa"] = word_data.get("ipa", "")
         response_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
         response_data["correct_meaning"] = options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning))
         response_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        response_data["context_meaning"] = options_result.get("context_meaning", correct_meaning)
+        response_data["context_meaning"] = correct_meaning
         response_data["examples"] = options_result.get("examples", [])
         response_data["context_sentences"] = context_sentences_with_translations
         response_data["context"] = context
@@ -2050,7 +2046,7 @@ async def get_unit_words(file_id: str, unit_id: int):
             # 构建学习数据
             learning_word = {
                 "word": options_result.get("word", word_data["word"]),
-                "ipa": options_result.get("ipa", word_data.get("ipa", "")),
+                "ipa": word_data.get("ipa", ""),
                 "correct_meaning": options_result.get("enriched_meaning", correct_meaning),
                 "options": options,
                 "correct_index": correct_index,
@@ -2860,7 +2856,7 @@ async def get_word_detail(word: str, source_lang: str = "en", target_lang: str =
         
         result = {
             "word": options_result.get("word", word),
-            "ipa": options_result.get("ipa", ""),
+            "ipa": "",
             "meaning": options_result.get("enriched_meaning", ""),
             "enriched_meaning": options_result.get("enriched_meaning", ""),
             "part_of_speech": options_result.get("morphology", ""),

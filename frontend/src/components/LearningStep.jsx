@@ -1,14 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain, BookOpen, Volume2 } from 'lucide-react'
-import { useEffect, useCallback, useRef } from 'react'
+import { useEffect } from 'react'
 import { speakText } from '../utils/speech'
 
 function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t, sourceLang, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
-  const lastSpokenWord = useRef(null)
-
   useEffect(() => {
-    if (learningData?.word && !skipListening && lastSpokenWord.current !== learningData.word) {
-      lastSpokenWord.current = learningData.word
+    if (learningData?.word && !skipListening) {
       const timer = setTimeout(() => speakText(learningData.word, sourceLang), 300)
       return () => clearTimeout(timer)
     }

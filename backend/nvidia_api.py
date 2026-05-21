@@ -171,11 +171,6 @@ class NvidiaAPI:
                             "type": "string",
                             "description": "单词的完整释义，包含多个母语单词的常见含义"
                         },
-                        "context_meaning": {
-                            "type": "string",
-                            "description": "结合上下文的特定释义"
-                        },
-                        "ipa": {"type": "string"},
                         "variants_detail": {
                             "type": "array",
                             "description": "词形变化 + 类型说明，只包含确实存在的词形变化",
@@ -230,7 +225,7 @@ class NvidiaAPI:
                             }
                         }
                     },
-                    "required": ["word", "enriched_meaning", "context_meaning", "ipa", "examples", "multiple_choice"]
+                    "required": ["word", "enriched_meaning", "examples", "multiple_choice"]
                 }
             }
         }
@@ -245,12 +240,10 @@ class NvidiaAPI:
 请生成以下信息：
 
 1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
-2. context_meaning: 结合上下文的特定释义，必须是具体的翻译，不能是占位符
-3. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
-4. variants_detail: 词形变化列表，带类型说明（如过去式、复数等），只包含确实存在的词形变化，如果没有则返回空数组
-5. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
-6. memory_hint: 记忆辅助（与用户母语的联想或对比）
-7. multiple_choice: 选择题，包含：
+2. variants_detail: 词形变化列表，带类型说明（如过去式、复数等），只包含确实存在的词形变化，如果没有则返回空数组
+3. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
+4. memory_hint: 记忆辅助（与用户母语的联想或对比）
+5. multiple_choice: 选择题，包含：
    - question: 可为空（默认为单词本身）
    - correct_answer: 单词的常见、正常释义，不是上下文特定释义
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
@@ -265,7 +258,7 @@ class NvidiaAPI:
 - 【重要】选项必须是纯单词或短语，不能是完整句子
 - 【重要】选项必须与单词本身的意思无关，不能包含单词的任何含义
 - 【重要】词形变化必须是确实存在的，不要硬加不存在的词形
-- 【极其重要】enriched_meaning 和 context_meaning 中不能包含占位符文本（如"释义1"、"含义1"、"meaning 1"等），必须全部是具体的、有意义的翻译内容
+- 【极其重要】enriched_meaning 中不能包含占位符文本（如"释义1"、"含义1"、"meaning 1"等），必须全部是具体的、有意义的翻译内容
 - 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 """
 
@@ -282,7 +275,6 @@ class NvidiaAPI:
             default_response = {
                 "word": word,
                 "enriched_meaning": correct_meaning,
-                "ipa": "",
                 "variants_detail": [],
                 "examples": [
                     {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
@@ -307,7 +299,6 @@ class NvidiaAPI:
             error_response = {
                 "word": word,
                 "enriched_meaning": correct_meaning,
-                "ipa": "",
                 "variants_detail": [],
                 "examples": [
                     {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
@@ -379,30 +370,6 @@ class NvidiaAPI:
                                     "word": {"type": "string", "description": "The word or phrase. Fixed collocations must be kept as one entry (e.g. 'what's up', 'run out of')"},
                                     "ipa": {"type": "string"},
                                     "context_meaning": {"type": "string"},
-                                    "variants": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "type": {"type": "string"},
-                                                "form": {"type": "string"}
-                                            },
-                                            "required": ["type", "form"]
-                                        }
-                                    },
-                                    "examples": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 2,
-                                        "maxItems": 2
-                                    },
-                                    "options": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 4,
-                                        "maxItems": 4
-                                    },
-                                    "grammar": {"type": "string"},
                                     "translation": {"type": "string"},
                                     "tokens": {
                                         "type": "array",
@@ -415,8 +382,8 @@ class NvidiaAPI:
                                     }
                                 },
                                 "required": [
-                                    "word", "ipa", "context_meaning", "variants", 
-                                    "examples", "options", "grammar", "translation", "tokens", "morphology"
+                                    "word", "ipa", "context_meaning",
+                                    "translation", "tokens", "morphology"
                                 ]
                             }
                         }
@@ -482,13 +449,9 @@ class NvidiaAPI:
 1. word: The word or phrase itself (固定搭配用完整短语，如 "what's up")
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
-4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
-5. examples: 2 example sentences in SOURCE_LANG that match the context meaning
-6. options: 4 options for the meaning (1 correct, 3 incorrect) - 错误答案必须是该单词所没有的意思，而不是非句子中的意思
-7. grammar: Grammar explanation for the word
-8. translation: Translation of the word to TARGET_LANG
-9. tokens: Split the word into tokens if applicable (固定搭配列出组成单词，如 "what's up" -> ["what's", "up"])
-10. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
+4. translation: Translation of the word to TARGET_LANG
+5. tokens: Split the word into tokens if applicable (固定搭配列出组成单词，如 "what's up" -> ["what's", "up"])
+6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
@@ -556,30 +519,6 @@ TEXT_CONTENT
                                     "word": {"type": "string"},
                                     "ipa": {"type": "string"},
                                     "context_meaning": {"type": "string"},
-                                    "variants": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "type": {"type": "string"},
-                                                "form": {"type": "string"}
-                                            },
-                                            "required": ["type", "form"]
-                                        }
-                                    },
-                                    "examples": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 2,
-                                        "maxItems": 2
-                                    },
-                                    "options": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 4,
-                                        "maxItems": 4
-                                    },
-                                    "grammar": {"type": "string"},
                                     "translation": {"type": "string"},
                                     "tokens": {
                                         "type": "array",
@@ -591,8 +530,8 @@ TEXT_CONTENT
                                     }
                                 },
                                 "required": [
-                                    "word", "ipa", "context_meaning", "variants",
-                                    "examples", "options", "grammar", "translation", "tokens", "morphology"
+                                    "word", "ipa", "context_meaning",
+                                    "translation", "tokens", "morphology"
                                 ]
                             }
                         }
@@ -613,13 +552,9 @@ TEXT_CONTENT
 1. word: 单词本身
 2. ipa: 国际音标
 3. context_meaning: 基于上下文的 {target_lang} 释义
-4. variants: 词形变化列表
-5. examples: 2个例句
-6. options: 4个选项（1个正确，3个错误）
-7. grammar: 语法解释
-8. translation: {target_lang} 翻译
-9. tokens: 分词结果
-10. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
+4. translation: {target_lang} 翻译
+5. tokens: 分词结果
+6. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
 
 【重要】必须为每一个遗漏的单词都生成条目，不要遗漏任何一个！
 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。"""
