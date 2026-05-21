@@ -72,8 +72,28 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
     setLoadingWords(prev => ({ ...prev, [wordKey]: true }))
     try {
-      const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-      const data = await response.json()
+      try {
+        await fetch(`/api/learn/${currentFileId}/priority-word-gen`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ word: wordKey })
+        })
+      } catch (_) {}
+
+      const waitForDetail = async (retries = 30) => {
+        const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
+        const data = await response.json()
+        if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
+          return data
+        }
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, 2000))
+          return waitForDetail(retries - 1)
+        }
+        return data
+      }
+
+      const data = await waitForDetail()
       setWordDetails(prev => ({ ...prev, [wordKey]: data }))
       setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
       return data

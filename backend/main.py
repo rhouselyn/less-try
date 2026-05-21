@@ -188,12 +188,31 @@ def fix_llm_options_result(result: dict, source_lang="en") -> dict:
             "correct_answer": correct_meaning,
             "options": [
                 {"text": correct_meaning, "is_correct": True},
-                {"text": "其他释义A", "is_correct": False},
-                {"text": "其他释义B", "is_correct": False},
-                {"text": "其他释义C", "is_correct": False}
+                {"text": "释义1", "is_correct": False},
+                {"text": "释义2", "is_correct": False},
+                {"text": "释义3", "is_correct": False}
             ]
         }
     return result
+
+def get_fallback_options(correct_meaning, file_id, count=3):
+    import random as rnd
+    distractors = []
+    try:
+        vocab_data = storage.load_vocab(file_id)
+        all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
+        candidates = []
+        for v in all_vocab:
+            meaning = v.get("context_meaning") or v.get("translation") or v.get("enriched_meaning") or ""
+            if meaning and meaning != correct_meaning:
+                candidates.append(meaning)
+        rnd.shuffle(candidates)
+        distractors = candidates[:count]
+    except:
+        pass
+    while len(distractors) < count:
+        distractors.append(f"释义{len(distractors)+1}")
+    return distractors
 
 def filter_eligible_sentences(sentences):
     eligible = []
@@ -765,11 +784,26 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     ordered_correct_words = []
                     used_correct = set()
                     for sw in sentence_word_list:
+                        sw_clean = sw.strip('.,;:!?').lower()
+                        best_match = None
+                        best_match_len = 0
                         for cw in listening_correct_words:
-                            if cw not in used_correct and (sw.lower() == cw.lower() or sw.lower() in cw.lower() or cw.lower() in sw.lower()):
-                                ordered_correct_words.append(cw)
-                                used_correct.add(cw)
+                            if cw in used_correct:
+                                continue
+                            cw_lower = cw.lower()
+                            if sw_clean == cw_lower:
+                                best_match = cw
+                                best_match_len = 999
                                 break
+                            if cw_lower in sw_clean and len(cw_lower) > best_match_len:
+                                best_match = cw
+                                best_match_len = len(cw_lower)
+                            if sw_clean in cw_lower and len(sw_clean) > best_match_len:
+                                best_match = cw
+                                best_match_len = len(sw_clean)
+                        if best_match:
+                            ordered_correct_words.append(best_match)
+                            used_correct.add(best_match)
                     if len(ordered_correct_words) == len(listening_correct_words):
                         listening_correct_words = ordered_correct_words
                     
@@ -833,14 +867,21 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
             else:
                 quizzes_with_anchor.append((quiz, 0))
         
-        quizzes_with_anchor.sort(key=lambda x: x[1])
+        random.shuffle(quizzes_with_anchor)
         
-        offset = 0
-        for quiz, anchor_pos in quizzes_with_anchor:
-            adjusted_anchor = anchor_pos + offset
+        for _ in range(len(quizzes_with_anchor)):
+            min_anchor = min(a for _, a in quizzes_with_anchor)
+            candidates = [(q, a) for q, a in quizzes_with_anchor if a == min_anchor]
+            chosen = random.choice(candidates)
+            quizzes_with_anchor.remove(chosen)
+            quiz, anchor_pos = chosen
+            adjusted_anchor = anchor_pos
             insert_pos = random.randint(adjusted_anchor, max(adjusted_anchor, len(final_items)))
             final_items.insert(insert_pos, quiz)
-            offset += 1
+            for i in range(len(quizzes_with_anchor)):
+                q, a = quizzes_with_anchor[i]
+                if a >= insert_pos:
+                    quizzes_with_anchor[i] = (q, a + 1)
         
         if final_items:
             plan.append({
@@ -1183,7 +1224,8 @@ async def get_random_word(file_id: str):
                     if opt["is_correct"]:
                         correct_index = i
             else:
-                options = [cached_word.get("meaning", ""), "其他释义A", "其他释义B", "其他释义C"]
+                fallback_opts = get_fallback_options(cached_word.get("meaning", ""), file_id, 3)
+                options = [cached_word.get("meaning", "")] + fallback_opts
                 correct_index = 0
             
             # 启动后台任务预生成下一个单词
@@ -1290,7 +1332,8 @@ async def get_random_word(file_id: str):
                 if opt["is_correct"]:
                     correct_index = i
         else:
-            options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
+            fallback_opts = get_fallback_options(correct_meaning, file_id, 3)
+            options = options_result.get("options", [correct_meaning] + fallback_opts)
             correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据
@@ -1733,7 +1776,8 @@ async def get_word_details(file_id: str, word: str):
                 if opt["is_correct"]:
                     correct_index = i
         else:
-            options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
+            fallback_opts = get_fallback_options(correct_meaning, file_id, 3)
+            options = options_result.get("options", [correct_meaning] + fallback_opts)
             correct_index = options_result.get("correct_index", 0)
         
         # 构建响应数据（同时支持单词详情和学习模式）
@@ -1873,7 +1917,8 @@ async def get_unit_words(file_id: str, unit_id: int):
                     if opt["is_correct"]:
                         correct_index = i
             else:
-                options = options_result.get("options", [correct_meaning, "其他释义A", "其他释义B", "其他释义C"])
+                fallback_opts = get_fallback_options(correct_meaning, file_id, 3)
+                options = options_result.get("options", [correct_meaning] + fallback_opts)
                 correct_index = options_result.get("correct_index", 0)
             
             # 构建学习数据
