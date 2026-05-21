@@ -61,7 +61,19 @@ export const translations = {
     historyTitle: "学习记录",
     noHistory: "暂无学习记录",
     rename: "重命名",
-    delete: "删除"
+    delete: "删除",
+    modeDirect: "直接输入",
+    modeTranslate: "自动翻译",
+    modeGenerate: "自由生成",
+    modeDirectDesc: "输入目标语言文本，直接生成学习资料",
+    modeTranslateDesc: "输入母语文本，自动翻译后再生成学习资料",
+    modeGenerateDesc: "描述想要的内容，AI 生成文本后学习",
+    modeDirectPlaceholder: "粘贴或输入你想学习的文本...",
+    modeTranslatePlaceholder: "输入你想翻译并学习的文本（使用母语）...",
+    modeGeneratePlaceholder: "描述你想学习的文本内容，例如：一篇关于旅行的短文...",
+    translating: "翻译中...",
+    generating: "生成文本中...",
+    modeLabel: "输入模式"
   },
   en: {
     title: "Lesslingo",
@@ -124,6 +136,18 @@ export const translations = {
     historyTitle: "Learning History",
     noHistory: "No learning history yet",
     rename: "Rename",
-    delete: "Delete"
+    delete: "Delete",
+    modeDirect: "Direct Input",
+    modeTranslate: "Auto Translate",
+    modeGenerate: "Free Generate",
+    modeDirectDesc: "Enter text in target language, generate study materials directly",
+    modeTranslateDesc: "Enter text in native language, auto-translate then generate materials",
+    modeGenerateDesc: "Describe what you want, AI generates text then you learn",
+    modeDirectPlaceholder: "Paste or enter text you want to learn...",
+    modeTranslatePlaceholder: "Enter text to translate and learn (in your native language)...",
+    modeGeneratePlaceholder: "Describe the text content you want to learn, e.g.: a short essay about travel...",
+    translating: "Translating...",
+    generating: "Generating text...",
+    modeLabel: "Input Mode"
   }
 };

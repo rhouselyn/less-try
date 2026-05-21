@@ -3011,6 +3011,80 @@ async def rename_history(file_id: str, request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/translate-text")
+async def translate_text(request: dict):
+    try:
+        text = request.get("text", "")
+        source_lang = request.get("source_language", "zh")
+        target_lang = request.get("target_language", "en")
+
+        if not text:
+            raise HTTPException(status_code=400, detail="Text is required")
+
+        nvidia_api.reload()
+        messages = [
+            {
+                "role": "system",
+                "content": f"You are a professional translator. Translate the following text from {source_lang} to {target_lang}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent."
+            },
+            {
+                "role": "user",
+                "content": text
+            }
+        ]
+        response = await nvidia_api.call_minimax(messages, temperature=0.3, max_tokens=4096)
+
+        translated_text = ""
+        if "choices" in response and len(response["choices"]) > 0:
+            translated_text = response["choices"][0].get("message", {}).get("content", "").strip()
+
+        if not translated_text:
+            raise HTTPException(status_code=500, detail="Translation failed")
+
+        return {"translated_text": translated_text}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/generate-text")
+async def generate_text(request: dict):
+    try:
+        prompt = request.get("prompt", "")
+        source_lang = request.get("source_language", "en")
+        target_lang = request.get("target_language", "zh")
+
+        if not prompt:
+            raise HTTPException(status_code=400, detail="Prompt is required")
+
+        nvidia_api.reload()
+        messages = [
+            {
+                "role": "system",
+                "content": f"You are a text generator. Generate a text in {source_lang} based on the user's description. CRITICAL RULES: 1. Generate ONLY plain text content (articles, stories, essays, descriptions, etc.). 2. Do NOT generate dialogues, conversations, or chat-like content. 3. Do NOT include any meta-commentary, explanations, or notes. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long. 6. Output ONLY the generated text, nothing else."
+            },
+            {
+                "role": "user",
+                "content": prompt
+            }
+        ]
+        response = await nvidia_api.call_minimax(messages, temperature=0.7, max_tokens=4096)
+
+        generated_text = ""
+        if "choices" in response and len(response["choices"]) > 0:
+            generated_text = response["choices"][0].get("message", {}).get("content", "").strip()
+
+        if not generated_text:
+            raise HTTPException(status_code=500, detail="Text generation failed")
+
+        return {"generated_text": generated_text}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000, timeout_keep_alive=600)

@@ -77,6 +77,7 @@ function App() {
   const [skipListening, setSkipListening] = useState(false)
   const [wordListLang, setWordListLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
+  const [inputMode, setInputMode] = useState('direct')
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -257,32 +258,35 @@ function App() {
     setSelectedOption(null)
     setIsCorrect(null)
     
-    // 立即跳转到单词表页面，即使还没有收到响应
     setStep('dictionary')
     
     try {
-      console.log('开始处理文本，长度:', text.length)
-      const response = await api.processText(text, sourceLang, targetLang)
+      let finalText = text.trim()
       
-      console.log('API响应:', response)
+      if (inputMode === 'translate') {
+        const translateResponse = await api.translateText(text.trim(), targetLang, sourceLang)
+        finalText = translateResponse.translated_text
+      } else if (inputMode === 'generate') {
+        const generateResponse = await api.generateText(text.trim(), sourceLang, targetLang)
+        finalText = generateResponse.generated_text
+      }
+      
+      const response = await api.processText(finalText, sourceLang, targetLang)
+      
       if (response && response.file_id) {
         const fileId = response.file_id
         setFileId(fileId)
         setCurrentFileId(fileId)
-        console.log('获取到文件ID:', fileId)
       } else {
         throw new Error('无效的API响应')
       }
     } catch (error) {
       console.error('处理文本错误:', error)
       if (error.response && error.response.status === 504) {
-        // 504错误表示网关超时，可能是网络延迟或后端处理时间过长
         alert('网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
-        // 处理超时错误
         alert('处理超时，请稍后重试')
       } else {
-        // 其他错误
         alert('处理失败，请重试')
       }
       setLoading(false)
@@ -1006,6 +1010,8 @@ function App() {
                       loading={loading}
                       onProcess={handleProcess}
                       t={t}
+                      inputMode={inputMode}
+                      setInputMode={setInputMode}
                     />
                   </AnimatePresence>
                 </>

@@ -185,5 +185,23 @@ export const api = {
 
   priorityWordGen: async (fileId, word) => {
     await axios.post(`${baseUrl}/api/learn/${fileId}/priority-word-gen`, { word })
+  },
+
+  translateText: async (text, sourceLang, targetLang) => {
+    const response = await axios.post(`${baseUrl}/api/translate-text`, {
+      text: text.trim(),
+      source_language: sourceLang,
+      target_language: targetLang,
+    });
+    return response.data;
+  },
+
+  generateText: async (prompt, sourceLang, targetLang) => {
+    const response = await axios.post(`${baseUrl}/api/generate-text`, {
+      prompt: prompt.trim(),
+      source_language: sourceLang,
+      target_language: targetLang,
+    });
+    return response.data;
   }
 };
