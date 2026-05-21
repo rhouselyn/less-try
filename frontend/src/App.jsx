@@ -433,6 +433,7 @@ function App() {
     try {
       setCurrentPhase(2)
       setCurrentPhaseUnit(unitId)
+      await api.setPhaseProgress(currentFileId, 2, unitId, unitId * 10)
       const exerciseData = await api.getPhaseUnitExercise(currentFileId, 2, unitId)
       if (exerciseData.unit_complete) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
@@ -869,6 +870,16 @@ function App() {
     setStep('vocab-list')
   }
 
+  const handleConfirmBack = (targetStep) => {
+    if (window.confirm('你确定要退出吗？')) {
+      if (typeof targetStep === 'function') {
+        targetStep()
+      } else {
+        setStep(targetStep || 'all-units')
+      }
+    }
+  }
+
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang) => {
     setSkipPolling(true)
     setLoading(true)
@@ -1042,7 +1053,7 @@ function App() {
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
               onNextWord={reviewMode ? goToNextReviewItem : getNextWord}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               onOpenVocabList={handleOpenVocabList}
               loading={loading}
               t={t}
@@ -1059,7 +1070,7 @@ function App() {
               key={`sentence-quiz-${quizData?.original_sentence}-${quizData?.step_in_unit}`}
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 if (currentFileId && currentPhase) {
                   const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
@@ -1087,7 +1098,7 @@ function App() {
               key={`listening-quiz-${listeningQuizData?.original_sentence}-${listeningQuizData?.step_in_unit}`}
               quizData={listeningQuizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
@@ -1191,7 +1202,7 @@ function App() {
               key={`masked-exercise-${currentExerciseData?.exercise_index_in_unit}-${currentExerciseData?.mask_version}`}
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
@@ -1228,7 +1239,7 @@ function App() {
               key={`reconstruction-exercise-${currentExerciseData?.exercise_index_in_unit}`}
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
