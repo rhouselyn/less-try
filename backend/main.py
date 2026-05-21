@@ -61,6 +61,32 @@ def is_source_lang_text(text, source_lang="en"):
 
 ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
 
+def vocab_sort_key(entry):
+    word = entry.get("word", "")
+    ipa = entry.get("ipa", "")
+    if word and len(word) > 0:
+        first_char = word[0]
+        if '\u4e00' <= first_char <= '\u9fff':
+            if ipa and len(ipa.strip('/')) > 0:
+                return ipa.lstrip('/').strip()[0].lower()
+            return first_char
+        if '\u3040' <= first_char <= '\u309f' or '\u30a0' <= first_char <= '\u30ff':
+            if ipa and len(ipa.strip('/')) > 0:
+                return ipa.lstrip('/').strip()[0].lower()
+            return first_char
+        if '\uac00' <= first_char <= '\ud7af':
+            return first_char
+        import unicodedata
+        normalized = unicodedata.normalize('NFD', first_char)
+        if len(normalized) > 0:
+            base = normalized[0]
+            if base.isalpha():
+                return base.lower()
+        return first_char.lower()
+    if ipa and len(ipa.strip('/')) > 0:
+        return ipa.lstrip('/').strip()[0].lower()
+    return ""
+
 MAX_SENTENCE_WORDS_FOR_QUIZ = 8
 
 def get_translation_phrases(translation_result, max_phrases=6):
@@ -418,7 +444,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 if word not in seen and word:
                     seen.add(word)
                     unique_partial.append(entry)
-            unique_partial.sort(key=lambda x: x["word"].lower())
+            unique_partial.sort(key=vocab_sort_key)
             
             progress = int(len(completed_indices) / total_sentences * 100)
             processing_status[file_id] = {
@@ -458,7 +484,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 unique_vocab.append(entry)
         all_vocab = unique_vocab
         
-        all_vocab.sort(key=lambda x: x["word"].lower())
+        all_vocab.sort(key=vocab_sort_key)
         print(f"[DEBUG] 从所有句子中提取词典条目，共 {len(all_vocab)} 个单词: {[word['word'] for word in all_vocab]}")
         
         storage.save_pipeline_data(file_id, sentence_translations)
@@ -531,7 +557,11 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
         context = ""
         context_sentences = []
         if sentences:
-            word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
+            has_cjk = any('\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' or '\uac00' <= c <= '\ud7af' for c in word_to_gen[:10])
+            if has_cjk:
+                word_pattern = re.compile(re.escape(word_to_gen), re.IGNORECASE)
+            else:
+                word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
             for sent_idx, sentence_data in enumerate(sentences):
                 if "sentence" in sentence_data:
                     if word_pattern.search(sentence_data["sentence"]):
@@ -632,240 +662,216 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     
     max_items_per_unit = 10
     
-    plan = []
-    all_learned_vocab_indices = set()
-    used_sentences = set()
+    word_to_shuffled_pos = {}
+    for pos, idx in enumerate(shuffled_indices):
+        word_to_shuffled_pos[idx] = pos
     
-    vocab_pointer = 0
-    
-    while vocab_pointer < len(shuffled_indices):
-        unit_word_items = []
-        unit_quiz_items = []
+    sentence_quiz_info = []
+    for sent_idx, sentence_data in enumerate(sentences):
+        if "sentence" not in sentence_data:
+            continue
         
-        while vocab_pointer < len(shuffled_indices) and len(unit_word_items) < max_items_per_unit:
-            vocab_idx = shuffled_indices[vocab_pointer]
-            vocab_pointer += 1
-            
-            unit_word_items.append({
-                "type": "word",
-                "vocab_index": vocab_idx
-            })
-            all_learned_vocab_indices.add(vocab_idx)
-            
-            learned_words = [vocab[i] for i in all_learned_vocab_indices]
-            
-            for sentence_data in sentences:
-                if "sentence" not in sentence_data:
-                    continue
-                
-                sentence = sentence_data["sentence"]
-                
-                if sentence in used_sentences:
-                    continue
-                
-                word_count = len(sentence.split())
-                if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
-                    continue
-                
-                already_in_unit = any(
-                    item.get("sentence") == sentence
-                    for item in unit_quiz_items
-                )
-                if already_in_unit:
-                    continue
-                
-                tr = sentence_data.get("translation_result", {})
-                if "translation" not in tr:
-                    continue
-                
-                translation_tokens = tr.get("translation", [])
-                if not translation_tokens:
-                    continue
-                
-                sentence_covered = True
+        sentence = sentence_data["sentence"]
+        word_count = len(sentence.split())
+        if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
+            continue
+        
+        tr = sentence_data.get("translation_result", {})
+        if "translation" not in tr:
+            continue
+        
+        translation_tokens = tr.get("translation", [])
+        if not translation_tokens:
+            continue
+        
+        covering_vocab_indices = []
+        for vi, v in enumerate(vocab):
+            v_tokens = v.get("tokens", [v["word"]])
+            word_covers = False
+            for wt in v_tokens:
                 for token in translation_tokens:
                     if isinstance(token, dict) and "text" in token:
-                        token_text = token["text"].lower()
-                        token_covered = False
-                        for w in learned_words:
-                            w_tokens = w.get("tokens", [w["word"]])
-                            for wt in w_tokens:
-                                if wt.lower() == token_text or wt.lower() in token_text or token_text in wt.lower():
-                                    token_covered = True
-                                    break
-                            if token_covered:
-                                break
-                        if not token_covered:
-                            sentence_covered = False
+                        if wt.lower() == token["text"].lower() or wt.lower() in token["text"].lower() or token["text"].lower() in wt.lower():
+                            word_covers = True
                             break
+                if word_covers:
+                    break
+            if word_covers:
+                covering_vocab_indices.append(vi)
+        
+        if not covering_vocab_indices:
+            continue
+        
+        all_covered = True
+        for token in translation_tokens:
+            if isinstance(token, dict) and "text" in token:
+                token_text = token["text"].lower()
+                token_covered = False
+                for vi in covering_vocab_indices:
+                    w = vocab[vi]
+                    w_tokens = w.get("tokens", [w["word"]])
+                    for wt in w_tokens:
+                        if wt.lower() == token_text or wt.lower() in token_text or token_text in wt.lower():
+                            token_covered = True
+                            break
+                    if token_covered:
+                        break
+                if not token_covered:
+                    all_covered = False
+                    break
+        
+        if not all_covered:
+            continue
+        
+        last_covering_shuffled_pos = max(word_to_shuffled_pos.get(vi, len(shuffled_indices)) for vi in covering_vocab_indices)
+        
+        sentence_quiz_info.append({
+            "sentence": sentence,
+            "sentence_data": sentence_data,
+            "covering_vocab_indices": covering_vocab_indices,
+            "last_covering_shuffled_pos": last_covering_shuffled_pos
+        })
+    
+    sentence_quiz_info.sort(key=lambda x: x["last_covering_shuffled_pos"])
+    
+    plan = []
+    unit_start_shuffled_pos = 0
+    quiz_insertion_pointer = 0
+    
+    while unit_start_shuffled_pos < len(shuffled_indices):
+        unit_end_shuffled_pos = min(unit_start_shuffled_pos + max_items_per_unit, len(shuffled_indices))
+        
+        unit_word_items = []
+        for sp in range(unit_start_shuffled_pos, unit_end_shuffled_pos):
+            vocab_idx = shuffled_indices[sp]
+            unit_word_items.append({
+                "type": "word",
+                "vocab_index": vocab_idx,
+                "_shuffled_pos": sp
+            })
+        
+        unit_quiz_items = []
+        while quiz_insertion_pointer < len(sentence_quiz_info):
+            sqi = sentence_quiz_info[quiz_insertion_pointer]
+            last_pos = sqi["last_covering_shuffled_pos"]
+            
+            if last_pos < unit_end_shuffled_pos:
+                quiz_insertion_pointer += 1
                 
-                if sentence_covered:
-                    used_sentences.add(sentence)
+                sentence = sqi["sentence"]
+                sentence_data = sqi["sentence_data"]
+                covering_vocab_indices = sqi["covering_vocab_indices"]
+                tr = sentence_data.get("translation_result", {})
+                translation_tokens = tr.get("translation", [])
+                
+                raw_translation = tr.get("tokenized_translation", "")
+                correct_translation = raw_translation.strip() if raw_translation else ""
+                
+                correct_tokens = get_translation_phrases(tr, max_phrases=6)
+                correct_tokens = [ct for ct in correct_tokens if not is_punctuation_only(ct)]
+                
+                if len(correct_tokens) >= 2:
+                    redundant_tokens = tr.get("redundant_tokens", [])
+                    cleaned_redundant = []
+                    correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
+                    for rt in redundant_tokens:
+                        rt_stripped = rt.strip()
+                        if rt_stripped and rt_stripped not in correct_tokens and not is_punctuation_only(rt_stripped):
+                            if correct_has_source_lang or not is_source_lang_text(rt_stripped, source_lang):
+                                cleaned_redundant.append(rt_stripped)
                     
-                    covering_vocab_indices = []
-                    for word_item in unit_word_items:
-                        w_data = vocab[word_item["vocab_index"]]
-                        w_tokens = w_data.get("tokens", [w_data["word"]])
-                        word_covers = False
-                        for wt in w_tokens:
-                            for token in translation_tokens:
-                                if isinstance(token, dict) and "text" in token:
-                                    if wt.lower() == token["text"].lower() or wt.lower() in token["text"].lower() or token["text"].lower() in wt.lower():
-                                        word_covers = True
-                                        break
-                            if word_covers:
-                                break
-                        if word_covers:
-                            covering_vocab_indices.append(word_item["vocab_index"])
+                    selected_distractors = list(dict.fromkeys(cleaned_redundant))[:4]
                     
-                    raw_translation = tr.get("tokenized_translation", "")
-                    correct_translation = raw_translation.strip() if raw_translation else ""
-                    
-                    correct_tokens = get_translation_phrases(tr, max_phrases=6)
-                    correct_tokens = [ct for ct in correct_tokens if not is_punctuation_only(ct)]
-                    
-                    if len(correct_tokens) >= 2:
-                        redundant_tokens = tr.get("redundant_tokens", [])
-                        cleaned_redundant = []
-                        correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
-                        for rt in redundant_tokens:
-                            rt_stripped = rt.strip()
-                            if rt_stripped and rt_stripped not in correct_tokens and not is_punctuation_only(rt_stripped):
-                                if correct_has_source_lang or not is_source_lang_text(rt_stripped, source_lang):
-                                    cleaned_redundant.append(rt_stripped)
-                        
-                        selected_distractors = list(dict.fromkeys(cleaned_redundant))[:4]
-                        
-                        if len(selected_distractors) < 4:
-                            existing_set = set(correct_tokens) | set(selected_distractors)
-                            for other_sent in sentences:
-                                if other_sent.get("sentence") == sentence:
-                                    continue
-                                other_tr = other_sent.get("translation_result", {})
-                                other_phrases = get_translation_phrases(other_tr, max_phrases=10)
-                                for op in other_phrases:
-                                    if op not in existing_set:
-                                        if correct_has_source_lang or not is_source_lang_text(op, source_lang):
-                                            selected_distractors.append(op)
-                                            existing_set.add(op)
-                                            if len(selected_distractors) >= 4:
-                                                break
-                                if len(selected_distractors) >= 4:
-                                    break
-                        
-                        all_tokens = correct_tokens + selected_distractors
-                        
-                        if not correct_translation.strip():
-                            correct_translation = "".join(correct_tokens)
-                        
-                        unit_quiz_items.append({
-                            "type": "sentence_quiz",
-                            "sentence": sentence,
-                            "correct_translation": correct_translation,
-                            "correct_tokens": correct_tokens,
-                            "tokens": all_tokens,
-                            "_covering_vocab_indices": covering_vocab_indices
-                        })
-                    
-                    listening_correct_words = [vocab[vi]["word"] for vi in covering_vocab_indices]
-                    if not listening_correct_words:
-                        for vi in all_learned_vocab_indices:
-                            w_data = vocab[vi]
-                            w_tokens = w_data.get("tokens", [w_data["word"]])
-                            for wt in w_tokens:
-                                for token in translation_tokens:
-                                    if isinstance(token, dict) and "text" in token:
-                                        if wt.lower() == token["text"].lower() or wt.lower() in token["text"].lower() or token["text"].lower() in wt.lower():
-                                            if w_data["word"] not in listening_correct_words:
-                                                listening_correct_words.append(w_data["word"])
-                                            break
-                    
-                    sentence_word_list = sentence.split()
-                    ordered_correct_words = []
-                    used_correct = set()
-                    for sw in sentence_word_list:
-                        sw_clean = sw.strip('.,;:!?').lower()
-                        best_match = None
-                        best_match_len = 0
-                        for cw in listening_correct_words:
-                            if cw in used_correct:
+                    if len(selected_distractors) < 4:
+                        existing_set = set(correct_tokens) | set(selected_distractors)
+                        for other_sent in sentences:
+                            if other_sent.get("sentence") == sentence:
                                 continue
-                            cw_lower = cw.lower()
-                            if sw_clean == cw_lower:
-                                best_match = cw
-                                best_match_len = 999
+                            other_tr = other_sent.get("translation_result", {})
+                            other_phrases = get_translation_phrases(other_tr, max_phrases=10)
+                            for op in other_phrases:
+                                if op not in existing_set:
+                                    if correct_has_source_lang or not is_source_lang_text(op, source_lang):
+                                        selected_distractors.append(op)
+                                        existing_set.add(op)
+                                        if len(selected_distractors) >= 4:
+                                            break
+                            if len(selected_distractors) >= 4:
                                 break
-                            if cw_lower in sw_clean and len(cw_lower) > best_match_len:
-                                best_match = cw
-                                best_match_len = len(cw_lower)
-                            if sw_clean in cw_lower and len(sw_clean) > best_match_len:
-                                best_match = cw
-                                best_match_len = len(sw_clean)
-                        if best_match:
-                            ordered_correct_words.append(best_match)
-                            used_correct.add(best_match)
-                    if len(ordered_correct_words) == len(listening_correct_words):
-                        listening_correct_words = ordered_correct_words
                     
-                    listening_distractor_words = []
-                    listening_correct_lower = set(w.lower() for w in listening_correct_words)
-                    available = [v["word"] for v in vocab if v["word"].lower() not in listening_correct_lower]
-                    random.shuffle(available)
-                    for w in available:
-                        listening_distractor_words.append(w)
+                    all_tokens = correct_tokens + selected_distractors
+                    
+                    if not correct_translation.strip():
+                        correct_translation = "".join(correct_tokens)
+                    
+                    unit_quiz_items.append({
+                        "type": "sentence_quiz",
+                        "sentence": sentence,
+                        "correct_translation": correct_translation,
+                        "correct_tokens": correct_tokens,
+                        "tokens": all_tokens,
+                        "_last_covering_shuffled_pos": last_pos
+                    })
+                
+                listening_correct_words = build_listening_correct_words(sentence, vocab, covering_vocab_indices, all_learned_set=set(vi for sp2 in range(unit_end_shuffled_pos) for vi in [shuffled_indices[sp2]]), translation_tokens=translation_tokens)
+                
+                listening_distractor_words = []
+                listening_correct_lower = set(w.lower() for w in listening_correct_words)
+                available = [v["word"] for v in vocab if v["word"].lower() not in listening_correct_lower]
+                random.shuffle(available)
+                for w in available:
+                    listening_distractor_words.append(w)
+                    if len(listening_distractor_words) >= 2:
+                        break
+                
+                if len(listening_distractor_words) < 2:
+                    for other_sent in sentences:
+                        other_sentence = other_sent.get("sentence", "")
+                        if other_sentence and other_sentence != sentence:
+                            for w in other_sentence.split():
+                                w_clean = w.strip()
+                                if w_clean and w_clean.lower() not in listening_correct_lower and w_clean not in listening_distractor_words:
+                                    listening_distractor_words.append(w_clean)
+                                    if len(listening_distractor_words) >= 2:
+                                        break
                         if len(listening_distractor_words) >= 2:
                             break
-                    
-                    if len(listening_distractor_words) < 2:
-                        for other_sent in sentences:
-                            other_sentence = other_sent.get("sentence", "")
-                            if other_sentence and other_sentence != sentence:
-                                for w in other_sentence.split():
-                                    w_clean = w.strip()
-                                    if w_clean and w_clean.lower() not in listening_correct_lower and w_clean not in listening_distractor_words:
-                                        listening_distractor_words.append(w_clean)
-                                        if len(listening_distractor_words) >= 2:
-                                            break
-                            if len(listening_distractor_words) >= 2:
-                                break
-                    
-                    if len(listening_distractor_words) < 2:
-                        backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
-                        backup_distractors = list(backup_vocab_list)
-                        random.shuffle(backup_distractors)
-                        idx = 0
-                        while len(listening_distractor_words) < 2:
-                            bd = backup_distractors[idx % len(backup_distractors)]
-                            if bd.lower() not in listening_correct_lower and bd not in listening_distractor_words:
-                                listening_distractor_words.append(bd)
-                            idx += 1
-                    
-                    if not listening_correct_words:
-                        continue
-                    
+                
+                if len(listening_distractor_words) < 2:
+                    backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
+                    backup_distractors = list(backup_vocab_list)
+                    random.shuffle(backup_distractors)
+                    idx = 0
+                    while len(listening_distractor_words) < 2:
+                        bd = backup_distractors[idx % len(backup_distractors)]
+                        if bd.lower() not in listening_correct_lower and bd not in listening_distractor_words:
+                            listening_distractor_words.append(bd)
+                        idx += 1
+                
+                if listening_correct_words:
                     unit_quiz_items.append({
                         "type": "listening_quiz",
                         "sentence": sentence,
                         "correct_words": listening_correct_words,
                         "distractor_words": listening_distractor_words[:2],
-                        "_covering_vocab_indices": covering_vocab_indices
+                        "_last_covering_shuffled_pos": last_pos
                     })
+            else:
+                break
         
         final_items = list(unit_word_items)
         
         quizzes_with_anchor = []
         for quiz in unit_quiz_items:
-            covering = quiz.pop("_covering_vocab_indices", [])
-            if covering:
-                last_covering_idx = covering[-1]
-                anchor_pos = 0
-                for i, item in enumerate(final_items):
-                    if item.get("type") == "word" and item.get("vocab_index") == last_covering_idx:
-                        anchor_pos = i + 1
-                        break
-                quizzes_with_anchor.append((quiz, anchor_pos))
+            last_pos = quiz.pop("_last_covering_shuffled_pos", 0)
+            anchor_pos = 0
+            for i, item in enumerate(final_items):
+                if item.get("type") == "word" and item.get("_shuffled_pos", -1) >= last_pos:
+                    anchor_pos = i + 1
+                    break
             else:
-                quizzes_with_anchor.append((quiz, 0))
+                anchor_pos = len(final_items)
+            quizzes_with_anchor.append((quiz, anchor_pos))
         
         random.shuffle(quizzes_with_anchor)
         
@@ -875,21 +881,71 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
             chosen = random.choice(candidates)
             quizzes_with_anchor.remove(chosen)
             quiz, anchor_pos = chosen
-            adjusted_anchor = anchor_pos
-            insert_pos = random.randint(adjusted_anchor, max(adjusted_anchor, len(final_items)))
+            insert_pos = random.randint(anchor_pos, max(anchor_pos, len(final_items)))
             final_items.insert(insert_pos, quiz)
             for i in range(len(quizzes_with_anchor)):
                 q, a = quizzes_with_anchor[i]
                 if a >= insert_pos:
                     quizzes_with_anchor[i] = (q, a + 1)
         
+        for item in final_items:
+            item.pop("_shuffled_pos", None)
+        
         if final_items:
             plan.append({
                 "unit_id": len(plan),
                 "items": final_items
             })
+        
+        unit_start_shuffled_pos = unit_end_shuffled_pos
     
     storage.save_learning_plan(file_id, plan)
+
+
+def build_listening_correct_words(sentence, vocab, covering_vocab_indices, all_learned_set=None, translation_tokens=None):
+    import re
+    
+    covering_words = [vocab[vi]["word"] for vi in covering_vocab_indices]
+    
+    sentence_tokens_from_tr = []
+    if translation_tokens:
+        for token in translation_tokens:
+            if isinstance(token, dict) and "text" in token:
+                sentence_tokens_from_tr.append(token["text"])
+    
+    if sentence_tokens_from_tr:
+        source_words = sentence_tokens_from_tr
+    else:
+        source_words = re.findall(r'[^\s.,;:!?，。；：！？、]+', sentence)
+    
+    ordered_correct_words = []
+    used_covering = set()
+    
+    for sw in source_words:
+        sw_clean = sw.strip('.,;:!?，。；：！？、').lower()
+        if not sw_clean:
+            continue
+        best_match = None
+        best_match_len = 0
+        for cw in covering_words:
+            if cw in used_covering:
+                continue
+            cw_lower = cw.lower()
+            if sw_clean == cw_lower:
+                best_match = cw
+                best_match_len = 999
+                break
+            if len(cw_lower) > best_match_len and (cw_lower in sw_clean or sw_clean in cw_lower):
+                best_match = cw
+                best_match_len = max(len(cw_lower), len(sw_clean))
+        if best_match:
+            ordered_correct_words.append(best_match)
+            used_covering.add(best_match)
+    
+    if not ordered_correct_words:
+        ordered_correct_words = list(covering_words)
+    
+    return ordered_correct_words
 
 
 async def generate_title(text: str, source_lang: str) -> str:

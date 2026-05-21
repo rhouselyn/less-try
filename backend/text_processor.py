@@ -145,7 +145,12 @@ class TextProcessor:
 
     def extract_words(self, text: str, language: str) -> List[str]:
         import re
-        words = re.findall(r"\b\w+(?:'\w+)?\b", text)
+        has_cjk = any('\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' or '\uac00' <= c <= '\ud7af' for c in text[:200])
+        
+        if has_cjk:
+            words = re.findall(r'[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+|[a-zA-Z]+(?:\'[a-zA-Z]+)?', text)
+        else:
+            words = re.findall(r"\b\w+(?:'\w+)?\b", text)
         words = [w.lower() for w in words]
         
         seen = set()
@@ -324,8 +329,11 @@ class TextProcessor:
 
     def tokenize_sentence(self, sentence: str) -> List[str]:
         import re
-        words = re.findall(r"\b\w+(?:'\w+)?\b", sentence)
-        return words
+        has_cjk = any('\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' or '\uac00' <= c <= '\ud7af' for c in sentence[:200])
+        
+        if has_cjk:
+            return re.findall(r'[\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]+|[a-zA-Z]+(?:\'[a-zA-Z]+)?', sentence)
+        return re.findall(r"\b\w+(?:'\w+)?\b", sentence)
     
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0) -> Dict[str, Any]:
         if translation_tokens:
