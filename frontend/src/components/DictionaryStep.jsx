@@ -308,9 +308,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </motion.button>
       )}
 
-      <div className="flex gap-6" style={{ minHeight: '70vh' }}>
-        <div className="w-1/2 flex flex-col">
-          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
+      <div className="flex gap-6" style={{ height: '70vh' }}>
+        <div className="w-1/2 flex flex-col min-h-0">
+          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0">
@@ -332,7 +332,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto" style={{ maxHeight: '70vh' }}>
+            <div className="flex-1 overflow-y-auto">
               {filteredSentences.length > 0 ? (
                 <div className="divide-y divide-stone-200/60">
                   {filteredSentences.map((item, index) => {
@@ -382,8 +382,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           </div>
         </div>
 
-        <div className="w-1/2 flex flex-col">
-          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
+        <div className="w-1/2 flex flex-col min-h-0">
+          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0">
@@ -405,7 +405,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto" ref={vocabListRef} style={{ maxHeight: '70vh' }}>
+            <div className="flex-1 overflow-y-auto" ref={vocabListRef}>
               {groupedVocab.length === 0 ? (
                 <div className="py-16 text-center">
                   <BookOpen className="w-10 h-10 mx-auto mb-3 text-stone-200" />
