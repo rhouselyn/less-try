@@ -3062,7 +3062,7 @@ async def generate_text(request: dict):
         messages = [
             {
                 "role": "system",
-                "content": f"You are a text generator. Generate a text in {source_lang} based on the user's description. CRITICAL RULES: 1. Generate ONLY plain text content (articles, stories, essays, descriptions, etc.). 2. Do NOT generate dialogues, conversations, or chat-like content. 3. Do NOT include any meta-commentary, explanations, or notes. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long. 6. Output ONLY the generated text, nothing else."
+                "content": f"You are a text generator. Generate a text in {source_lang} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else."
             },
             {
                 "role": "user",

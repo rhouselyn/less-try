@@ -78,6 +78,7 @@ function App() {
   const [wordListLang, setWordListLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
+  const [preprocessStatus, setPreprocessStatus] = useState(null)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -258,6 +259,14 @@ function App() {
     setSelectedOption(null)
     setIsCorrect(null)
     
+    if (inputMode === 'translate') {
+      setPreprocessStatus('translating')
+    } else if (inputMode === 'generate') {
+      setPreprocessStatus('generating')
+    } else {
+      setPreprocessStatus(null)
+    }
+    
     setStep('dictionary')
     
     try {
@@ -271,6 +280,8 @@ function App() {
         finalText = generateResponse.generated_text
       }
       
+      setPreprocessStatus(null)
+      
       const response = await api.processText(finalText, sourceLang, targetLang)
       
       if (response && response.file_id) {
@@ -282,6 +293,7 @@ function App() {
       }
     } catch (error) {
       console.error('处理文本错误:', error)
+      setPreprocessStatus(null)
       if (error.response && error.response.status === 504) {
         alert('网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
@@ -1040,6 +1052,7 @@ function App() {
               t={t}
               currentFileId={currentFileId}
               sourceLang={sourceLang}
+              preprocessStatus={preprocessStatus}
             />
           )}
           
