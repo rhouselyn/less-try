@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings, Home } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
+import ConfirmDialog from './components/ConfirmDialog'
 
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
@@ -75,6 +76,7 @@ function App() {
   const unitErrorCountRef = useRef(0)
   const [skipListening, setSkipListening] = useState(false)
   const [wordListLang, setWordListLang] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -871,13 +873,17 @@ function App() {
   }
 
   const handleConfirmBack = (targetStep) => {
-    if (window.confirm('你确定要退出吗？')) {
-      if (typeof targetStep === 'function') {
-        targetStep()
-      } else {
-        setStep(targetStep || 'all-units')
+    setConfirmDialog({
+      isOpen: true,
+      onConfirm: () => {
+        setConfirmDialog({ isOpen: false, onConfirm: null })
+        if (typeof targetStep === 'function') {
+          targetStep()
+        } else {
+          setStep(targetStep || 'all-units')
+        }
       }
-    }
+    })
   }
 
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang) => {
@@ -1285,6 +1291,15 @@ function App() {
         )}
       </main>
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} />
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="确认退出"
+        message="你确定要退出当前练习吗？退出后进度将不会保存。"
+        confirmText="退出"
+        cancelText="继续练习"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ isOpen: false, onConfirm: null })}
+      />
     </div>
   )
 }
