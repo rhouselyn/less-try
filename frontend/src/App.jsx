@@ -209,7 +209,7 @@ function App() {
     // 立即执行一次轮询
     pollStatus()
     // 设置轮询间隔为2秒，减少服务器负担
-    pollingInterval = setInterval(pollStatus, 2000)
+    pollingInterval = setInterval(pollStatus, 1000)
 
     // 清理函数
     return () => {
@@ -425,6 +425,9 @@ function App() {
     
     setUnitErrorCount(0)
     unitErrorCountRef.current = 0
+    setWrongItems([])
+    setReviewMode(false)
+    setReviewIndex(0)
     
     setLoading(true)
     try {
@@ -500,7 +503,13 @@ function App() {
 
   const handleNextPhaseExercise = async () => {
     if (!currentFileId || !currentPhase) return
-    
+
+    if (reviewMode) {
+      goToNextReviewItem()
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
@@ -662,6 +671,20 @@ function App() {
         unitErrorCountRef.current = newCount
         return newCount
       })
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
+        setWrongItems(prev => [...prev, { type: exerciseType, data: currentExerciseData }])
+      }
+    } else {
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
+      }
     }
   }
 
@@ -687,6 +710,10 @@ function App() {
     } else if (nextItem?.type === 'listening_quiz') {
       setListeningQuizData(nextItem.data)
       setStep('listening-quiz')
+    } else if (nextItem?.type === 'masked_sentence' || nextItem?.type === 'translation_reconstruction') {
+      setExerciseType(nextItem.type)
+      setCurrentExerciseData(nextItem.data)
+      setStep('phase-exercise')
     }
   }
 
@@ -772,6 +799,8 @@ function App() {
         setShowWordCard(false)
         setSelectedOption(null)
         setIsCorrect(null)
+        setLearningMode('word')
+        setStep('learning')
       }
     } catch (error) {
       console.error('获取下一个单词错误:', error)
@@ -1002,7 +1031,7 @@ function App() {
           
           {step === 'sentence-quiz' && (
             <SentenceQuizStep
-              key="sentence-quiz"
+              key={`sentence-quiz-${quizData?.original_sentence}-${quizData?.step_in_unit}`}
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => setStep('all-units')}
@@ -1027,7 +1056,7 @@ function App() {
           
           {step === 'listening-quiz' && (
             <ListeningQuizStep
-              key="listening-quiz"
+              key={`listening-quiz-${listeningQuizData?.original_sentence}-${listeningQuizData?.step_in_unit}`}
               quizData={listeningQuizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => setStep('all-units')}
@@ -1044,7 +1073,7 @@ function App() {
             <UnitCompleteStep
               key="unit-complete"
               unitNumber={completedUnitId || 0}
-              totalUnits={phase1Units.length || 1}
+              totalUnits={completedPhase === 2 ? (phase2Units.length || 1) : (phase1Units.length || 1)}
               phase={completedPhase}
               onContinue={() => {
                 setUnitErrorCount(0)
@@ -1070,6 +1099,10 @@ function App() {
                 } else if (firstWrong?.type === 'listening_quiz') {
                   setListeningQuizData(firstWrong.data)
                   setStep('listening-quiz')
+                } else if (firstWrong?.type === 'masked_sentence' || firstWrong?.type === 'translation_reconstruction') {
+                  setExerciseType(firstWrong.type)
+                  setCurrentExerciseData(firstWrong.data)
+                  setStep('phase-exercise')
                 }
               }}
               errorCount={unitErrorCount}
@@ -1124,7 +1157,7 @@ function App() {
           
           {step === 'phase-exercise' && exerciseType === 'masked_sentence' && (
             <MaskedSentenceExerciseStep
-              key="masked-exercise"
+              key={`masked-exercise-${currentExerciseData?.exercise_index_in_unit}-${currentExerciseData?.mask_version}`}
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
               onBack={() => setStep('all-units')}
@@ -1158,7 +1191,7 @@ function App() {
           
           {step === 'phase-exercise' && exerciseType === 'translation_reconstruction' && (
             <TranslationReconstructionStep
-              key="reconstruction-exercise"
+              key={`reconstruction-exercise-${currentExerciseData?.exercise_index_in_unit}`}
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
               onBack={() => setStep('all-units')}

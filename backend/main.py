@@ -371,13 +371,12 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 else:
                     break
             
-            ordered_translations = []
-            for si in range(max_sequential + 1):
-                if si in results_dict:
-                    ordered_translations.append(results_dict[si])
+            all_completed_translations = []
+            for si in sorted(results_dict.keys()):
+                all_completed_translations.append(results_dict[si])
             
             partial_vocab = []
-            for si, sd in enumerate(ordered_translations):
+            for si, sd in enumerate(all_completed_translations):
                 tr = sd.get("translation_result", {})
                 if isinstance(tr, dict) and "dictionary_entries" in tr:
                     de = tr["dictionary_entries"]
@@ -409,7 +408,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 "current_sentence": len(completed_indices),
                 "total_sentences": total_sentences,
                 "vocab": unique_partial,
-                "sentence_translations": ordered_translations
+                "sentence_translations": all_completed_translations
             }
             print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(completed_indices)} 个句子, 词汇 {len(unique_partial)} 个")
         
