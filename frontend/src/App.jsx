@@ -589,6 +589,20 @@ function App() {
   }
 
   const handleOptionSelect = (index) => {
+    if (selectedOption !== null) {
+      if (isCorrect) return
+      setSelectedOption(index)
+      const isCorrectAnswer = index === learningData.correct_index
+      setIsCorrect(isCorrectAnswer)
+      if (isCorrectAnswer) {
+        setShowWordCard(true)
+        if (reviewMode) {
+          setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+          setReviewIndex(prev => prev)
+        }
+      }
+      return
+    }
     setSelectedOption(index)
     const isCorrectAnswer = index === learningData.correct_index
     setIsCorrect(isCorrectAnswer)
@@ -599,11 +613,13 @@ function App() {
         setReviewIndex(prev => prev)
       }
     } else {
-      setUnitErrorCount(prev => {
-        const newCount = prev + 1
-        unitErrorCountRef.current = newCount
-        return newCount
-      })
+      if (!reviewMode) {
+        setUnitErrorCount(prev => {
+          const newCount = prev + 1
+          unitErrorCountRef.current = newCount
+          return newCount
+        })
+      }
       if (reviewMode) {
         const currentItem = wrongItems[reviewIndex]
         if (currentItem) {
@@ -618,11 +634,13 @@ function App() {
 
   const handleSentenceQuizAnswer = (isCorrect) => {
     if (!isCorrect) {
-      setUnitErrorCount(prev => {
-        const newCount = prev + 1
-        unitErrorCountRef.current = newCount
-        return newCount
-      })
+      if (!reviewMode) {
+        setUnitErrorCount(prev => {
+          const newCount = prev + 1
+          unitErrorCountRef.current = newCount
+          return newCount
+        })
+      }
       if (reviewMode) {
         const currentItem = wrongItems[reviewIndex]
         if (currentItem) {
@@ -642,11 +660,13 @@ function App() {
 
   const handleListeningQuizAnswer = (isCorrect) => {
     if (!isCorrect) {
-      setUnitErrorCount(prev => {
-        const newCount = prev + 1
-        unitErrorCountRef.current = newCount
-        return newCount
-      })
+      if (!reviewMode) {
+        setUnitErrorCount(prev => {
+          const newCount = prev + 1
+          unitErrorCountRef.current = newCount
+          return newCount
+        })
+      }
       if (reviewMode) {
         const currentItem = wrongItems[reviewIndex]
         if (currentItem) {
@@ -666,11 +686,13 @@ function App() {
 
   const handlePhase2Answer = (isCorrect) => {
     if (!isCorrect) {
-      setUnitErrorCount(prev => {
-        const newCount = prev + 1
-        unitErrorCountRef.current = newCount
-        return newCount
-      })
+      if (!reviewMode) {
+        setUnitErrorCount(prev => {
+          const newCount = prev + 1
+          unitErrorCountRef.current = newCount
+          return newCount
+        })
+      }
       if (reviewMode) {
         const currentItem = wrongItems[reviewIndex]
         if (currentItem) {
@@ -1026,6 +1048,9 @@ function App() {
               t={t}
               sourceLang={sourceLang}
               skipListening={skipListening}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
@@ -1051,6 +1076,9 @@ function App() {
               sourceLang={sourceLang}
               onAnswer={handleSentenceQuizAnswer}
               skipListening={skipListening}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
@@ -1066,6 +1094,9 @@ function App() {
               sourceLang={sourceLang}
               onAnswer={handleListeningQuizAnswer}
               skipListening={skipListening}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
@@ -1186,6 +1217,9 @@ function App() {
               sentencePreview={currentExerciseData?.sentence_preview}
               sourceLang={sourceLang}
               onAnswer={handlePhase2Answer}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
@@ -1218,6 +1252,9 @@ function App() {
               sentencePreview={currentExerciseData?.sentence_preview}
               sourceLang={sourceLang}
               onAnswer={handlePhase2Answer}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           

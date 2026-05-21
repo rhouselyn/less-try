@@ -7,12 +7,13 @@ const LANG_MAP = {
   'de': 'de-DE',
   'es': 'es-ES',
   'it': 'it-IT',
-  'pt': 'pt-PT',
+  'pt': 'pt-BR',
   'ru': 'ru-RU',
 }
 
 let voicesLoaded = false
 let voicesReadyPromise = null
+let currentUtterance = null
 
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   const loadVoices = () => {
@@ -45,6 +46,7 @@ function speakText(text, sourceLang = 'en') {
   if (!text) return
 
   window.speechSynthesis.cancel()
+  currentUtterance = null
 
   const doSpeak = () => {
     try {
@@ -56,9 +58,12 @@ function speakText(text, sourceLang = 'en') {
       const voices = window.speechSynthesis.getVoices()
       const targetLang = LANG_MAP[sourceLang] || 'en-US'
       const langPrefix = targetLang.split('-')[0]
-      const matchedVoice = voices.find(v => v.lang.startsWith(langPrefix))
-      if (matchedVoice) {
-        utterance.voice = matchedVoice
+      const exactMatch = voices.find(v => v.lang === targetLang)
+      const langMatch = voices.find(v => v.lang.startsWith(langPrefix))
+      if (exactMatch) {
+        utterance.voice = exactMatch
+      } else if (langMatch) {
+        utterance.voice = langMatch
       }
 
       utterance.onerror = (e) => {
@@ -67,7 +72,26 @@ function speakText(text, sourceLang = 'en') {
         }
       }
 
+      currentUtterance = utterance
       window.speechSynthesis.speak(utterance)
+
+      const resumeInterval = setInterval(() => {
+        if (!window.speechSynthesis.speaking) {
+          clearInterval(resumeInterval)
+          return
+        }
+        window.speechSynthesis.resume()
+      }, 5000)
+      utterance.onend = () => {
+        clearInterval(resumeInterval)
+        currentUtterance = null
+      }
+      utterance.onerror = (e) => {
+        clearInterval(resumeInterval)
+        if (e.error !== 'canceled') {
+          currentUtterance = null
+        }
+      }
     } catch (e) {
       console.warn('Speech synthesis failed:', e)
     }

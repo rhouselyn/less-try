@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, X, BookOpen, Volume2, Languages } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
-  const stepInUnit = (quizData?.step_in_unit ?? 0) + 1
+  const stepInUnit = reviewMode ? (reviewIndex + 1) : ((quizData?.step_in_unit ?? 0) + 1)
   const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
   const rawTotalItemsInUnit = quizData?.total_items_in_unit ?? 0
-  const totalItemsInUnit = skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit
+  const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit)
 
   const autoSpeak = useCallback(() => {
     if (quizData?.original_sentence) {
@@ -152,27 +152,18 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
                     whileHover={!isChecked ? { scale: 1.1, y: -5 } : {}}
-                    className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium ${
+                    onClick={() => !isChecked && handleRemoveToken(pos)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium ${
                       isChecked
                         ? isCorrect
                           ? 'bg-green-100 text-green-800 border border-green-300'
                           : isTokenCorrect
                             ? 'bg-green-100 text-green-800 border border-green-300'
                             : 'bg-red-100 text-red-800 border border-red-300'
-                        : 'bg-stone-800 text-white'
+                        : 'bg-stone-800 text-white cursor-pointer'
                     }`}
                   >
                     <span>{token}</span>
-                    {!isChecked && (
-                      <motion.button
-                        onClick={() => handleRemoveToken(pos)}
-                        className="p-1 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors"
-                        whileHover={{ scale: 1.2 }}
-                        whileTap={{ scale: 0.8 }}
-                      >
-                        <X className="w-3 h-3" />
-                      </motion.button>
-                    )}
                   </motion.div>
                 )
               })}

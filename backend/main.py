@@ -455,6 +455,31 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             "sentence_translations": sentence_translations
         }
         print(f"[DEBUG] 所有处理完成！")
+
+        if file_id not in word_gen_state:
+            word_gen_state[file_id] = {
+                "running": False,
+                "position": 0,
+                "vocab": all_vocab,
+                "priority_queue": [],
+                "task": None,
+                "processing_words": set()
+            }
+        state = word_gen_state[file_id]
+        state["vocab"] = all_vocab
+        if "processing_words" not in state:
+            state["processing_words"] = set()
+        for i, word_entry in enumerate(all_vocab):
+            word = word_entry.get("word", "")
+            if word and not storage.load_word_cache(file_id, word):
+                state["position"] = i
+                break
+        else:
+            state["position"] = len(all_vocab)
+        if not state["running"]:
+            state["running"] = True
+            state["task"] = asyncio.create_task(background_word_gen(file_id))
+            print(f"[DEBUG] 自动启动单词详情生成")
     except Exception as e:
         print(f"[ERROR] 处理出错: {str(e)}")
         import traceback

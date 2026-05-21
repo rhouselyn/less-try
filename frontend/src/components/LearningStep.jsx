@@ -3,7 +3,7 @@ import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain, BookOpe
 import { useEffect, useCallback } from 'react'
 import { speakText } from '../utils/speech'
 
-function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t, sourceLang, skipListening }) {
+function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t, sourceLang, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
   const autoSpeak = useCallback(() => {
     if (learningData?.word) {
       setTimeout(() => speakText(learningData.word, sourceLang), 300)
@@ -29,10 +29,10 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
     )
   }
 
-  const stepInUnit = (learningData.step_in_unit ?? 0) + 1
+  const stepInUnit = reviewMode ? (reviewIndex + 1) : ((learningData.step_in_unit ?? 0) + 1)
   const listeningCountInUnit = learningData.listening_count_in_unit ?? 0
   const rawTotalItemsInUnit = learningData.total_items_in_unit ?? learningData.word_count_in_unit ?? learningData.unit_end_index ?? 0
-  const totalItemsInUnit = skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit
+  const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit)
 
   return (
     <motion.div
