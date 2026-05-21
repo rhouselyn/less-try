@@ -55,7 +55,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (el && vocabListRef.current) {
+      const container = vocabListRef.current
+      const containerRect = container.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      const stickyOffset = 32
+      const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+      container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+    }
   }
 
   const fetchWordDetail = useCallback(async (wordKey) => {

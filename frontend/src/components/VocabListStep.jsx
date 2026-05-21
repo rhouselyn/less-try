@@ -77,7 +77,14 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`vocab-group-${letter}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (el && listRef.current) {
+      const container = listRef.current
+      const containerRect = container.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      const stickyOffset = 32
+      const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+      container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+    }
   }
 
   const getEnriched = (word) => enrichedWords[word] || {}
@@ -143,6 +150,19 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
         </div>
       ) : (
         <div className="flex gap-4">
+          {letterIndex.length > 1 && (
+            <div className="hidden sm:flex flex-col items-center gap-0.5 pt-8 sticky top-8 self-start shrink-0">
+              {letterIndex.map(letter => (
+                <button
+                  key={letter}
+                  onClick={() => scrollToLetter(letter)}
+                  className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="space-y-3" ref={listRef} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               {groupedVocab.map(([letter, words], groupIdx) => (
@@ -233,20 +253,6 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
               ))}
             </div>
           </div>
-
-          {letterIndex.length > 3 && (
-            <div className="hidden lg:flex flex-col items-center gap-0.5 pt-8 sticky top-8 self-start">
-              {letterIndex.map(letter => (
-                <button
-                  key={letter}
-                  onClick={() => scrollToLetter(letter)}
-                  className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
-                >
-                  {letter}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </motion.div>

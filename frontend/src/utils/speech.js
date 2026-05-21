@@ -37,7 +37,7 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     setTimeout(() => {
       loadVoices()
       resolve()
-    }, 1000)
+    }, 2000)
   })
 }
 
@@ -45,8 +45,10 @@ function speakText(text, sourceLang = 'en') {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   if (!text) return
 
-  window.speechSynthesis.cancel()
-  currentUtterance = null
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+    window.speechSynthesis.cancel()
+    currentUtterance = null
+  }
 
   const doSpeak = () => {
     try {
@@ -66,43 +68,49 @@ function speakText(text, sourceLang = 'en') {
         utterance.voice = langMatch
       }
 
+      let resumeInterval = null
+
+      utterance.onstart = () => {
+        resumeInterval = setInterval(() => {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume()
+          }
+        }, 5000)
+      }
+
+      utterance.onend = () => {
+        if (resumeInterval) clearInterval(resumeInterval)
+        currentUtterance = null
+      }
+
       utterance.onerror = (e) => {
+        if (resumeInterval) clearInterval(resumeInterval)
         if (e.error !== 'canceled') {
           console.warn('Speech synthesis error:', e.error)
         }
+        currentUtterance = null
       }
 
       currentUtterance = utterance
       window.speechSynthesis.speak(utterance)
 
-      const resumeInterval = setInterval(() => {
-        if (!window.speechSynthesis.speaking) {
-          clearInterval(resumeInterval)
-          return
+      setTimeout(() => {
+        if (window.speechSynthesis.speaking === false && currentUtterance === utterance) {
+          window.speechSynthesis.cancel()
+          window.speechSynthesis.speak(utterance)
         }
-        window.speechSynthesis.resume()
-      }, 5000)
-      utterance.onend = () => {
-        clearInterval(resumeInterval)
-        currentUtterance = null
-      }
-      utterance.onerror = (e) => {
-        clearInterval(resumeInterval)
-        if (e.error !== 'canceled') {
-          currentUtterance = null
-        }
-      }
+      }, 200)
     } catch (e) {
       console.warn('Speech synthesis failed:', e)
     }
   }
 
   if (voicesLoaded) {
-    doSpeak()
+    setTimeout(doSpeak, 50)
   } else if (voicesReadyPromise) {
-    voicesReadyPromise.then(doSpeak)
+    voicesReadyPromise.then(() => setTimeout(doSpeak, 50))
   } else {
-    setTimeout(doSpeak, 300)
+    setTimeout(doSpeak, 500)
   }
 }
 
