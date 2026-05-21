@@ -57,9 +57,6 @@ def is_source_lang_text(text, source_lang="en"):
         if re.match(r'^[a-zA-Z\s\-\']+$', text) and len(text.split()) <= 3:
             if not re.search(r'[\u4e00-\u9fff]', text):
                 return True
-    if source_lang == "ug":
-        if re.search(r'[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]', text):
-            return True
     return False
 
 ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
@@ -78,10 +75,6 @@ def vocab_sort_key(entry):
                 return ipa.lstrip('/').strip()[0].lower()
             return first_char
         if '\uac00' <= first_char <= '\ud7af':
-            return first_char
-        if '\u0600' <= first_char <= '\u06ff' or '\u0750' <= first_char <= '\u077f' or '\u08a0' <= first_char <= '\u08ff':
-            if ipa and len(ipa.strip('/')) > 0:
-                return ipa.lstrip('/').strip()[0].lower()
             return first_char
         import unicodedata
         normalized = unicodedata.normalize('NFD', first_char)
