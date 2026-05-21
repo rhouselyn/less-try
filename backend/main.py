@@ -296,14 +296,17 @@ async def root():
 
 async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str, rpm: int = 20):
     try:
+        t_total_start = time.time()
         print(f"[DEBUG] 开始处理文件 {file_id}, RPM={rpm}")
         processing_status[file_id] = {"status": "processing", "progress": 0}
         
         storage.save_language_settings(file_id, source_lang, target_lang, rpm)
         
+        t_split_start = time.time()
         sentences = text_processor.split_sentences(text)
         total_sentences = len(sentences)
-        print(f"[DEBUG] 分割为 {total_sentences} 个句子: {sentences}")
+        t_split_end = time.time()
+        print(f"[TIMING] 句子分割: {t_split_end - t_split_start:.3f}s, 共 {total_sentences} 个句子")
         
         rate_limiter = RateLimiter(rpm)
         results_dict = {}
@@ -312,7 +315,15 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         async def process_single_sentence(idx, sentence):
             if not sentence.strip():
                 return idx, None
+            
+            t_sentence_start = time.time()
+            
+            t_rate_start = time.time()
             await rate_limiter.acquire()
+            t_rate_end = time.time()
+            print(f"[TIMING] 句子 {idx+1} 等待限速: {t_rate_end - t_rate_start:.3f}s")
+            
+            t_llm_start = time.time()
             print(f"[DEBUG] 正在翻译句子 {idx+1}/{total_sentences}: {repr(sentence)}")
             sentence_translation_result = await text_processor.process_translation(
                 sentence,
@@ -320,13 +331,21 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 target_lang,
                 nvidia_api
             )
-            print(f"[DEBUG] 句子 {idx+1} 翻译完成")
+            t_llm_end = time.time()
+            print(f"[TIMING] 句子 {idx+1} LLM翻译调用: {t_llm_end - t_llm_start:.3f}s")
             
+            t_validate_start = time.time()
             sentence_translation_result = text_processor.validate_and_complete_translation(
                 sentence, sentence_translation_result, source_lang
             )
+            t_validate_end = time.time()
+            print(f"[TIMING] 句子 {idx+1} 验证补全: {t_validate_end - t_validate_start:.3f}s")
             
+            t_extract_start = time.time()
             sentence_words = text_processor.extract_words(sentence, source_lang)
+            t_extract_end = time.time()
+            print(f"[TIMING] 句子 {idx+1} 单词提取: {t_extract_end - t_extract_start:.3f}s")
+            
             dict_entry_words = set()
             if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
                 dict_entries = sentence_translation_result["dictionary_entries"]
@@ -348,10 +367,13 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             
             if missing_words:
                 print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
+                t_missing_start = time.time()
                 await rate_limiter.acquire()
                 remaining_entries = await nvidia_api.process_remaining_words(
                     missing_words, source_lang, target_lang, sentence
                 )
+                t_missing_end = time.time()
+                print(f"[TIMING] 句子 {idx+1} 遗漏单词补充LLM调用: {t_missing_end - t_missing_start:.3f}s")
                 if remaining_entries:
                     if isinstance(sentence_translation_result, dict):
                         if "dictionary_entries" not in sentence_translation_result:
@@ -399,6 +421,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 "sentence": sentence,
                 "translation_result": sentence_translation_result
             }
+            t_sentence_end = time.time()
+            print(f"[TIMING] 句子 {idx+1} 总耗时: {t_sentence_end - t_sentence_start:.3f}s")
             return idx, sentence_data
         
         tasks = [asyncio.create_task(process_single_sentence(i, s)) for i, s in enumerate(sentences)]
@@ -513,7 +537,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             "vocab": all_vocab,
             "sentence_translations": sentence_translations
         }
-        print(f"[DEBUG] 所有处理完成！")
+        t_total_end = time.time()
+        print(f"[TIMING] ========== 全部处理完成 ==========")
+        print(f"[TIMING] 总耗时: {t_total_end - t_total_start:.3f}s")
+        print(f"[TIMING] 句子数: {total_sentences}, 单词数: {len(all_vocab)}")
 
         if file_id not in word_gen_state:
             word_gen_state[file_id] = {
@@ -983,6 +1010,7 @@ async def generate_title(text: str, source_lang: str) -> str:
 @app.post("/api/process-text")
 async def process_text(request: dict, background_tasks: BackgroundTasks):
     try:
+        t_api_start = time.time()
         text = request.get("text", "")
         source_lang = request.get("source_language", "en")
         target_lang = request.get("target_language", "zh")
@@ -997,11 +1025,18 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         app_settings = storage.load_app_settings()
         rpm = app_settings.get("rpm", 20)
         
+        t_title_start = time.time()
         title = await generate_title(text, source_lang)
+        t_title_end = time.time()
+        print(f"[TIMING] 标题生成: {t_title_end - t_title_start:.3f}s")
+        
         text_preview = text.strip()[:100]
         storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
         
         background_tasks.add_task(process_text_background, file_id, text, source_lang, target_lang, rpm)
+        
+        t_api_end = time.time()
+        print(f"[TIMING] /api/process-text API响应耗时: {t_api_end - t_api_start:.3f}s")
         
         return {
             "file_id": file_id,

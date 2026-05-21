@@ -113,6 +113,7 @@ class NvidiaAPI:
         return result
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+        import time as _time
         self.reload()
         payload = {
             "model": self.model,
@@ -127,6 +128,7 @@ class NvidiaAPI:
             payload["tool_choice"] = "auto"
 
         try:
+            t0 = _time.time()
             result = await asyncio.to_thread(
                 self._sync_post,
                 f"{self.base_url}/chat/completions",
@@ -134,9 +136,13 @@ class NvidiaAPI:
                 payload,
                 600
             )
+            t1 = _time.time()
+            has_tools = "yes" if tools else "no"
+            print(f"[TIMING] call_minimax (tools={has_tools}): {t1 - t0:.3f}s")
             return result
         except requests.exceptions.Timeout:
             print("API request timed out. Retrying...")
+            t0 = _time.time()
             result = await asyncio.to_thread(
                 self._sync_post,
                 f"{self.base_url}/chat/completions",
@@ -144,6 +150,9 @@ class NvidiaAPI:
                 payload,
                 600
             )
+            t1 = _time.time()
+            has_tools = "yes" if tools else "no"
+            print(f"[TIMING] call_minimax retry (tools={has_tools}): {t1 - t0:.3f}s")
             return result
 
 
