@@ -134,6 +134,28 @@ BACKUP_VOCAB_BY_LANG = {
         "受け入れる", "同意", "許す", "現れる", "原因", "創造", "期待", "力",
         "影響", "観察", "好む", "受け取る", "必要", "仕える", "共有", "広がる",
     ],
+    "ug": [
+        "ئەتىگەن", "كەچ", "ئائىلە", "دوست", "مەكتەپ", "ئوقۇتقۇچى", "ئوقۇغۇچى", "سىنىپ",
+        "باغ", "گۈل", "ھايۋان", "سۇ", "دەريا", "تاغ", "ئورمان", "ھاۋا",
+        "ياز", "قىش", "ئەتىياز", "كۈز", "دەم ئېلىش", "تۇغۇلغان كۈن", "ناشتا", "كەچلىك تاماق",
+        "ئاشخانا", "دېرىزە", "ئىشىك", "ئۈستەل", "ئورۇندۇق", "رەسىم", "رەڭ", "مۇزىكا",
+        "ھېكايە", "خەت", "سان", "سوئال", "جاۋاب", "مىسال", "مەشىق", "دەرس",
+        "دۆلەت", "كەنت", "بازار", "كۆۋرۈك", "بېكەت", "كۇتۇپخانا", "دوختۇرخانا", "مۇزېي",
+        "ساياھەت", "زىيارەت", "يېتىپ كېلىش", "قايتىش", "ئېلىپ مېڭىش", "ئەگىشىش", "ئاڭلاش", "ئەستە تۇتۇش",
+        "گۈزەل", "مۇھىم", "ئوخشىمىغان", "قىيىن", "قالتىس", "ئېھتىياتچان", "بىللە", "ئارىسىدا",
+        "ھەمىشە", "ئادەتتە", "بەزىدە", "تېز", "ئاستا", "ئەستايىدىل", "ئەلۋەتتە", "ئاللىبۇرۇن",
+        "يېتەرلىك", "باشقا", "بىرنەچچە", "بەلكىم", "دېگۈدەك", "جەريانىدا", "سىز", "قارشى",
+        "ئىشىنىش", "تەييارلاش", "بايقاش", "چۈشەندۈرۈش", "تەسەۋۋۇر", "ئۆز ئىچىگە ئېلىش", "تەمىنلەش", "پەرەز",
+        "ئىشلەپچىقىرىش", "يىغىش", "قوغداش", "باغلاش", "تەرەققىي", "ياخشىلاش", "ئاشۇرۇش", "ئويلىنىش",
+        "تەبىئەت", "پەن", "مەدەنىيەت", "كەلگۈسى", "تارىخ", "تىل", "بىلىم", "دىققەت",
+        "ئالاھىدە", "مۇمكىن", "مودا", "ئوخشىشىپ كېتىدىغان", "ئاددىي", "غەلىتە", "پايدىلىق", "ئەستايىدىل",
+        "قارار", "بېقىنىش", "بۆلۈش", "كىرىش", "يۈز بېرىش", "تەكلىپ", "دىققەت", "ۋەدە",
+        "تەكلىپ", "قوللاش", "ئىشقا ئاشۇرۇش", "داۋاملاشتۇرۇش", "تەشكىللەش", "تونۇشتۇرۇش", "تەبرىكلەش", "ئالاقىلىشىش",
+        "پىكىر", "قارار", "يۆنىلىش", "ئۇچۇر", "تەجرىبە", "مائارىپ", "شەرت", "ئورۇن",
+        "قەدىمكى", "زامانىۋى", "توغرا", "دەل", "مۇۋاپىق", "زۆرۈر", "ئەسلى", "ئەنئەنىۋى",
+        "قوبۇل", "قوشۇلۇش", "رۇخسەت", "پەيدا بولۇش", "سەۋەب", "يارىتىش", "كۈتۈش", "كۈچ",
+        "تەسىر", "كۆزىتىش", "ئالدىن تاللاش", "قوبۇل", "ئېھتىياج", "خىزمەت", "بەھرىمەن", "تارقىلىش",
+    ],
 }
 
 BACKUP_VOCAB = BACKUP_VOCAB_BY_LANG["en"]
@@ -279,7 +301,7 @@ class TextProcessor:
         if not isinstance(translation_result, dict) or 'translation' not in translation_result:
             return translation_result
         
-        original_words = self.tokenize_sentence(sentence)
+        original_words = self.tokenize_sentence(sentence, source_lang)
         
         existing_tokens = []
         if 'translation' in translation_result:
@@ -311,15 +333,18 @@ class TextProcessor:
         translation_result['translation'] = completed_translation
         return translation_result
 
-    def tokenize_sentence(self, sentence: str) -> List[str]:
+    def tokenize_sentence(self, sentence: str, source_lang: str = "en") -> List[str]:
         import re
+        if source_lang == "ug":
+            tokens = re.findall(r'[\u0600-\u06ff\u0750-\u077f\u08a0-\u08ff]+', sentence)
+            return tokens if tokens else sentence.split()
         return re.findall(r"\b\w+(?:'\w+)?\b", sentence)
     
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0) -> Dict[str, Any]:
         if translation_tokens:
             words = translation_tokens
         else:
-            words = self.tokenize_sentence(sentence)
+            words = self.tokenize_sentence(sentence, source_lang)
         
         word_count = len(words)
         
@@ -402,7 +427,7 @@ class TextProcessor:
         if translation_tokens:
             current_sentence_words_lower = {w.lower() for w in translation_tokens}
         else:
-            current_sentence_words_lower = {w.lower() for w in self.tokenize_sentence(sentence)}
+            current_sentence_words_lower = {w.lower() for w in self.tokenize_sentence(sentence, source_lang)}
         
         exclude_lower = set(answer_lower) | current_sentence_words_lower
         

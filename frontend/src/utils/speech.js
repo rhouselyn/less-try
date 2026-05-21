@@ -9,6 +9,7 @@ const LANG_MAP = {
   'it': 'it-IT',
   'pt': 'pt-BR',
   'ru': 'ru-RU',
+  'ug': 'ug-CN',
 }
 
 let voicesLoaded = false

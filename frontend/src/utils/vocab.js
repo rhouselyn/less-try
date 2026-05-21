@@ -5,6 +5,14 @@ const CJK_RANGES = [
   [0xac00, 0xd7af],
 ]
 
+const ARABIC_RANGES = [
+  [0x0600, 0x06ff],
+  [0x0750, 0x077f],
+  [0x08a0, 0x08ff],
+  [0xfb50, 0xfdff],
+  [0xfe70, 0xfeff],
+]
+
 function isCJK(char) {
   const code = char.charCodeAt(0)
   return CJK_RANGES.some(([start, end]) => code >= start && code <= end)
@@ -15,11 +23,31 @@ function hasCJK(text) {
   return [...text].some(c => isCJK(c))
 }
 
+function isArabic(char) {
+  const code = char.charCodeAt(0)
+  return ARABIC_RANGES.some(([start, end]) => code >= start && code <= end)
+}
+
+function hasArabic(text) {
+  if (!text) return false
+  return [...text].some(c => isArabic(c))
+}
+
 function getGroupKey(word) {
   const w = word.word || ''
   const ipa = word.ipa || ''
 
   if (hasCJK(w)) {
+    if (ipa && ipa.length > 1) {
+      const cleaned = ipa.replace(/^[\/\[]+/, '').trim()
+      if (cleaned.length > 0) {
+        return cleaned[0].toUpperCase()
+      }
+    }
+    return w[0]
+  }
+
+  if (hasArabic(w)) {
     if (ipa && ipa.length > 1) {
       const cleaned = ipa.replace(/^[\/\[]+/, '').trim()
       if (cleaned.length > 0) {
@@ -47,4 +75,4 @@ function groupVocab(vocab) {
   return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
 }
 
-export { getGroupKey, groupVocab, hasCJK }
+export { getGroupKey, groupVocab, hasCJK, hasArabic }
