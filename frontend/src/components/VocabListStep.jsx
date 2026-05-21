@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Search, BookOpen, Volume2, Loader2 } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
+import { groupVocab } from '../utils/vocab'
 import WordDetail from './WordDetail'
 
 function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang }) {
@@ -62,13 +63,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
   }, [vocab, searchQuery])
 
   const groupedVocab = useMemo(() => {
-    const groups = {}
-    filteredVocab.forEach(word => {
-      const letter = word.word[0].toUpperCase()
-      if (!groups[letter]) groups[letter] = []
-      groups[letter].push(word)
-    })
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+    return groupVocab(filteredVocab)
   }, [filteredVocab])
 
   const letterIndex = useMemo(() => {

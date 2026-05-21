@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, EyeOff } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
+import { groupVocab } from '../utils/vocab'
 import { speakText } from '../utils/speech'
 
 function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang }) {
@@ -45,13 +46,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [vocab, vocabSearch])
 
   const groupedVocab = useMemo(() => {
-    const groups = {}
-    filteredVocab.forEach(word => {
-      const letter = word.word[0].toUpperCase()
-      if (!groups[letter]) groups[letter] = []
-      groups[letter].push(word)
-    })
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+    return groupVocab(filteredVocab)
   }, [filteredVocab])
 
   const letterIndex = useMemo(() => {
