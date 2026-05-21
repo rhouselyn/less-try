@@ -93,13 +93,6 @@ function speakText(text, sourceLang = 'en') {
 
       currentUtterance = utterance
       window.speechSynthesis.speak(utterance)
-
-      setTimeout(() => {
-        if (window.speechSynthesis.speaking === false && currentUtterance === utterance) {
-          window.speechSynthesis.cancel()
-          window.speechSynthesis.speak(utterance)
-        }
-      }, 200)
     } catch (e) {
       console.warn('Speech synthesis failed:', e)
     }

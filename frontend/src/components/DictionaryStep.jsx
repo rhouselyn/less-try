@@ -246,8 +246,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col gap-4"
-      style={{ height: 'calc(100vh - 140px)' }}
+      className="flex flex-col gap-3"
+      style={{ height: '100%' }}
     >
       {processingInfo && (
         <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
