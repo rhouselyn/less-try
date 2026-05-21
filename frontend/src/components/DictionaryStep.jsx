@@ -123,8 +123,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const handleTokenClick = useCallback(async (sourceWord) => {
     const sourceLower = sourceWord.toLowerCase()
+    const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
     const matchedWord = vocab.find(w => {
-      if (w.word.toLowerCase() === sourceLower) return true
+      const wordLower = w.word.toLowerCase()
+      if (wordLower === sourceLower) return true
+      if (wordLower === sourceNoHyphen) return true
+      if (wordLower.replace(/-/g, ' ') === sourceLower) return true
       if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
       return false
     })
@@ -175,8 +179,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
+    const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
     return vocab.some(w => {
-      if (w.word.toLowerCase() === sourceLower) return true
+      const wordLower = w.word.toLowerCase()
+      if (wordLower === sourceLower) return true
+      if (wordLower === sourceNoHyphen) return true
+      if (wordLower.replace(/-/g, ' ') === sourceLower) return true
       if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
       return false
     })
@@ -187,19 +195,20 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const tr = item.translation_result
     const tokens = (tr && tr.translation && Array.isArray(tr.translation)) ? tr.translation : null
 
-    if (!tokens) {
+    const tokenTexts = tokens
+      ? tokens.filter(t => typeof t === 'object' && t.text).map(t => t.text)
+      : []
+
+    const vocabTexts = vocab.map(w => w.word).filter(Boolean)
+
+    const allWords = [...new Set([...tokenTexts, ...vocabTexts])]
+    if (allWords.length === 0) {
       return <div className="font-medium text-stone-800 mb-1.5">{sentence}</div>
     }
 
-    const vocabWords = tokens
-      .filter(t => typeof t === 'object' && t.text)
-      .map(t => t.text)
+    allWords.sort((a, b) => b.length - a.length)
 
-    if (vocabWords.length === 0) {
-      return <div className="font-medium text-stone-800 mb-1.5">{sentence}</div>
-    }
-
-    const escapedWords = vocabWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const escapedWords = allWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     const pattern = new RegExp(`(${escapedWords.join('|')})`, 'gi')
     const parts = sentence.split(pattern)
 

@@ -293,13 +293,39 @@ class TextProcessor:
         used_existing = set()
         
         for orig_word in original_words:
+            orig_lower = orig_word.lower()
             found = False
             for i, token in enumerate(existing_tokens):
-                if i not in used_existing and token['text'].lower() == orig_word.lower():
+                if i in used_existing:
+                    continue
+                token_lower = token['text'].lower()
+                if token_lower == orig_lower:
                     completed_translation.append(token)
                     used_existing.add(i)
                     found = True
                     break
+                if token_lower == orig_lower.replace('-', ' '):
+                    completed_translation.append(token)
+                    used_existing.add(i)
+                    found = True
+                    break
+                if token_lower.replace('-', ' ') == orig_lower:
+                    completed_translation.append({**token, 'text': orig_word})
+                    used_existing.add(i)
+                    found = True
+                    break
+            if not found:
+                for i, token in enumerate(existing_tokens):
+                    if i in used_existing:
+                        continue
+                    token_lower = token['text'].lower()
+                    if orig_lower.startswith(token_lower) or token_lower.startswith(orig_lower):
+                        continue
+                    if token_lower in orig_lower or orig_lower in token_lower:
+                        completed_translation.append({**token, 'text': orig_word})
+                        used_existing.add(i)
+                        found = True
+                        break
             if not found:
                 completed_translation.append({
                     'text': orig_word,
@@ -313,7 +339,7 @@ class TextProcessor:
 
     def tokenize_sentence(self, sentence: str) -> List[str]:
         import re
-        return re.findall(r"\b\w+(?:'\w+)?\b", sentence)
+        return re.findall(r"\b\w+(?:[-']\w+)*\b", sentence)
     
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0) -> Dict[str, Any]:
         if translation_tokens:
