@@ -630,6 +630,27 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
             context,
             target_lang
         )
+        
+        placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
+        enriched = options_result.get("enriched_meaning", "")
+        ctx_meaning = options_result.get("context_meaning", "")
+        if placeholder_pattern.search(enriched) or placeholder_pattern.search(ctx_meaning):
+            print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
+            options_result = await nvidia_api.generate_multiple_choice(
+                word_to_gen,
+                correct_meaning,
+                context,
+                target_lang
+            )
+            enriched = options_result.get("enriched_meaning", "")
+            ctx_meaning = options_result.get("context_meaning", "")
+            if placeholder_pattern.search(enriched) or placeholder_pattern.search(ctx_meaning):
+                print(f"[WARN] Still placeholder text after retry for '{word_to_gen}', using fallback")
+                if placeholder_pattern.search(enriched):
+                    options_result["enriched_meaning"] = correct_meaning
+                if placeholder_pattern.search(ctx_meaning):
+                    options_result["context_meaning"] = correct_meaning
+        
         options_result = fix_llm_options_result(options_result, source_lang)
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word_to_gen)

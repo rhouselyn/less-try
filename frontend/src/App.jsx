@@ -990,9 +990,9 @@ function App() {
 
       <main>
         {step === 'input' ? (
-          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
+          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ height: 'calc(100vh - 80px)' }}>
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
-            <div className="flex-1 min-w-0 relative">
+            <div className="flex-1 min-w-0 relative h-full">
               {wordListLang ? (
                 <WordListPanel
                   sourceLang={wordListLang}
