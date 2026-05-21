@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, ChevronDown, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
+import { groupVocab } from '../utils/vocab'
 
 function WordDetailCard({ word, sourceLang, detailLoading }) {
   return (
@@ -126,13 +127,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
     : words
 
   const groupedWords = useMemo(() => {
-    const groups = {}
-    filteredWords.forEach(word => {
-      const letter = word.word[0].toUpperCase()
-      if (!groups[letter]) groups[letter] = []
-      groups[letter].push(word)
-    })
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+    return groupVocab(filteredWords)
   }, [filteredWords])
 
   const letterIndex = useMemo(() => {

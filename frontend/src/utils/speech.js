@@ -7,12 +7,13 @@ const LANG_MAP = {
   'de': 'de-DE',
   'es': 'es-ES',
   'it': 'it-IT',
-  'pt': 'pt-PT',
+  'pt': 'pt-BR',
   'ru': 'ru-RU',
 }
 
 let voicesLoaded = false
 let voicesReadyPromise = null
+let currentUtterance = null
 
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   const loadVoices = () => {
@@ -36,7 +37,7 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     setTimeout(() => {
       loadVoices()
       resolve()
-    }, 1000)
+    }, 2000)
   })
 }
 
@@ -44,7 +45,10 @@ function speakText(text, sourceLang = 'en') {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   if (!text) return
 
-  window.speechSynthesis.cancel()
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+    window.speechSynthesis.cancel()
+    currentUtterance = null
+  }
 
   const doSpeak = () => {
     try {
@@ -56,29 +60,57 @@ function speakText(text, sourceLang = 'en') {
       const voices = window.speechSynthesis.getVoices()
       const targetLang = LANG_MAP[sourceLang] || 'en-US'
       const langPrefix = targetLang.split('-')[0]
-      const matchedVoice = voices.find(v => v.lang.startsWith(langPrefix))
-      if (matchedVoice) {
-        utterance.voice = matchedVoice
+      const exactMatch = voices.find(v => v.lang === targetLang)
+      const langMatch = voices.find(v => v.lang.startsWith(langPrefix))
+      if (exactMatch) {
+        utterance.voice = exactMatch
+      } else if (langMatch) {
+        utterance.voice = langMatch
+      }
+
+      let resumeInterval = null
+
+      utterance.onstart = () => {
+        resumeInterval = setInterval(() => {
+          if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume()
+          }
+        }, 5000)
+      }
+
+      utterance.onend = () => {
+        if (resumeInterval) clearInterval(resumeInterval)
+        currentUtterance = null
       }
 
       utterance.onerror = (e) => {
+        if (resumeInterval) clearInterval(resumeInterval)
         if (e.error !== 'canceled') {
           console.warn('Speech synthesis error:', e.error)
         }
+        currentUtterance = null
       }
 
+      currentUtterance = utterance
       window.speechSynthesis.speak(utterance)
+
+      setTimeout(() => {
+        if (window.speechSynthesis.speaking === false && currentUtterance === utterance) {
+          window.speechSynthesis.cancel()
+          window.speechSynthesis.speak(utterance)
+        }
+      }, 200)
     } catch (e) {
       console.warn('Speech synthesis failed:', e)
     }
   }
 
   if (voicesLoaded) {
-    doSpeak()
+    setTimeout(doSpeak, 50)
   } else if (voicesReadyPromise) {
-    voicesReadyPromise.then(doSpeak)
+    voicesReadyPromise.then(() => setTimeout(doSpeak, 50))
   } else {
-    setTimeout(doSpeak, 300)
+    setTimeout(doSpeak, 500)
   }
 }
 

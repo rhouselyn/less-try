@@ -14,7 +14,8 @@
     "framer-motion": "^11.11.17",
     "lucide-react": "^0.454.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-is": "^18.3.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.29.2",

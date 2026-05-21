@@ -62,7 +62,10 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
       }
 
       setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
+      setTimeout(() => {
+        setSaved(false)
+        onClose()
+      }, 800)
     } catch (e) {
       console.error('Failed to save settings:', e)
     } finally {

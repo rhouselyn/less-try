@@ -153,6 +153,9 @@ function AllUnitsStep({
             <h3 className="text-base font-semibold text-stone-700 mb-3 flex items-center gap-2">
               {t.phase2}
             </h3>
+            {phase2Units.length === 0 || (phase2Units.length === 1 && phase2Units[0]?.no_eligible_sentences) ? (
+              <p className="text-sm text-stone-400 py-2">暂无可练习内容</p>
+            ) : (
             <div className="flex flex-wrap gap-2">
               {phase2Units.map((unit, index) =>
                 renderUnitCard(
@@ -166,6 +169,7 @@ function AllUnitsStep({
                 )
               )}
             </div>
+            )}
           </div>
         </div>
       )}

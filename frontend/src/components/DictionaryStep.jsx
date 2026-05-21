@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, EyeOff } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
+import { groupVocab } from '../utils/vocab'
 import { speakText } from '../utils/speech'
 
 function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang }) {
@@ -45,13 +46,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [vocab, vocabSearch])
 
   const groupedVocab = useMemo(() => {
-    const groups = {}
-    filteredVocab.forEach(word => {
-      const letter = word.word[0].toUpperCase()
-      if (!groups[letter]) groups[letter] = []
-      groups[letter].push(word)
-    })
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+    return groupVocab(filteredVocab)
   }, [filteredVocab])
 
   const letterIndex = useMemo(() => {
@@ -60,7 +55,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (el && vocabListRef.current) {
+      const container = vocabListRef.current
+      const containerRect = container.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      const stickyOffset = 32
+      const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+      container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+    }
   }
 
   const fetchWordDetail = useCallback(async (wordKey) => {
@@ -72,8 +74,28 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
     setLoadingWords(prev => ({ ...prev, [wordKey]: true }))
     try {
-      const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-      const data = await response.json()
+      try {
+        await fetch(`/api/learn/${currentFileId}/priority-word-gen`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ word: wordKey })
+        })
+      } catch (_) {}
+
+      const waitForDetail = async (retries = 30) => {
+        const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
+        const data = await response.json()
+        if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
+          return data
+        }
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, 2000))
+          return waitForDetail(retries - 1)
+        }
+        return data
+      }
+
+      const data = await waitForDetail()
       setWordDetails(prev => ({ ...prev, [wordKey]: data }))
       setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
       return data
@@ -101,8 +123,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const handleTokenClick = useCallback(async (sourceWord) => {
     const sourceLower = sourceWord.toLowerCase()
+    const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
     const matchedWord = vocab.find(w => {
-      if (w.word.toLowerCase() === sourceLower) return true
+      const wordLower = w.word.toLowerCase()
+      if (wordLower === sourceLower) return true
+      if (wordLower === sourceNoHyphen) return true
+      if (wordLower.replace(/-/g, ' ') === sourceLower) return true
       if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
       return false
     })
@@ -153,8 +179,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
+    const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
     return vocab.some(w => {
-      if (w.word.toLowerCase() === sourceLower) return true
+      const wordLower = w.word.toLowerCase()
+      if (wordLower === sourceLower) return true
+      if (wordLower === sourceNoHyphen) return true
+      if (wordLower.replace(/-/g, ' ') === sourceLower) return true
       if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
       return false
     })
@@ -165,19 +195,20 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const tr = item.translation_result
     const tokens = (tr && tr.translation && Array.isArray(tr.translation)) ? tr.translation : null
 
-    if (!tokens) {
+    const tokenTexts = tokens
+      ? tokens.filter(t => typeof t === 'object' && t.text).map(t => t.text)
+      : []
+
+    const vocabTexts = vocab.map(w => w.word).filter(Boolean)
+
+    const allWords = [...new Set([...tokenTexts, ...vocabTexts])]
+    if (allWords.length === 0) {
       return <div className="font-medium text-stone-800 mb-1.5">{sentence}</div>
     }
 
-    const vocabWords = tokens
-      .filter(t => typeof t === 'object' && t.text)
-      .map(t => t.text)
+    allWords.sort((a, b) => b.length - a.length)
 
-    if (vocabWords.length === 0) {
-      return <div className="font-medium text-stone-800 mb-1.5">{sentence}</div>
-    }
-
-    const escapedWords = vocabWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    const escapedWords = allWords.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     const pattern = new RegExp(`(${escapedWords.join('|')})`, 'gi')
     const parts = sentence.split(pattern)
 

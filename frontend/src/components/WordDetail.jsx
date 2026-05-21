@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Brain, Lightbulb, BookText, GitBranch, Volume2 } from 'lucide-react'
+import { Brain, Lightbulb, BookText, GitBranch, Volume2, Quote } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
 function WordDetail({ word, t, onSentenceClick, sourceLang }) {
@@ -77,6 +77,39 @@ function WordDetail({ word, t, onSentenceClick, sourceLang }) {
             <p className="text-[13px] text-stone-600 leading-relaxed bg-amber-50/70 px-3 py-2 rounded-lg border border-amber-100">
               {word.memory_hint}
             </p>
+          </div>
+        )}
+
+        {word.context_sentences && word.context_sentences.length > 0 && (
+          <div>
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+              <Quote className="w-3 h-3" />
+              原文例句
+            </h3>
+            <div className="space-y-1.5">
+              {word.context_sentences.map((cs, index) => (
+                <div
+                  key={index}
+                  className="border-l-[1.5px] border-amber-300 pl-2.5 cursor-pointer hover:bg-amber-50/40 rounded-r transition-colors"
+                  onClick={() => onSentenceClick && cs.sentence_index !== undefined && onSentenceClick(cs.sentence_index)}
+                >
+                  <div className="flex items-start gap-1.5">
+                    <p className="text-stone-700 text-[13px] leading-snug flex-1">{cs.sentence}</p>
+                    {cs.sentence && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); speakText(cs.sentence, sourceLang) }}
+                        className="p-1 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors shrink-0"
+                      >
+                        <Volume2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  {cs.translation && (
+                    <p className="text-stone-400 text-[11px] leading-snug mt-0.5">{cs.translation}</p>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
 

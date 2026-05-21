@@ -1,8 +1,10 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Search, BookOpen, Volume2 } from 'lucide-react'
+import { ArrowLeft, Search, BookOpen, Volume2, Loader2 } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
+import { groupVocab } from '../utils/vocab'
+import WordDetail from './WordDetail'
 
 function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -61,13 +63,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
   }, [vocab, searchQuery])
 
   const groupedVocab = useMemo(() => {
-    const groups = {}
-    filteredVocab.forEach(word => {
-      const letter = word.word[0].toUpperCase()
-      if (!groups[letter]) groups[letter] = []
-      groups[letter].push(word)
-    })
-    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+    return groupVocab(filteredVocab)
   }, [filteredVocab])
 
   const letterIndex = useMemo(() => {
@@ -81,7 +77,14 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`vocab-group-${letter}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    if (el && listRef.current) {
+      const container = listRef.current
+      const containerRect = container.getBoundingClientRect()
+      const elRect = el.getBoundingClientRect()
+      const stickyOffset = 32
+      const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+      container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+    }
   }
 
   const getEnriched = (word) => enrichedWords[word] || {}
@@ -147,6 +150,19 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
         </div>
       ) : (
         <div className="flex gap-4">
+          {letterIndex.length > 1 && (
+            <div className="hidden sm:flex flex-col items-center gap-0.5 pt-8 sticky top-8 self-start shrink-0">
+              {letterIndex.map(letter => (
+                <button
+                  key={letter}
+                  onClick={() => scrollToLetter(letter)}
+                  className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="space-y-3" ref={listRef} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
               {groupedVocab.map(([letter, words], groupIdx) => (
@@ -211,76 +227,20 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                 className="overflow-hidden"
                               >
                                 <div className="px-4 pb-3.5 border-t border-stone-100/80">
-                                  <div className="pt-3 space-y-2.5">
-                                    {(() => {
-                                      const variants = enriched.variants_detail || word.variants_detail
-                                      return variants && variants.length > 0 ? (
-                                        <div>
-                                          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">词形变化</span>
-                                          <div className="flex flex-wrap gap-1.5 mt-1">
-                                            {variants.map((v, i) => (
-                                              <span key={i} className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-md border border-amber-100/80">
-                                                <span className="text-amber-500/70">{v.type}</span>
-                                                <span className="font-medium">{v.form}</span>
-                                              </span>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      ) : null
-                                    })()}
-
-                                    {(() => {
-                                      const examples = enriched.examples || word.examples
-                                      if (examples && examples.length > 0) {
-                                        return (
-                                          <div>
-                                            <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">例句</span>
-                                            <div className="mt-1 space-y-1.5">
-                                              {examples.slice(0, 2).map((ex, i) => (
-                                                <div key={i} className="border-l-2 border-amber-200/60 pl-2.5">
-                                                  <div className="flex items-start gap-1.5">
-                                                    <p className="text-[12px] text-stone-700 leading-snug flex-1">{typeof ex === 'string' ? ex : ex.sentence}</p>
-                                                    {((typeof ex === 'string' ? ex : ex.sentence)) && (
-                                                      <button
-                                                        onClick={(e) => { e.stopPropagation(); speakText(typeof ex === 'string' ? ex : ex.sentence, sourceLang) }}
-                                                        className="p-1 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors shrink-0"
-                                                      >
-                                                        <Volume2 className="w-3 h-3" />
-                                                      </button>
-                                                    )}
-                                                  </div>
-                                                  {typeof ex === 'object' && ex.translation && (
-                                                    <p className="text-[11px] text-stone-400 leading-snug mt-0.5">{ex.translation}</p>
-                                                  )}
-                                                </div>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )
-                                      }
-                                      if (loadingWord === word.word) {
-                                        return (
-                                          <div className="flex items-center gap-2">
-                                            <div className="w-3 h-3 border border-amber-300 border-t-amber-600 rounded-full animate-spin" />
-                                            <span className="text-[11px] text-stone-400">加载中...</span>
-                                          </div>
-                                        )
-                                      }
-                                      return null
-                                    })()}
-
-                                    {(() => {
-                                      const memoryHint = enriched.memory_hint || word.memory_hint
-                                      return memoryHint ? (
-                                        <div>
-                                          <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">记忆辅助</span>
-                                          <p className="text-[12px] text-stone-600 leading-snug mt-1 bg-amber-50/70 px-2.5 py-1.5 rounded-lg border border-amber-100">
-                                            {memoryHint}
-                                          </p>
-                                        </div>
-                                      ) : null
-                                    })()}
-                                  </div>
+                                  {loadingWord === word.word ? (
+                                    <div className="pt-4 flex flex-col items-center justify-center gap-3">
+                                      <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+                                      <p className="text-[12px] text-stone-400">正在加载单词详情...</p>
+                                    </div>
+                                  ) : (() => {
+                                    const mergedWord = { ...word, ...enriched }
+                                    const hasDetail = mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.variants_detail || mergedWord.examples || mergedWord.memory_hint || mergedWord.context_sentences
+                                    return hasDetail ? (
+                                      <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} />
+                                    ) : (
+                                      <div className="pt-3 text-center text-stone-400 text-[12px]">暂无详情</div>
+                                    )
+                                  })()}
                                 </div>
                               </motion.div>
                             )}
@@ -293,20 +253,6 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
               ))}
             </div>
           </div>
-
-          {letterIndex.length > 3 && (
-            <div className="hidden lg:flex flex-col items-center gap-0.5 pt-8 sticky top-8 self-start">
-              {letterIndex.map(letter => (
-                <button
-                  key={letter}
-                  onClick={() => scrollToLetter(letter)}
-                  className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
-                >
-                  {letter}
-                </button>
-              ))}
-            </div>
-          )}
         </div>
       )}
     </motion.div>

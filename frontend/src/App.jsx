@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings, Home } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
+import ConfirmDialog from './components/ConfirmDialog'
 
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
@@ -75,6 +76,7 @@ function App() {
   const unitErrorCountRef = useRef(0)
   const [skipListening, setSkipListening] = useState(false)
   const [wordListLang, setWordListLang] = useState(null)
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -209,7 +211,7 @@ function App() {
     // 立即执行一次轮询
     pollStatus()
     // 设置轮询间隔为2秒，减少服务器负担
-    pollingInterval = setInterval(pollStatus, 2000)
+    pollingInterval = setInterval(pollStatus, 1000)
 
     // 清理函数
     return () => {
@@ -425,11 +427,15 @@ function App() {
     
     setUnitErrorCount(0)
     unitErrorCountRef.current = 0
+    setWrongItems([])
+    setReviewMode(false)
+    setReviewIndex(0)
     
     setLoading(true)
     try {
       setCurrentPhase(2)
       setCurrentPhaseUnit(unitId)
+      await api.setPhaseProgress(currentFileId, 2, unitId, unitId * 10)
       const exerciseData = await api.getPhaseUnitExercise(currentFileId, 2, unitId)
       if (exerciseData.unit_complete) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
@@ -500,7 +506,13 @@ function App() {
 
   const handleNextPhaseExercise = async () => {
     if (!currentFileId || !currentPhase) return
-    
+
+    if (reviewMode) {
+      goToNextReviewItem()
+      setLoading(false)
+      return
+    }
+
     setLoading(true)
     try {
       const nextRes = await api.nextPhaseExercise(currentFileId, currentPhase, currentPhaseUnit)
@@ -580,6 +592,20 @@ function App() {
   }
 
   const handleOptionSelect = (index) => {
+    if (selectedOption !== null) {
+      if (isCorrect) return
+      setSelectedOption(index)
+      const isCorrectAnswer = index === learningData.correct_index
+      setIsCorrect(isCorrectAnswer)
+      if (isCorrectAnswer) {
+        setShowWordCard(true)
+        if (reviewMode) {
+          setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+          setReviewIndex(prev => prev)
+        }
+      }
+      return
+    }
     setSelectedOption(index)
     const isCorrectAnswer = index === learningData.correct_index
     setIsCorrect(isCorrectAnswer)
@@ -590,11 +616,13 @@ function App() {
         setReviewIndex(prev => prev)
       }
     } else {
-      setUnitErrorCount(prev => {
-        const newCount = prev + 1
-        unitErrorCountRef.current = newCount
-        return newCount
-      })
+      if (!reviewMode) {
+        setUnitErrorCount(prev => {
+          const newCount = prev + 1
+          unitErrorCountRef.current = newCount
+          return newCount
+        })
+      }
       if (reviewMode) {
         const currentItem = wrongItems[reviewIndex]
         if (currentItem) {
@@ -609,11 +637,13 @@ function App() {
 
   const handleSentenceQuizAnswer = (isCorrect) => {
     if (!isCorrect) {
-      setUnitErrorCount(prev => {
-        const newCount = prev + 1
-        unitErrorCountRef.current = newCount
-        return newCount
-      })
+      if (!reviewMode) {
+        setUnitErrorCount(prev => {
+          const newCount = prev + 1
+          unitErrorCountRef.current = newCount
+          return newCount
+        })
+      }
       if (reviewMode) {
         const currentItem = wrongItems[reviewIndex]
         if (currentItem) {
@@ -633,11 +663,13 @@ function App() {
 
   const handleListeningQuizAnswer = (isCorrect) => {
     if (!isCorrect) {
-      setUnitErrorCount(prev => {
-        const newCount = prev + 1
-        unitErrorCountRef.current = newCount
-        return newCount
-      })
+      if (!reviewMode) {
+        setUnitErrorCount(prev => {
+          const newCount = prev + 1
+          unitErrorCountRef.current = newCount
+          return newCount
+        })
+      }
       if (reviewMode) {
         const currentItem = wrongItems[reviewIndex]
         if (currentItem) {
@@ -657,11 +689,27 @@ function App() {
 
   const handlePhase2Answer = (isCorrect) => {
     if (!isCorrect) {
-      setUnitErrorCount(prev => {
-        const newCount = prev + 1
-        unitErrorCountRef.current = newCount
-        return newCount
-      })
+      if (!reviewMode) {
+        setUnitErrorCount(prev => {
+          const newCount = prev + 1
+          unitErrorCountRef.current = newCount
+          return newCount
+        })
+      }
+      if (reviewMode) {
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
+      } else {
+        setWrongItems(prev => [...prev, { type: exerciseType, data: currentExerciseData }])
+      }
+    } else {
+      if (reviewMode) {
+        setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+        setReviewIndex(prev => prev)
+      }
     }
   }
 
@@ -687,6 +735,10 @@ function App() {
     } else if (nextItem?.type === 'listening_quiz') {
       setListeningQuizData(nextItem.data)
       setStep('listening-quiz')
+    } else if (nextItem?.type === 'masked_sentence' || nextItem?.type === 'translation_reconstruction') {
+      setExerciseType(nextItem.type)
+      setCurrentExerciseData(nextItem.data)
+      setStep('phase-exercise')
     }
   }
 
@@ -772,6 +824,8 @@ function App() {
         setShowWordCard(false)
         setSelectedOption(null)
         setIsCorrect(null)
+        setLearningMode('word')
+        setStep('learning')
       }
     } catch (error) {
       console.error('获取下一个单词错误:', error)
@@ -816,6 +870,20 @@ function App() {
   const handleOpenVocabList = () => {
     setPreviousStep(step)
     setStep('vocab-list')
+  }
+
+  const handleConfirmBack = (targetStep) => {
+    setConfirmDialog({
+      isOpen: true,
+      onConfirm: () => {
+        setConfirmDialog({ isOpen: false, onConfirm: null })
+        if (typeof targetStep === 'function') {
+          targetStep()
+        } else {
+          setStep(targetStep || 'all-units')
+        }
+      }
+    })
   }
 
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang) => {
@@ -991,21 +1059,24 @@ function App() {
               isCorrect={isCorrect}
               onOptionSelect={handleOptionSelect}
               onNextWord={reviewMode ? goToNextReviewItem : getNextWord}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               onOpenVocabList={handleOpenVocabList}
               loading={loading}
               t={t}
               sourceLang={sourceLang}
               skipListening={skipListening}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
           {step === 'sentence-quiz' && (
             <SentenceQuizStep
-              key="sentence-quiz"
+              key={`sentence-quiz-${quizData?.original_sentence}-${quizData?.step_in_unit}`}
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 if (currentFileId && currentPhase) {
                   const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
@@ -1022,21 +1093,27 @@ function App() {
               sourceLang={sourceLang}
               onAnswer={handleSentenceQuizAnswer}
               skipListening={skipListening}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
           {step === 'listening-quiz' && (
             <ListeningQuizStep
-              key="listening-quiz"
+              key={`listening-quiz-${listeningQuizData?.original_sentence}-${listeningQuizData?.step_in_unit}`}
               quizData={listeningQuizData}
               onNextQuestion={handleNextSentenceQuiz}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               loading={loading}
               t={t}
               onOpenVocabList={handleOpenVocabList}
               sourceLang={sourceLang}
               onAnswer={handleListeningQuizAnswer}
               skipListening={skipListening}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
@@ -1044,7 +1121,7 @@ function App() {
             <UnitCompleteStep
               key="unit-complete"
               unitNumber={completedUnitId || 0}
-              totalUnits={phase1Units.length || 1}
+              totalUnits={completedPhase === 2 ? (phase2Units.length || 1) : (phase1Units.length || 1)}
               phase={completedPhase}
               onContinue={() => {
                 setUnitErrorCount(0)
@@ -1070,6 +1147,10 @@ function App() {
                 } else if (firstWrong?.type === 'listening_quiz') {
                   setListeningQuizData(firstWrong.data)
                   setStep('listening-quiz')
+                } else if (firstWrong?.type === 'masked_sentence' || firstWrong?.type === 'translation_reconstruction') {
+                  setExerciseType(firstWrong.type)
+                  setCurrentExerciseData(firstWrong.data)
+                  setStep('phase-exercise')
                 }
               }}
               errorCount={unitErrorCount}
@@ -1124,10 +1205,10 @@ function App() {
           
           {step === 'phase-exercise' && exerciseType === 'masked_sentence' && (
             <MaskedSentenceExerciseStep
-              key="masked-exercise"
+              key={`masked-exercise-${currentExerciseData?.exercise_index_in_unit}-${currentExerciseData?.mask_version}`}
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
@@ -1153,15 +1234,18 @@ function App() {
               sentencePreview={currentExerciseData?.sentence_preview}
               sourceLang={sourceLang}
               onAnswer={handlePhase2Answer}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
           {step === 'phase-exercise' && exerciseType === 'translation_reconstruction' && (
             <TranslationReconstructionStep
-              key="reconstruction-exercise"
+              key={`reconstruction-exercise-${currentExerciseData?.exercise_index_in_unit}`}
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
-              onBack={() => setStep('all-units')}
+              onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
                   api.getPhaseUnits(currentFileId, 1),
@@ -1185,6 +1269,9 @@ function App() {
               sentencePreview={currentExerciseData?.sentence_preview}
               sourceLang={sourceLang}
               onAnswer={handlePhase2Answer}
+              reviewMode={reviewMode}
+              reviewIndex={reviewIndex}
+              wrongItemsCount={wrongItems.length}
             />
           )}
           
@@ -1204,6 +1291,15 @@ function App() {
         )}
       </main>
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} />
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title="确认退出"
+        message="你确定要退出当前练习吗？退出后进度将不会保存。"
+        confirmText="退出"
+        cancelText="继续练习"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ isOpen: false, onConfirm: null })}
+      />
     </div>
   )
 }
