@@ -316,6 +316,12 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             if not sentence.strip():
                 return idx, None
             
+            before_indices = [i for i in range(max(0, idx - 2), idx)]
+            after_indices = [i for i in range(idx + 1, min(len(sentences), idx + 3))]
+            before_sentences = [sentences[i] for i in before_indices if sentences[i].strip()]
+            after_sentences = [sentences[i] for i in after_indices if sentences[i].strip()]
+            context_sentences = {"before": before_sentences, "after": after_sentences} if (before_sentences or after_sentences) else None
+            
             t_sentence_start = time.time()
             
             t_rate_start = time.time()
@@ -329,7 +335,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 sentence,
                 source_lang,
                 target_lang,
-                nvidia_api
+                nvidia_api,
+                context_sentences
             )
             t_llm_end = time.time()
             print(f"[TIMING] 句子 {idx+1} LLM翻译调用: {t_llm_end - t_llm_start:.3f}s")

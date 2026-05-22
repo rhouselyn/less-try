@@ -41,6 +41,8 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const correctWords = quizData.correct_words || []
   const options = quizData.options || []
 
+  const stripPunct = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
+
   const handleWordSelect = (word, index) => {
     if (isChecked) return
     setSelectedWords([...selectedWords, { word, index }])
@@ -149,7 +151,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                   }`}
                   onClick={() => handleRemoveWord(pos)}
                 >
-                  {item.word}
+                  {stripPunct(item.word)}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -176,7 +178,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                       : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
                   }`}
                 >
-                  {word}
+                  {stripPunct(word)}
                 </motion.button>
               )
             })}

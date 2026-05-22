@@ -136,7 +136,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                         )}
                       </motion.div>
                     )}
-                    <span className="text-lg">{option}</span>
+                    <span className="text-lg">{typeof option === 'string' ? option.replace(/[，。、；：！？,.:;!?]/g, '') : option}</span>
                   </div>
                 </motion.button>
               ))}

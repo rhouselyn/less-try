@@ -318,7 +318,7 @@ class NvidiaAPI:
             }
             return error_response
 
-    async def process_text_with_dictionary(self, text: str, source_lang: str, target_lang: str):
+    async def process_text_with_dictionary(self, text: str, source_lang: str, target_lang: str, context_sentences: dict = None):
         tool_def = {
             "type": "function",
             "function": {
@@ -463,7 +463,12 @@ class NvidiaAPI:
   5. 冗余词应该是容易混淆但明显不同的概念
   6. 【极其重要】冗余词替换正确答案中的对应词后，组成的句子意思不能与原句意思相同或近似。例如正确答案是"读书"，冗余词不能是"看"（因为"看书"≈"读书"），而应该是"写"、"买"等意思明显不同的词
 
+翻译时请参考上下文，使用符合TARGET_LANG母语者日常表达的翻译，不要机械直译，要自然流畅但不需要文学化。
+
 要处理的文本：
+CONTEXT_SENTENCES
+
+【待处理文本】
 TEXT_CONTENT
 
 请严格按照 tool 定义的 JSON 结构返回所有字段，不要遗漏任何 required 字段。
@@ -472,6 +477,21 @@ TEXT_CONTENT
         prompt = prompt.replace("TEXT_LANG", source_lang)
         prompt = prompt.replace("TARGET_LANG", target_lang)
         prompt = prompt.replace("TEXT_CONTENT", text)
+
+        if context_sentences:
+            before = context_sentences.get("before", [])
+            after = context_sentences.get("after", [])
+            if before or after:
+                context_section = "【上下文】\n"
+                if before:
+                    context_section += "前文：\n" + "\n".join(before) + "\n"
+                if after:
+                    context_section += "后文：\n" + "\n".join(after) + "\n"
+                prompt = prompt.replace("CONTEXT_SENTENCES", context_section)
+            else:
+                prompt = prompt.replace("CONTEXT_SENTENCES", "")
+        else:
+            prompt = prompt.replace("CONTEXT_SENTENCES", "")
 
         messages = [{"role": "user", "content": prompt}]
         

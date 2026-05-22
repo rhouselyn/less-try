@@ -45,10 +45,8 @@ function speakText(text, sourceLang = 'en') {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   if (!text) return
 
-  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-    window.speechSynthesis.cancel()
-    currentUtterance = null
-  }
+  window.speechSynthesis.cancel()
+  currentUtterance = null
 
   const doSpeak = () => {
     try {

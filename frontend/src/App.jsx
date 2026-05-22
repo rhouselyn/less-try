@@ -1031,7 +1031,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: 'calc(100vh - 64px)', overflow: 'hidden' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
             <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
