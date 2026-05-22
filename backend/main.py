@@ -878,47 +878,55 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         "_last_covering_shuffled_pos": last_pos
                     })
                 
-                listening_correct_words = build_listening_correct_words(sentence, vocab, covering_vocab_indices, all_learned_set=set(vi for sp2 in range(unit_end_shuffled_pos) for vi in [shuffled_indices[sp2]]), translation_tokens=translation_tokens)
+                sentence_words_clean = [w for w in sentence.split() if w.strip()]
+                sentence_words_display = [w.strip('.,;:!?，。；：！？、') for w in sentence_words_clean]
+                sentence_words_display = [w for w in sentence_words_display if w]
                 
-                listening_distractor_words = []
-                listening_correct_lower = set(w.lower() for w in listening_correct_words)
-                available = [v["word"] for v in vocab if v["word"].lower() not in listening_correct_lower]
-                random.shuffle(available)
-                for w in available:
-                    listening_distractor_words.append(w)
-                    if len(listening_distractor_words) >= 2:
-                        break
+                correct_lower_set = set(w.lower() for w in sentence_words_display)
+                distractor_words = []
+                distractor_set = set()
                 
-                if len(listening_distractor_words) < 2:
-                    for other_sent in sentences:
-                        other_sentence = other_sent.get("sentence", "")
-                        if other_sentence and other_sentence != sentence:
-                            for w in other_sentence.split():
-                                w_clean = w.strip()
-                                if w_clean and w_clean.lower() not in listening_correct_lower and w_clean not in listening_distractor_words:
-                                    listening_distractor_words.append(w_clean)
-                                    if len(listening_distractor_words) >= 2:
-                                        break
-                        if len(listening_distractor_words) >= 2:
-                            break
+                for other_sent in sentences:
+                    other_sentence = other_sent.get("sentence", "")
+                    if other_sentence and other_sentence != sentence:
+                        for w in other_sentence.split():
+                            w_clean = w.strip('.,;:!?，。；：！？、')
+                            if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
+                                distractor_words.append(w_clean)
+                                distractor_set.add(w_clean.lower())
                 
-                if len(listening_distractor_words) < 2:
+                for v in vocab:
+                    v_tokens = v.get("tokens", [v["word"]])
+                    for vt in v_tokens:
+                        if vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
+                            distractor_words.append(vt)
+                            distractor_set.add(vt.lower())
+                    if v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
+                        distractor_words.append(v["word"])
+                        distractor_set.add(v["word"].lower())
+                
+                random.shuffle(distractor_words)
+                num_distractors = max(2, len(sentence_words_display) // 2)
+                distractor_words = distractor_words[:num_distractors]
+                
+                if len(distractor_words) < 2:
                     backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
                     backup_distractors = list(backup_vocab_list)
                     random.shuffle(backup_distractors)
                     idx = 0
-                    while len(listening_distractor_words) < 2:
+                    while len(distractor_words) < 2:
                         bd = backup_distractors[idx % len(backup_distractors)]
-                        if bd.lower() not in listening_correct_lower and bd not in listening_distractor_words:
-                            listening_distractor_words.append(bd)
+                        if bd.lower() not in correct_lower_set and bd.lower() not in distractor_set:
+                            distractor_words.append(bd)
+                            distractor_set.add(bd.lower())
                         idx += 1
                 
-                if listening_correct_words:
+                if sentence_words_display:
                     unit_quiz_items.append({
                         "type": "listening_quiz",
                         "sentence": sentence,
-                        "correct_words": listening_correct_words,
-                        "distractor_words": listening_distractor_words[:2],
+                        "correct_words": sentence_words_display,
+                        "distractor_words": distractor_words,
                         "_last_covering_shuffled_pos": last_pos
                     })
             else:
@@ -966,51 +974,6 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
     
     storage.save_learning_plan(file_id, plan)
 
-
-def build_listening_correct_words(sentence, vocab, covering_vocab_indices, all_learned_set=None, translation_tokens=None):
-    import re
-    
-    covering_words = [vocab[vi]["word"] for vi in covering_vocab_indices]
-    
-    sentence_tokens_from_tr = []
-    if translation_tokens:
-        for token in translation_tokens:
-            if isinstance(token, dict) and "text" in token:
-                sentence_tokens_from_tr.append(token["text"])
-    
-    if sentence_tokens_from_tr:
-        source_words = sentence_tokens_from_tr
-    else:
-        source_words = re.findall(r'[^\s.,;:!?，。；：！？、]+', sentence)
-    
-    ordered_correct_words = []
-    used_covering = set()
-    
-    for sw in source_words:
-        sw_clean = sw.strip('.,;:!?，。；：！？、').lower()
-        if not sw_clean:
-            continue
-        best_match = None
-        best_match_len = 0
-        for cw in covering_words:
-            if cw in used_covering:
-                continue
-            cw_lower = cw.lower()
-            if sw_clean == cw_lower:
-                best_match = cw
-                best_match_len = 999
-                break
-            if len(cw_lower) > best_match_len and (cw_lower in sw_clean or sw_clean in cw_lower):
-                best_match = cw
-                best_match_len = max(len(cw_lower), len(sw_clean))
-        if best_match:
-            ordered_correct_words.append(best_match)
-            used_covering.add(best_match)
-    
-    if not ordered_correct_words:
-        ordered_correct_words = list(covering_words)
-    
-    return ordered_correct_words
 
 
 async def generate_title(text: str, source_lang: str) -> str:
@@ -1274,54 +1237,60 @@ async def get_random_word(file_id: str):
                 if current_item["type"] == "listening_quiz":
                     import random as rnd
                     correct_sentence = current_item["sentence"]
-                    correct_words = current_item.get("correct_words", correct_sentence.split())
-                    correct_lower_set = set(w.lower() for w in correct_words)
+                    sentence_words_clean = [w for w in correct_sentence.split() if w.strip()]
+                    sentence_words_display = [w.strip('.,;:!?，。；：！？、') for w in sentence_words_clean]
+                    sentence_words_display = [w for w in sentence_words_display if w]
+                    correct_lower_set = set(w.lower() for w in sentence_words_display)
                     distractor_words = []
-                    max_distractors = 2
+                    distractor_set = set()
+                    
+                    pipeline_data = storage.load_pipeline_data(file_id)
+                    all_sentences = pipeline_data if isinstance(pipeline_data, list) else pipeline_data.get("data", [])
+                    for sd in all_sentences:
+                        other_s = sd.get("sentence", "")
+                        if other_s and other_s != correct_sentence:
+                            for w in other_s.split():
+                                w_clean = w.strip('.,;:!?，。；：！？、')
+                                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
+                                    distractor_words.append(w_clean)
+                                    distractor_set.add(w_clean.lower())
                     
                     vocab_data = storage.load_vocab(file_id)
                     all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
-                    available = [v["word"] for v in all_vocab if v["word"].lower() not in correct_lower_set]
-                    rnd.shuffle(available)
-                    for w in available:
-                        distractor_words.append(w)
-                        if len(distractor_words) >= max_distractors:
-                            break
+                    for v in all_vocab:
+                        v_tokens = v.get("tokens", [v["word"]])
+                        for vt in v_tokens:
+                            if vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
+                                distractor_words.append(vt)
+                                distractor_set.add(vt.lower())
+                        if v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
+                            distractor_words.append(v["word"])
+                            distractor_set.add(v["word"].lower())
                     
-                    if len(distractor_words) < max_distractors:
-                        pipeline_data = storage.load_pipeline_data(file_id)
-                        all_sentences = pipeline_data if isinstance(pipeline_data, list) else pipeline_data.get("data", [])
-                        for sd in all_sentences:
-                            other_s = sd.get("sentence", "")
-                            if other_s and other_s != correct_sentence:
-                                for w in other_s.split():
-                                    w_clean = w.strip()
-                                    if w_clean and w_clean.lower() not in correct_lower_set and w_clean not in distractor_words:
-                                        distractor_words.append(w_clean)
-                                        if len(distractor_words) >= max_distractors:
-                                            break
-                            if len(distractor_words) >= max_distractors:
-                                break
+                    rnd.shuffle(distractor_words)
+                    num_distractors = max(2, len(sentence_words_display) // 2)
+                    distractor_words = distractor_words[:num_distractors]
                     
-                    if len(distractor_words) < max_distractors:
+                    if len(distractor_words) < 2:
                         language_settings = storage.load_language_settings(file_id)
                         source_lang = language_settings.get("source_lang", "en")
                         backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
                         backup_distractors = list(backup_vocab_list)
                         rnd.shuffle(backup_distractors)
                         idx = 0
-                        while len(distractor_words) < max_distractors:
+                        while len(distractor_words) < 2:
                             bd = backup_distractors[idx % len(backup_distractors)]
-                            if bd.lower() not in correct_lower_set and bd not in distractor_words:
+                            if bd.lower() not in correct_lower_set and bd.lower() not in distractor_set:
                                 distractor_words.append(bd)
+                                distractor_set.add(bd.lower())
                             idx += 1
                     
-                    options = correct_words + distractor_words
+                    options = sentence_words_display + distractor_words
                     rnd.shuffle(options)
                     return {
                         "type": "listening_quiz",
                         "original_sentence": correct_sentence,
-                        "correct_words": correct_words,
+                        "correct_words": sentence_words_display,
                         "options": options,
                         "unit_end_index": unit_end_index,
                         "current_index": current_index,
@@ -1580,49 +1549,55 @@ async def next_word(file_id: str):
                 if next_item["type"] == "listening_quiz":
                     import random as rnd
                     correct_sentence = next_item["sentence"]
-                    correct_words = next_item.get("correct_words", correct_sentence.split())
-                    correct_lower_set = set(w.lower() for w in correct_words)
+                    sentence_words_clean = [w for w in correct_sentence.split() if w.strip()]
+                    sentence_words_display = [w.strip('.,;:!?，。；：！？、') for w in sentence_words_clean]
+                    sentence_words_display = [w for w in sentence_words_display if w]
+                    correct_lower_set = set(w.lower() for w in sentence_words_display)
                     distractor_words = []
-                    max_distractors = 2
+                    distractor_set = set()
+                    
+                    pipeline_data = storage.load_pipeline_data(file_id)
+                    all_sentences = pipeline_data if isinstance(pipeline_data, list) else pipeline_data.get("data", [])
+                    for sd in all_sentences:
+                        other_s = sd.get("sentence", "")
+                        if other_s and other_s != correct_sentence:
+                            for w in other_s.split():
+                                w_clean = w.strip('.,;:!?，。；：！？、')
+                                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
+                                    distractor_words.append(w_clean)
+                                    distractor_set.add(w_clean.lower())
                     
                     vocab_data = storage.load_vocab(file_id)
                     all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
-                    available = [v["word"] for v in all_vocab if v["word"].lower() not in correct_lower_set]
-                    rnd.shuffle(available)
-                    for w in available:
-                        distractor_words.append(w)
-                        if len(distractor_words) >= max_distractors:
-                            break
+                    for v in all_vocab:
+                        v_tokens = v.get("tokens", [v["word"]])
+                        for vt in v_tokens:
+                            if vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
+                                distractor_words.append(vt)
+                                distractor_set.add(vt.lower())
+                        if v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
+                            distractor_words.append(v["word"])
+                            distractor_set.add(v["word"].lower())
                     
-                    if len(distractor_words) < max_distractors:
-                        pipeline_data = storage.load_pipeline_data(file_id)
-                        all_sentences = pipeline_data if isinstance(pipeline_data, list) else pipeline_data.get("data", [])
-                        for sd in all_sentences:
-                            other_s = sd.get("sentence", "")
-                            if other_s and other_s != correct_sentence:
-                                for w in other_s.split():
-                                    w_clean = w.strip()
-                                    if w_clean and w_clean.lower() not in correct_lower_set and w_clean not in distractor_words:
-                                        distractor_words.append(w_clean)
-                                        if len(distractor_words) >= max_distractors:
-                                            break
-                            if len(distractor_words) >= max_distractors:
-                                break
+                    rnd.shuffle(distractor_words)
+                    num_distractors = max(2, len(sentence_words_display) // 2)
+                    distractor_words = distractor_words[:num_distractors]
                     
-                    if len(distractor_words) < max_distractors:
+                    if len(distractor_words) < 2:
                         language_settings = storage.load_language_settings(file_id)
                         source_lang = language_settings.get("source_lang", "en")
                         backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
                         backup_distractors = list(backup_vocab_list)
                         rnd.shuffle(backup_distractors)
                         idx = 0
-                        while len(distractor_words) < max_distractors:
+                        while len(distractor_words) < 2:
                             bd = backup_distractors[idx % len(backup_distractors)]
-                            if bd.lower() not in correct_lower_set and bd not in distractor_words:
+                            if bd.lower() not in correct_lower_set and bd.lower() not in distractor_set:
                                 distractor_words.append(bd)
+                                distractor_set.add(bd.lower())
                             idx += 1
                     
-                    options = correct_words + distractor_words
+                    options = sentence_words_display + distractor_words
                     rnd.shuffle(options)
                     return {
                         "success": True,
@@ -1630,7 +1605,7 @@ async def next_word(file_id: str):
                         "unit_end_index": unit_end_index,
                         "listening_quiz": {
                             "original_sentence": correct_sentence,
-                            "correct_words": correct_words,
+                            "correct_words": sentence_words_display,
                             "options": options,
                             "step_in_unit": step_in_unit,
                             "total_items_in_unit": len(items),

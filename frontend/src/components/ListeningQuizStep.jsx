@@ -56,9 +56,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   }
 
   const checkAnswer = () => {
-    const userWords = selectedWords.map(w => w.word.toLowerCase())
+    const stripForCompare = (s) => typeof s === 'string' ? s.replace(/[，。、；：！？,.:;!?]/g, '').toLowerCase().trim() : ''
+    const userWords = selectedWords.map(w => stripForCompare(w.word))
     const correct = userWords.length === correctWords.length &&
-      userWords.every((w, i) => w === correctWords[i].toLowerCase())
+      userWords.every((w, i) => w === stripForCompare(correctWords[i]))
     setIsCorrect(correct)
     setIsChecked(true)
     if (onAnswer) onAnswer(correct)
@@ -199,7 +200,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             </div>
             {!isCorrect && (
               <p className="text-stone-700 font-medium">
-                正确答案：{correctWords.join(' ')}
+                正确答案：{correctWords.map(w => stripPunct(w)).join(' ')}
               </p>
             )}
           </motion.div>
