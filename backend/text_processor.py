@@ -144,7 +144,11 @@ class TextProcessor:
         pass
 
     def extract_words(self, text: str, language: str) -> List[str]:
-        return []
+        import re
+        if language in ('ja', 'zh', 'ko'):
+            return list(text)
+        words = re.findall(r"\b\w+(?:[-']\w+)*\b", text)
+        return [w for w in words if w.strip()]
 
     def extract_words_from_sentences(self, sentences: List[str], language: str) -> List[str]:
         """从句子列表中提取单词并全局去重"""
