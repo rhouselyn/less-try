@@ -240,6 +240,83 @@ def get_fallback_options(correct_meaning, file_id, count=3):
         distractors.append(f"释义{len(distractors)+1}")
     return distractors
 
+def get_listening_correct_words(sentence, sentence_data):
+    tr = sentence_data.get("translation_result", {})
+    dict_entries = tr.get("dictionary_entries", [])
+
+    if dict_entries and isinstance(dict_entries, list):
+        all_tokens = []
+        for entry in dict_entries:
+            if not isinstance(entry, dict):
+                continue
+            tokens = entry.get("tokens", [])
+            if not isinstance(tokens, list):
+                continue
+            for token in tokens:
+                if isinstance(token, str) and token.strip():
+                    all_tokens.append(token.strip())
+
+        if all_tokens:
+            sentence_lower = sentence.lower()
+            token_with_pos = []
+            used_positions = []
+
+            for token in all_tokens:
+                token_clean = token.strip('.,;:!?，。；：！？、')
+                if not token_clean:
+                    continue
+                search_from = 0
+                found = False
+                while search_from < len(sentence_lower):
+                    pos = sentence_lower.find(token_clean.lower(), search_from)
+                    if pos < 0:
+                        break
+                    if pos not in used_positions:
+                        token_with_pos.append((pos, token_clean))
+                        used_positions.append(pos)
+                        found = True
+                        break
+                    search_from = pos + 1
+                if not found:
+                    token_with_pos.append((len(sentence) + len(token_with_pos), token_clean))
+
+            token_with_pos.sort(key=lambda x: x[0])
+            result = [t[1] for t in token_with_pos]
+            if result:
+                return result
+
+    words = [w for w in sentence.split() if w.strip()]
+    return [w.strip('.,;:!?，。；：！？、') for w in words if w.strip('.,;:!?，。；：！？、')]
+
+
+def get_listening_distractors_from_sentences(sentence, all_sentences, correct_lower_set):
+    distractor_words = []
+    distractor_set = set()
+    for sd in all_sentences:
+        other_s = sd.get("sentence", "")
+        if not other_s or other_s == sentence:
+            continue
+        other_tr = sd.get("translation_result", {})
+        other_de = other_tr.get("dictionary_entries", [])
+        if other_de and isinstance(other_de, list):
+            for entry in other_de:
+                if not isinstance(entry, dict):
+                    continue
+                for vt in entry.get("tokens", []):
+                    if isinstance(vt, str):
+                        vt_clean = vt.strip('.,;:!?，。；：！？、')
+                        if vt_clean and vt_clean.lower() not in correct_lower_set and vt_clean.lower() not in distractor_set:
+                            distractor_words.append(vt_clean)
+                            distractor_set.add(vt_clean.lower())
+        else:
+            for w in other_s.split():
+                w_clean = w.strip('.,;:!?，。；：！？、')
+                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
+                    distractor_words.append(w_clean)
+                    distractor_set.add(w_clean.lower())
+    return distractor_words, distractor_set
+
+
 def filter_eligible_sentences(sentences):
     eligible = []
     for s in sentences:
@@ -878,22 +955,10 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         "_last_covering_shuffled_pos": last_pos
                     })
                 
-                sentence_words_clean = [w for w in sentence.split() if w.strip()]
-                sentence_words_display = [w.strip('.,;:!?，。；：！？、') for w in sentence_words_clean]
-                sentence_words_display = [w for w in sentence_words_display if w]
+                sentence_words_display = get_listening_correct_words(sentence, sentence_data)
                 
                 correct_lower_set = set(w.lower() for w in sentence_words_display)
-                distractor_words = []
-                distractor_set = set()
-                
-                for other_sent in sentences:
-                    other_sentence = other_sent.get("sentence", "")
-                    if other_sentence and other_sentence != sentence:
-                        for w in other_sentence.split():
-                            w_clean = w.strip('.,;:!?，。；：！？、')
-                            if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
-                                distractor_words.append(w_clean)
-                                distractor_set.add(w_clean.lower())
+                distractor_words, distractor_set = get_listening_distractors_from_sentences(sentence, sentences, correct_lower_set)
                 
                 for v in vocab:
                     v_tokens = v.get("tokens", [v["word"]])
@@ -1237,23 +1302,19 @@ async def get_random_word(file_id: str):
                 if current_item["type"] == "listening_quiz":
                     import random as rnd
                     correct_sentence = current_item["sentence"]
-                    sentence_words_clean = [w for w in correct_sentence.split() if w.strip()]
-                    sentence_words_display = [w.strip('.,;:!?，。；：！？、') for w in sentence_words_clean]
-                    sentence_words_display = [w for w in sentence_words_display if w]
-                    correct_lower_set = set(w.lower() for w in sentence_words_display)
-                    distractor_words = []
-                    distractor_set = set()
                     
                     pipeline_data = storage.load_pipeline_data(file_id)
                     all_sentences = pipeline_data if isinstance(pipeline_data, list) else pipeline_data.get("data", [])
+                    
+                    current_sentence_data = None
                     for sd in all_sentences:
-                        other_s = sd.get("sentence", "")
-                        if other_s and other_s != correct_sentence:
-                            for w in other_s.split():
-                                w_clean = w.strip('.,;:!?，。；：！？、')
-                                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
-                                    distractor_words.append(w_clean)
-                                    distractor_set.add(w_clean.lower())
+                        if sd.get("sentence") == correct_sentence:
+                            current_sentence_data = sd
+                            break
+                    
+                    sentence_words_display = get_listening_correct_words(correct_sentence, current_sentence_data or {})
+                    correct_lower_set = set(w.lower() for w in sentence_words_display)
+                    distractor_words, distractor_set = get_listening_distractors_from_sentences(correct_sentence, all_sentences, correct_lower_set)
                     
                     vocab_data = storage.load_vocab(file_id)
                     all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
@@ -1549,23 +1610,19 @@ async def next_word(file_id: str):
                 if next_item["type"] == "listening_quiz":
                     import random as rnd
                     correct_sentence = next_item["sentence"]
-                    sentence_words_clean = [w for w in correct_sentence.split() if w.strip()]
-                    sentence_words_display = [w.strip('.,;:!?，。；：！？、') for w in sentence_words_clean]
-                    sentence_words_display = [w for w in sentence_words_display if w]
-                    correct_lower_set = set(w.lower() for w in sentence_words_display)
-                    distractor_words = []
-                    distractor_set = set()
                     
                     pipeline_data = storage.load_pipeline_data(file_id)
                     all_sentences = pipeline_data if isinstance(pipeline_data, list) else pipeline_data.get("data", [])
+                    
+                    current_sentence_data = None
                     for sd in all_sentences:
-                        other_s = sd.get("sentence", "")
-                        if other_s and other_s != correct_sentence:
-                            for w in other_s.split():
-                                w_clean = w.strip('.,;:!?，。；：！？、')
-                                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
-                                    distractor_words.append(w_clean)
-                                    distractor_set.add(w_clean.lower())
+                        if sd.get("sentence") == correct_sentence:
+                            current_sentence_data = sd
+                            break
+                    
+                    sentence_words_display = get_listening_correct_words(correct_sentence, current_sentence_data or {})
+                    correct_lower_set = set(w.lower() for w in sentence_words_display)
+                    distractor_words, distractor_set = get_listening_distractors_from_sentences(correct_sentence, all_sentences, correct_lower_set)
                     
                     vocab_data = storage.load_vocab(file_id)
                     all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
