@@ -282,8 +282,6 @@ def get_listening_correct_words(sentence, sentence_data):
                         found = True
                         break
                     search_from = pos + 1
-                if not found:
-                    token_with_pos.append((len(clean_sentence) + len(token_with_pos), token_clean))
 
             token_with_pos.sort(key=lambda x: x[0])
             result = [t[1] for t in token_with_pos]
@@ -301,7 +299,6 @@ def get_listening_correct_words(sentence, sentence_data):
 
 def get_listening_distractors_from_sentences(sentence, all_sentences, correct_lower_set):
     import re
-    speaker_labels = {'a', 'b', 'c', 'd', 'e'}
     distractor_words = []
     distractor_set = set()
     for sd in all_sentences:
@@ -317,14 +314,14 @@ def get_listening_distractors_from_sentences(sentence, all_sentences, correct_lo
                 for vt in entry.get("tokens", []):
                     if isinstance(vt, str):
                         vt_clean = vt.strip('.,;:!?，。；：！？、')
-                        if vt_clean and vt_clean.lower() not in correct_lower_set and vt_clean.lower() not in distractor_set and vt_clean.lower() not in speaker_labels:
+                        if vt_clean and vt_clean.lower() not in correct_lower_set and vt_clean.lower() not in distractor_set:
                             distractor_words.append(vt_clean)
                             distractor_set.add(vt_clean.lower())
         else:
             clean_other = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', other_s)
             for w in clean_other.split():
                 w_clean = w.strip('.,;:!?，。；：！？、')
-                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set and w_clean.lower() not in speaker_labels:
+                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
                     distractor_words.append(w_clean)
                     distractor_set.add(w_clean.lower())
     return distractor_words, distractor_set
