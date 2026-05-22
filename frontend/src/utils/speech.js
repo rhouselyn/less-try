@@ -44,16 +44,10 @@ function speakText(text, sourceLang = 'en') {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   if (!text) return
 
-  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-    window.speechSynthesis.cancel()
-  }
+  window.speechSynthesis.cancel()
 
   const doSpeak = () => {
     try {
-      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-        window.speechSynthesis.cancel()
-      }
-
       const utterance = new SpeechSynthesisUtterance(text)
       utterance.lang = LANG_MAP[sourceLang] || 'en-US'
       utterance.rate = 0.9
@@ -97,10 +91,12 @@ function speakText(text, sourceLang = 'en') {
     }
   }
 
+  const delay = window.speechSynthesis.speaking || window.speechSynthesis.pending ? 200 : 50
+
   if (voicesLoaded) {
-    setTimeout(doSpeak, 100)
+    setTimeout(doSpeak, delay)
   } else if (voicesReadyPromise) {
-    voicesReadyPromise.then(() => setTimeout(doSpeak, 100))
+    voicesReadyPromise.then(() => setTimeout(doSpeak, delay))
   } else {
     setTimeout(doSpeak, 500)
   }

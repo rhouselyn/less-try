@@ -1052,7 +1052,19 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
         
         unit_start_shuffled_pos = unit_end_shuffled_pos
     
-    storage.save_learning_plan(file_id, plan)
+    final_plan = []
+    flat_items = []
+    for unit in plan:
+        flat_items.extend(unit["items"])
+    
+    for i in range(0, len(flat_items), max_items_per_unit):
+        chunk = flat_items[i:i + max_items_per_unit]
+        final_plan.append({
+            "unit_id": len(final_plan),
+            "items": chunk
+        })
+    
+    storage.save_learning_plan(file_id, final_plan)
 
 
 
@@ -2050,6 +2062,7 @@ async def get_unit_words(file_id: str, unit_id: int):
         # 为每个单词生成学习数据
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
+        source_lang = language_settings.get("source_lang", "en")
         
         learning_words = []
         for word_data in unit_words:
@@ -2400,6 +2413,7 @@ async def generate_sentence_quiz(file_id: str):
         print(f"[DEBUG] 清理后的冗余词: {cleaned_redundant_tokens}")
         
         unique_redundant = list(dict.fromkeys(cleaned_redundant_tokens))
+        random.shuffle(unique_redundant)
         selected_distractors = unique_redundant[:4]
         
         if len(selected_distractors) < 4:
@@ -2560,7 +2574,12 @@ async def get_phase_units(file_id: str, phase_number: int):
             exercises_per_sent = []
             for s in eligible_sentences:
                 wc = len(s.get("sentence", "").split())
-                exercises_per_sent.append(4 if wc >= 3 else 1)
+                if wc >= 20:
+                    exercises_per_sent.append(3)
+                elif wc >= 3:
+                    exercises_per_sent.append(4)
+                else:
+                    exercises_per_sent.append(1)
             expected_length = sum(exercises_per_sent)
             
             if exercise_order is None or len(exercise_order) != expected_length:
@@ -2631,7 +2650,12 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             exercises_per_sent = []
             for s in eligible_sentences:
                 wc = len(s.get("sentence", "").split())
-                exercises_per_sent.append(4 if wc >= 3 else 1)
+                if wc >= 20:
+                    exercises_per_sent.append(3)
+                elif wc >= 3:
+                    exercises_per_sent.append(4)
+                else:
+                    exercises_per_sent.append(1)
             expected_length = sum(exercises_per_sent)
             
             if exercise_order is None or len(exercise_order) != expected_length:
@@ -2708,36 +2732,24 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 tokenized_translation = translation_result.get("tokenized_translation", "")
                 
                 original_tokens = []
-                dict_entries = translation_result.get("dictionary_entries", [])
-                if dict_entries and isinstance(dict_entries, list):
-                    translation_token_texts = []
-                    if "translation" in translation_result:
-                        for token in translation_result["translation"]:
-                            if isinstance(token, dict) and "text" in token:
-                                translation_token_texts.append(token["text"].lower())
-                    
-                    covered_tokens = set()
-                    for entry in dict_entries:
-                        if isinstance(entry, dict) and "word" in entry:
-                            entry_tokens = entry.get("tokens", [entry["word"]])
-                            entry_covers = [t.lower() for t in entry_tokens if t.lower() in translation_token_texts]
-                            if len(entry_covers) > 1:
-                                original_tokens.append(entry["word"])
-                                for t in entry_covers:
-                                    covered_tokens.add(t)
-                    
-                    for tt in translation_token_texts:
-                        if tt not in covered_tokens:
-                            for token in translation_result["translation"]:
-                                if isinstance(token, dict) and token.get("text", "").lower() == tt:
-                                    original_tokens.append(token["text"])
-                                    break
+                if "translation" in translation_result:
+                    for token in translation_result["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            original_tokens.append(token["text"])
                 
                 if not original_tokens:
-                    if "translation" in translation_result:
-                        for token in translation_result["translation"]:
-                            if isinstance(token, dict) and "text" in token:
-                                original_tokens.append(token["text"])
+                    dict_entries = translation_result.get("dictionary_entries", [])
+                    if dict_entries and isinstance(dict_entries, list):
+                        seen = set()
+                        for entry in dict_entries:
+                            if isinstance(entry, dict) and "tokens" in entry:
+                                for t in entry.get("tokens", []):
+                                    if isinstance(t, str) and t.strip() and t.lower() not in seen:
+                                        original_tokens.append(t.strip())
+                                        seen.add(t.lower())
+                    
+                    if not original_tokens:
+                        original_tokens = text_processor.tokenize_sentence(current_sentence)
                     
                     if not original_tokens:
                         original_tokens = text_processor.tokenize_sentence(current_sentence)

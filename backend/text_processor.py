@@ -362,19 +362,31 @@ class TextProcessor:
         all_candidates = list(range(word_count))
         random.shuffle(all_candidates)
         
+        if translation_tokens:
+            token_list = translation_tokens
+        else:
+            token_list = self.tokenize_sentence(sentence)
+        
         mask_groups = []
         remaining = list(all_candidates)
         
         while remaining and len(mask_groups) < 3:
             group = []
             used = set()
+            used_words_in_group = set()
             for idx in remaining:
                 if len(group) >= num_masks:
                     break
                 too_close = any(abs(idx - e) <= 2 for e in used)
-                if not too_close:
-                    group.append(idx)
-                    used.add(idx)
+                if too_close:
+                    continue
+                word_at_idx = token_list[idx].lower().strip('.,;:!?，。；：！？、') if idx < len(token_list) else ''
+                if word_at_idx in used_words_in_group:
+                    continue
+                group.append(idx)
+                used.add(idx)
+                if word_at_idx:
+                    used_words_in_group.add(word_at_idx)
             if group:
                 mask_groups.append(sorted(group))
             remaining = [r for r in remaining if r not in used]
@@ -429,19 +441,24 @@ class TextProcessor:
         else:
             current_sentence_words_lower = {w.lower() for w in self.tokenize_sentence(sentence)}
         
-        exclude_lower = set(answer_lower) | current_sentence_words_lower
+        exclude_lower = set(answer_lower)
         
         max_distractors = 2
         
         if all_sentences:
+            all_distractor_candidates = []
+            all_distractor_set = set()
             for sent_data in all_sentences:
                 if "sentence" in sent_data and sent_data["sentence"] != sentence:
                     if "translation_result" in sent_data and "translation" in sent_data["translation_result"]:
                         for token in sent_data["translation_result"]["translation"]:
                             if isinstance(token, dict) and "text" in token:
                                 token_text = token["text"]
-                                if token_text.lower() not in exclude_lower and token_text not in distractors and len(distractors) < max_distractors:
-                                    distractors.append(token_text)
+                                if token_text.lower() not in exclude_lower and token_text.lower() not in all_distractor_set:
+                                    all_distractor_candidates.append(token_text)
+                                    all_distractor_set.add(token_text.lower())
+            random.shuffle(all_distractor_candidates)
+            distractors = all_distractor_candidates[:max_distractors]
         
         if len(distractors) < max_distractors:
             vocab_words = [v["word"] for v in vocab]
