@@ -1,13 +1,27 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain, BookOpen, Volume2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { speakText } from '../utils/speech'
 
 function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t, sourceLang, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
+  const speakTimerRef = useRef(null)
+
   useEffect(() => {
+    if (speakTimerRef.current) {
+      clearTimeout(speakTimerRef.current)
+      speakTimerRef.current = null
+    }
     if (learningData?.word && !skipListening) {
-      const timer = setTimeout(() => speakText(learningData.word, sourceLang), 300)
-      return () => clearTimeout(timer)
+      speakTimerRef.current = setTimeout(() => {
+        speakText(learningData.word, sourceLang)
+        speakTimerRef.current = null
+      }, 300)
+    }
+    return () => {
+      if (speakTimerRef.current) {
+        clearTimeout(speakTimerRef.current)
+        speakTimerRef.current = null
+      }
     }
   }, [learningData?.word, sourceLang, skipListening])
 
@@ -136,7 +150,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                         )}
                       </motion.div>
                     )}
-                    <span className="text-lg">{typeof option === 'string' ? option.replace(/[，。、；：！？,.:;!?]/g, '') : option}</span>
+                    <span className="text-lg">{option}</span>
                   </div>
                 </motion.button>
               ))}
