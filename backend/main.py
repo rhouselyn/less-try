@@ -160,7 +160,7 @@ def select_key_tokens(seg_words, max_tokens=10):
     
     return result[:max_tokens]
 
-def fix_llm_options_result(result: dict, source_lang="en") -> dict:
+def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict:
     if not isinstance(result, dict):
         return result
     mc = result.get("multiple_choice")
@@ -209,15 +209,14 @@ def fix_llm_options_result(result: dict, source_lang="en") -> dict:
                 }
     if "multiple_choice" not in result or not isinstance(result.get("multiple_choice"), dict) or "options" not in result.get("multiple_choice", {}):
         correct_meaning = result.get("enriched_meaning", result.get("context_meaning", ""))
+        fallback_distractors = get_fallback_options(correct_meaning, file_id, count=3)
+        fb_opts = [{"text": correct_meaning, "is_correct": True}]
+        for fd in fallback_distractors:
+            fb_opts.append({"text": fd, "is_correct": False})
         result["multiple_choice"] = {
             "question": "",
             "correct_answer": correct_meaning,
-            "options": [
-                {"text": correct_meaning, "is_correct": True},
-                {"text": "释义1", "is_correct": False},
-                {"text": "释义2", "is_correct": False},
-                {"text": "释义3", "is_correct": False}
-            ]
+            "options": fb_opts[:4]
         }
     return result
 
@@ -731,7 +730,7 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                 if placeholder_pattern.search(enriched):
                     options_result["enriched_meaning"] = correct_meaning
         
-        options_result = fix_llm_options_result(options_result, source_lang)
+        options_result = fix_llm_options_result(options_result, source_lang, file_id)
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word_to_gen)
         cache_data["ipa"] = word_entry.get("ipa", "")
@@ -847,13 +846,18 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
         all_covered = True
         for token in translation_tokens:
             if isinstance(token, dict) and "text" in token:
-                token_text = token["text"].lower()
+                token_text = token["text"]
+                token_translation = token.get("translation", "")
+                token_morphology = token.get("morphology", "")
+                if len(token_text) <= 2 and not token_translation and not token_morphology:
+                    continue
+                token_text_lower = token_text.lower()
                 token_covered = False
                 for vi in covering_vocab_indices:
                     w = vocab[vi]
                     w_tokens = w.get("tokens", [w["word"]])
                     for wt in w_tokens:
-                        if wt.lower() == token_text or wt.lower() in token_text or token_text in wt.lower():
+                        if wt.lower() == token_text_lower or wt.lower() in token_text_lower or token_text_lower in wt.lower():
                             token_covered = True
                             break
                     if token_covered:
@@ -966,7 +970,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                         if vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
                             distractor_words.append(vt)
                             distractor_set.add(vt.lower())
-                    if v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
+                    if len(v_tokens) == 1 and v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
                         distractor_words.append(v["word"])
                         distractor_set.add(v["word"].lower())
                 
@@ -986,7 +990,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                             distractor_set.add(bd.lower())
                         idx += 1
                 
-                if sentence_words_display:
+                if sentence_words_display and len(sentence_words_display) >= 2:
                     unit_quiz_items.append({
                         "type": "listening_quiz",
                         "sentence": sentence,
@@ -1324,7 +1328,7 @@ async def get_random_word(file_id: str):
                             if vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
                                 distractor_words.append(vt)
                                 distractor_set.add(vt.lower())
-                        if v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
+                        if len(v_tokens) == 1 and v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
                             distractor_words.append(v["word"])
                             distractor_set.add(v["word"].lower())
                     
@@ -1480,7 +1484,7 @@ async def get_random_word(file_id: str):
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result, source_lang)
+        options_result = fix_llm_options_result(options_result, source_lang, file_id)
         
         # 提取选项和正确索引
         options = []
@@ -1632,7 +1636,7 @@ async def next_word(file_id: str):
                             if vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
                                 distractor_words.append(vt)
                                 distractor_set.add(vt.lower())
-                        if v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
+                        if len(v_tokens) == 1 and v["word"].lower() not in correct_lower_set and v["word"].lower() not in distractor_set:
                             distractor_words.append(v["word"])
                             distractor_set.add(v["word"].lower())
                     
@@ -1780,7 +1784,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result, source_lang)
+        options_result = fix_llm_options_result(options_result, source_lang, file_id)
         
         # 构建缓存数据
         cache_data = dict(options_result)
@@ -1926,7 +1930,7 @@ async def get_word_details(file_id: str, word: str):
             context,
             target_lang
         )
-        options_result = fix_llm_options_result(options_result, source_lang)
+        options_result = fix_llm_options_result(options_result, source_lang, file_id)
         
         # 提取选项和正确索引
         options = []
@@ -2067,7 +2071,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                 context,
                 target_lang
             )
-            options_result = fix_llm_options_result(options_result, source_lang)
+            options_result = fix_llm_options_result(options_result, source_lang, file_id)
             
             # 提取选项和正确索引
             options = []
@@ -2891,7 +2895,7 @@ async def get_word_detail(word: str, source_lang: str = "en", target_lang: str =
         options_result = await nvidia_api.generate_multiple_choice(
             word, "", "", target_lang
         )
-        options_result = fix_llm_options_result(options_result, source_lang)
+        options_result = fix_llm_options_result(options_result, source_lang, file_id)
         
         result = {
             "word": options_result.get("word", word),
