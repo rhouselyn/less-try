@@ -2632,7 +2632,6 @@ async def get_phase_units(file_id: str, phase_number: int):
 @app.get("/api/{file_id}/phase/{phase_number}/unit/{unit_id}")
 async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int):
     try:
-        storage.update_history_access(file_id)
         sentences = storage.load_pipeline_data(file_id)
         vocab = storage.load_vocab(file_id)
         if not sentences:
@@ -3076,7 +3075,7 @@ def compute_file_progress(file_id: str) -> dict:
 async def get_history():
     try:
         records = storage.load_history()
-        records.sort(key=lambda x: x.get("last_accessed_at", "") or x.get("created_at", ""), reverse=True)
+        records.sort(key=lambda x: x.get("created_at", ""), reverse=True)
         for record in records:
             file_id = record.get("file_id", "")
             if file_id:

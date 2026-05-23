@@ -93,9 +93,9 @@ function App() {
   
   const updateUnitStars = (key, starCount) => {
     setUnitStarCounts(prev => {
-      const updated = { ...prev, [key]: starCount }
+      const updated = { ...prev, [key]: Math.max(prev[key] || 0, starCount) }
       if (currentFileId) {
-        api.saveUnitStars(currentFileId, updated).catch(err => {
+        api.saveUnitStars(currentFileId, { [key]: updated[key] }).catch(err => {
           console.error('Failed to save stars:', err)
         })
       }
@@ -520,7 +520,7 @@ function App() {
     }
   }
 
-  const handleNextPhaseExercise = async (retryCount = 0) => {
+  const handleNextPhaseExercise = async () => {
     if (!currentFileId || !currentPhase) return
 
     if (reviewMode) {
@@ -578,10 +578,6 @@ function App() {
       }
     } catch (error) {
       console.error('下一个练习错误:', error)
-      if (retryCount < 2) {
-        await new Promise(r => setTimeout(r, 1000))
-        return handleNextPhaseExercise(retryCount + 1)
-      }
       alert('无法获取下一个练习，请重试')
     } finally {
       setLoading(false)

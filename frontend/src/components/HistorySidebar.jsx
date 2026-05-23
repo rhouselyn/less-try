@@ -118,17 +118,33 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
 
 function ProgressBadge({ progress }) {
   if (!progress) return null
-  const p1 = progress.phase1 || { completed: 0, total: 0 }
-  const p2 = progress.phase2 || { completed: 0, total: 0 }
-  const totalCompleted = p1.completed + p2.completed
-  const totalUnits = p1.total + p2.total
-  if (totalUnits === 0) return null
+  const p1 = progress.phase1
+  const p2 = progress.phase2
+  if (!p1 && !p2) return null
 
-  const done = totalCompleted >= totalUnits
+  const segments = []
+  if (p1 && p1.total > 0) {
+    const done = p1.completed >= p1.total
+    segments.push(
+      <span key="p1" className={`text-[10px] font-medium tabular-nums ${done ? 'text-emerald-500' : 'text-rose-300'}`}>
+        {p1.completed}/{p1.total}
+      </span>
+    )
+  }
+  if (p2 && p2.total > 0) {
+    const done = p2.completed >= p2.total
+    segments.push(
+      <span key="p2" className={`text-[10px] font-medium tabular-nums ${done ? 'text-emerald-500' : 'text-rose-300'}`}>
+        {p2.completed}/{p2.total}
+      </span>
+    )
+  }
+
+  if (segments.length === 0) return null
   return (
-    <span className={`text-[10px] font-medium tabular-nums ${done ? 'text-emerald-500' : 'text-red-500'}`}>
-      {totalCompleted}/{totalUnits}
-    </span>
+    <div className="flex items-center gap-1.5">
+      {segments.reduce((acc, seg, i) => i === 0 ? [seg] : [...acc, <span key={`sep-${i}`} className="text-[9px] text-stone-200">·</span>, seg], [])}
+    </div>
   )
 }
 
@@ -162,16 +178,12 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
     )
   }
 
-  const lang = record.source_lang || 'other'
-  const langIcon = LANG_ICONS[lang] || '📝'
-
   return (
     <div
       className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-stone-100/70 transition-colors mx-2"
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
     >
       <Pencil className="w-3.5 h-3.5 text-stone-300 flex-shrink-0 mt-0.5" />
-      <span className="text-[11px] flex-shrink-0">{langIcon}</span>
       <div className="flex-1 min-w-0">
         <div className="text-[13px] text-stone-700 truncate leading-snug">
           {record.title}
@@ -204,12 +216,6 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
   useEffect(() => {
     loadHistory()
   }, [])
-
-  useEffect(() => {
-    if (!expanded) return
-    const interval = setInterval(loadHistory, 10000)
-    return () => clearInterval(interval)
-  }, [expanded])
 
   const loadHistory = async () => {
     try {
@@ -299,7 +305,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               </div>
 
               <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
-                {records.length === 0 && (
+                {Object.keys(grouped).length === 0 && (
                   <div className="px-4 py-12 text-center">
                     <div className="text-2xl mb-2">📚</div>
                     <div className="text-[13px] text-stone-400">
@@ -308,47 +314,46 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   </div>
                 )}
 
-                {langKeys.length > 0 && (
-                  <div className="flex items-center gap-1 px-3 py-2 flex-wrap">
-                    {langKeys.map((lang, idx) => (
+                {Object.entries(grouped).map(([lang, items], langIdx) => (
+                  <div key={lang} className="mb-1">
+                    <div className="flex items-center gap-1.5 px-4 py-1.5 mt-1">
+                      <span className="text-xs">{LANG_ICONS[lang] || '📝'}</span>
+                      <span className="text-[11px] font-medium text-stone-400 tracking-wide">
+                        {LANG_LABELS[lang] || lang}
+                      </span>
+                      <span className="text-[10px] text-stone-300">{items.length}</span>
                       <button
-                        key={lang}
                         onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
-                        className={`flex items-center gap-1 px-2 py-1 rounded-md text-[11px] transition-all ${
+                        className={`ml-auto p-1 rounded-md transition-all ${
                           activeWordListLang === lang
-                            ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-sm'
-                            : 'text-stone-400 hover:text-amber-500 hover:bg-amber-50'
+                            ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[langIdx % SIDEBAR_COLORS.length] + ' text-white shadow-sm'
+                            : 'text-stone-300 hover:text-amber-500 hover:bg-amber-50'
                         }`}
-                        title={`${LANG_LABELS[lang] || lang} - ${t.wordList || '单词总表'}`}
+                        title="Word list"
                       >
-                        <span className="text-[11px]">{LANG_ICONS[lang] || '📝'}</span>
-                        <Library className="w-3 h-3" />
+                        <Library className="w-3.5 h-3.5" />
                       </button>
-                    ))}
+                    </div>
+
+                    <div className="space-y-0.5 px-0.5">
+                      {items.map((record) => (
+                        <HistoryItem
+                          key={record.file_id}
+                          record={record}
+                          isRenaming={renamingId === record.file_id}
+                          renameValue={renameValue}
+                          onRenameStart={handleRenameStart}
+                          onRenameConfirm={handleRenameConfirm}
+                          onRenameCancel={handleRenameCancel}
+                          onRenameChange={setRenameValue}
+                          onNavigate={onNavigateToRecord}
+                          onMenuOpen={handleMenuOpen}
+                          t={t}
+                        />
+                      ))}
+                    </div>
                   </div>
-                )}
-
-                {langKeys.length > 0 && records.length > 0 && (
-                  <div className="mx-3 border-t border-stone-200/60" />
-                )}
-
-                <div className="space-y-0.5 px-0.5 py-1">
-                  {records.map((record) => (
-                    <HistoryItem
-                      key={record.file_id}
-                      record={record}
-                      isRenaming={renamingId === record.file_id}
-                      renameValue={renameValue}
-                      onRenameStart={handleRenameStart}
-                      onRenameConfirm={handleRenameConfirm}
-                      onRenameCancel={handleRenameCancel}
-                      onRenameChange={setRenameValue}
-                      onNavigate={onNavigateToRecord}
-                      onMenuOpen={handleMenuOpen}
-                      t={t}
-                    />
-                  ))}
-                </div>
+                ))}
               </div>
 
               <div className="px-3 py-2 border-t border-stone-200/60 flex-shrink-0">
@@ -396,16 +401,18 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               <div className="w-6 border-t border-stone-200/60 my-1" />
             )}
 
-            {records.slice(0, 5).map((record) => (
-              <button
-                key={record.file_id}
-                onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang)}
-                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
-                title={`${LANG_ICONS[record.source_lang] || ''} ${record.title}`}
-              >
-                <Pencil className="w-4 h-4" />
-              </button>
-            ))}
+            {langKeys.flatMap(lang =>
+              grouped[lang].slice(0, 3).map((record) => (
+                <button
+                  key={record.file_id}
+                  onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang)}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
+                  title={record.title}
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              ))
+            )}
           </motion.div>
         )}
       </div>
