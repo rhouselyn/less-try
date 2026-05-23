@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
+import { ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
 import { api } from '../utils/api'
 
 const LANG_LABELS = {
@@ -120,31 +120,15 @@ function ProgressBadge({ progress }) {
   if (!progress) return null
   const p1 = progress.phase1
   const p2 = progress.phase2
-  if (!p1 && !p2) return null
+  const totalCompleted = (p1?.completed || 0) + (p2?.completed || 0)
+  const totalUnits = (p1?.total || 0) + (p2?.total || 0)
+  if (totalUnits === 0) return null
 
-  const segments = []
-  if (p1 && p1.total > 0) {
-    const done = p1.completed >= p1.total
-    segments.push(
-      <span key="p1" className={`text-[10px] font-medium tabular-nums ${done ? 'text-emerald-500' : 'text-rose-300'}`}>
-        {p1.completed}/{p1.total}
-      </span>
-    )
-  }
-  if (p2 && p2.total > 0) {
-    const done = p2.completed >= p2.total
-    segments.push(
-      <span key="p2" className={`text-[10px] font-medium tabular-nums ${done ? 'text-emerald-500' : 'text-rose-300'}`}>
-        {p2.completed}/{p2.total}
-      </span>
-    )
-  }
-
-  if (segments.length === 0) return null
+  const done = totalCompleted >= totalUnits
   return (
-    <div className="flex items-center gap-1.5">
-      {segments.reduce((acc, seg, i) => i === 0 ? [seg] : [...acc, <span key={`sep-${i}`} className="text-[9px] text-stone-200">·</span>, seg], [])}
-    </div>
+    <span className={`text-[10px] font-semibold tabular-nums ${done ? 'text-emerald-500' : 'text-red-400'}`}>
+      {totalCompleted}/{totalUnits}
+    </span>
   )
 }
 
@@ -183,14 +167,12 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
       className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-stone-100/70 transition-colors mx-2"
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
     >
+      <ProgressBadge progress={record.progress} />
       <Pencil className="w-3.5 h-3.5 text-stone-300 flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <div className="text-[13px] text-stone-700 truncate leading-snug">
           {record.title}
         </div>
-      </div>
-      <div className="flex-shrink-0 group-hover:hidden">
-        <ProgressBadge progress={record.progress} />
       </div>
       <button
         onClick={e => {
@@ -198,11 +180,24 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
           const rect = e.currentTarget.getBoundingClientRect()
           onMenuOpen(record.file_id, rect.right - 160, rect.bottom + 4)
         }}
-        className="hidden group-hover:flex items-center justify-center p-1 rounded-md hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-all flex-shrink-0"
+        className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-all flex-shrink-0"
       >
         <MoreHorizontal className="w-3.5 h-3.5" />
       </button>
     </div>
+  )
+}
+
+function RecentItem({ record, onNavigate }) {
+  return (
+    <button
+      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
+      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100/70 transition-colors text-left"
+    >
+      <span className="text-xs flex-shrink-0">{LANG_ICONS[record.source_lang] || '📝'}</span>
+      <span className="text-[13px] text-stone-700 truncate flex-1">{record.title}</span>
+      <ProgressBadge progress={record.progress} />
+    </button>
   )
 }
 
@@ -212,6 +207,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
   const [menuState, setMenuState] = useState({ open: false, fileId: null, x: 0, y: 0 })
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
+  const [recentExpanded, setRecentExpanded] = useState(false)
 
   useEffect(() => {
     loadHistory()
@@ -226,12 +222,22 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
     }
   }
 
-  const grouped = records.reduce((acc, record) => {
-    const lang = record.source_lang || 'other'
-    if (!acc[lang]) acc[lang] = []
-    acc[lang].push(record)
-    return acc
-  }, {})
+  const sortedRecords = [...records].sort((a, b) => (b.updated_at || b.created_at || '').localeCompare(a.updated_at || a.created_at || ''))
+
+  const grouped = (() => {
+    const g = {}
+    for (const record of sortedRecords) {
+      const lang = record.source_lang || 'other'
+      if (!g[lang]) g[lang] = []
+      g[lang].push(record)
+    }
+    return g
+  })()
+
+  const langKeys = Object.keys(grouped)
+
+  const recentRecords = sortedRecords.slice(0, recentExpanded ? Math.max(8, 3 + 5 * Math.ceil((sortedRecords.length - 3) / 5)) : 3)
+  const hasMoreRecent = sortedRecords.length > 3
 
   const handleDelete = async (fileId) => {
     try {
@@ -277,7 +283,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
     setMenuState(prev => ({ ...prev, open: false }))
   }, [])
 
-  const langKeys = Object.keys(grouped)
+  const SIDEBAR_WIDTH = 300
 
   return (
     <>
@@ -286,7 +292,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
           {expanded && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 260, opacity: 1 }}
+              animate={{ width: SIDEBAR_WIDTH, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
               className="h-full overflow-hidden flex flex-col bg-stone-50 border-r border-stone-200/80"
@@ -305,12 +311,50 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               </div>
 
               <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
-                {Object.keys(grouped).length === 0 && (
+                {records.length === 0 && (
                   <div className="px-4 py-12 text-center">
                     <div className="text-2xl mb-2">📚</div>
                     <div className="text-[13px] text-stone-400">
                       {t.noHistory || '暂无学习记录'}
                     </div>
+                  </div>
+                )}
+
+                {records.length > 0 && (
+                  <div className="mb-2">
+                    <div className="px-4 py-1.5 mt-1">
+                      <span className="text-[11px] font-medium text-stone-400 tracking-wide">
+                        最近
+                      </span>
+                    </div>
+                    <div className="space-y-0.5 px-1">
+                      {recentRecords.map(record => (
+                        <RecentItem
+                          key={record.file_id}
+                          record={record}
+                          onNavigate={onNavigateToRecord}
+                        />
+                      ))}
+                    </div>
+                    {hasMoreRecent && (
+                      <button
+                        onClick={() => setRecentExpanded(prev => !prev)}
+                        className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+                      >
+                        {recentExpanded ? (
+                          <>
+                            <ChevronUp className="w-3 h-3" />
+                            收起
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3 h-3" />
+                            显示更多
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <div className="mx-4 my-2 border-t border-stone-200/60" />
                   </div>
                 )}
 

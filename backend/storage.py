@@ -344,10 +344,7 @@ class Storage:
             with open(stars_path, 'r', encoding='utf-8') as f:
                 existing = json.load(f)
         for key, count in stars_data.items():
-            if key in existing:
-                existing[key] = max(existing[key], count)
-            else:
-                existing[key] = count
+            existing[key] = count
         with open(stars_path, 'w', encoding='utf-8') as f:
             json.dump(existing, f, ensure_ascii=False, indent=2)
 
@@ -364,6 +361,16 @@ class Storage:
         for r in records:
             if r.get("file_id") == file_id:
                 r["title"] = new_title
+                self.save_history(records)
+                return True
+        return False
+
+    def touch_history_record(self, file_id: str):
+        import datetime
+        records = self.load_history()
+        for r in records:
+            if r.get("file_id") == file_id:
+                r["updated_at"] = datetime.datetime.now().isoformat()
                 self.save_history(records)
                 return True
         return False

@@ -98,19 +98,29 @@ class NvidiaAPI:
     def reload(self):
         self._reload()
 
-    def _sync_post(self, url, headers, payload, timeout):
-        response = requests.post(url, headers=headers, json=payload, timeout=timeout)
-        response.raise_for_status()
-        result = response.json()
-        if "choices" in result and len(result["choices"]) > 0:
-            choice = result["choices"][0]
-            message = choice.get("message", {})
-            content = message.get("content", "")
-            reasoning_content = message.get("reasoning_content", "")
-            if not content and reasoning_content:
-                message["content"] = reasoning_content
-                result["choices"][0]["message"] = message
-        return result
+    def _sync_post(self, url, headers, payload, timeout, max_retries=3):
+        import time as _time
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+                response.raise_for_status()
+                result = response.json()
+                if "choices" in result and len(result["choices"]) > 0:
+                    choice = result["choices"][0]
+                    message = choice.get("message", {})
+                    content = message.get("content", "")
+                    reasoning_content = message.get("reasoning_content", "")
+                    if not content and reasoning_content:
+                        message["content"] = reasoning_content
+                        result["choices"][0]["message"] = message
+                return result
+            except requests.exceptions.HTTPError as e:
+                if e.response is not None and e.response.status_code in (503, 429, 502) and attempt < max_retries - 1:
+                    wait = 2 ** attempt * 2
+                    print(f"[RETRY] API returned {e.response.status_code}, retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
+                    _time.sleep(wait)
+                    continue
+                raise
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         import time as _time

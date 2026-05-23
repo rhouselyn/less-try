@@ -116,7 +116,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full text-sm font-medium mb-4"
           >
             <Headphones className="w-4 h-4" />
-            听力题
+            {t.listeningQuizTitle || '听力题'}
           </motion.div>
           <div className="flex items-center justify-center gap-2">
             <motion.button

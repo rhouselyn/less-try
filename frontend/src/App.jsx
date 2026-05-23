@@ -93,7 +93,7 @@ function App() {
   
   const updateUnitStars = (key, starCount) => {
     setUnitStarCounts(prev => {
-      const updated = { ...prev, [key]: Math.max(prev[key] || 0, starCount) }
+      const updated = { ...prev, [key]: starCount }
       if (currentFileId) {
         api.saveUnitStars(currentFileId, { [key]: updated[key] }).catch(err => {
           console.error('Failed to save stars:', err)

@@ -1281,6 +1281,7 @@ pre_generated_words = {}
 @app.get("/api/learn/{file_id}/random-word")
 async def get_random_word(file_id: str):
     try:
+        storage.touch_history_record(file_id)
         vocab = storage.load_vocab(file_id)
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
@@ -2632,6 +2633,7 @@ async def get_phase_units(file_id: str, phase_number: int):
 @app.get("/api/{file_id}/phase/{phase_number}/unit/{unit_id}")
 async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int):
     try:
+        storage.touch_history_record(file_id)
         sentences = storage.load_pipeline_data(file_id)
         vocab = storage.load_vocab(file_id)
         if not sentences:
