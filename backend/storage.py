@@ -317,11 +317,22 @@ class Storage:
             "source_lang": source_lang,
             "target_lang": target_lang,
             "text_preview": text_preview,
-            "created_at": datetime.datetime.now().isoformat()
+            "created_at": datetime.datetime.now().isoformat(),
+            "last_accessed_at": datetime.datetime.now().isoformat()
         }
         records.append(record)
         self.save_history(records)
         return record
+
+    def update_history_access(self, file_id: str):
+        records = self.load_history()
+        import datetime
+        for r in records:
+            if r.get("file_id") == file_id:
+                r["last_accessed_at"] = datetime.datetime.now().isoformat()
+                self.save_history(records)
+                return True
+        return False
 
     def delete_history_record(self, file_id: str) -> bool:
         records = self.load_history()
