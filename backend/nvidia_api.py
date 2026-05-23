@@ -375,7 +375,7 @@ class NvidiaAPI:
                                     "tokens": {
                                         "type": "array",
                                         "items": {"type": "string"},
-                                        "description": "Component morphemes of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For derived/inflected words, split into base form + affix (e.g. 'previously' -> ['previous', 'ly'], 'studying' -> ['study', 'ing'], 'published' -> ['publish', 'ed'], 'prestigious' -> ['prestige', 'ous'], 'insufficient' -> ['in', 'sufficient'], 'mountains' -> ['mountain', 's']). Each token must be a meaningful morpheme or word part."
+                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list should contain only the word itself (e.g. 'brightly' -> ['brightly'], 'studying' -> ['studying'], 'mountains' -> ['mountains']). Do NOT split single words into morphemes."
                                     },
                                     "morphology": {
                                         "type": "string",
@@ -451,7 +451,7 @@ class NvidiaAPI:
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. translation: Translation of the word to TARGET_LANG
-5. tokens: 将词条拆分为语素组件。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。【极其重要】派生词和屈折词必须拆分为词根+词缀（如 "previously" -> ["previous", "ly"], "studying" -> ["study", "ing"], "published" -> ["publish", "ed"], "prestigious" -> ["prestige", "ous"], "insufficient" -> ["in", "sufficient"], "mountains" -> ["mountain", "s"], "converting" -> ["convert", "ing"], "gotten" -> ["get", "ten"]）。每个 token 必须是有意义的语素或词的部分。不可拆分的基础词（如 "the", "and", "water"）tokens 列表只包含自身。
+5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。单个词的 tokens 只包含自身（如 "brightly" -> ["brightly"], "studying" -> ["studying"], "mountains" -> ["mountains"]）。不要将单个词拆分为词根+词缀。
 6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】

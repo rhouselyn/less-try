@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, MoreHorizontal, Pencil, Trash2, MessageSquare, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
+import { ChevronLeft, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
 import { api } from '../utils/api'
 
 const LANG_LABELS = {
@@ -116,6 +116,38 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
   )
 }
 
+function ProgressBadge({ progress }) {
+  if (!progress) return null
+  const p1 = progress.phase1
+  const p2 = progress.phase2
+  if (!p1 && !p2) return null
+
+  const segments = []
+  if (p1 && p1.total > 0) {
+    const done = p1.completed >= p1.total
+    segments.push(
+      <span key="p1" className={`text-[10px] font-medium tabular-nums ${done ? 'text-emerald-500' : 'text-rose-300'}`}>
+        {p1.completed}/{p1.total}
+      </span>
+    )
+  }
+  if (p2 && p2.total > 0) {
+    const done = p2.completed >= p2.total
+    segments.push(
+      <span key="p2" className={`text-[10px] font-medium tabular-nums ${done ? 'text-emerald-500' : 'text-rose-300'}`}>
+        {p2.completed}/{p2.total}
+      </span>
+    )
+  }
+
+  if (segments.length === 0) return null
+  return (
+    <div className="flex items-center gap-1.5">
+      {segments.reduce((acc, seg, i) => i === 0 ? [seg] : [...acc, <span key={`sep-${i}`} className="text-[9px] text-stone-200">·</span>, seg], [])}
+    </div>
+  )
+}
+
 function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameConfirm, onRenameCancel, onRenameChange, onNavigate, onMenuOpen, t }) {
   const renameRef = useRef(null)
 
@@ -151,11 +183,14 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
       className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-stone-100/70 transition-colors mx-2"
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
     >
-      <MessageSquare className="w-3.5 h-3.5 text-stone-300 flex-shrink-0 mt-0.5" />
+      <Pencil className="w-3.5 h-3.5 text-stone-300 flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <div className="text-[13px] text-stone-700 truncate leading-snug">
           {record.title}
         </div>
+      </div>
+      <div className="flex-shrink-0 group-hover:hidden">
+        <ProgressBadge progress={record.progress} />
       </div>
       <button
         onClick={e => {
@@ -163,7 +198,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
           const rect = e.currentTarget.getBoundingClientRect()
           onMenuOpen(record.file_id, rect.right - 160, rect.bottom + 4)
         }}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-all flex-shrink-0"
+        className="hidden group-hover:flex items-center justify-center p-1 rounded-md hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-all flex-shrink-0"
       >
         <MoreHorizontal className="w-3.5 h-3.5" />
       </button>
@@ -374,7 +409,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
                   title={record.title}
                 >
-                  <MessageSquare className="w-4 h-4" />
+                  <Pencil className="w-4 h-4" />
                 </button>
               ))
             )}
