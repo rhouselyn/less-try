@@ -240,7 +240,7 @@ class NvidiaAPI:
 请生成以下信息：
 
 1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
-2. variants_detail: 词形变化列表，带类型说明（如过去式、复数等），只包含确实存在的词形变化，如果没有则返回空数组
+2. variants_detail: 词形变化列表，带类型说明。【极其重要】对于派生词（如 previously, prestigious, studying, published），必须列出其词根/原形作为词形变化（如 previously -> {{"form": "previous", "type": "形容词原形"}}, prestigious -> {{"form": "prestige", "type": "名词原形"}}, studying -> {{"form": "study", "type": "动词原形"}}, published -> {{"form": "publish", "type": "动词原形"}}）。对于基础词，列出其常见的屈折变化（如名词的复数、动词的过去式/过去分词/现在分词、形容词的比较级/最高级等）。只包含确实存在的词形变化，如果没有则返回空数组
 3. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
@@ -375,7 +375,7 @@ class NvidiaAPI:
                                     "tokens": {
                                         "type": "array",
                                         "items": {"type": "string"},
-                                        "description": "Component words of this entry. For fixed collocations, list each component (e.g. 'what's up' -> ['what's', 'up'])"
+                                        "description": "Component morphemes of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For derived/inflected words, split into base form + affix (e.g. 'previously' -> ['previous', 'ly'], 'studying' -> ['study', 'ing'], 'published' -> ['publish', 'ed'], 'prestigious' -> ['prestige', 'ous'], 'insufficient' -> ['in', 'sufficient'], 'mountains' -> ['mountain', 's']). Each token must be a meaningful morpheme or word part."
                                     },
                                     "morphology": {
                                         "type": "string",
@@ -451,7 +451,7 @@ class NvidiaAPI:
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. translation: Translation of the word to TARGET_LANG
-5. tokens: Split the word into tokens if applicable (固定搭配列出组成单词，如 "what's up" -> ["what's", "up"])
+5. tokens: 将词条拆分为语素组件。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。【极其重要】派生词和屈折词必须拆分为词根+词缀（如 "previously" -> ["previous", "ly"], "studying" -> ["study", "ing"], "published" -> ["publish", "ed"], "prestigious" -> ["prestige", "ous"], "insufficient" -> ["in", "sufficient"], "mountains" -> ["mountain", "s"], "converting" -> ["convert", "ing"], "gotten" -> ["get", "ten"]）。每个 token 必须是有意义的语素或词的部分。不可拆分的基础词（如 "the", "and", "water"）tokens 列表只包含自身。
 6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】

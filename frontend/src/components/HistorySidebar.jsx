@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2, MessageSquare, BookOpen } from 'lucide-react'
+import { ChevronLeft, MoreHorizontal, Pencil, Trash2, MessageSquare, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
 import { api } from '../utils/api'
 
 const LANG_LABELS = {
@@ -48,6 +48,17 @@ const LANG_ICONS = {
   pl: '🇵🇱',
   uk: '🇺🇦'
 }
+
+const SIDEBAR_COLORS = [
+  'from-amber-400 to-orange-500',
+  'from-emerald-400 to-teal-500',
+  'from-blue-400 to-indigo-500',
+  'from-rose-400 to-pink-500',
+  'from-violet-400 to-purple-500',
+  'from-cyan-400 to-sky-500',
+  'from-lime-400 to-green-500',
+  'from-fuchsia-400 to-pink-500',
+]
 
 function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
   const ref = useRef(null)
@@ -231,6 +242,8 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
     setMenuState(prev => ({ ...prev, open: false }))
   }, [])
 
+  const langKeys = Object.keys(grouped)
+
   return (
     <>
       <div className="flex h-full">
@@ -252,7 +265,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   onClick={() => setExpanded(false)}
                   className="p-1 rounded-md hover:bg-stone-200/60 text-stone-400 hover:text-stone-600 transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <PanelLeftClose className="w-4 h-4" />
                 </button>
               </div>
 
@@ -266,7 +279,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   </div>
                 )}
 
-                {Object.entries(grouped).map(([lang, items]) => (
+                {Object.entries(grouped).map(([lang, items], langIdx) => (
                   <div key={lang} className="mb-1">
                     <div className="flex items-center gap-1.5 px-4 py-1.5 mt-1">
                       <span className="text-xs">{LANG_ICONS[lang] || '📝'}</span>
@@ -276,10 +289,14 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                       <span className="text-[10px] text-stone-300">{items.length}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
-                        className={`ml-auto p-0.5 rounded transition-colors ${activeWordListLang === lang ? 'text-amber-500 hover:text-amber-600' : 'text-stone-300 hover:text-amber-500'}`}
+                        className={`ml-auto p-1 rounded-md transition-all ${
+                          activeWordListLang === lang
+                            ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[langIdx % SIDEBAR_COLORS.length] + ' text-white shadow-sm'
+                            : 'text-stone-300 hover:text-amber-500 hover:bg-amber-50'
+                        }`}
                         title="Word list"
                       >
-                        <BookOpen className="w-3.5 h-3.5" />
+                        <Library className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
@@ -314,15 +331,54 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
         </AnimatePresence>
 
         {!expanded && (
-          <motion.button
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            onClick={() => setExpanded(true)}
-            className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-stone-50 hover:bg-stone-100 border border-stone-200/80 border-l-0 text-stone-400 hover:text-stone-600 transition-colors self-start mt-4 rounded-r-lg"
-            title={t.historyTitle || '学习记录'}
+            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-stone-50 border-r border-stone-200/80"
+            style={{ width: 48 }}
           >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </motion.button>
+            <button
+              onClick={() => setExpanded(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
+              title={t.historyTitle || '学习记录'}
+            >
+              <PanelLeftOpen className="w-4.5 h-4.5" />
+            </button>
+
+            <div className="w-6 border-t border-stone-200/60 my-1" />
+
+            {langKeys.map((lang, idx) => (
+              <button
+                key={lang}
+                onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+                  activeWordListLang === lang
+                    ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-md'
+                    : 'hover:bg-stone-200/70 text-stone-400 hover:text-stone-600'
+                }`}
+                title={`${LANG_LABELS[lang] || lang} - ${t.wordList || '单词总表'}`}
+              >
+                <Library className="w-4 h-4" />
+              </button>
+            ))}
+
+            {records.length > 0 && langKeys.length > 0 && (
+              <div className="w-6 border-t border-stone-200/60 my-1" />
+            )}
+
+            {langKeys.flatMap(lang =>
+              grouped[lang].slice(0, 3).map((record) => (
+                <button
+                  key={record.file_id}
+                  onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang)}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
+                  title={record.title}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                </button>
+              ))
+            )}
+          </motion.div>
         )}
       </div>
 
