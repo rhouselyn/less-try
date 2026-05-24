@@ -1,5 +1,148 @@
 from typing import List, Set, Dict, Any
 import string
+import unicodedata
+
+PUNCTUATION_CHARS = frozenset({
+    '.', ',', '!', '?', ':', ';',
+    '…', '⋯',
+    '，', '。', '！', '？', '：', '；', '、',
+    '؟', '،',
+    '।', '॥',
+    '။', '၊',
+    '។', '៕', '៖',
+    '։', '՜', '՞',
+    '።', '፣',
+    '།',
+    '᪩', '᪪',
+    '⳹', '⳾',
+    '𐩖', '𐩗',
+    '꘎', '꛳',
+    '‽',
+    '‼', '⁇', '⁈', '⁉',
+    '¡', '¿',
+    '«', '»', '‹', '›',
+    '「', '」', '『', '』', '【', '】', '（', '）', '《', '》',
+    '〈', '〉', '〔', '〕', '〖', '〗',
+    '"', '"', '"', ''', ''', '`',
+    '—', '–', '‐', '‑', '‒',
+    '·', '•', '◦',
+    '⁊',
+})
+
+def is_punctuation_only(text):
+    if not text or not isinstance(text, str):
+        return False
+    stripped = text.strip()
+    if not stripped:
+        return True
+    for ch in stripped:
+        if ch in PUNCTUATION_CHARS:
+            continue
+        cat = unicodedata.category(ch)
+        if cat.startswith('P') or cat.startswith('Z'):
+            continue
+        return False
+    return True
+
+SCRIPT_RANGES = {
+    'Latin': [
+        (0x0041, 0x005A), (0x0061, 0x007A), (0x00C0, 0x024F),
+        (0x1E00, 0x1EFF), (0x2C60, 0x2C7F), (0xA720, 0xA7FF), (0xAB30, 0xAB6F),
+    ],
+    'Cyrillic': [(0x0400, 0x052F)],
+    'Greek': [(0x0370, 0x03FF), (0x1F00, 0x1FFF)],
+    'Arabic': [(0x0600, 0x06FF), (0x0750, 0x077F), (0x08A0, 0x08FF), (0xFB50, 0xFDFF), (0xFE70, 0xFEFF)],
+    'Hebrew': [(0x0590, 0x05FF), (0xFB1D, 0xFB4F)],
+    'Devanagari': [(0x0900, 0x097F), (0xA8E0, 0xA8FF)],
+    'Bengali': [(0x0980, 0x09FF)],
+    'Gurmukhi': [(0x0A00, 0x0A7F)],
+    'Gujarati': [(0x0A80, 0x0AFF)],
+    'Oriya': [(0x0B00, 0x0B7F)],
+    'Tamil': [(0x0B80, 0x0BFF)],
+    'Telugu': [(0x0C00, 0x0C7F)],
+    'Kannada': [(0x0C80, 0x0CFF)],
+    'Malayalam': [(0x0D00, 0x0D7F)],
+    'Sinhala': [(0x0D80, 0x0DFF)],
+    'Thai': [(0x0E00, 0x0E7F)],
+    'Lao': [(0x0E80, 0x0EFF)],
+    'Tibetan': [(0x0F00, 0x0FFF)],
+    'Myanmar': [(0x1000, 0x109F), (0xAA60, 0xAA7F)],
+    'Georgian': [(0x10A0, 0x10FF), (0x2D00, 0x2D2F)],
+    'Hangul': [(0xAC00, 0xD7AF), (0x1100, 0x11FF), (0x3130, 0x318F)],
+    'CJK': [(0x4E00, 0x9FFF), (0x3400, 0x4DBF), (0x20000, 0x2A6DF), (0xF900, 0xFAFF)],
+    'Hiragana': [(0x3040, 0x309F)],
+    'Katakana': [(0x30A0, 0x30FF)],
+    'Armenian': [(0x0530, 0x058F)],
+    'Ethiopic': [(0x1200, 0x139F)],
+    'Khmer': [(0x1780, 0x17FF)],
+    'Thaana': [(0x0780, 0x07BF)],
+}
+
+LANG_SCRIPTS = {
+    'en': {'Latin'}, 'fr': {'Latin'}, 'de': {'Latin'}, 'es': {'Latin'}, 'it': {'Latin'},
+    'pt': {'Latin'}, 'nl': {'Latin'}, 'sv': {'Latin'}, 'da': {'Latin'}, 'nb': {'Latin'},
+    'nn': {'Latin'}, 'ro': {'Latin'}, 'pl': {'Latin'}, 'cs': {'Latin'}, 'sk': {'Latin'},
+    'hr': {'Latin'}, 'sl': {'Latin'}, 'bg': {'Cyrillic'}, 'ru': {'Cyrillic'}, 'uk': {'Cyrillic'},
+    'be': {'Cyrillic'}, 'sr': {'Cyrillic'}, 'mk': {'Cyrillic'},
+    'el': {'Greek'}, 'hy': {'Armenian'}, 'ka': {'Georgian'},
+    'zh': {'CJK'}, 'zh-TW': {'CJK'}, 'yue': {'CJK'},
+    'ja': {'CJK', 'Hiragana', 'Katakana'},
+    'ko': {'Hangul', 'CJK'},
+    'ar': {'Arabic'}, 'ars': {'Arabic'}, 'apc': {'Arabic'}, 'arz': {'Arabic'},
+    'ary': {'Arabic'}, 'acm': {'Arabic'}, 'acq': {'Arabic'}, 'aeb': {'Arabic'},
+    'he': {'Hebrew'}, 'mt': {'Latin'},
+    'fa': {'Arabic'}, 'prs': {'Arabic'}, 'tg': {'Cyrillic'},
+    'hi': {'Devanagari'}, 'mr': {'Devanagari'}, 'ne': {'Devanagari'},
+    'bn': {'Bengali'}, 'as': {'Bengali'},
+    'pa': {'Gurmukhi'}, 'gu': {'Gujarati'}, 'or': {'Oriya'},
+    'ta': {'Tamil'}, 'te': {'Telugu'}, 'kn': {'Kannada'}, 'ml': {'Malayalam'},
+    'si': {'Sinhala'},
+    'th': {'Thai'}, 'lo': {'Lao'},
+    'my': {'Myanmar'}, 'km': {'Khmer'},
+    'tr': {'Latin'}, 'az': {'Latin'}, 'uz': {'Latin'}, 'kk': {'Cyrillic'},
+    'ba': {'Cyrillic'}, 'tt': {'Cyrillic'},
+    'fi': {'Latin'}, 'et': {'Latin'}, 'hu': {'Latin'},
+    'vi': {'Latin'}, 'id': {'Latin'}, 'ms': {'Latin'}, 'tl': {'Latin'},
+    'sw': {'Latin'}, 'ht': {'Latin'}, 'af': {'Latin'},
+    'cy': {'Latin'}, 'ga': {'Latin'}, 'is': {'Latin'}, 'fo': {'Latin'},
+    'sq': {'Latin'}, 'lt': {'Latin'}, 'lv': {'Latin'}, 'lb': {'Latin'},
+    'eu': {'Latin'}, 'ca': {'Latin'}, 'gl': {'Latin'}, 'oc': {'Latin'},
+    'vec': {'Latin'}, 'lmo': {'Latin'}, 'lij': {'Latin'}, 'scn': {'Latin'},
+    'fur': {'Latin'}, 'sc': {'Latin'}, 'ast': {'Latin'}, 'szl': {'Latin'},
+    'li': {'Latin'}, 'bs': {'Latin'},
+    'sd': {'Arabic'}, 'ur': {'Arabic'},
+    'yi': {'Hebrew'},
+    'mag': {'Devanagari'}, 'mai': {'Devanagari'}, 'bho': {'Devanagari'},
+    'awa': {'Devanagari'}, 'hne': {'Devanagari'},
+    'ceb': {'Latin'}, 'jv': {'Latin'}, 'su': {'Latin'}, 'min': {'Latin'},
+    'ban': {'Latin'}, 'bjn': {'Latin'}, 'pag': {'Latin'}, 'ilo': {'Latin'},
+    'war': {'Latin'}, 'kea': {'Latin'}, 'pap': {'Latin'}, 'tpi': {'Latin'},
+}
+
+def _detect_script(ch):
+    cp = ord(ch)
+    for script, ranges in SCRIPT_RANGES.items():
+        for start, end in ranges:
+            if start <= cp <= end:
+                return script
+    return None
+
+def is_source_lang_text(text, source_lang="en"):
+    if not text or not isinstance(text, str):
+        return False
+    text = text.strip()
+    if len(text.split()) > 3:
+        return False
+    detected_scripts = set()
+    for ch in text:
+        if unicodedata.category(ch).startswith('L'):
+            s = _detect_script(ch)
+            if s:
+                detected_scripts.add(s)
+    if not detected_scripts:
+        return True
+    expected = LANG_SCRIPTS.get(source_lang, {'Latin'})
+    return detected_scripts.issubset(expected)
 
 BACKUP_VOCAB_BY_LANG = {
     "en": [
@@ -134,9 +277,45 @@ BACKUP_VOCAB_BY_LANG = {
         "受け入れる", "同意", "許す", "現れる", "原因", "創造", "期待", "力",
         "影響", "観察", "好む", "受け取る", "必要", "仕える", "共有", "広がる",
     ],
+    "ko": [
+        "아침", "저녁", "가족", "친구", "학교", "선생님", "학생", "교실",
+        "정원", "꽃", "동물", "물", "강", "산", "숲", "날씨",
+        "여름", "겨울", "봄", "가을", "휴가", "생일", "아침식사", "저녁식사",
+        "부엌", "창문", "문", "탁자", "의자", "그림", "색", "음악",
+        "이야기", "편지", "숫자", "질문", "대답", "예", "연습", "수업",
+        "나라", "마을", "시장", "다리", "역", "도서관", "병원", "박물관",
+        "여행", "방문", "도착", "귀환", "가지다", "따르다", "듣다", "기억하다",
+        "아름다운", "중요한", "다른", "어려운", "멋진", "조심스러운", "함께", "사이",
+        "항상", "보통", "가끔", "빠른", "느린", "주의 깊은", "확실히", "이미",
+        "충분한", "다른", "몇몇", "아마", "거의", "동안", "없이", "반대",
+        "믿다", "준비하다", "발견하다", "설명하다", "상상하다", "포함하다", "제공하다", "가정하다",
+        "생산하다", "수집하다", "보호하다", "연결하다", "발전하다", "개선하다", "증가하다", "고려하다",
+        "자연", "과학", "문화", "미래", "역사", "언어", "지식", "주의",
+        "특별한", "가능한", "인기 있는", "비슷한", "간단한", "이상한", "유용한", "진지한",
+        "결정하다", "의존하다", "나누다", "들어가다", "일어나다", "초대하다", "알아차리다", "약속하다",
+        "제안하다", "지지하다", "달성하다", "계속하다", "조직하다", "소개하다", "축하하다", "소통하다",
+        "의견", "결정", "방향", "정보", "경험", "교육", "조건", "위치",
+        "오래된", "현대", "올바른", "정확한", "적절한", "필요한", "원래의", "전통적인",
+        "받아들이다", "동의하다", "허락하다", "나타나다", "원인", "창조하다", "기대하다", "힘",
+        "영향", "관찰하다", "선호하다", "받다", "요구하다", "봉사하다", "공유하다", "퍼지다",
+    ],
 }
 
 BACKUP_VOCAB = BACKUP_VOCAB_BY_LANG["en"]
+
+
+NO_SPACE_LANGUAGES = frozenset({
+    'zh', 'zh-TW', 'yue',
+    'ja',
+    'th', 'lo', 'km', 'my',
+})
+
+def _tokenize_by_space(text: str) -> List[str]:
+    return [w for w in text.split() if w.strip()]
+
+def _tokenize_by_char(text: str) -> List[str]:
+    import re
+    return [c for c in text if c.strip() and not re.match(r'^[^\w]+$', c, re.UNICODE)]
 
 
 class TextProcessor:
@@ -145,13 +324,9 @@ class TextProcessor:
 
     def extract_words(self, text: str, language: str) -> List[str]:
         import re
-        if language == 'ko':
-            words = text.split()
-            return [w for w in words if w.strip()]
-        if language in ('ja', 'zh'):
-            return list(text)
-        words = re.findall(r"\b\w+(?:[-']\w+)*\b", text)
-        return [w for w in words if w.strip()]
+        if language in NO_SPACE_LANGUAGES:
+            return _tokenize_by_char(text)
+        return _tokenize_by_space(text)
 
     def extract_words_from_sentences(self, sentences: List[str], language: str) -> List[str]:
         """从句子列表中提取单词并全局去重"""
@@ -272,9 +447,8 @@ class TextProcessor:
                 filtered_translation = []
                 for token in result['translation']:
                     if isinstance(token, dict) and 'text' in token:
-                        text = token['text'].strip()
-                        # 只过滤完全是标点符号的token
-                        if text and not all(char in '.,;:!?' for char in text):
+                        token_text = token['text'].strip()
+                        if token_text and not is_punctuation_only(token_text):
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
         
@@ -293,7 +467,46 @@ class TextProcessor:
                 if isinstance(token, dict) and 'text' in token:
                     existing_tokens.append(token)
         
-        existing_text_lower = [t['text'].lower() for t in existing_tokens]
+        if not existing_tokens:
+            translation_result['translation'] = [
+                {'text': w, 'translation': '', 'phonetic': '', 'morphology': ''}
+                for w in original_words
+            ]
+            return translation_result
+        
+        existing_text_joined = ''.join(t['text'] for t in existing_tokens).lower()
+        original_joined = ''.join(original_words).lower()
+        
+        if existing_text_joined == original_joined and len(existing_tokens) == len(original_words):
+            return translation_result
+        
+        if existing_text_joined == original_joined and len(existing_tokens) != len(original_words):
+            merged = []
+            orig_idx = 0
+            tok_idx = 0
+            while orig_idx < len(original_words) and tok_idx < len(existing_tokens):
+                orig = original_words[orig_idx]
+                combined = ''
+                combined_tokens = []
+                while tok_idx < len(existing_tokens):
+                    combined += existing_tokens[tok_idx]['text']
+                    combined_tokens.append(existing_tokens[tok_idx])
+                    if combined.lower() == orig.lower():
+                        if len(combined_tokens) == 1:
+                            merged.append(combined_tokens[0])
+                        else:
+                            merged.append({
+                                'text': orig,
+                                'translation': '；'.join(t.get('translation', '') for t in combined_tokens if t.get('translation')),
+                                'phonetic': combined_tokens[0].get('phonetic', ''),
+                                'morphology': '；'.join(t.get('morphology', '') for t in combined_tokens if t.get('morphology')),
+                            })
+                        tok_idx += 1
+                        break
+                    tok_idx += 1
+                orig_idx += 1
+            translation_result['translation'] = merged
+            return translation_result
         
         completed_translation = []
         used_existing = set()
@@ -310,24 +523,17 @@ class TextProcessor:
                     used_existing.add(i)
                     found = True
                     break
-                if token_lower == orig_lower.replace('-', ' '):
-                    completed_translation.append(token)
-                    used_existing.add(i)
-                    found = True
-                    break
-                if token_lower.replace('-', ' ') == orig_lower:
-                    completed_translation.append({**token, 'text': orig_word})
-                    used_existing.add(i)
-                    found = True
-                    break
             if not found:
                 for i, token in enumerate(existing_tokens):
                     if i in used_existing:
                         continue
                     token_lower = token['text'].lower()
-                    if orig_lower.startswith(token_lower) or token_lower.startswith(orig_lower):
-                        continue
-                    if token_lower in orig_lower or orig_lower in token_lower:
+                    if token_lower == orig_lower.replace('-', ' '):
+                        completed_translation.append(token)
+                        used_existing.add(i)
+                        found = True
+                        break
+                    if token_lower.replace('-', ' ') == orig_lower:
                         completed_translation.append({**token, 'text': orig_word})
                         used_existing.add(i)
                         found = True
@@ -344,12 +550,9 @@ class TextProcessor:
         return translation_result
 
     def tokenize_sentence(self, sentence: str, language: str = "en") -> List[str]:
-        import re
-        if language == 'ko':
-            return [w for w in sentence.split() if w.strip()]
-        if language in ('ja', 'zh'):
-            return [c for c in sentence if c.strip()]
-        return re.findall(r"\b\w+(?:[-']\w+)*\b", sentence)
+        if language in NO_SPACE_LANGUAGES:
+            return _tokenize_by_char(sentence)
+        return _tokenize_by_space(sentence)
     
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0) -> Dict[str, Any]:
         if translation_tokens:
@@ -391,7 +594,11 @@ class TextProcessor:
                 too_close = any(abs(idx - e) <= 2 for e in used)
                 if too_close:
                     continue
-                word_at_idx = token_list[idx].lower().strip('.,;:!?，。；：！？、') if idx < len(token_list) else ''
+                word_at_idx = token_list[idx].lower()
+                for ch in word_at_idx:
+                    if ch in PUNCTUATION_CHARS or unicodedata.category(ch).startswith('P'):
+                        word_at_idx = word_at_idx.replace(ch, '')
+                word_at_idx = word_at_idx.strip() if idx < len(token_list) else ''
                 if word_at_idx in used_words_in_group:
                     continue
                 group.append(idx)

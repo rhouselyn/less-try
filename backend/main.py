@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 
 from nvidia_api import NvidiaAPI, get_settings, update_settings
-from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG
+from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text
 from storage import Storage
 
 load_dotenv()
@@ -20,8 +20,6 @@ load_dotenv()
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
 import re
-
-PUNCTUATION_CHARS = set('.,!?:;，。！？：；、')
 
 class RateLimiter:
     def __init__(self, rpm):
@@ -41,42 +39,16 @@ class RateLimiter:
                 await asyncio.sleep(wait_time)
             self.last_call = time.time()
 
-def is_punctuation_only(text):
-    if not text or not isinstance(text, str):
-        return False
-    stripped = text.strip()
-    if not stripped:
-        return True
-    return all(ch in PUNCTUATION_CHARS for ch in stripped)
-
-def is_source_lang_text(text, source_lang="en"):
-    if not text or not isinstance(text, str):
-        return False
-    text = text.strip()
-    if source_lang == "en":
-        if re.match(r'^[a-zA-Z\s\-\']+$', text) and len(text.split()) <= 3:
-            if not re.search(r'[\u4e00-\u9fff]', text):
-                return True
-    return False
-
 ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
 
 def vocab_sort_key(entry):
+    import unicodedata
     word = entry.get("word", "")
     ipa = entry.get("ipa", "")
     if word and len(word) > 0:
         first_char = word[0]
-        if '\u4e00' <= first_char <= '\u9fff':
-            if ipa and len(ipa.strip('/')) > 0:
-                return ipa.lstrip('/').strip()[0].lower()
-            return first_char
-        if '\u3040' <= first_char <= '\u309f' or '\u30a0' <= first_char <= '\u30ff':
-            if ipa and len(ipa.strip('/')) > 0:
-                return ipa.lstrip('/').strip()[0].lower()
-            return first_char
-        if '\uac00' <= first_char <= '\ud7af':
-            return first_char
-        import unicodedata
+        if ipa and len(ipa.strip('/')) > 0:
+            return ipa.lstrip('/').strip()[0].lower()
         normalized = unicodedata.normalize('NFD', first_char)
         if len(normalized) > 0:
             base = normalized[0]
@@ -173,7 +145,7 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         if len(filtered_options) < 4:
             correct_answer = mc.get("correct_answer", "")
             existing_texts = {o["text"] for o in filtered_options}
-            fallbacks = ["其他含义", "不同释义", "无关意思", "另一种解释", "不同概念"]
+            fallbacks = ["other meaning", "different sense", "unrelated", "alternative", "different concept"]
             for fb in fallbacks:
                 if len(filtered_options) >= 4:
                     break
@@ -2747,7 +2719,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                         seen = set()
                         unique_tokens = []
                         for t in all_dict_tokens:
-                            if t.lower() not in seen:
+                            if t.lower() not in seen and not is_punctuation_only(t):
                                 seen.add(t.lower())
                                 unique_tokens.append(t)
                         
@@ -2758,7 +2730,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 if not original_tokens and "translation" in translation_result:
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
-                            if token["text"].strip():
+                            if token["text"].strip() and not is_punctuation_only(token["text"]):
                                 original_tokens.append(token["text"])
                 
                 if not original_tokens:

@@ -459,7 +459,7 @@ class NvidiaAPI:
     * 【极其重要】所有条目的 text 按顺序拼接后必须等于原文内容（去除标点差异后），不能遗漏或增加内容
     * 【绝对禁止】将一个完整的词拆分成字符、音节或语素！一个词就是一个条目，不能更小
   - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
-  - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
+  - phonetic: 音标(IPA)（如果该语言没有标准音标，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
