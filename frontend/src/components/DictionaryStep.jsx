@@ -6,7 +6,7 @@ import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
 import { speakText } from '../utils/speech'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, preprocessStatus }) {
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
@@ -246,7 +246,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col gap-6"
+      className="flex flex-col gap-3"
+      style={{ height: '100%' }}
     >
       {processingInfo && (
         <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
@@ -263,7 +264,30 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </div>
       )}
 
-      {!processingInfo && vocab.length > 0 && (
+      {!processingInfo && loading && !preprocessStatus && (
+        <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex justify-between mb-2">
+            <span className="text-sm text-stone-600">{t.processing}: 句子 0 / ...</span>
+            <span className="text-sm text-stone-600">0%</span>
+          </div>
+          <div className="w-full bg-stone-100 rounded-full h-2.5">
+            <div className="bg-stone-800 h-2.5 rounded-full transition-all duration-300" style={{ width: '0%' }}></div>
+          </div>
+        </div>
+      )}
+
+      {preprocessStatus && (
+        <div className="bg-white border border-blue-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
+            <span className="text-sm text-blue-700 font-medium">
+              {preprocessStatus === 'translating' ? (t.translating || '翻译中...') : (t.generating || '生成文本中...')}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {!processingInfo && !preprocessStatus && vocab.length > 0 && (
         <motion.button
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
@@ -285,9 +309,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </motion.button>
       )}
 
-      <div className="flex gap-6" style={{ minHeight: '70vh' }}>
-        <div className="w-1/2 flex flex-col">
-          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
+      <div className="flex gap-6 flex-1 min-h-0">
+        <div className="w-1/2 flex flex-col min-h-0">
+          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0">
@@ -309,7 +333,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto" style={{ maxHeight: '70vh' }}>
+            <div className="flex-1 overflow-y-auto min-h-0">
               {filteredSentences.length > 0 ? (
                 <div className="divide-y divide-stone-200/60">
                   {filteredSentences.map((item, index) => {
@@ -359,8 +383,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           </div>
         </div>
 
-        <div className="w-1/2 flex flex-col">
-          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1">
+        <div className="w-1/2 flex flex-col min-h-0">
+          <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0">
@@ -382,7 +406,13 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto" ref={vocabListRef} style={{ maxHeight: '70vh' }}>
+            <div className="flex-1 overflow-y-auto min-h-0" ref={vocabListRef}>
+              {groupedVocab.length === 0 ? (
+                <div className="py-16 text-center">
+                  <BookOpen className="w-10 h-10 mx-auto mb-3 text-stone-200" />
+                  <p className="text-stone-400 text-sm">{loading ? t.loading : (vocabSearch ? '没有找到匹配的单词' : t.loading)}</p>
+                </div>
+              ) : (
               <div className="space-y-3">
                 {groupedVocab.map(([letter, words], groupIdx) => (
                   <div key={letter} id={`dict-group-${letter}`}>
@@ -473,6 +503,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                   </div>
                 ))}
               </div>
+              )}
             </div>
 
             {letterIndex.length > 3 && (

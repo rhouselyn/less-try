@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, Globe2, PenLine } from 'lucide-react'
+import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, Globe2, PenLine, Languages, Wand2 } from 'lucide-react'
 
 const LANGUAGES = [
   { value: 'en', native: 'English', en: 'English', zh: '英语', family: 'indo-european', flag: '🇬🇧' },
@@ -309,7 +309,115 @@ function LanguageSelector({ value, onChange, targetLang }) {
   )
 }
 
-function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t }) {
+const MODES = [
+  { key: 'direct', icon: PenLine, color: 'amber' },
+  { key: 'translate', icon: Languages, color: 'blue' },
+  { key: 'generate', icon: Wand2, color: 'violet' },
+]
+
+function ModeSelector({ mode, setMode, t }) {
+  return (
+    <div className="flex gap-1 p-1 bg-stone-100/80 rounded-xl">
+      {MODES.map(({ key, icon: Icon, color }) => {
+        const isActive = mode === key
+        const labelMap = { direct: t.modeDirect, translate: t.modeTranslate, generate: t.modeGenerate }
+        const activeBg = {
+          amber: 'bg-amber-500 text-white shadow-sm shadow-amber-500/20',
+          blue: 'bg-blue-500 text-white shadow-sm shadow-blue-500/20',
+          violet: 'bg-violet-500 text-white shadow-sm shadow-violet-500/20',
+        }
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setMode(key)}
+            className={`relative flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+              isActive ? activeBg[color] : 'text-stone-500 hover:text-stone-700 hover:bg-white/60'
+            }`}
+          >
+            <Icon className="w-3.5 h-3.5" />
+            <span>{labelMap[key]}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+function ModeDescription({ mode, t }) {
+  const descMap = { direct: t.modeDirectDesc, translate: t.modeTranslateDesc, generate: t.modeGenerateDesc }
+  const colorMap = {
+    direct: 'text-amber-600/70',
+    translate: 'text-blue-600/70',
+    generate: 'text-violet-600/70',
+  }
+  return (
+    <motion.p
+      key={mode}
+      initial={{ opacity: 0, y: -4 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -4 }}
+      transition={{ duration: 0.2 }}
+      className={`text-[11px] leading-relaxed ${colorMap[mode]}`}
+    >
+      {descMap[mode]}
+    </motion.p>
+  )
+}
+
+function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode }) {
+  const getPlaceholder = () => {
+    if (inputMode === 'translate') return t.modeTranslatePlaceholder
+    if (inputMode === 'generate') return t.modeGeneratePlaceholder
+    return t.modeDirectPlaceholder
+  }
+
+  const getLabel = () => {
+    if (inputMode === 'translate') return t.nativeLang
+    if (inputMode === 'generate') return t.inputText
+    return t.inputText
+  }
+
+  const getButtonText = () => {
+    if (loading) return t.processing
+    return t.generateMaterials
+  }
+
+  const getAccentColor = () => {
+    if (inputMode === 'translate') return 'blue'
+    if (inputMode === 'generate') return 'violet'
+    return 'amber'
+  }
+
+  const accent = getAccentColor()
+
+  const btnStyles = {
+    amber: {
+      active: 'bg-amber-500 text-white shadow-md shadow-amber-500/20 hover:bg-amber-600 hover:shadow-lg hover:shadow-amber-500/25',
+      disabled: 'bg-stone-100 text-stone-400 cursor-not-allowed',
+    },
+    blue: {
+      active: 'bg-blue-500 text-white shadow-md shadow-blue-500/20 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/25',
+      disabled: 'bg-stone-100 text-stone-400 cursor-not-allowed',
+    },
+    violet: {
+      active: 'bg-violet-500 text-white shadow-md shadow-violet-500/20 hover:bg-violet-600 hover:shadow-lg hover:shadow-violet-500/25',
+      disabled: 'bg-stone-100 text-stone-400 cursor-not-allowed',
+    },
+  }
+
+  const textareaBorder = {
+    amber: 'focus:border-amber-400/80 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.06)]',
+    blue: 'focus:border-blue-400/80 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.06)]',
+    violet: 'focus:border-violet-400/80 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.06)]',
+  }
+
+  const iconColor = {
+    amber: 'group-focus-within:text-amber-300',
+    blue: 'group-focus-within:text-blue-300',
+    violet: 'group-focus-within:text-violet-300',
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -337,6 +445,22 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.08, duration: 0.4 }}
+          >
+            <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
+              {t.modeLabel}
+            </label>
+            <ModeSelector mode={inputMode} setMode={setInputMode} t={t} />
+            <div className="mt-2 min-h-[28px]">
+              <AnimatePresence mode="wait">
+                <ModeDescription mode={inputMode} t={t} />
+              </AnimatePresence>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
             className="space-y-3"
           >
@@ -354,18 +478,18 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             transition={{ delay: 0.15, duration: 0.4 }}
           >
             <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
-              {t.inputText}
+              {getLabel()}
             </label>
             <div className="relative group">
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder={t.placeholder}
+                placeholder={getPlaceholder()}
                 rows={4}
-                className="w-full px-4 py-3 rounded-xl border border-stone-200/80 bg-white text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:border-amber-400/80 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.06)] resize-none leading-relaxed transition-all duration-200 hover:border-stone-300"
+                className={`w-full px-4 py-3 rounded-xl border border-stone-200/80 bg-white text-sm text-stone-800 placeholder-stone-400 focus:outline-none ${textareaBorder[accent]} resize-none leading-relaxed transition-all duration-200 hover:border-stone-300`}
               />
               <div className="absolute top-3 right-3 pointer-events-none">
-                <PenLine className="w-4 h-4 text-stone-200 group-focus-within:text-amber-300 transition-colors" />
+                <PenLine className={`w-4 h-4 text-stone-200 ${iconColor[accent]} transition-colors`} />
               </div>
             </div>
           </motion.div>
@@ -381,21 +505,19 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
               onClick={onProcess}
               disabled={loading || !text.trim()}
               className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 ${
-                loading || !text.trim()
-                  ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
-                  : 'bg-amber-500 text-white shadow-md shadow-amber-500/20 hover:bg-amber-600 hover:shadow-lg hover:shadow-amber-500/25'
+                loading || !text.trim() ? btnStyles[accent].disabled : btnStyles[accent].active
               }`}
             >
               <AnimatePresence mode="wait">
                 {loading ? (
                   <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {t.processing}
+                    {getButtonText()}
                   </motion.span>
                 ) : (
                   <motion.span key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
                     <Sparkles className="w-4 h-4" />
-                    {t.generateMaterials}
+                    {getButtonText()}
                     <ArrowRight className="w-3.5 h-3.5 opacity-70" />
                   </motion.span>
                 )}

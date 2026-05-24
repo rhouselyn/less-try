@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronLeft, ChevronRight, MoreHorizontal, Pencil, Trash2, MessageSquare, BookOpen } from 'lucide-react'
+import { ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
 import { api } from '../utils/api'
 
 const LANG_LABELS = {
@@ -48,6 +48,17 @@ const LANG_ICONS = {
   pl: '🇵🇱',
   uk: '🇺🇦'
 }
+
+const SIDEBAR_COLORS = [
+  'from-amber-400 to-orange-500',
+  'from-emerald-400 to-teal-500',
+  'from-blue-400 to-indigo-500',
+  'from-rose-400 to-pink-500',
+  'from-violet-400 to-purple-500',
+  'from-cyan-400 to-sky-500',
+  'from-lime-400 to-green-500',
+  'from-fuchsia-400 to-pink-500',
+]
 
 function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
   const ref = useRef(null)
@@ -105,6 +116,22 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
   )
 }
 
+function ProgressBadge({ progress }) {
+  if (!progress) return <span className="w-[32px] flex-shrink-0" />
+  const p1 = progress.phase1
+  const p2 = progress.phase2
+  const totalCompleted = (p1?.completed || 0) + (p2?.completed || 0)
+  const totalUnits = (p1?.total || 0) + (p2?.total || 0)
+  if (totalUnits === 0) return <span className="w-[32px] flex-shrink-0" />
+
+  const done = totalCompleted >= totalUnits
+  return (
+    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-emerald-500' : 'text-red-400'}`}>
+      {totalCompleted}/{totalUnits}
+    </span>
+  )
+}
+
 function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameConfirm, onRenameCancel, onRenameChange, onNavigate, onMenuOpen, t }) {
   const renameRef = useRef(null)
 
@@ -140,7 +167,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
       className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-stone-100/70 transition-colors mx-2"
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
     >
-      <MessageSquare className="w-3.5 h-3.5 text-stone-300 flex-shrink-0 mt-0.5" />
+      <ProgressBadge progress={record.progress} />
       <div className="flex-1 min-w-0">
         <div className="text-[13px] text-stone-700 truncate leading-snug">
           {record.title}
@@ -160,12 +187,26 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
   )
 }
 
+function RecentItem({ record, onNavigate }) {
+  return (
+    <button
+      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
+      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100/70 transition-colors text-left"
+    >
+      <ProgressBadge progress={record.progress} />
+      <span className="text-[13px] text-stone-700 truncate flex-1">{record.title}</span>
+      <span className="text-xs flex-shrink-0">{LANG_ICONS[record.source_lang] || '📝'}</span>
+    </button>
+  )
+}
+
 function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListLang }) {
   const [expanded, setExpanded] = useState(true)
   const [records, setRecords] = useState([])
   const [menuState, setMenuState] = useState({ open: false, fileId: null, x: 0, y: 0 })
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
+  const [recentExpanded, setRecentExpanded] = useState(false)
 
   useEffect(() => {
     loadHistory()
@@ -180,12 +221,22 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
     }
   }
 
-  const grouped = records.reduce((acc, record) => {
-    const lang = record.source_lang || 'other'
-    if (!acc[lang]) acc[lang] = []
-    acc[lang].push(record)
-    return acc
-  }, {})
+  const sortedRecords = [...records].sort((a, b) => (b.updated_at || b.created_at || '').localeCompare(a.updated_at || a.created_at || ''))
+
+  const grouped = (() => {
+    const g = {}
+    for (const record of sortedRecords) {
+      const lang = record.source_lang || 'other'
+      if (!g[lang]) g[lang] = []
+      g[lang].push(record)
+    }
+    return g
+  })()
+
+  const langKeys = Object.keys(grouped)
+
+  const recentRecords = sortedRecords.slice(0, recentExpanded ? Math.max(8, 3 + 5 * Math.ceil((sortedRecords.length - 3) / 5)) : 3)
+  const hasMoreRecent = sortedRecords.length > 3
 
   const handleDelete = async (fileId) => {
     try {
@@ -231,6 +282,8 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
     setMenuState(prev => ({ ...prev, open: false }))
   }, [])
 
+  const SIDEBAR_WIDTH = 260
+
   return (
     <>
       <div className="flex h-full">
@@ -238,7 +291,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
           {expanded && (
             <motion.div
               initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 260, opacity: 1 }}
+              animate={{ width: SIDEBAR_WIDTH, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
               className="h-full overflow-hidden flex flex-col bg-stone-50 border-r border-stone-200/80"
@@ -252,12 +305,12 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   onClick={() => setExpanded(false)}
                   className="p-1 rounded-md hover:bg-stone-200/60 text-stone-400 hover:text-stone-600 transition-colors"
                 >
-                  <ChevronLeft className="w-4 h-4" />
+                  <PanelLeftClose className="w-4 h-4" />
                 </button>
               </div>
 
               <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
-                {Object.keys(grouped).length === 0 && (
+                {records.length === 0 && (
                   <div className="px-4 py-12 text-center">
                     <div className="text-2xl mb-2">📚</div>
                     <div className="text-[13px] text-stone-400">
@@ -266,7 +319,45 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   </div>
                 )}
 
-                {Object.entries(grouped).map(([lang, items]) => (
+                {records.length > 0 && (
+                  <div className="mb-2">
+                    <div className="px-4 py-1.5 mt-1">
+                      <span className="text-[11px] font-medium text-stone-400 tracking-wide">
+                        最近
+                      </span>
+                    </div>
+                    <div className="space-y-0.5 px-1">
+                      {recentRecords.map(record => (
+                        <RecentItem
+                          key={record.file_id}
+                          record={record}
+                          onNavigate={onNavigateToRecord}
+                        />
+                      ))}
+                    </div>
+                    {hasMoreRecent && (
+                      <button
+                        onClick={() => setRecentExpanded(prev => !prev)}
+                        className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
+                      >
+                        {recentExpanded ? (
+                          <>
+                            <ChevronUp className="w-3 h-3" />
+                            收起
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3 h-3" />
+                            显示更多
+                          </>
+                        )}
+                      </button>
+                    )}
+                    <div className="mx-4 my-2 border-t border-stone-200/60" />
+                  </div>
+                )}
+
+                {Object.entries(grouped).map(([lang, items], langIdx) => (
                   <div key={lang} className="mb-1">
                     <div className="flex items-center gap-1.5 px-4 py-1.5 mt-1">
                       <span className="text-xs">{LANG_ICONS[lang] || '📝'}</span>
@@ -276,10 +367,14 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                       <span className="text-[10px] text-stone-300">{items.length}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
-                        className={`ml-auto p-0.5 rounded transition-colors ${activeWordListLang === lang ? 'text-amber-500 hover:text-amber-600' : 'text-stone-300 hover:text-amber-500'}`}
+                        className={`ml-auto p-1 rounded-md transition-all ${
+                          activeWordListLang === lang
+                            ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[langIdx % SIDEBAR_COLORS.length] + ' text-white shadow-sm'
+                            : 'text-stone-300 hover:text-amber-500 hover:bg-amber-50'
+                        }`}
                         title="Word list"
                       >
-                        <BookOpen className="w-3.5 h-3.5" />
+                        <Library className="w-3.5 h-3.5" />
                       </button>
                     </div>
 
@@ -314,15 +409,54 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
         </AnimatePresence>
 
         {!expanded && (
-          <motion.button
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            onClick={() => setExpanded(true)}
-            className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-stone-50 hover:bg-stone-100 border border-stone-200/80 border-l-0 text-stone-400 hover:text-stone-600 transition-colors self-start mt-4 rounded-r-lg"
-            title={t.historyTitle || '学习记录'}
+            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-stone-50 border-r border-stone-200/80"
+            style={{ width: 48 }}
           >
-            <ChevronRight className="w-3.5 h-3.5" />
-          </motion.button>
+            <button
+              onClick={() => setExpanded(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
+              title={t.historyTitle || '学习记录'}
+            >
+              <PanelLeftOpen className="w-4.5 h-4.5" />
+            </button>
+
+            <div className="w-6 border-t border-stone-200/60 my-1" />
+
+            {langKeys.map((lang, idx) => (
+              <button
+                key={lang}
+                onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
+                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+                  activeWordListLang === lang
+                    ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-md'
+                    : 'hover:bg-stone-200/70 text-stone-400 hover:text-stone-600'
+                }`}
+                title={`${LANG_LABELS[lang] || lang} - ${t.wordList || '单词总表'}`}
+              >
+                <Library className="w-4 h-4" />
+              </button>
+            ))}
+
+            {records.length > 0 && langKeys.length > 0 && (
+              <div className="w-6 border-t border-stone-200/60 my-1" />
+            )}
+
+            {langKeys.flatMap(lang =>
+              grouped[lang].slice(0, 3).map((record) => (
+                <button
+                  key={record.file_id}
+                  onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang)}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
+                  title={record.title}
+                >
+                  <Pencil className="w-4 h-4" />
+                </button>
+              ))
+            )}
+          </motion.div>
         )}
       </div>
 

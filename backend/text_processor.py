@@ -144,7 +144,11 @@ class TextProcessor:
         pass
 
     def extract_words(self, text: str, language: str) -> List[str]:
-        return []
+        import re
+        if language in ('ja', 'zh', 'ko'):
+            return list(text)
+        words = re.findall(r"\b\w+(?:[-']\w+)*\b", text)
+        return [w for w in words if w.strip()]
 
     def extract_words_from_sentences(self, sentences: List[str], language: str) -> List[str]:
         """从句子列表中提取单词并全局去重"""
@@ -253,9 +257,8 @@ class TextProcessor:
         # 返回出现次数最多的音标，如果次数相同则返回第一个
         return sorted_phonetics[0][0]
 
-    async def process_translation(self, text: str, source_lang: str, target_lang: str, nvidia_api):
-        # 使用新的合并方法处理文本和词典
-        result = await nvidia_api.process_text_with_dictionary(text, source_lang, target_lang)
+    async def process_translation(self, text: str, source_lang: str, target_lang: str, nvidia_api, context_sentences: dict = None):
+        result = await nvidia_api.process_text_with_dictionary(text, source_lang, target_lang, context_sentences)
         
         # 简单处理，保留LLM生成的自然结果
         if isinstance(result, dict):
@@ -363,19 +366,31 @@ class TextProcessor:
         all_candidates = list(range(word_count))
         random.shuffle(all_candidates)
         
+        if translation_tokens:
+            token_list = translation_tokens
+        else:
+            token_list = self.tokenize_sentence(sentence)
+        
         mask_groups = []
         remaining = list(all_candidates)
         
         while remaining and len(mask_groups) < 3:
             group = []
             used = set()
+            used_words_in_group = set()
             for idx in remaining:
                 if len(group) >= num_masks:
                     break
                 too_close = any(abs(idx - e) <= 2 for e in used)
-                if not too_close:
-                    group.append(idx)
-                    used.add(idx)
+                if too_close:
+                    continue
+                word_at_idx = token_list[idx].lower().strip('.,;:!?，。；：！？、') if idx < len(token_list) else ''
+                if word_at_idx in used_words_in_group:
+                    continue
+                group.append(idx)
+                used.add(idx)
+                if word_at_idx:
+                    used_words_in_group.add(word_at_idx)
             if group:
                 mask_groups.append(sorted(group))
             remaining = [r for r in remaining if r not in used]
@@ -430,19 +445,24 @@ class TextProcessor:
         else:
             current_sentence_words_lower = {w.lower() for w in self.tokenize_sentence(sentence)}
         
-        exclude_lower = set(answer_lower) | current_sentence_words_lower
+        exclude_lower = set(answer_lower)
         
         max_distractors = 2
         
         if all_sentences:
+            all_distractor_candidates = []
+            all_distractor_set = set()
             for sent_data in all_sentences:
                 if "sentence" in sent_data and sent_data["sentence"] != sentence:
                     if "translation_result" in sent_data and "translation" in sent_data["translation_result"]:
                         for token in sent_data["translation_result"]["translation"]:
                             if isinstance(token, dict) and "text" in token:
                                 token_text = token["text"]
-                                if token_text.lower() not in exclude_lower and token_text not in distractors and len(distractors) < max_distractors:
-                                    distractors.append(token_text)
+                                if token_text.lower() not in exclude_lower and token_text.lower() not in all_distractor_set:
+                                    all_distractor_candidates.append(token_text)
+                                    all_distractor_set.add(token_text.lower())
+            random.shuffle(all_distractor_candidates)
+            distractors = all_distractor_candidates[:max_distractors]
         
         if len(distractors) < max_distractors:
             vocab_words = [v["word"] for v in vocab]

@@ -78,7 +78,7 @@ class Storage:
             import shutil
             shutil.rmtree(cache_dir)
     
-    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str, rpm: int = 20):
+    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str, rpm: int = 60):
         file_dir = self.get_file_dir(file_id)
         settings_path = file_dir / "language_settings.json"
         with open(settings_path, 'w', encoding='utf-8') as f:
@@ -95,12 +95,12 @@ class Storage:
             with open(settings_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 if "rpm" not in data:
-                    data["rpm"] = 20
+                    data["rpm"] = 60
                 return data
         return {
             "source_lang": "en",
             "target_lang": "zh",
-            "rpm": 20
+            "rpm": 60
         }
     
     def save_learning_progress(self, file_id: str, current_index: int):
@@ -344,10 +344,7 @@ class Storage:
             with open(stars_path, 'r', encoding='utf-8') as f:
                 existing = json.load(f)
         for key, count in stars_data.items():
-            if key in existing:
-                existing[key] = max(existing[key], count)
-            else:
-                existing[key] = count
+            existing[key] = count
         with open(stars_path, 'w', encoding='utf-8') as f:
             json.dump(existing, f, ensure_ascii=False, indent=2)
 
@@ -368,6 +365,16 @@ class Storage:
                 return True
         return False
 
+    def touch_history_record(self, file_id: str):
+        import datetime
+        records = self.load_history()
+        for r in records:
+            if r.get("file_id") == file_id:
+                r["updated_at"] = datetime.datetime.now().isoformat()
+                self.save_history(records)
+                return True
+        return False
+
     def save_app_settings(self, settings: Dict):
         settings_path = self.base_dir / "app_settings.json"
         with open(settings_path, 'w', encoding='utf-8') as f:
@@ -378,4 +385,4 @@ class Storage:
         if settings_path.exists():
             with open(settings_path, 'r', encoding='utf-8') as f:
                 return json.load(f)
-        return {"rpm": 20, "target_lang": "zh"}
+        return {"rpm": 60, "target_lang": "zh"}

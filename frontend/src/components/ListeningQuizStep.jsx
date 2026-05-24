@@ -41,6 +41,8 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const correctWords = quizData.correct_words || []
   const options = quizData.options || []
 
+  const stripPunct = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
+
   const handleWordSelect = (word, index) => {
     if (isChecked) return
     setSelectedWords([...selectedWords, { word, index }])
@@ -54,9 +56,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   }
 
   const checkAnswer = () => {
-    const userWords = selectedWords.map(w => w.word.toLowerCase())
+    const stripForCompare = (s) => typeof s === 'string' ? s.replace(/[，。、；：！？,.:;!?]/g, '').toLowerCase().trim() : ''
+    const userWords = selectedWords.map(w => stripForCompare(w.word))
     const correct = userWords.length === correctWords.length &&
-      userWords.every((w, i) => w === correctWords[i].toLowerCase())
+      userWords.every((w, i) => w === stripForCompare(correctWords[i]))
     setIsCorrect(correct)
     setIsChecked(true)
     if (onAnswer) onAnswer(correct)
@@ -113,7 +116,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full text-sm font-medium mb-4"
           >
             <Headphones className="w-4 h-4" />
-            听力题
+            {t.listeningQuizTitle || '听力题'}
           </motion.div>
           <div className="flex items-center justify-center gap-2">
             <motion.button
@@ -149,7 +152,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                   }`}
                   onClick={() => handleRemoveWord(pos)}
                 >
-                  {item.word}
+                  {stripPunct(item.word)}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -176,7 +179,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                       : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
                   }`}
                 >
-                  {word}
+                  {stripPunct(word)}
                 </motion.button>
               )
             })}
@@ -197,7 +200,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             </div>
             {!isCorrect && (
               <p className="text-stone-700 font-medium">
-                正确答案：{correctWords.join(' ')}
+                正确答案：{correctWords.map(w => stripPunct(w)).join(' ')}
               </p>
             )}
           </motion.div>

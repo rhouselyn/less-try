@@ -186,9 +186,9 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
     }
 
     return (
-      <div className="flex">
+      <div className="flex h-full">
         {letterIndex.length > 1 && !searchQuery && (
-          <div className="sticky top-0 flex flex-col items-center py-2 px-1 border-r border-stone-100 bg-stone-50/50 shrink-0">
+          <div className="flex flex-col items-center py-2 px-1 border-r border-stone-100 bg-stone-50/50 shrink-0">
             {letterIndex.map(letter => (
               <button
                 key={letter}
@@ -200,7 +200,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
             ))}
           </div>
         )}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 overflow-y-auto">
           {groupedWords.map(([letter, groupWords]) => (
             <div key={letter} id={`letter-${letter}`}>
               <div className="sticky top-0 z-10 px-5 py-1.5 bg-stone-50/90 backdrop-blur-sm border-b border-stone-100">
@@ -270,7 +270,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
 
   if (onBack) {
     return (
-      <div className="h-full flex flex-col bg-white rounded-xl border border-stone-200/60 shadow-sm overflow-hidden">
+      <div className="h-full flex flex-col bg-white rounded-xl border border-stone-200/60 shadow-sm overflow-hidden min-h-0">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-amber-50/50 to-white">
           <div className="flex items-center gap-2.5">
             <BookOpen className="w-5 h-5 text-amber-500" />
@@ -309,7 +309,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 min-h-0">
           {renderWordList()}
         </div>
       </div>

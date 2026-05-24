@@ -98,21 +98,32 @@ class NvidiaAPI:
     def reload(self):
         self._reload()
 
-    def _sync_post(self, url, headers, payload, timeout):
-        response = requests.post(url, headers=headers, json=payload, timeout=timeout)
-        response.raise_for_status()
-        result = response.json()
-        if "choices" in result and len(result["choices"]) > 0:
-            choice = result["choices"][0]
-            message = choice.get("message", {})
-            content = message.get("content", "")
-            reasoning_content = message.get("reasoning_content", "")
-            if not content and reasoning_content:
-                message["content"] = reasoning_content
-                result["choices"][0]["message"] = message
-        return result
+    def _sync_post(self, url, headers, payload, timeout, max_retries=3):
+        import time as _time
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+                response.raise_for_status()
+                result = response.json()
+                if "choices" in result and len(result["choices"]) > 0:
+                    choice = result["choices"][0]
+                    message = choice.get("message", {})
+                    content = message.get("content", "")
+                    reasoning_content = message.get("reasoning_content", "")
+                    if not content and reasoning_content:
+                        message["content"] = reasoning_content
+                        result["choices"][0]["message"] = message
+                return result
+            except requests.exceptions.HTTPError as e:
+                if e.response is not None and e.response.status_code in (503, 429, 502) and attempt < max_retries - 1:
+                    wait = 2 ** attempt * 2
+                    print(f"[RETRY] API returned {e.response.status_code}, retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
+                    _time.sleep(wait)
+                    continue
+                raise
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+        import time as _time
         self.reload()
         payload = {
             "model": self.model,
@@ -127,6 +138,7 @@ class NvidiaAPI:
             payload["tool_choice"] = "auto"
 
         try:
+            t0 = _time.time()
             result = await asyncio.to_thread(
                 self._sync_post,
                 f"{self.base_url}/chat/completions",
@@ -134,9 +146,13 @@ class NvidiaAPI:
                 payload,
                 600
             )
+            t1 = _time.time()
+            has_tools = "yes" if tools else "no"
+            print(f"[TIMING] call_minimax (tools={has_tools}): {t1 - t0:.3f}s")
             return result
         except requests.exceptions.Timeout:
             print("API request timed out. Retrying...")
+            t0 = _time.time()
             result = await asyncio.to_thread(
                 self._sync_post,
                 f"{self.base_url}/chat/completions",
@@ -144,6 +160,9 @@ class NvidiaAPI:
                 payload,
                 600
             )
+            t1 = _time.time()
+            has_tools = "yes" if tools else "no"
+            print(f"[TIMING] call_minimax retry (tools={has_tools}): {t1 - t0:.3f}s")
             return result
 
 
@@ -162,11 +181,6 @@ class NvidiaAPI:
                             "type": "string",
                             "description": "单词的完整释义，包含多个母语单词的常见含义"
                         },
-                        "context_meaning": {
-                            "type": "string",
-                            "description": "结合上下文的特定释义"
-                        },
-                        "ipa": {"type": "string"},
                         "variants_detail": {
                             "type": "array",
                             "description": "词形变化 + 类型说明，只包含确实存在的词形变化",
@@ -221,7 +235,7 @@ class NvidiaAPI:
                             }
                         }
                     },
-                    "required": ["word", "enriched_meaning", "context_meaning", "ipa", "examples", "multiple_choice"]
+                    "required": ["word", "enriched_meaning", "examples", "multiple_choice"]
                 }
             }
         }
@@ -235,13 +249,11 @@ class NvidiaAPI:
 
 请生成以下信息：
 
-1. enriched_meaning: 单词的完整释义，包含多个母语单词的常见含义，用分号分隔
-2. context_meaning: 结合上下文的特定释义
-3. ipa: 国际音标发音（如果是中文等没有音标的语言，可为空）
-4. variants_detail: 词形变化列表，带类型说明（如过去式、复数等），只包含确实存在的词形变化，如果没有则返回空数组
-5. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
-6. memory_hint: 记忆辅助（与用户母语的联想或对比）
-7. multiple_choice: 选择题，包含：
+1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
+2. variants_detail: 词形变化列表，带类型说明。【极其重要】对于派生词（如 previously, prestigious, studying, published），必须列出其词根/原形作为词形变化（如 previously -> {{"form": "previous", "type": "形容词原形"}}, prestigious -> {{"form": "prestige", "type": "名词原形"}}, studying -> {{"form": "study", "type": "动词原形"}}, published -> {{"form": "publish", "type": "动词原形"}}）。对于基础词，列出其常见的屈折变化（如名词的复数、动词的过去式/过去分词/现在分词、形容词的比较级/最高级等）。只包含确实存在的词形变化，如果没有则返回空数组
+3. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
+4. memory_hint: 记忆辅助（与用户母语的联想或对比）
+5. multiple_choice: 选择题，包含：
    - question: 可为空（默认为单词本身）
    - correct_answer: 单词的常见、正常释义，不是上下文特定释义
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
@@ -256,6 +268,8 @@ class NvidiaAPI:
 - 【重要】选项必须是纯单词或短语，不能是完整句子
 - 【重要】选项必须与单词本身的意思无关，不能包含单词的任何含义
 - 【重要】词形变化必须是确实存在的，不要硬加不存在的词形
+- 【重要】四个选项的格式和词性必须保持一致：如果正确答案包含两个释义，错误选项也必须各包含两个释义；如果正确答案只有一个释义，错误选项也各只有一个释义。所有选项的词性范围应尽量一致
+- 【极其重要】enriched_meaning 中不能包含占位符文本（如"释义1"、"含义1"、"meaning 1"等），必须全部是具体的、有意义的翻译内容
 - 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 """
 
@@ -272,7 +286,6 @@ class NvidiaAPI:
             default_response = {
                 "word": word,
                 "enriched_meaning": correct_meaning,
-                "ipa": "",
                 "variants_detail": [],
                 "examples": [
                     {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
@@ -297,7 +310,6 @@ class NvidiaAPI:
             error_response = {
                 "word": word,
                 "enriched_meaning": correct_meaning,
-                "ipa": "",
                 "variants_detail": [],
                 "examples": [
                     {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
@@ -317,7 +329,7 @@ class NvidiaAPI:
             }
             return error_response
 
-    async def process_text_with_dictionary(self, text: str, source_lang: str, target_lang: str):
+    async def process_text_with_dictionary(self, text: str, source_lang: str, target_lang: str, context_sentences: dict = None):
         tool_def = {
             "type": "function",
             "function": {
@@ -369,35 +381,11 @@ class NvidiaAPI:
                                     "word": {"type": "string", "description": "The word or phrase. Fixed collocations must be kept as one entry (e.g. 'what's up', 'run out of')"},
                                     "ipa": {"type": "string"},
                                     "context_meaning": {"type": "string"},
-                                    "variants": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "type": {"type": "string"},
-                                                "form": {"type": "string"}
-                                            },
-                                            "required": ["type", "form"]
-                                        }
-                                    },
-                                    "examples": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 2,
-                                        "maxItems": 2
-                                    },
-                                    "options": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 4,
-                                        "maxItems": 4
-                                    },
-                                    "grammar": {"type": "string"},
                                     "translation": {"type": "string"},
                                     "tokens": {
                                         "type": "array",
                                         "items": {"type": "string"},
-                                        "description": "Component words of this entry. For fixed collocations, list each component (e.g. 'what's up' -> ['what's', 'up'])"
+                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list should contain only the word itself (e.g. 'brightly' -> ['brightly'], 'studying' -> ['studying'], 'mountains' -> ['mountains']). Do NOT split single words into morphemes."
                                     },
                                     "morphology": {
                                         "type": "string",
@@ -405,8 +393,8 @@ class NvidiaAPI:
                                     }
                                 },
                                 "required": [
-                                    "word", "ipa", "context_meaning", "variants", 
-                                    "examples", "options", "grammar", "translation", "tokens", "morphology"
+                                    "word", "ipa", "context_meaning",
+                                    "translation", "tokens", "morphology"
                                 ]
                             }
                         }
@@ -444,7 +432,7 @@ class NvidiaAPI:
 按照以下结构处理文本：
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
-  - text: 原词/标记（不带标点）
+  - text: 原词/标记（不带标点）。【极其重要】对于没有空格分隔的语言（如日语、中文、韩语等），必须将每个独立的词/助词/语素作为单独的条目，不要将多个词合并为一个text！例如"すみません、メニューをください"必须拆为"すみません""メニュー""を""ください"四个条目，不能合并为"すみません"和"メニューをください"两个条目。助词（は、が、を、に、で等）必须作为独立条目。
   - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
@@ -472,13 +460,9 @@ class NvidiaAPI:
 1. word: The word or phrase itself (固定搭配用完整短语，如 "what's up")
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
-4. variants: Other forms of the word (e.g., past tense, plural) if applicable, each with "type" (e.g., verb, noun) and "form" (the variant form)
-5. examples: 2 example sentences in SOURCE_LANG that match the context meaning
-6. options: 4 options for the meaning (1 correct, 3 incorrect) - 错误答案必须是该单词所没有的意思，而不是非句子中的意思
-7. grammar: Grammar explanation for the word
-8. translation: Translation of the word to TARGET_LANG
-9. tokens: Split the word into tokens if applicable (固定搭配列出组成单词，如 "what's up" -> ["what's", "up"])
-10. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
+4. translation: Translation of the word to TARGET_LANG
+5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。单个词的 tokens 只包含自身（如 "brightly" -> ["brightly"], "studying" -> ["studying"], "mountains" -> ["mountains"]）。不要将单个词拆分为词根+词缀。
+6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
@@ -490,7 +474,12 @@ class NvidiaAPI:
   5. 冗余词应该是容易混淆但明显不同的概念
   6. 【极其重要】冗余词替换正确答案中的对应词后，组成的句子意思不能与原句意思相同或近似。例如正确答案是"读书"，冗余词不能是"看"（因为"看书"≈"读书"），而应该是"写"、"买"等意思明显不同的词
 
+翻译时请参考上下文，使用符合TARGET_LANG母语者日常表达的翻译，不要机械直译，要自然流畅但不需要文学化。
+
 要处理的文本：
+CONTEXT_SENTENCES
+
+【待处理文本】
 TEXT_CONTENT
 
 请严格按照 tool 定义的 JSON 结构返回所有字段，不要遗漏任何 required 字段。
@@ -499,6 +488,21 @@ TEXT_CONTENT
         prompt = prompt.replace("TEXT_LANG", source_lang)
         prompt = prompt.replace("TARGET_LANG", target_lang)
         prompt = prompt.replace("TEXT_CONTENT", text)
+
+        if context_sentences:
+            before = context_sentences.get("before", [])
+            after = context_sentences.get("after", [])
+            if before or after:
+                context_section = "【上下文】\n"
+                if before:
+                    context_section += "前文：\n" + "\n".join(before) + "\n"
+                if after:
+                    context_section += "后文：\n" + "\n".join(after) + "\n"
+                prompt = prompt.replace("CONTEXT_SENTENCES", context_section)
+            else:
+                prompt = prompt.replace("CONTEXT_SENTENCES", "")
+        else:
+            prompt = prompt.replace("CONTEXT_SENTENCES", "")
 
         messages = [{"role": "user", "content": prompt}]
         
@@ -546,30 +550,6 @@ TEXT_CONTENT
                                     "word": {"type": "string"},
                                     "ipa": {"type": "string"},
                                     "context_meaning": {"type": "string"},
-                                    "variants": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "type": {"type": "string"},
-                                                "form": {"type": "string"}
-                                            },
-                                            "required": ["type", "form"]
-                                        }
-                                    },
-                                    "examples": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 2,
-                                        "maxItems": 2
-                                    },
-                                    "options": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "minItems": 4,
-                                        "maxItems": 4
-                                    },
-                                    "grammar": {"type": "string"},
                                     "translation": {"type": "string"},
                                     "tokens": {
                                         "type": "array",
@@ -581,8 +561,8 @@ TEXT_CONTENT
                                     }
                                 },
                                 "required": [
-                                    "word", "ipa", "context_meaning", "variants",
-                                    "examples", "options", "grammar", "translation", "tokens", "morphology"
+                                    "word", "ipa", "context_meaning",
+                                    "translation", "tokens", "morphology"
                                 ]
                             }
                         }
@@ -603,13 +583,9 @@ TEXT_CONTENT
 1. word: 单词本身
 2. ipa: 国际音标
 3. context_meaning: 基于上下文的 {target_lang} 释义
-4. variants: 词形变化列表
-5. examples: 2个例句
-6. options: 4个选项（1个正确，3个错误）
-7. grammar: 语法解释
-8. translation: {target_lang} 翻译
-9. tokens: 分词结果
-10. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
+4. translation: {target_lang} 翻译
+5. tokens: 分词结果
+6. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
 
 【重要】必须为每一个遗漏的单词都生成条目，不要遗漏任何一个！
 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。"""

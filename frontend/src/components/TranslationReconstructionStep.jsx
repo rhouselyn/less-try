@@ -89,7 +89,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full text-sm font-medium mb-4"
           >
             <Languages className="w-4 h-4" />
-            翻译还原
+            {t.translationReconstructionTitle || '翻译还原'}
           </motion.div>
           <div className="flex items-center justify-center gap-2">
             <motion.p

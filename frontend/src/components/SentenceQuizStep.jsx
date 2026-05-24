@@ -55,6 +55,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
 
   const stripPunctuation = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
 
+  const displayToken = (token) => typeof token === 'string' ? token.replace(/[，。、；：！？,.:;!?]/g, '') : token
+
   const handleCheckAnswer = () => {
     const userTokens = selectedIndices.map(i => stripPunctuation(quizData.tokens[i]))
     const correctTokens = quizData.correct_tokens.map(t => stripPunctuation(t))
@@ -163,7 +165,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                         : 'bg-stone-800 text-white cursor-pointer'
                     }`}
                   >
-                    <span>{token}</span>
+                    <span>{displayToken(token)}</span>
                   </motion.div>
                 )
               })}
@@ -195,7 +197,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                     : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
                 }`}
               >
-                {token}
+                {displayToken(token)}
               </motion.button>
             ))}
           </div>

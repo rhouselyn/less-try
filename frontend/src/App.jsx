@@ -77,6 +77,8 @@ function App() {
   const [skipListening, setSkipListening] = useState(false)
   const [wordListLang, setWordListLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
+  const [inputMode, setInputMode] = useState('direct')
+  const [preprocessStatus, setPreprocessStatus] = useState(null)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -91,7 +93,7 @@ function App() {
   
   const updateUnitStars = (key, starCount) => {
     setUnitStarCounts(prev => {
-      const updated = { ...prev, [key]: Math.max(prev[key] || 0, starCount) }
+      const updated = { ...prev, [key]: starCount }
       if (currentFileId) {
         api.saveUnitStars(currentFileId, { [key]: updated[key] }).catch(err => {
           console.error('Failed to save stars:', err)
@@ -257,32 +259,46 @@ function App() {
     setSelectedOption(null)
     setIsCorrect(null)
     
-    // 立即跳转到单词表页面，即使还没有收到响应
+    if (inputMode === 'translate') {
+      setPreprocessStatus('translating')
+    } else if (inputMode === 'generate') {
+      setPreprocessStatus('generating')
+    } else {
+      setPreprocessStatus(null)
+    }
+    
     setStep('dictionary')
     
     try {
-      console.log('开始处理文本，长度:', text.length)
-      const response = await api.processText(text, sourceLang, targetLang)
+      let finalText = text.trim()
       
-      console.log('API响应:', response)
+      if (inputMode === 'translate') {
+        const translateResponse = await api.translateText(text.trim(), targetLang, sourceLang)
+        finalText = translateResponse.translated_text
+      } else if (inputMode === 'generate') {
+        const generateResponse = await api.generateText(text.trim(), sourceLang, targetLang)
+        finalText = generateResponse.generated_text
+      }
+      
+      setPreprocessStatus(null)
+      
+      const response = await api.processText(finalText, sourceLang, targetLang)
+      
       if (response && response.file_id) {
         const fileId = response.file_id
         setFileId(fileId)
         setCurrentFileId(fileId)
-        console.log('获取到文件ID:', fileId)
       } else {
         throw new Error('无效的API响应')
       }
     } catch (error) {
       console.error('处理文本错误:', error)
+      setPreprocessStatus(null)
       if (error.response && error.response.status === 504) {
-        // 504错误表示网关超时，可能是网络延迟或后端处理时间过长
         alert('网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
-        // 处理超时错误
         alert('处理超时，请稍后重试')
       } else {
-        // 其他错误
         alert('处理失败，请重试')
       }
       setLoading(false)
@@ -974,9 +990,9 @@ function App() {
 
       <main>
         {step === 'input' ? (
-          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ minHeight: 'calc(100vh - 80px)' }}>
+          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ height: 'calc(100vh - 80px)' }}>
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
-            <div className="flex-1 min-w-0 relative">
+            <div className="flex-1 min-w-0 relative h-full">
               {wordListLang ? (
                 <WordListPanel
                   sourceLang={wordListLang}
@@ -1006,6 +1022,8 @@ function App() {
                       loading={loading}
                       onProcess={handleProcess}
                       t={t}
+                      inputMode={inputMode}
+                      setInputMode={setInputMode}
                     />
                   </AnimatePresence>
                 </>
@@ -1013,7 +1031,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
             <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
@@ -1034,6 +1052,7 @@ function App() {
               t={t}
               currentFileId={currentFileId}
               sourceLang={sourceLang}
+              preprocessStatus={preprocessStatus}
             />
           )}
           
