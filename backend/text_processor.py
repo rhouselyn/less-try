@@ -145,7 +145,10 @@ class TextProcessor:
 
     def extract_words(self, text: str, language: str) -> List[str]:
         import re
-        if language in ('ja', 'zh', 'ko'):
+        if language == 'ko':
+            words = text.split()
+            return [w for w in words if w.strip()]
+        if language in ('ja', 'zh'):
             return list(text)
         words = re.findall(r"\b\w+(?:[-']\w+)*\b", text)
         return [w for w in words if w.strip()]
@@ -282,7 +285,7 @@ class TextProcessor:
         if not isinstance(translation_result, dict) or 'translation' not in translation_result:
             return translation_result
         
-        original_words = self.tokenize_sentence(sentence)
+        original_words = self.tokenize_sentence(sentence, language=source_lang)
         
         existing_tokens = []
         if 'translation' in translation_result:
@@ -340,15 +343,19 @@ class TextProcessor:
         translation_result['translation'] = completed_translation
         return translation_result
 
-    def tokenize_sentence(self, sentence: str) -> List[str]:
+    def tokenize_sentence(self, sentence: str, language: str = "en") -> List[str]:
         import re
+        if language == 'ko':
+            return [w for w in sentence.split() if w.strip()]
+        if language in ('ja', 'zh'):
+            return [c for c in sentence if c.strip()]
         return re.findall(r"\b\w+(?:[-']\w+)*\b", sentence)
     
     def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0) -> Dict[str, Any]:
         if translation_tokens:
             words = translation_tokens
         else:
-            words = self.tokenize_sentence(sentence)
+            words = self.tokenize_sentence(sentence, language=source_lang)
         
         word_count = len(words)
         
@@ -369,7 +376,7 @@ class TextProcessor:
         if translation_tokens:
             token_list = translation_tokens
         else:
-            token_list = self.tokenize_sentence(sentence)
+            token_list = self.tokenize_sentence(sentence, language=source_lang)
         
         mask_groups = []
         remaining = list(all_candidates)
@@ -443,7 +450,7 @@ class TextProcessor:
         if translation_tokens:
             current_sentence_words_lower = {w.lower() for w in translation_tokens}
         else:
-            current_sentence_words_lower = {w.lower() for w in self.tokenize_sentence(sentence)}
+            current_sentence_words_lower = {w.lower() for w in self.tokenize_sentence(sentence, language=source_lang)}
         
         exclude_lower = set(answer_lower)
         

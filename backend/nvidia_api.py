@@ -366,7 +366,7 @@ class NvidiaAPI:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "text": {"type": "string"},
+                                    "text": {"type": "string", "description": "A single word-level token from the source text (no punctuation). For space-separated languages (English, Korean, etc.), each space-separated word is one entry. For non-space languages (Japanese, Chinese), each meaningful word is one entry. NEVER split a word into characters or syllables. Korean example: 안녕하세요 is ONE entry, NOT 안+녕+하+세+요."},
                                     "translation": {"type": "string"},
                                     "phonetic": {"type": "string"},
                                     "morphology": {"type": "string"}
@@ -381,7 +381,7 @@ class NvidiaAPI:
                         "translation_phrases": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "将 tokenized_translation 拆分为独立片段，用于翻译排序练习。【拆分原则】1.优先拆成单个词；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容"
+                            "description": "将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先拆成单个词或短词组；2.对于中文等无空格语言，按词边界拆分（如'很高兴见到你'→['很','高兴','见到','你']或['很高兴','见到','你']）；3.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；4.虚词（的、了、地等）可以与相邻词合并；5.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容"
                         },
                         "grammar_explanation": {
                             "type": "string",
@@ -404,7 +404,7 @@ class NvidiaAPI:
                                     "tokens": {
                                         "type": "array",
                                         "items": {"type": "string"},
-                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list should contain only the word itself (e.g. 'brightly' -> ['brightly'], 'studying' -> ['studying'], 'mountains' -> ['mountains']). Do NOT split single words into morphemes."
+                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list should contain only the word itself (e.g. 'brightly' -> ['brightly'], 'studying' -> ['studying'], 'mountains' -> ['mountains'], '안녕하세요' -> ['안녕하세요']). Do NOT split single words into morphemes, characters, or syllables."
                                     },
                                     "morphology": {
                                         "type": "string",
@@ -451,12 +451,16 @@ class NvidiaAPI:
 按照以下结构处理文本：
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
-  - text: 原词/标记（不带标点）。【极其重要】对于没有空格分隔的语言（如日语、中文、韩语等），必须将每个独立的词/助词/语素作为单独的条目，不要将多个词合并为一个text！例如"すみません、メニューをください"必须拆为"すみません""メニュー""を""ください"四个条目，不能合并为"すみません"和"メニューをください"两个条目。助词（は、が、を、に、で等）必须作为独立条目。
+  - text: 原词/标记（不带标点）。【极其重要·分词粒度规则】：
+    * 对于有空格分隔的语言（英语、韩语等）：按空格分词，每个空格分隔的词作为一个条目。不要将一个词拆成更小的单位！
+    * 韩语特别说明：韩语使用空格（띄어쓰기）分隔词语，必须按空格分词！例如"안녕하세요 만나서 반갑습니다"必须拆为"안녕하세요""만나서""반갑습니다"三个条目。绝不能将一个韩语词拆成音节！例如안녕하세요是一个完整的词，绝不能拆为안+녕+하+세+요！
+    * 对于没有空格分隔的语言（日语、中文等）：将每个独立的词/助词作为单独的条目。例如"すみません、メニューをください"必须拆为"すみません""メニュー""を""ください"四个条目。助词（は、が、を、に、で等）必须作为独立条目。
+    * 【绝对禁止】将一个完整的词拆分成字符或音节！
   - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
   - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
-- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。【拆分原则】1.优先拆成单个词；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
+- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先拆成单个词或短词组；2.对于中文等无空格语言，按词边界拆分（如'很高兴见到你'→['很','高兴','见到','你']或['很高兴','见到','你']）；3.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；4.虚词（的、了、地等）可以与相邻词合并；5.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组。【关键规则】生成的冗余词与正确答案中的词组合后，不能形成与正确答案相同或近似的意思。例如：如果正确答案是"她读书"，冗余词"看"是不合适的，因为"她看书"和"她读书"意思几乎一样；应该选择如"写"、"买"、"卖"等组合后意思明显不同的词
 
@@ -469,18 +473,20 @@ class NvidiaAPI:
 
 【极其重要！！！dictionary_entries的分组规则！！！】
 - 【优先拆分原则】当一个词组可以被拆分为多个独立单词时，必须拆分为独立条目，不要作为整体！例如 "頑張ってください" 必须拆成 "頑張って" 和 "ください" 两个条目，不能作为一个整体条目
+- 【韩语特别规则】韩语使用空格（띄어쓰기）分隔词语，每个空格分隔的单位（어절）通常作为一个独立条目。例如 "안녕하세요 만나서 반갑습니다" 必须拆成 "안녕하세요" 和 "만나서" 和 "반갑습니다" 三个条目。绝不能将一个韩语词拆成音节作为单独条目！例如 안녕하세요 是一个词，不能拆为 안、녕、하、세、요 五个条目！
 - 只有真正的不可拆分的固定搭配（如英语 "what's up"、法语 "au revoir"）才作为单个条目
 - 判断标准：如果拆分后每个部分都有独立的含义和用法，就必须拆分；只有当整体的意思完全不等于各部分之和时才保持整体
 - 缩写形式（如 what's, don't, he's）必须作为单个条目，不要拆分
 - 每个条目的 tokens 字段列出该条目包含的原文单词（如 word="what's up" 则 tokens=["what's", "up"]）
 - 【极其重要】文本中的每一个单词都必须被某个条目的 tokens 覆盖，一个都不能遗漏！
+- 【绝对禁止】将一个完整的词拆分成字符或音节作为单独的条目！
 
 为每个条目提供：
 1. word: The word or phrase itself (固定搭配用完整短语，如 "what's up")
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. translation: Translation of the word to TARGET_LANG
-5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。单个词的 tokens 只包含自身（如 "brightly" -> ["brightly"], "studying" -> ["studying"], "mountains" -> ["mountains"]）。不要将单个词拆分为词根+词缀。
+5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。单个词的 tokens 只包含自身（如 "brightly" -> ["brightly"], "studying" -> ["studying"], "mountains" -> ["mountains"], "안녕하세요" -> ["안녕하세요"]）。不要将单个词拆分为词根+词缀，也不要拆分为字符或音节！
 6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】

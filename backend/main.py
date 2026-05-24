@@ -2734,27 +2734,35 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 tokenized_translation = translation_result.get("tokenized_translation", "")
                 
                 original_tokens = []
-                if "translation" in translation_result:
+                dict_entries = translation_result.get("dictionary_entries", [])
+                if dict_entries and isinstance(dict_entries, list):
+                    all_dict_tokens = []
+                    for entry in dict_entries:
+                        if isinstance(entry, dict):
+                            for t in entry.get("tokens", []):
+                                if isinstance(t, str) and t.strip():
+                                    all_dict_tokens.append(t.strip())
+                    
+                    if all_dict_tokens:
+                        seen = set()
+                        unique_tokens = []
+                        for t in all_dict_tokens:
+                            if t.lower() not in seen:
+                                seen.add(t.lower())
+                                unique_tokens.append(t)
+                        
+                        sentence_lower = current_sentence.lower()
+                        unique_tokens.sort(key=lambda tok: sentence_lower.find(tok.lower()) if sentence_lower.find(tok.lower()) >= 0 else len(sentence_lower))
+                        original_tokens = unique_tokens
+                
+                if not original_tokens and "translation" in translation_result:
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
-                            original_tokens.append(token["text"])
+                            if token["text"].strip():
+                                original_tokens.append(token["text"])
                 
                 if not original_tokens:
-                    dict_entries = translation_result.get("dictionary_entries", [])
-                    if dict_entries and isinstance(dict_entries, list):
-                        seen = set()
-                        for entry in dict_entries:
-                            if isinstance(entry, dict) and "tokens" in entry:
-                                for t in entry.get("tokens", []):
-                                    if isinstance(t, str) and t.strip() and t.lower() not in seen:
-                                        original_tokens.append(t.strip())
-                                        seen.add(t.lower())
-                    
-                    if not original_tokens:
-                        original_tokens = text_processor.tokenize_sentence(current_sentence)
-                    
-                    if not original_tokens:
-                        original_tokens = text_processor.tokenize_sentence(current_sentence)
+                    original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)
                 
                 import random
                 distractors = []
