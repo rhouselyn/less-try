@@ -117,16 +117,16 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
 }
 
 function ProgressBadge({ progress }) {
-  if (!progress) return null
+  if (!progress) return <span className="w-[32px] flex-shrink-0" />
   const p1 = progress.phase1
   const p2 = progress.phase2
   const totalCompleted = (p1?.completed || 0) + (p2?.completed || 0)
   const totalUnits = (p1?.total || 0) + (p2?.total || 0)
-  if (totalUnits === 0) return null
+  if (totalUnits === 0) return <span className="w-[32px] flex-shrink-0" />
 
   const done = totalCompleted >= totalUnits
   return (
-    <span className={`text-[10px] font-semibold tabular-nums ${done ? 'text-emerald-500' : 'text-red-400'}`}>
+    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-emerald-500' : 'text-red-400'}`}>
       {totalCompleted}/{totalUnits}
     </span>
   )
@@ -168,7 +168,6 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
     >
       <ProgressBadge progress={record.progress} />
-      <Pencil className="w-3.5 h-3.5 text-stone-300 flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0">
         <div className="text-[13px] text-stone-700 truncate leading-snug">
           {record.title}
@@ -194,9 +193,9 @@ function RecentItem({ record, onNavigate }) {
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100/70 transition-colors text-left"
     >
-      <span className="text-xs flex-shrink-0">{LANG_ICONS[record.source_lang] || '📝'}</span>
-      <span className="text-[13px] text-stone-700 truncate flex-1">{record.title}</span>
       <ProgressBadge progress={record.progress} />
+      <span className="text-[13px] text-stone-700 truncate flex-1">{record.title}</span>
+      <span className="text-xs flex-shrink-0">{LANG_ICONS[record.source_lang] || '📝'}</span>
     </button>
   )
 }
@@ -283,7 +282,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
     setMenuState(prev => ({ ...prev, open: false }))
   }, [])
 
-  const SIDEBAR_WIDTH = 300
+  const SIDEBAR_WIDTH = 260
 
   return (
     <>
