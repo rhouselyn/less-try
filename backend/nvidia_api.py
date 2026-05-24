@@ -3,6 +3,7 @@ import json
 import requests
 import asyncio
 from typing import List, Dict, Any
+from dotenv import load_dotenv
 
 
 def _repair_truncated_json(json_str):
@@ -45,40 +46,58 @@ def _repair_truncated_json(json_str):
     return []
 
 
-CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
-CONFIG_FILE = os.path.join(CONFIG_DIR, "llm_settings.json")
+ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
 
 def _load_settings():
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
+    load_dotenv(ENV_FILE, override=True)
+    api_key = os.environ.get("NVIDIA_API_KEY", "")
+    base_url = os.environ.get("LLM_BASE_URL", "https://api.siliconflow.cn/v1")
+    model = os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B")
     return {
-        "api_key": "sk-tszhvcglvfqiivwqqtqwkxmxsneyuymjjywtfxteofmfvkct",
-        "base_url": "https://api.siliconflow.cn/v1",
-        "model": "Qwen/Qwen3.6-27B"
+        "api_key": api_key,
+        "base_url": base_url,
+        "model": model
     }
 
-def _save_settings(settings: dict):
-    os.makedirs(CONFIG_DIR, exist_ok=True)
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(settings, f, indent=2, ensure_ascii=False)
+def _save_env_file(updates: dict):
+    env_vars = {}
+    if os.path.exists(ENV_FILE):
+        with open(ENV_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    key, _, value = line.partition("=")
+                    env_vars[key.strip()] = value.strip()
+    
+    key_mapping = {
+        "api_key": "NVIDIA_API_KEY",
+        "base_url": "LLM_BASE_URL",
+        "model": "LLM_MODEL",
+    }
+    for settings_key, env_key in key_mapping.items():
+        if settings_key in updates:
+            env_vars[env_key] = updates[settings_key]
+    
+    with open(ENV_FILE, "w", encoding="utf-8") as f:
+        for key, value in env_vars.items():
+            f.write(f"{key}={value}\n")
 
 def get_settings():
     return _load_settings()
 
 def update_settings(api_key: str = None, base_url: str = None, model: str = None):
-    current = _load_settings()
+    updates = {}
     if api_key is not None:
-        current["api_key"] = api_key
+        updates["api_key"] = api_key
     if base_url is not None:
-        current["base_url"] = base_url
+        updates["base_url"] = base_url
     if model is not None:
-        current["model"] = model
-    _save_settings(current)
-    return current
+        updates["model"] = model
+    _save_env_file(updates)
+    os.environ["NVIDIA_API_KEY"] = updates.get("api_key", os.environ.get("NVIDIA_API_KEY", ""))
+    os.environ["LLM_BASE_URL"] = updates.get("base_url", os.environ.get("LLM_BASE_URL", ""))
+    os.environ["LLM_MODEL"] = updates.get("model", os.environ.get("LLM_MODEL", ""))
+    return _load_settings()
 
 
 class NvidiaAPI:

@@ -1,5 +1,47 @@
 # Environment files
-backend/.env
+.env
+**/.env
+
+# Config files with sensitive data
+backend/config/llm_settings.json
 
 # Data directory
 data/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Node
+node_modules/
+frontend/node_modules/
+frontend/.vite/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+
+# Trae internal
+.trae/
