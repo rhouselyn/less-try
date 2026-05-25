@@ -115,12 +115,6 @@ function App() {
   const t = translations[targetLang] || translations.zh;
 
   useEffect(() => {
-    api.getAppSettings().then(data => {
-      if (data.target_lang) setTargetLang(data.target_lang)
-    }).catch(() => {})
-  }, [])
-
-  useEffect(() => {
     if (vocab.length > 0) {
       sortVocab()
     }
@@ -935,6 +929,11 @@ function App() {
     }
   }
 
+  const handleSkipListeningChange = (value) => {
+    setSkipListening(value)
+    api.saveUserPreferences({ skip_listening: value }).catch(() => {})
+  }
+
   const handleOpenWordList = (lang) => {
     setWordListLang(prev => prev === lang ? null : lang)
   }
@@ -1138,6 +1137,7 @@ function App() {
               sourceLang={sourceLang}
               onAnswer={handleListeningQuizAnswer}
               skipListening={skipListening}
+              onSkipListeningChange={handleSkipListeningChange}
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
@@ -1201,7 +1201,7 @@ function App() {
               t={t}
               unitStarCounts={unitStarCounts}
               skipListening={skipListening}
-              onSkipListeningChange={setSkipListening}
+              onSkipListeningChange={handleSkipListeningChange}
             />
           )}
           
@@ -1317,7 +1317,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} sourceLang={sourceLang} onSourceLangChange={setSourceLang} skipListening={skipListening} onSkipListeningChange={setSkipListening} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} sourceLang={sourceLang} onSourceLangChange={setSourceLang} skipListening={skipListening} onSkipListeningChange={handleSkipListeningChange} t={t} />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="确认退出"

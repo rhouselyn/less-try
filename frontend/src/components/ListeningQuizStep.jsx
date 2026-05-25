@@ -1,12 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones, SkipForward } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { speakText } from '../utils/speech'
 
-function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
+function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, onSkipListeningChange, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedWords, setSelectedWords] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
+  const [isSkipped, setIsSkipped] = useState(false)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((quizData?.step_in_unit ?? 0) + 1)
   const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
@@ -65,10 +66,19 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
     if (onAnswer) onAnswer(correct)
   }
 
+  const handleSkipListening = () => {
+    setIsSkipped(true)
+    setIsCorrect(true)
+    setIsChecked(true)
+    if (onAnswer) onAnswer(true)
+    if (onSkipListeningChange) onSkipListeningChange(true)
+  }
+
   const handleNextQuestion = () => {
     setSelectedWords([])
     setIsChecked(false)
     setIsCorrect(false)
+    setIsSkipped(false)
     onNextQuestion()
   }
 
@@ -92,6 +102,18 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
             <span className="text-sm text-stone-500 font-medium">{t.step || '第'} {stepInUnit} / {totalItemsInUnit} {t.question || '题'}</span>
+          )}
+          {!isChecked && !isSkipped && (
+            <motion.button
+              onClick={handleSkipListening}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title={t.skipListening || '跳过听力'}
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+              {t.skip || '跳过'}
+            </motion.button>
           )}
           {onOpenVocabList && (
             <motion.button
@@ -195,10 +217,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <div className="flex items-center gap-3 mb-2">
               {isCorrect ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <XCircle className="w-6 h-6 text-red-600" />}
               <span className={`font-semibold text-lg ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                {isCorrect ? t.correct : t.incorrect}
+                {isSkipped ? (t.skipped || '已跳过') : isCorrect ? t.correct : t.incorrect}
               </span>
             </div>
-            {!isCorrect && (
+            {(isSkipped || !isCorrect) && (
               <p className="text-stone-700 font-medium">
                 {t.correctAnswer || '正确答案'}：{correctWords.map(w => stripPunct(w)).join(' ')}
               </p>

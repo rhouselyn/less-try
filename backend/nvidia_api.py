@@ -358,7 +358,7 @@ class NvidiaAPI:
                                 "properties": {
                                     "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) must be one token. (4) All 'text' values concatenated in order must equal the original source text ignoring punctuation, with no overlap — each character belongs to exactly one token. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
                                     "translation": {"type": "string"},
-                                    "phonetic": {"type": "string", "description": "IPA pronunciation of this word. MUST use standard International Phonetic Alphabet symbols only. Do NOT use pinyin, romaji, or any other transliteration system. For tonal languages, include tone markers (e.g. tone numbers or diacritics). Example: Mandarin '喝' → /xɤ˥˩/ NOT /he/; Japanese '食べる' → /tabeɾɯ/ NOT /taberu/."},
+                                    "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
                                     "morphology": {"type": "string"}
                                 },
                                 "required": ["text", "translation", "phonetic", "morphology"]
@@ -388,7 +388,7 @@ class NvidiaAPI:
                                 "type": "object",
                                 "properties": {
                                     "word": {"type": "string", "description": "The word or phrase. Fixed collocations must be kept as one entry (e.g. 'what's up', 'run out of')"},
-                                    "ipa": {"type": "string", "description": "IPA pronunciation. MUST use standard International Phonetic Alphabet symbols only. Do NOT use pinyin, romaji, or any other transliteration system. For tonal languages, include tone markers."},
+                                    "ipa": {"type": "string", "description": "Pronunciation. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system. For tonal languages, include tone information."},
                                     "context_meaning": {"type": "string"},
                                     "translation": {"type": "string"},
                                     "tokens": {
@@ -459,7 +459,7 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 - translation: 对象数组，每个对象包含：
   - text: 原文中的一个词（严格遵循源语言的自然词边界！）
   - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
-  - phonetic: 国际音标(IPA)发音。必须使用标准 IPA 符号，严禁使用拼音、罗马字或其他转写系统。声调语言需标注声调（如声调符号或数字）。正确示例：普通话"喝"→/xɤ˥˩/（不是/he/）；日语"食べる"→/tabeɾɯ/（不是/taberu/）
+  - phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
@@ -480,7 +480,7 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 
 为每个条目提供：
 1. word: The word or phrase itself
-2. ipa: 国际音标(IPA)发音。必须使用标准 IPA 符号，严禁使用拼音、罗马字或其他转写系统(IPA)发音。必须使用标准 IPA 符号，严禁使用拼音、罗马字或其他转写系统
+2. ipa: 发音标注。使用该语言最常用、最被广泛认可的注音系统
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. translation: Translation of the word to TARGET_LANG
 5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词。单个词的 tokens 只包含自身。变位/活用形式也是单个词，tokens 只包含其自身，不要拆分为词干+词缀、字符或音节！
@@ -570,7 +570,7 @@ TEXT_CONTENT
                                 "type": "object",
                                 "properties": {
                                     "word": {"type": "string"},
-                                    "ipa": {"type": "string", "description": "IPA pronunciation. MUST use standard International Phonetic Alphabet symbols only. Do NOT use pinyin, romaji, or any other transliteration system. For tonal languages, include tone markers."},
+                                    "ipa": {"type": "string", "description": "Pronunciation. Use the most commonly used and widely recognized pronunciation notation for the source language. For tonal languages, include tone information."},
                                     "context_meaning": {"type": "string"},
                                     "translation": {"type": "string"},
                                     "tokens": {
@@ -603,7 +603,7 @@ TEXT_CONTENT
 
 请为每个单词提供：
 1. word: 单词本身
-2. ipa: 国际音标
+2. ipa: 发音标注。使用该语言最常用、最被广泛认可的注音系统
 3. context_meaning: 基于上下文的 {target_lang} 释义
 4. translation: {target_lang} 翻译
 5. tokens: 分词结果
