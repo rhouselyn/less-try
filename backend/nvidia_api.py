@@ -366,7 +366,7 @@ class NvidiaAPI:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. If a hyphenated or apostrophized form is a single lexical unit in that language, it must be one token. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) In languages that use spaces, each space-delimited unit is typically one token (unless it's a multi-word fixed expression). In languages without spaces, follow linguistic word boundaries. (4) All 'text' values concatenated in order must equal the original source text ignoring punctuation. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
+                                    "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) must be one token. (4) All 'text' values concatenated in order must equal the original source text ignoring punctuation, with no overlap — each character belongs to exactly one token. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
                                     "translation": {"type": "string"},
                                     "phonetic": {"type": "string"},
                                     "morphology": {"type": "string"}
@@ -404,7 +404,7 @@ class NvidiaAPI:
                                     "tokens": {
                                         "type": "array",
                                         "items": {"type": "string"},
-                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list should contain only the word itself (e.g. 'brightly' -> ['brightly'], 'studying' -> ['studying'], 'mountains' -> ['mountains']). Inflected/conjugated forms are also single words — tokens must contain the whole form (e.g. 'ran' -> ['ran']), NOT stem+affix. Do NOT split single words into morphemes, characters, or syllables."
+                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list must contain only the word itself (e.g. 'brightly' -> ['brightly']). Non-compositional words must have tokens containing only themselves (e.g. a compound word whose meaning ≠ sum of parts must NOT be split into sub-components). Do NOT split single words into morphemes, characters, or syllables."
                                     },
                                     "morphology": {
                                         "type": "string",
@@ -436,15 +436,7 @@ class NvidiaAPI:
 2. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
 3. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
 4. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
-   - n (名词)
-   - v (动词)
-   - adj (形容词)
-   - adv (副词)
-   - pron (代词)
-   - prep (介词)
-   - conj (连词)
-   - interj (感叹词)
-   - det (限定词)
+   - n (名词), v (动词), adj (形容词), adv (副词), pron (代词), prep (介词), conj (连词), interj (感叹词), det (限定词)
 5. morphology 字段必须只包含缩写，不要有其他内容！
 6. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 
@@ -464,15 +456,10 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 【关键规则】
 1. 遵循该语言的正字法惯例：每种语言都有自己的词边界规则。连字符(-)、撇号(')等字符在某些语言中是词的内部组成部分，在另一些语言中可能是分隔符。请根据该语言自身的正字法来判断。
 2. 变位/屈折形式是单个词：不要将变位形式拆分为词干+词缀。词的形态信息放在 morphology 字段，不通过拆分来表达。
-3. 尊重该语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言（如中文、日语、韩语、泰语等）按语言学上的词边界分词。
-4. 【极其重要·无空格语言的分词规则】对于不用空格分隔词语的语言（中文、日语、韩语等），分词时必须遵循"词典词条优先"原则：
-   - 多字词如果作为一个整体在词典中有独立条目，就必须作为一个 token，不能拆成单字
-   - 判断标准：整体含义是否等于各字面含义的简单叠加？如果不等于（即整体 > 部分之和），则必须作为单个 token
-   - 正确示例："冰美式"→1个token（iced Americano，整体含义≠冰+美+式）；"咖啡"→1个token（coffee，整体含义≠咖+啡）；"我想"→2个token（"我"=I，"想"=want to，每个单字都能独立表达完整含义）
-   - 错误示例：将"冰美式"拆成"冰"+"美"+"式"三个token；将"咖啡"拆成"咖"+"啡"两个token
-   - 分词一致性：同一个词在不同句子中必须保持相同的分词粒度
+3. 尊重该语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词。
+4. 【极其重要·非组合性原则】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个 token，不能拆分。这是所有语言的通用原则，不限于任何特定语言。
 5. text 字段绝对禁止包含标点符号（句号、逗号、问号、感叹号等），但连字符和撇号如果在该语言中是词的组成部分则必须保留。
-6. 所有条目的 text 按顺序拼接后必须等于原文内容（去除标点差异后），不能遗漏或增加内容。
+6. 所有条目的 text 按顺序拼接后必须等于原文内容（去除标点差异后），不能遗漏或增加内容。每个字符/符号必须且只能属于一个 token，不能重叠。
 7. 绝对禁止将一个完整的词拆分成字符、音节或语素。
 
 ═══════════════════════════════════════════════════════════
@@ -491,14 +478,12 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 
 同时，为文本中出现的词汇生成完整词典条目（dictionary_entries）：
 
-【极其重要！！！dictionary_entries的分组规则！！！】
+【极其重要！！！dictionary_entries的规则！！！】
+- 【核心原则】dictionary_entries 的分词粒度必须与 translation 数组完全一致！translation 中的每个 token 必须在 dictionary_entries 中有且仅有一个对应的条目，该条目的 word 和 tokens 必须与 translation 中的 text 一致。绝不允许 translation 中有一个合并 token（如某多字符词）而 dictionary_entries 中却将其拆成多个子条目，反之亦然。
 - 每个条目必须是一个完整的词——即原文中连续出现的、能独立使用或能在词典中查到的最小意义单位。遵循该语言的自然词边界
 - 变位/活用/屈折形式视为单个词，不要拆分为词干+词缀。词的形态变化信息应放在 morphology 字段，不要通过拆分 tokens 来表达
 - 只有真正的不可拆分的固定搭配才作为单个条目
-- 【极其重要·分词规则因语言类型而异】
-  ▸ 有空格语言（英语、法语等）：优先拆分原则——如果一个词组可以被拆分为多个独立单词，且拆分后每个部分都有独立的含义和用法，就必须拆分为独立条目
-  ▸ 无空格语言（中文、日语、韩语等）：词典词条优先原则——多字词如果作为一个整体在词典中有独立条目、且整体含义不等于各字面含义的简单叠加，就必须作为单个条目，不能拆成单字。例如"冰美式"=iced Americano，整体含义不是"冰+美+式"的简单叠加，必须作为单个条目；"咖啡"=coffee，不是"咖+啡"的叠加，必须作为单个条目。只有当每个单字本身就能独立表达该语境下的完整含义时才拆分（如"我"=I、"想"=want to）
-- 【极其重要·无空格语言分词一致性】对于不用空格分隔词语的语言，dictionary_entries 的分词必须与 translation 数组完全一致！如果 translation 中"冰美式"是一个 token，那么 dictionary_entries 中也必须有"冰美式"这个条目，不能拆成"冰"和"美式"两个条目。反之亦然——绝不能在 dictionary_entries 中有合并词条（如"冰美式"）的同时又在 translation 中将其拆成"冰"+"美"+"式"
+- 【非组合性原则】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加，则必须作为单个条目，不能拆分。这是所有语言的通用原则。
 - 每个条目的 tokens 字段列出该条目包含的原文单词（如固定搭配 word="what's up" 则 tokens=["what's", "up"]）。单个词的 tokens 只包含自身。遵循该语言自然词边界的词，tokens 只包含自身
 - 【极其重要】文本中的每一个单词都必须被某个条目的 tokens 覆盖，一个都不能遗漏！
 - 【绝对禁止】将一个完整的词拆分成字符、音节或语素作为单独的条目！

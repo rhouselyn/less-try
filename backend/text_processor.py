@@ -823,12 +823,7 @@ class TextProcessor:
         return distractors
 
 
-NO_SPACE_LANGS = {'zh', 'ja', 'ko', 'th', 'lo', 'my', 'km', 'bo', 'yue'}
-
-def fix_no_space_language_tokenization(translation_result, source_lang):
-    if source_lang not in NO_SPACE_LANGS:
-        return translation_result
-
+def fix_translation_dict_consistency(translation_result, source_lang):
     if not isinstance(translation_result, dict):
         return translation_result
 
@@ -848,12 +843,17 @@ def fix_no_space_language_tokenization(translation_result, source_lang):
         word = entry.get("word", "")
         tokens = entry.get("tokens", [])
         if len(word) > 1 and isinstance(tokens, list) and tokens == [word]:
-            combined_entries[word] = entry
+            translation_texts = set()
+            for t in translation:
+                if isinstance(t, dict) and "text" in t:
+                    translation_texts.add(t["text"])
+            if word not in translation_texts:
+                combined_entries[word] = entry
 
     if not combined_entries:
         return translation_result
 
-    print(f"[DEBUG] fix_no_space_language_tokenization: Found {len(combined_entries)} combined entries: {list(combined_entries.keys())}")
+    print(f"[DEBUG] fix_translation_dict_consistency: Found {len(combined_entries)} combined dict entries not in translation: {list(combined_entries.keys())}")
 
     sorted_combined = sorted(combined_entries.keys(), key=len, reverse=True)
 
@@ -871,7 +871,6 @@ def fix_no_space_language_tokenization(translation_result, source_lang):
             combined_entry = combined_entries[combined_word]
             combined_len = len(combined_word)
             candidate = ""
-            candidate_tokens = []
             j = i
             while j < len(translation) and len(candidate) < combined_len:
                 t = translation[j]
@@ -879,7 +878,6 @@ def fix_no_space_language_tokenization(translation_result, source_lang):
                     next_text = t["text"]
                     if candidate + next_text == combined_word[:len(candidate) + len(next_text)]:
                         candidate += next_text
-                        candidate_tokens.append(t)
                         j += 1
                     else:
                         break
@@ -909,11 +907,11 @@ def fix_no_space_language_tokenization(translation_result, source_lang):
         if isinstance(token, dict) and "text" in token:
             merged_texts.add(token["text"])
 
-    covered_chars = set()
+    covered_substrings = set()
     for combined_word in combined_entries:
         if combined_word in merged_texts:
             for ch in combined_word:
-                covered_chars.add(ch)
+                covered_substrings.add(ch)
 
     filtered_entries = []
     for entry in dict_entries:
@@ -923,7 +921,7 @@ def fix_no_space_language_tokenization(translation_result, source_lang):
         word = entry.get("word", "")
         if word in merged_texts:
             filtered_entries.append(entry)
-        elif len(word) == 1 and word in covered_chars:
+        elif len(word) == 1 and word in covered_substrings:
             continue
         else:
             filtered_entries.append(entry)

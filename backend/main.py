@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 
 from nvidia_api import NvidiaAPI, get_settings, update_settings
-from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, fix_no_space_language_tokenization
+from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, fix_translation_dict_consistency
 from storage import Storage
 
 load_dotenv()
@@ -540,7 +540,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     
                     print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
             
-            sentence_translation_result = fix_no_space_language_tokenization(
+            sentence_translation_result = fix_translation_dict_consistency(
                 sentence_translation_result, source_lang
             )
             
