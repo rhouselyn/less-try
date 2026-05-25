@@ -272,6 +272,17 @@ def get_listening_correct_words(sentence, sentence_data):
             if tokens_normalized == sentence_normalized:
                 return raw_words
             
+            deduped_words = []
+            seen = set()
+            for w in raw_words:
+                key = w.lower()
+                if key not in seen:
+                    seen.add(key)
+                    deduped_words.append(w)
+            deduped_normalized = normalize_for_compare(''.join(deduped_words))
+            if deduped_normalized == sentence_normalized:
+                return deduped_words
+            
             words_from_sentence = [w for w in clean_sentence.split() if w.strip()]
             words_cleaned = []
             for w in words_from_sentence:
@@ -281,7 +292,7 @@ def get_listening_correct_words(sentence, sentence_data):
             if words_cleaned and normalize_for_compare(''.join(words_cleaned)) == sentence_normalized:
                 return words_cleaned
             
-            return raw_words
+            return deduped_words
 
     dict_entries = tr.get("dictionary_entries", [])
     if dict_entries and isinstance(dict_entries, list):
@@ -2091,7 +2102,10 @@ async def get_word_details(file_id: str, word: str):
         print(f"[DEBUG] 缓存单词信息: {word}")
         
         return response_data
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"[ERROR] 获取单词详情失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting word details: {str(e)}")
 
 

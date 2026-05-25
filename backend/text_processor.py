@@ -507,6 +507,36 @@ class TextProcessor:
                         token['text'] = cleaned
                     existing_tokens.append(token)
         
+        seen_cleaned = {}
+        deduped_tokens = []
+        original_word_counts = {}
+        for w in original_words:
+            key = w.lower()
+            original_word_counts[key] = original_word_counts.get(key, 0) + 1
+        
+        token_seen_counts = {}
+        for token in existing_tokens:
+            key = token['text'].lower()
+            allowed = original_word_counts.get(key, 1)
+            current = token_seen_counts.get(key, 0)
+            if current < allowed:
+                token_seen_counts[key] = current + 1
+                deduped_tokens.append(token)
+            else:
+                if key in seen_cleaned:
+                    prev = seen_cleaned[key]
+                    for field in ('translation', 'phonetic', 'morphology'):
+                        if not prev.get(field) and token.get(field):
+                            prev[field] = token[field]
+                else:
+                    for prev in deduped_tokens:
+                        if prev['text'].lower() == key:
+                            for field in ('translation', 'phonetic', 'morphology'):
+                                if not prev.get(field) and token.get(field):
+                                    prev[field] = token[field]
+                            break
+        existing_tokens = deduped_tokens
+        
         if not existing_tokens:
             translation_result['translation'] = [
                 {'text': w, 'translation': '', 'phonetic': '', 'morphology': ''}

@@ -84,7 +84,16 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
       const waitForDetail = async (retries = 30) => {
         const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-        const data = await response.json()
+        let data
+        try {
+          data = await response.json()
+        } catch {
+          if (retries > 0) {
+            await new Promise(r => setTimeout(r, 2000))
+            return waitForDetail(retries - 1)
+          }
+          return null
+        }
         if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
           return data
         }
