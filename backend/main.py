@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 
 from nvidia_api import NvidiaAPI, get_settings, update_settings
-from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text
+from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation
 from storage import Storage
 
 load_dotenv()
@@ -137,22 +137,59 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         return result
     mc = result.get("multiple_choice")
     if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-        filtered_options = []
+        correct_answer = mc.get("correct_answer", "")
+        correct_answer_lower = correct_answer.lower().strip() if correct_answer else ""
+        
+        normalized_options = []
         for opt in mc["options"]:
-            if isinstance(opt, dict) and "text" in opt:
-                if opt.get("is_correct", False) or not is_source_lang_text(opt["text"], source_lang):
-                    filtered_options.append(opt)
+            if not isinstance(opt, dict) or "text" not in opt:
+                continue
+            text = opt["text"]
+            is_correct = opt.get("is_correct", False)
+            if isinstance(is_correct, str):
+                is_correct = is_correct.lower() in ("true", "yes", "1")
+            elif isinstance(is_correct, (int, float)):
+                is_correct = bool(is_correct)
+            if not is_correct and correct_answer_lower and text.lower().strip() == correct_answer_lower:
+                is_correct = True
+            normalized_options.append({"text": text, "is_correct": bool(is_correct)})
+        
+        if not any(o["is_correct"] for o in normalized_options) and correct_answer:
+            normalized_options.insert(0, {"text": correct_answer, "is_correct": True})
+        
+        filtered_options = []
+        for opt in normalized_options:
+            if opt["is_correct"]:
+                filtered_options.append(opt)
+            elif not is_source_lang_text(opt["text"], source_lang):
+                filtered_options.append(opt)
+        
         if len(filtered_options) < 4:
-            correct_answer = mc.get("correct_answer", "")
             existing_texts = {o["text"] for o in filtered_options}
-            fallbacks = ["other meaning", "different sense", "unrelated", "alternative", "different concept"]
-            for fb in fallbacks:
+            fallback_distractors = get_fallback_options(correct_answer, file_id, count=4 - len(filtered_options))
+            for fd in fallback_distractors:
+                if len(filtered_options) >= 4:
+                    break
+                if fd not in existing_texts:
+                    filtered_options.append({"text": fd, "is_correct": False})
+                    existing_texts.add(fd)
+        
+        if len(filtered_options) < 4:
+            existing_texts = {o["text"] for o in filtered_options}
+            generic_fallbacks = ["other meaning", "different sense", "unrelated", "alternative", "different concept"]
+            for fb in generic_fallbacks:
                 if len(filtered_options) >= 4:
                     break
                 if fb not in existing_texts:
                     filtered_options.append({"text": fb, "is_correct": False})
                     existing_texts.add(fb)
+        
         mc["options"] = filtered_options[:4]
+        if not mc.get("correct_answer") and filtered_options:
+            for o in filtered_options:
+                if o["is_correct"]:
+                    mc["correct_answer"] = o["text"]
+                    break
         result["multiple_choice"] = mc
         return result
     if isinstance(mc, str) and not mc.strip():
@@ -572,11 +609,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         unique_vocab = []
         for entry in all_vocab:
             word = entry.get("word", "")
-            cleaned = word
-            while cleaned and is_punctuation_only(cleaned[-1]):
-                cleaned = cleaned[:-1]
-            while cleaned and is_punctuation_only(cleaned[0]):
-                cleaned = cleaned[1:]
+            cleaned = strip_edge_punctuation(word)
             if cleaned != word:
                 entry["word"] = cleaned
                 tokens = entry.get("tokens", [])
@@ -1388,73 +1421,79 @@ async def get_random_word(file_id: str):
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取随机单词信息: {word}")
-            # 构建学习模式响应
-            options = []
-            correct_index = 0
-            if "multiple_choice" in cached_word and "options" in cached_word["multiple_choice"]:
-                for i, opt in enumerate(cached_word["multiple_choice"]["options"]):
-                    options.append(opt["text"])
-                    if opt["is_correct"]:
-                        correct_index = i
+            mc = cached_word.get("multiple_choice", {})
+            mc_options = []
+            if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+            if not mc_options:
+                print(f"[DEBUG] 缓存中 MC 选项为空或无效，清除缓存重新生成: {word}")
+                storage.delete_word_cache(file_id, word)
             else:
-                fallback_opts = get_fallback_options(cached_word.get("meaning", ""), file_id, 3)
-                options = [cached_word.get("meaning", "")] + fallback_opts
+                options = []
                 correct_index = 0
-            
-            # 启动后台任务预生成下一个单词
-            asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
-            
-            context_sents = cached_word.get("context_sentences", [])
-            needs_rebuild = False
-            for cs in context_sents:
-                if isinstance(cs, dict) and "sentence_index" not in cs:
-                    needs_rebuild = True
-                    break
-                if isinstance(cs, str):
-                    needs_rebuild = True
-                    break
-            
-            if needs_rebuild or not context_sents:
-                all_sentences = storage.load_pipeline_data(file_id)
-                if all_sentences:
-                    import re as re_mod
-                    word_pattern = re_mod.compile(r'\b' + re_mod.escape(word) + r'\b', re_mod.IGNORECASE)
-                    rebuilt = []
-                    for sent_idx, sentence_data in enumerate(all_sentences):
-                        if "sentence" in sentence_data:
-                            if word_pattern.search(sentence_data["sentence"]):
-                                translation = ""
-                                if "translation_result" in sentence_data:
-                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                                rebuilt.append({
-                                    "sentence": sentence_data["sentence"],
-                                    "translation": translation,
-                                    "sentence_index": sent_idx
-                                })
-                    context_sents = rebuilt
-                    cached_word["context_sentences"] = rebuilt
-                    storage.save_word_cache(file_id, word, cached_word)
-            
-            return {
-                "word": cached_word.get("word", word),
-                "ipa": cached_word.get("ipa", ""),
-                "correct_meaning": cached_word.get("meaning", ""),
-                "options": options,
-                "correct_index": correct_index,
-                "context": cached_word.get("context", ""),
-                "context_sentences": context_sents,
-                "variants_detail": cached_word.get("variants_detail", []),
-                "examples": cached_word.get("examples", []),
-                "memory_hint": cached_word.get("memory_hint", ""),
-                "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
-                "context_meaning": cached_word.get("context_meaning", cached_word.get("meaning", "")),
-                "unit_end_index": unit_end_index,
-                "current_index": current_index,
-                "unit_start_index": unit_start_index,
-                "total_items_in_unit": total_items_in_unit,
+                for i, opt in enumerate(mc_options):
+                    options.append(opt["text"])
+                    if opt.get("is_correct"):
+                        correct_index = i
+                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
+                    for i, opt in enumerate(mc_options):
+                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
+                            correct_index = i
+                            break
+                
+                asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
+                
+                context_sents = cached_word.get("context_sentences", [])
+                needs_rebuild = False
+                for cs in context_sents:
+                    if isinstance(cs, dict) and "sentence_index" not in cs:
+                        needs_rebuild = True
+                        break
+                    if isinstance(cs, str):
+                        needs_rebuild = True
+                        break
+                
+                if needs_rebuild or not context_sents:
+                    all_sentences = storage.load_pipeline_data(file_id)
+                    if all_sentences:
+                        import re as re_mod
+                        word_pattern = re_mod.compile(r'\b' + re_mod.escape(word) + r'\b', re_mod.IGNORECASE)
+                        rebuilt = []
+                        for sent_idx, sentence_data in enumerate(all_sentences):
+                            if "sentence" in sentence_data:
+                                if word_pattern.search(sentence_data["sentence"]):
+                                    translation = ""
+                                    if "translation_result" in sentence_data:
+                                        translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                    rebuilt.append({
+                                        "sentence": sentence_data["sentence"],
+                                        "translation": translation,
+                                        "sentence_index": sent_idx
+                                    })
+                        context_sents = rebuilt
+                        cached_word["context_sentences"] = rebuilt
+                        storage.save_word_cache(file_id, word, cached_word)
+                
+                return {
+                    "word": cached_word.get("word", word),
+                    "ipa": cached_word.get("ipa", ""),
+                    "correct_meaning": cached_word.get("meaning", ""),
+                    "options": options,
+                    "correct_index": correct_index,
+                    "context": cached_word.get("context", ""),
+                    "context_sentences": context_sents,
+                    "variants_detail": cached_word.get("variants_detail", []),
+                    "examples": cached_word.get("examples", []),
+                    "memory_hint": cached_word.get("memory_hint", ""),
+                    "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
+                    "context_meaning": cached_word.get("context_meaning", cached_word.get("meaning", "")),
+                    "unit_end_index": unit_end_index,
+                    "current_index": current_index,
+                    "unit_start_index": unit_start_index,
+                    "total_items_in_unit": total_items_in_unit,
                         "listening_count_in_unit": listening_count_in_unit,
-                "step_in_unit": step_in_unit
-            }
+                    "step_in_unit": step_in_unit
+                }
         
         # 构建上下文（包含翻译）
         sentences = storage.load_pipeline_data(file_id)
@@ -1829,17 +1868,29 @@ async def get_word_details(file_id: str, word: str):
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
-            if "multiple_choice" in cached_word and "options" not in cached_word:
+            mc = cached_word.get("multiple_choice", {})
+            mc_options = []
+            if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+            if not mc_options:
+                print(f"[DEBUG] 缓存中 MC 选项为空或无效，清除缓存重新生成: {word}")
+                storage.delete_word_cache(file_id, word)
+                cached_word = None
+        if cached_word:
+            if "options" not in cached_word:
                 options = []
                 correct_index = 0
-                if "options" in cached_word["multiple_choice"]:
-                    for i, opt in enumerate(cached_word["multiple_choice"]["options"]):
-                        options.append(opt["text"])
-                        if opt["is_correct"]:
+                for i, opt in enumerate(mc_options):
+                    options.append(opt["text"])
+                    if opt.get("is_correct"):
+                        correct_index = i
+                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
+                    for i, opt in enumerate(mc_options):
+                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
                             correct_index = i
-                    cached_word["options"] = options
-                    cached_word["correct_index"] = correct_index
-                    print(f"[DEBUG] 从 multiple_choice 提取 options: {options}")
+                            break
+                cached_word["options"] = options
+                cached_word["correct_index"] = correct_index
             
             context_sents = cached_word.get("context_sentences", [])
             needs_rebuild = False
@@ -2746,8 +2797,9 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 if not original_tokens and "translation" in translation_result:
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
-                            if token["text"].strip() and not is_punctuation_only(token["text"]):
-                                original_tokens.append(token["text"])
+                            token_text = strip_edge_punctuation(token["text"].strip())
+                            if token_text and not is_punctuation_only(token_text):
+                                original_tokens.append(token_text)
                 
                 if not original_tokens:
                     original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)

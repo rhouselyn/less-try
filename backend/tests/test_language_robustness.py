@@ -4,7 +4,7 @@ import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from text_processor import TextProcessor, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text
+from text_processor import TextProcessor, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation
 
 tp = TextProcessor()
 
@@ -467,6 +467,44 @@ class TestVocabPunctuationCleaning:
         while cleaned and is_punctuation_only(cleaned[0]):
             cleaned = cleaned[1:]
         assert cleaned == 'Bonjour'
+
+
+class TestStripEdgePunctuation:
+    def test_hyphenated_word_preserved(self):
+        assert strip_edge_punctuation('allez-vous') == 'allez-vous'
+
+    def test_leading_hyphen_preserved(self):
+        assert strip_edge_punctuation('-vous') == '-vous'
+
+    def test_trailing_period_stripped(self):
+        assert strip_edge_punctuation('beau.') == 'beau'
+
+    def test_trailing_question_mark_stripped(self):
+        assert strip_edge_punctuation('Привет!') == 'Привет'
+
+    def test_trailing_cjk_punctuation_stripped(self):
+        assert strip_edge_punctuation('你好。') == '你好'
+
+    def test_apostrophe_word_preserved(self):
+        assert strip_edge_punctuation("aujourd'hui") == "aujourd'hui"
+
+    def test_leading_apostrophe_preserved(self):
+        assert strip_edge_punctuation("l'homme") == "l'homme"
+
+    def test_mixed_punctuation_stripped_but_hyphen_kept(self):
+        assert strip_edge_punctuation('.allez-vous.') == 'allez-vous'
+
+    def test_empty_string(self):
+        assert strip_edge_punctuation('') == ''
+
+    def test_punctuation_only(self):
+        assert strip_edge_punctuation('!!!') == ''
+
+    def test_clean_word_unchanged(self):
+        assert strip_edge_punctuation('Bonjour') == 'Bonjour'
+
+    def test_turkish_word_with_question_mark(self):
+        assert strip_edge_punctuation('nasılsın?') == 'nasılsın'
 
 
 if __name__ == "__main__":

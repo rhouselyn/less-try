@@ -71,6 +71,13 @@ class Storage:
                 return json.load(f)
         return None
 
+    def delete_word_cache(self, file_id: str, word: str):
+        file_dir = self.get_file_dir(file_id)
+        cache_dir = file_dir / "word_cache"
+        word_file = cache_dir / f"{word.lower()}.json"
+        if word_file.exists():
+            word_file.unlink()
+
     def clear_word_cache(self, file_id: str):
         file_dir = self.get_file_dir(file_id)
         cache_dir = file_dir / "word_cache"

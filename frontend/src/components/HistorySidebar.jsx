@@ -207,6 +207,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [recentExpanded, setRecentExpanded] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, fileId: null, title: '' })
 
   useEffect(() => {
     loadHistory()
@@ -239,12 +240,23 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
   const hasMoreRecent = sortedRecords.length > 3
 
   const handleDelete = async (fileId) => {
+    const record = records.find(r => r.file_id === fileId)
+    setDeleteConfirm({ open: true, fileId, title: record?.title || '' })
+  }
+
+  const handleDeleteConfirm = async () => {
+    const fileId = deleteConfirm.fileId
+    setDeleteConfirm({ open: false, fileId: null, title: '' })
     try {
       await api.deleteHistory(fileId)
       setRecords(prev => prev.filter(r => r.file_id !== fileId))
     } catch (err) {
       console.error('Failed to delete:', err)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ open: false, fileId: null, title: '' })
   }
 
   const handleRenameStart = useCallback((fileId) => {
@@ -470,6 +482,53 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
             onClose={handleMenuClose}
             t={t}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {deleteConfirm.open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+            onClick={handleDeleteCancel}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="bg-white rounded-2xl shadow-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-semibold text-stone-800">{t.confirmDelete || '确认删除'}</h3>
+                  <p className="text-[13px] text-stone-500 mt-0.5 line-clamp-2">{deleteConfirm.title}</p>
+                </div>
+              </div>
+              <p className="text-[13px] text-stone-500 mb-5 pl-[52px]">{t.deleteCannotUndo || '删除后不可恢复，确定要删除吗？'}</p>
+              <div className="flex gap-2.5 justify-end">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="px-4 py-2 text-[13px] rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors"
+                >
+                  {t.cancel || '取消'}
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 text-[13px] rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                >
+                  {t.confirmDeleteAction || '删除'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>

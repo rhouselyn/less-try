@@ -74,7 +74,11 @@ export const translations = {
     modeGeneratePlaceholder: "描述你想学习的文本内容，例如：一篇关于旅行的短文...",
     translating: "翻译中...",
     generating: "生成文本中...",
-    modeLabel: "输入模式"
+    modeLabel: "输入模式",
+    confirmDelete: "确认删除",
+    deleteCannotUndo: "删除后不可恢复，确定要删除吗？",
+    cancel: "取消",
+    confirmDeleteAction: "删除"
   },
   en: {
     title: "Lesslingo",
@@ -150,6 +154,10 @@ export const translations = {
     modeGeneratePlaceholder: "Describe the text content you want to learn, e.g.: a short essay about travel...",
     translating: "Translating...",
     generating: "Generating text...",
-    modeLabel: "Input Mode"
+    modeLabel: "Input Mode",
+    confirmDelete: "Confirm Delete",
+    deleteCannotUndo: "This action cannot be undone. Are you sure you want to delete?",
+    cancel: "Cancel",
+    confirmDeleteAction: "Delete"
   }
 };

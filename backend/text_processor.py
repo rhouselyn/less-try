@@ -44,6 +44,27 @@ def is_punctuation_only(text):
         return False
     return True
 
+WORD_INTERNAL_CHARS = frozenset({
+    '-', '\u2010', '\u2011', '\u2012', '\u2013', '\u2014',
+    "'", '\u2018', '\u2019', '\u201B',
+})
+
+def strip_edge_punctuation(text):
+    if not text or not isinstance(text, str):
+        return text
+    cleaned = text
+    while cleaned:
+        if not cleaned[-1] in WORD_INTERNAL_CHARS and is_punctuation_only(cleaned[-1]):
+            cleaned = cleaned[:-1]
+        else:
+            break
+    while cleaned:
+        if not cleaned[0] in WORD_INTERNAL_CHARS and is_punctuation_only(cleaned[0]):
+            cleaned = cleaned[1:]
+        else:
+            break
+    return cleaned
+
 SCRIPT_RANGES = {
     'Latin': [
         (0x0041, 0x005A), (0x0061, 0x007A), (0x00C0, 0x024F),
@@ -448,7 +469,12 @@ class TextProcessor:
                 for token in result['translation']:
                     if isinstance(token, dict) and 'text' in token:
                         token_text = token['text'].strip()
-                        if token_text and not is_punctuation_only(token_text):
+                        if not token_text or is_punctuation_only(token_text):
+                            continue
+                        cleaned = strip_edge_punctuation(token_text)
+                        if cleaned and cleaned != token_text:
+                            token['text'] = cleaned
+                        if cleaned:
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
         
@@ -460,12 +486,25 @@ class TextProcessor:
             return translation_result
         
         original_words = self.tokenize_sentence(sentence, language=source_lang)
-        original_words = [w for w in original_words if not is_punctuation_only(w)]
+        cleaned_original = []
+        for w in original_words:
+            if is_punctuation_only(w):
+                continue
+            cw = strip_edge_punctuation(w)
+            if cw:
+                cleaned_original.append(cw)
+        original_words = cleaned_original
         
         existing_tokens = []
         if 'translation' in translation_result:
             for token in translation_result['translation']:
                 if isinstance(token, dict) and 'text' in token:
+                    token_text = token['text']
+                    if is_punctuation_only(token_text):
+                        continue
+                    cleaned = strip_edge_punctuation(token_text)
+                    if cleaned != token_text:
+                        token['text'] = cleaned
                     existing_tokens.append(token)
         
         if not existing_tokens:
@@ -479,6 +518,7 @@ class TextProcessor:
         original_joined = ''.join(original_words).lower()
         
         if existing_text_joined == original_joined and len(existing_tokens) == len(original_words):
+            translation_result['translation'] = existing_tokens
             return translation_result
         
         if existing_text_joined == original_joined and len(existing_tokens) != len(original_words):
