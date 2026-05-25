@@ -10,7 +10,7 @@ import time
 import re
 
 from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name
-from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, fix_translation_dict_consistency
+from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
 from storage import Storage
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
@@ -154,9 +154,12 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
             normalized_options.insert(0, {"text": correct_answer, "is_correct": True})
         
         filtered_options = []
+        placeholder_pattern = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
         for opt in normalized_options:
             if opt["is_correct"]:
                 filtered_options.append(opt)
+            elif placeholder_pattern.match(opt["text"].strip()):
+                continue
             elif not is_source_lang_text(opt["text"], source_lang):
                 filtered_options.append(opt)
         
@@ -292,51 +295,12 @@ def get_listening_correct_words(sentence, sentence_data):
             if words_cleaned and normalize_for_compare(''.join(words_cleaned)) == sentence_normalized:
                 return words_cleaned
             
-            return deduped_words
+            return raw_words if tokens_normalized else deduped_words
 
-    dict_entries = tr.get("dictionary_entries", [])
-    if dict_entries and isinstance(dict_entries, list):
-        all_tokens = []
-        for entry in dict_entries:
-            if not isinstance(entry, dict):
-                continue
-            tokens = entry.get("tokens", [])
-            if not isinstance(tokens, list):
-                continue
-            for token in tokens:
-                if isinstance(token, str) and token.strip():
-                    t = token.strip()
-                    if is_punctuation_only(t):
-                        continue
-                    all_tokens.append(t)
-
-        if all_tokens:
-            sentence_lower = clean_sentence.lower()
-            token_with_pos = []
-            used_positions = []
-
-            for token in all_tokens:
-                token_clean = strip_edge_punctuation(token)
-                if not token_clean:
-                    continue
-                search_from = 0
-                found = False
-                while search_from < len(sentence_lower):
-                    pos = sentence_lower.find(token_clean.lower(), search_from)
-                    if pos < 0:
-                        break
-                    if pos not in used_positions:
-                        token_with_pos.append((pos, token_clean))
-                        used_positions.append(pos)
-                        found = True
-                        break
-                    search_from = pos + 1
-
-            token_with_pos.sort(key=lambda x: x[0])
-            result = [t[1] for t in token_with_pos]
-            if result:
-                return result
-
+    source_lang = sentence_data.get("source_lang", "en")
+    if source_lang in NO_SPACE_LANGUAGES:
+        return [c for c in clean_sentence if c.strip() and not is_punctuation_only(c)]
+    
     words = [w for w in clean_sentence.split() if w.strip()]
     filtered = []
     for w in words:
@@ -363,25 +327,13 @@ def get_listening_distractors_from_sentences(sentence, all_sentences, correct_lo
                     if vt and not is_punctuation_only(vt) and vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
                         distractor_words.append(vt)
                         distractor_set.add(vt.lower())
-        else:
-            other_de = other_tr.get("dictionary_entries", [])
-            if other_de and isinstance(other_de, list):
-                for entry in other_de:
-                    if not isinstance(entry, dict):
-                        continue
-                    for vt in entry.get("tokens", []):
-                        if isinstance(vt, str):
-                            vt_clean = strip_edge_punctuation(vt)
-                            if vt_clean and not is_punctuation_only(vt_clean) and vt_clean.lower() not in correct_lower_set and vt_clean.lower() not in distractor_set:
-                                distractor_words.append(vt_clean)
-                                distractor_set.add(vt_clean.lower())
-            else:
-                clean_other = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', other_s)
-                for w in clean_other.split():
-                    w_clean = strip_edge_punctuation(w)
-                    if w_clean and not is_punctuation_only(w_clean) and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
-                        distractor_words.append(w_clean)
-                        distractor_set.add(w_clean.lower())
+        if not (other_translation and isinstance(other_translation, list)):
+            clean_other = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', other_s)
+            for w in clean_other.split():
+                w_clean = strip_edge_punctuation(w)
+                if w_clean and not is_punctuation_only(w_clean) and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
+                    distractor_words.append(w_clean)
+                    distractor_set.add(w_clean.lower())
     return distractor_words, distractor_set
 
 
@@ -498,24 +450,25 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             t_extract_end = time.time()
             print(f"[TIMING] 句子 {idx+1} 单词提取: {t_extract_end - t_extract_start:.3f}s")
             
-            dict_entry_words = set()
-            if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
-                dict_entries = sentence_translation_result["dictionary_entries"]
-                if isinstance(dict_entries, str):
-                    try:
-                        dict_entries = json.loads(dict_entries)
-                        sentence_translation_result["dictionary_entries"] = dict_entries
-                    except:
-                        dict_entries = []
-                        sentence_translation_result["dictionary_entries"] = []
-                if isinstance(dict_entries, list):
-                    for entry in dict_entries:
-                        if isinstance(entry, dict) and "word" in entry:
-                            dict_entry_words.add(entry["word"].lower())
-                            for t in entry.get("tokens", []):
-                                dict_entry_words.add(t.lower())
+            translation_words = set()
+            if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
+                for token in sentence_translation_result["translation"]:
+                    if isinstance(token, dict) and "text" in token:
+                        translation_words.add(token["text"].lower())
             
-            missing_words = [w for w in sentence_words if w.lower() not in dict_entry_words]
+            if source_lang in NO_SPACE_LANGUAGES:
+                import re as _re
+                def _norm(text):
+                    return _re.sub(r'[\s\u3000]+', '', _re.sub(r'[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]', '', text)).lower()
+                sentence_norm = _norm(sentence)
+                tokens_norm = _norm(''.join(translation_words))
+                missing_words = [] if tokens_norm == sentence_norm else []
+            else:
+                missing_words = []
+                for w in sentence_words:
+                    w_clean = strip_edge_punctuation(w).lower()
+                    if w_clean and w_clean not in translation_words and not is_punctuation_only(w):
+                        missing_words.append(strip_edge_punctuation(w))
             
             if missing_words:
                 print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
@@ -527,28 +480,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 t_missing_end = time.time()
                 print(f"[TIMING] 句子 {idx+1} 遗漏单词补充LLM调用: {t_missing_end - t_missing_start:.3f}s")
                 if remaining_entries:
-                    if isinstance(sentence_translation_result, dict):
-                        if "dictionary_entries" not in sentence_translation_result:
-                            sentence_translation_result["dictionary_entries"] = []
-                        
-                        if not isinstance(sentence_translation_result["dictionary_entries"], list):
-                            try:
-                                parsed = json.loads(sentence_translation_result["dictionary_entries"])
-                                if isinstance(parsed, list):
-                                    sentence_translation_result["dictionary_entries"] = parsed
-                                else:
-                                    sentence_translation_result["dictionary_entries"] = []
-                            except:
-                                sentence_translation_result["dictionary_entries"] = []
-                        
-                        if isinstance(sentence_translation_result["dictionary_entries"], list):
-                            existing_words_lower = {e.get("word", "").lower() for e in sentence_translation_result["dictionary_entries"] if isinstance(e, dict)}
-                            for entry in remaining_entries:
-                                if isinstance(entry, dict) and "word" in entry:
-                                    if entry["word"].lower() not in existing_words_lower:
-                                        sentence_translation_result["dictionary_entries"].append(entry)
-                                        existing_words_lower.add(entry["word"].lower())
-                    
                     if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
                         translation_text_lower = []
                         for token in sentence_translation_result["translation"]:
@@ -556,25 +487,17 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                 translation_text_lower.append(token["text"].lower())
                         
                         for entry in remaining_entries:
-                            if isinstance(entry, dict) and "word" in entry:
-                                word = entry["word"]
+                            if isinstance(entry, dict) and "text" in entry:
+                                word = entry["text"]
                                 if word.lower() not in translation_text_lower:
-                                    sentence_translation_result["translation"].append({
-                                        "text": word,
-                                        "translation": entry.get("translation", ""),
-                                        "phonetic": entry.get("ipa", ""),
-                                        "morphology": entry.get("morphology", "")
-                                    })
+                                    sentence_translation_result["translation"].append(entry)
                                     translation_text_lower.append(word.lower())
                     
                     print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
             
-            sentence_translation_result = fix_translation_dict_consistency(
-                sentence_translation_result, source_lang
-            )
-            
             sentence_data = {
                 "sentence": sentence,
+                "source_lang": source_lang,
                 "translation_result": sentence_translation_result
             }
             t_sentence_end = time.time()
@@ -603,19 +526,19 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             partial_vocab = []
             for si, sd in enumerate(all_completed_translations):
                 tr = sd.get("translation_result", {})
-                if isinstance(tr, dict) and "dictionary_entries" in tr:
-                    de = tr["dictionary_entries"]
-                    if isinstance(de, str):
-                        try:
-                            de = json.loads(de)
-                        except:
-                            continue
-                    if isinstance(de, list):
-                        for entry in de:
-                            if isinstance(entry, dict):
-                                entry_copy = dict(entry)
-                                entry_copy["sentence_index"] = si
-                                partial_vocab.append(entry_copy)
+                if isinstance(tr, dict) and "translation" in tr:
+                    for token in tr["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            entry = {
+                                "word": token["text"],
+                                "ipa": token.get("phonetic", ""),
+                                "context_meaning": token.get("context_meaning", ""),
+                                "translation": token.get("translation", ""),
+                                "tokens": [token["text"]],
+                                "morphology": token.get("morphology", ""),
+                                "sentence_index": si
+                            }
+                            partial_vocab.append(entry)
             
             seen = set()
             unique_partial = []
@@ -642,21 +565,22 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         all_vocab = []
         for i, sentence_data in enumerate(sentence_translations):
             translation_result = sentence_data.get("translation_result", {})
-            if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
-                dictionary_entries = translation_result["dictionary_entries"]
-                if isinstance(dictionary_entries, str):
-                    try:
-                        dictionary_entries = json.loads(dictionary_entries)
-                    except:
-                        continue
-                if isinstance(dictionary_entries, list):
-                    for dict_entry in dictionary_entries:
-                        if isinstance(dict_entry, dict):
-                            word = dict_entry.get("word", "")
-                            if not word or is_punctuation_only(word):
-                                continue
-                            dict_entry["sentence_index"] = i
-                            all_vocab.append(dict_entry)
+            if isinstance(translation_result, dict) and "translation" in translation_result:
+                for token in translation_result["translation"]:
+                    if isinstance(token, dict) and "text" in token:
+                        word = token["text"]
+                        if not word or is_punctuation_only(word):
+                            continue
+                        entry = {
+                            "word": word,
+                            "ipa": token.get("phonetic", ""),
+                            "context_meaning": token.get("context_meaning", ""),
+                            "translation": token.get("translation", ""),
+                            "tokens": [word],
+                            "morphology": token.get("morphology", ""),
+                            "sentence_index": i
+                        }
+                        all_vocab.append(entry)
         
         seen = set()
         unique_vocab = []
@@ -896,7 +820,10 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
             continue
         
         sentence = sentence_data["sentence"]
-        word_count = len(sentence.split())
+        if source_lang in NO_SPACE_LANGUAGES:
+            word_count = len(sentence.replace(' ', ''))
+        else:
+            word_count = len(sentence.split())
         if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
             continue
         
@@ -1928,14 +1855,20 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
 async def get_word_details(file_id: str, word: str):
     try:
         print(f"[DEBUG] 获取单词详情: {word}")
+        language_settings = storage.load_language_settings(file_id)
+        source_lang = language_settings.get("source_lang", "en")
+        target_lang = language_settings["target_lang"]
+        
         # 先检查缓存
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
+            cached_word = fix_llm_options_result(cached_word, source_lang, file_id)
             mc = cached_word.get("multiple_choice", {})
             mc_options = []
+            placeholder_check = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
             if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o and not placeholder_check.match(o["text"].strip())]
             if not mc_options:
                 print(f"[DEBUG] 缓存中 MC 选项为空或无效，清除缓存重新生成: {word}")
                 storage.delete_word_cache(file_id, word)
@@ -2011,7 +1944,6 @@ async def get_word_details(file_id: str, word: str):
         context_sentences = []
         context_sentences_with_translations = []
         if sentences:
-            import re
             word_pattern = re.compile(r'\b' + re.escape(word_data["word"]) + r'\b', re.IGNORECASE)
             
             for sent_idx, sentence_data in enumerate(sentences):
@@ -2033,11 +1965,6 @@ async def get_word_details(file_id: str, word: str):
             
             if not context and sentences:
                 context = sentences[0].get("sentence", "")
-
-        # 加载语言设置
-        language_settings = storage.load_language_settings(file_id)
-        target_lang = language_settings["target_lang"]
-        source_lang = language_settings.get("source_lang", "en")
 
         correct_meaning = word_data.get("context_meaning", "")
 
@@ -2298,7 +2225,10 @@ async def check_coverage(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 
-                word_count = len(sentence.split())
+                if source_lang in NO_SPACE_LANGUAGES:
+                    word_count = len(sentence.replace(' ', ''))
+                else:
+                    word_count = len(sentence.split())
                 if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
                     continue
                 
@@ -2810,7 +2740,10 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             total_exercises_in_unit = exercise_end - exercise_start
             
             if type_idx < 3:
-                word_count = len(current_sentence.split())
+                if source_lang in NO_SPACE_LANGUAGES:
+                    word_count = len(current_sentence.replace(' ', ''))
+                else:
+                    word_count = len(current_sentence.split())
                 if word_count < 3:
                     type_idx = 3
             
@@ -2847,28 +2780,6 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                             token_text = strip_edge_punctuation(token["text"].strip())
                             if token_text and not is_punctuation_only(token_text):
                                 original_tokens.append(token_text)
-                
-                if not original_tokens:
-                    dict_entries = translation_result.get("dictionary_entries", [])
-                    if dict_entries and isinstance(dict_entries, list):
-                        all_dict_tokens = []
-                        for entry in dict_entries:
-                            if isinstance(entry, dict):
-                                for t in entry.get("tokens", []):
-                                    if isinstance(t, str) and t.strip():
-                                        all_dict_tokens.append(t.strip())
-                        
-                        if all_dict_tokens:
-                            seen = set()
-                            unique_tokens = []
-                            for t in all_dict_tokens:
-                                if t.lower() not in seen and not is_punctuation_only(t):
-                                    seen.add(t.lower())
-                                    unique_tokens.append(t)
-                            
-                            sentence_lower = current_sentence.lower()
-                            unique_tokens.sort(key=lambda tok: sentence_lower.find(tok.lower()) if sentence_lower.find(tok.lower()) >= 0 else len(sentence_lower))
-                            original_tokens = unique_tokens
                 
                 if not original_tokens:
                     original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)

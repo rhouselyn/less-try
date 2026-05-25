@@ -481,8 +481,74 @@ class TextProcessor:
         # 返回处理后的结果，保留LLM生成的自然翻译
         return result
     
+    def _normalize_text_for_compare(self, text):
+        import re
+        return re.sub(r'[\s\u3000]+', '', re.sub(r'[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]', '', text)).lower()
+
     def validate_and_complete_translation(self, sentence: str, translation_result: dict, source_lang: str) -> dict:
         if not isinstance(translation_result, dict) or 'translation' not in translation_result:
+            return translation_result
+        
+        existing_tokens = []
+        if 'translation' in translation_result:
+            for token in translation_result['translation']:
+                if isinstance(token, dict) and 'text' in token:
+                    token_text = token['text']
+                    if is_punctuation_only(token_text):
+                        continue
+                    cleaned = strip_edge_punctuation(token_text)
+                    if cleaned != token_text:
+                        token['text'] = cleaned
+                    if cleaned:
+                        existing_tokens.append(token)
+        
+        if not existing_tokens:
+            original_words = self.tokenize_sentence(sentence, language=source_lang)
+            cleaned_original = []
+            for w in original_words:
+                if is_punctuation_only(w):
+                    continue
+                cw = strip_edge_punctuation(w)
+                if cw:
+                    cleaned_original.append(cw)
+            translation_result['translation'] = [
+                {'text': w, 'translation': '', 'phonetic': '', 'morphology': '', 'context_meaning': ''}
+                for w in cleaned_original
+            ]
+            return translation_result
+        
+        sentence_normalized = self._normalize_text_for_compare(sentence)
+        tokens_normalized = self._normalize_text_for_compare(''.join(t['text'] for t in existing_tokens))
+        
+        if source_lang in NO_SPACE_LANGUAGES:
+            if tokens_normalized == sentence_normalized:
+                deduped = self._dedup_tokens(existing_tokens, sentence_normalized)
+                translation_result['translation'] = deduped
+                return translation_result
+            
+            if tokens_normalized and sentence_normalized.startswith(tokens_normalized):
+                remaining = sentence[len(''.join(t['text'] for t in existing_tokens)):]
+                remaining = remaining.strip()
+                if remaining:
+                    import re
+                    remaining_clean = re.sub(r'[^\w]+', '', remaining)
+                    if remaining_clean:
+                        existing_tokens.append({
+                            'text': remaining_clean,
+                            'translation': '',
+                            'phonetic': '',
+                            'morphology': '',
+                            'context_meaning': ''
+                        })
+                translation_result['translation'] = existing_tokens
+                return translation_result
+            
+            if len(tokens_normalized) > len(sentence_normalized):
+                deduped = self._dedup_tokens(existing_tokens, sentence_normalized)
+                translation_result['translation'] = deduped
+                return translation_result
+            
+            translation_result['translation'] = existing_tokens
             return translation_result
         
         original_words = self.tokenize_sentence(sentence, language=source_lang)
@@ -495,25 +561,12 @@ class TextProcessor:
                 cleaned_original.append(cw)
         original_words = cleaned_original
         
-        existing_tokens = []
-        if 'translation' in translation_result:
-            for token in translation_result['translation']:
-                if isinstance(token, dict) and 'text' in token:
-                    token_text = token['text']
-                    if is_punctuation_only(token_text):
-                        continue
-                    cleaned = strip_edge_punctuation(token_text)
-                    if cleaned != token_text:
-                        token['text'] = cleaned
-                    existing_tokens.append(token)
-        
-        seen_cleaned = {}
-        deduped_tokens = []
         original_word_counts = {}
         for w in original_words:
             key = w.lower()
             original_word_counts[key] = original_word_counts.get(key, 0) + 1
         
+        deduped_tokens = []
         token_seen_counts = {}
         for token in existing_tokens:
             key = token['text'].lower()
@@ -523,26 +576,13 @@ class TextProcessor:
                 token_seen_counts[key] = current + 1
                 deduped_tokens.append(token)
             else:
-                if key in seen_cleaned:
-                    prev = seen_cleaned[key]
-                    for field in ('translation', 'phonetic', 'morphology'):
-                        if not prev.get(field) and token.get(field):
-                            prev[field] = token[field]
-                else:
-                    for prev in deduped_tokens:
-                        if prev['text'].lower() == key:
-                            for field in ('translation', 'phonetic', 'morphology'):
-                                if not prev.get(field) and token.get(field):
-                                    prev[field] = token[field]
-                            break
+                for prev in deduped_tokens:
+                    if prev['text'].lower() == key:
+                        for field in ('translation', 'phonetic', 'morphology', 'context_meaning'):
+                            if not prev.get(field) and token.get(field):
+                                prev[field] = token[field]
+                        break
         existing_tokens = deduped_tokens
-        
-        if not existing_tokens:
-            translation_result['translation'] = [
-                {'text': w, 'translation': '', 'phonetic': '', 'morphology': ''}
-                for w in original_words
-            ]
-            return translation_result
         
         existing_text_joined = ''.join(t['text'] for t in existing_tokens).lower()
         original_joined = ''.join(original_words).lower()
@@ -571,6 +611,7 @@ class TextProcessor:
                                 'translation': '；'.join(t.get('translation', '') for t in combined_tokens if t.get('translation')),
                                 'phonetic': combined_tokens[0].get('phonetic', ''),
                                 'morphology': '；'.join(t.get('morphology', '') for t in combined_tokens if t.get('morphology')),
+                                'context_meaning': '；'.join(t.get('context_meaning', '') for t in combined_tokens if t.get('context_meaning')),
                             })
                         tok_idx += 1
                         break
@@ -614,11 +655,32 @@ class TextProcessor:
                     'text': orig_word,
                     'translation': '',
                     'phonetic': '',
-                    'morphology': ''
+                    'morphology': '',
+                    'context_meaning': ''
                 })
         
         translation_result['translation'] = completed_translation
         return translation_result
+    
+    def _dedup_tokens(self, tokens, sentence_normalized):
+        deduped = []
+        seen_keys = {}
+        for token in tokens:
+            key = token['text'].lower()
+            if key not in seen_keys:
+                seen_keys[key] = token
+                deduped.append(token)
+            else:
+                prev = seen_keys[key]
+                for field in ('translation', 'phonetic', 'morphology', 'context_meaning'):
+                    if not prev.get(field) and token.get(field):
+                        prev[field] = token[field]
+        
+        deduped_normalized = self._normalize_text_for_compare(''.join(t['text'] for t in deduped))
+        if deduped_normalized == sentence_normalized:
+            return deduped
+        
+        return tokens
 
     def tokenize_sentence(self, sentence: str, language: str = "en") -> List[str]:
         if language in NO_SPACE_LANGUAGES:
@@ -853,109 +915,3 @@ class TextProcessor:
         return distractors
 
 
-def fix_translation_dict_consistency(translation_result, source_lang):
-    if not isinstance(translation_result, dict):
-        return translation_result
-
-    translation = translation_result.get("translation", [])
-    dict_entries = translation_result.get("dictionary_entries", [])
-
-    if not translation or not dict_entries:
-        return translation_result
-
-    if not isinstance(dict_entries, list):
-        return translation_result
-
-    combined_entries = {}
-    for entry in dict_entries:
-        if not isinstance(entry, dict):
-            continue
-        word = entry.get("word", "")
-        tokens = entry.get("tokens", [])
-        if len(word) > 1 and isinstance(tokens, list) and tokens == [word]:
-            translation_texts = set()
-            for t in translation:
-                if isinstance(t, dict) and "text" in t:
-                    translation_texts.add(t["text"])
-            if word not in translation_texts:
-                combined_entries[word] = entry
-
-    if not combined_entries:
-        return translation_result
-
-    print(f"[DEBUG] fix_translation_dict_consistency: Found {len(combined_entries)} combined dict entries not in translation: {list(combined_entries.keys())}")
-
-    sorted_combined = sorted(combined_entries.keys(), key=len, reverse=True)
-
-    merged_translation = []
-    i = 0
-    while i < len(translation):
-        token = translation[i]
-        if not isinstance(token, dict) or "text" not in token:
-            merged_translation.append(token)
-            i += 1
-            continue
-
-        matched = False
-        for combined_word in sorted_combined:
-            combined_entry = combined_entries[combined_word]
-            combined_len = len(combined_word)
-            candidate = ""
-            j = i
-            while j < len(translation) and len(candidate) < combined_len:
-                t = translation[j]
-                if isinstance(t, dict) and "text" in t:
-                    next_text = t["text"]
-                    if candidate + next_text == combined_word[:len(candidate) + len(next_text)]:
-                        candidate += next_text
-                        j += 1
-                    else:
-                        break
-                else:
-                    break
-
-            if candidate == combined_word:
-                merged_token = {
-                    "text": combined_word,
-                    "translation": combined_entry.get("translation", ""),
-                    "phonetic": combined_entry.get("ipa", ""),
-                    "morphology": combined_entry.get("morphology", "")
-                }
-                merged_translation.append(merged_token)
-                i = j
-                matched = True
-                break
-
-        if not matched:
-            merged_translation.append(token)
-            i += 1
-
-    translation_result["translation"] = merged_translation
-
-    merged_texts = set()
-    for token in merged_translation:
-        if isinstance(token, dict) and "text" in token:
-            merged_texts.add(token["text"])
-
-    covered_substrings = set()
-    for combined_word in combined_entries:
-        if combined_word in merged_texts:
-            for ch in combined_word:
-                covered_substrings.add(ch)
-
-    filtered_entries = []
-    for entry in dict_entries:
-        if not isinstance(entry, dict):
-            filtered_entries.append(entry)
-            continue
-        word = entry.get("word", "")
-        if word in merged_texts:
-            filtered_entries.append(entry)
-        elif len(word) == 1 and word in covered_substrings:
-            continue
-        else:
-            filtered_entries.append(entry)
-
-    translation_result["dictionary_entries"] = filtered_entries
-
-    return translation_result

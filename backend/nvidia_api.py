@@ -317,7 +317,7 @@ class NvidiaAPI:
                                     "items": {
                                         "type": "object",
                                         "properties": {
-                                            "text": {"type": "string"},
+                                            "text": {"type": "string", "description": "A concrete, meaningful translation or definition. MUST NOT be a placeholder like 'meaning 1', '释义1', '含义1', etc."},
                                             "is_correct": {"type": "boolean"}
                                         }
                                     },
@@ -443,9 +443,10 @@ class NvidiaAPI:
                                     "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). Punctuation does NOT belong to any token — it is completely discarded. Hyphens(-) and apostrophes(') must be preserved if they are internal parts of a word in that language. TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) must be one token. (4) After removing punctuation from all 'text' values, their concatenation in order MUST equal the original source text with punctuation removed — no characters may be omitted or added. Each character belongs to exactly ONE token; no overlap, no duplication. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
                                     "translation": {"type": "string"},
                                     "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
-                                    "morphology": {"type": "string"}
+                                    "morphology": {"type": "string"},
+                                    "context_meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - just a few independent words, not a full sentence explanation"}
                                 },
-                                "required": ["text", "translation", "phonetic", "morphology"]
+                                "required": ["text", "translation", "phonetic", "morphology", "context_meaning"]
                             }
                         },
                         "tokenized_translation": {
@@ -465,36 +466,11 @@ class NvidiaAPI:
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组"
-                        },
-                        "dictionary_entries": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "word": {"type": "string", "description": "The word or phrase. Fixed collocations must be kept as one entry (e.g. 'what's up', 'run out of')"},
-                                    "ipa": {"type": "string", "description": "Pronunciation. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system. For tonal languages, include tone information."},
-                                    "context_meaning": {"type": "string"},
-                                    "translation": {"type": "string"},
-                                    "tokens": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list must contain only the word itself (e.g. 'brightly' -> ['brightly']). Non-compositional words must have tokens containing only themselves (e.g. a compound word whose meaning ≠ sum of parts must NOT be split into sub-components). Do NOT split single words into morphemes, characters, or syllables."
-                                    },
-                                    "morphology": {
-                                        "type": "string",
-                                        "description": "词性缩写，如 n, v, adj 等"
-                                    }
-                                },
-                                "required": [
-                                    "word", "ipa", "context_meaning",
-                                    "translation", "tokens", "morphology"
-                                ]
-                            }
                         }
                     },
                     "required": [
                         "original", "translation", "tokenized_translation", "translation_phrases",
-                        "grammar_explanation", "redundant_tokens", "dictionary_entries"
+                        "grammar_explanation", "redundant_tokens"
                     ]
                 }
             }
@@ -545,30 +521,11 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
   - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
   - phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
   - morphology: 只能是词性缩写（如 n, v, adj）
+  - context_meaning: 基于上下文的 TARGET_LANG 释义，只需几个独立的词，不需要用完整句子解释
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
-
-同时，为文本中出现的词汇生成完整词典条目（dictionary_entries）：
-
-【极其重要！！！dictionary_entries的规则！！！】
-- 【核心原则】dictionary_entries 的分词粒度必须与 translation 数组完全一致！translation 中的每个 token 必须在 dictionary_entries 中有且仅有一个对应的条目，该条目的 word 和 tokens 必须与 translation 中的 text 一致。绝不允许 translation 中有一个合并 token（如某多字符词）而 dictionary_entries 中却将其拆成多个子条目，反之亦然。
-- 每个条目必须是一个完整的词——即原文中连续出现的、能独立使用或能在词典中查到的最小意义单位。遵循该语言的自然词边界
-- 变位/活用/屈折形式视为单个词，不要拆分为词干+词缀。词的形态变化信息应放在 morphology 字段，不要通过拆分 tokens 来表达
-- 只有真正的不可拆分的固定搭配才作为单个条目
-- 【非组合性原则】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加，则必须作为单个条目，不能拆分。这是所有语言的通用原则。
-- 每个条目的 tokens 字段列出该条目包含的原文单词（如固定搭配 word="what's up" 则 tokens=["what's", "up"]）。单个词的 tokens 只包含自身。遵循该语言自然词边界的词，tokens 只包含自身
-- 【极其重要】文本中的每一个单词都必须被某个条目的 tokens 覆盖，一个都不能遗漏！
-- 【绝对禁止】将一个完整的词拆分成字符、音节或语素作为单独的条目！
-
-为每个条目提供：
-1. word: The word or phrase itself
-2. ipa: 发音标注。使用该语言最常用、最被广泛认可的注音系统
-3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
-4. translation: Translation of the word to TARGET_LANG
-5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词。单个词的 tokens 只包含自身。变位/活用形式也是单个词，tokens 只包含其自身，不要拆分为词干+词缀、字符或音节！
-6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
@@ -618,14 +575,6 @@ TEXT_CONTENT
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    if "dictionary_entries" in args:
-                        de = args["dictionary_entries"]
-                        if isinstance(de, str):
-                            repaired = _repair_truncated_json(de)
-                            args["dictionary_entries"] = repaired
-                            print(f"[DEBUG] process_text_with_dictionary: repaired dictionary_entries from string, got {len(repaired)} entries")
-                        elif isinstance(de, list) and de and not isinstance(de[0], dict):
-                            args["dictionary_entries"] = []
                     if "translation" in args and isinstance(args["translation"], str):
                         repaired_tr = _repair_truncated_json(args["translation"])
                         args["translation"] = repaired_tr if isinstance(repaired_tr, list) else []
@@ -643,56 +592,48 @@ TEXT_CONTENT
         tool_def = {
             "type": "function",
             "function": {
-                "name": "generate_remaining_dictionary_entries",
-                "description": "为遗漏的单词生成词典条目",
+                "name": "generate_remaining_words",
+                "description": "为遗漏的单词生成词信息",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "dictionary_entries": {
+                        "words": {
                             "type": "array",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "word": {"type": "string"},
-                                    "ipa": {"type": "string", "description": "Pronunciation. Use the most commonly used and widely recognized pronunciation notation for the source language. For tonal languages, include tone information."},
-                                    "context_meaning": {"type": "string"},
+                                    "text": {"type": "string"},
                                     "translation": {"type": "string"},
-                                    "tokens": {
-                                        "type": "array",
-                                        "items": {"type": "string"}
-                                    },
-                                    "morphology": {
-                                        "type": "string",
-                                        "description": "词性缩写，如 n, v, adj 等"
-                                    }
+                                    "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
+                                    "morphology": {"type": "string"},
+                                    "context_meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - just a few independent words, not a full sentence explanation"}
                                 },
                                 "required": [
-                                    "word", "ipa", "context_meaning",
-                                    "translation", "tokens", "morphology"
+                                    "text", "translation", "phonetic",
+                                    "morphology", "context_meaning"
                                 ]
                             }
                         }
                     },
-                    "required": ["dictionary_entries"]
+                    "required": ["words"]
                 }
             }
         }
 
         words_str = ", ".join(words)
         target_lang_name = get_lang_name(target_lang)
-        prompt = f"""以下单词在之前的处理中被遗漏了，请为它们生成完整的词典条目，使用 {target_lang_name} 输出。
+        prompt = f"""以下单词在之前的处理中被遗漏了，请为它们生成词信息，使用 {target_lang_name} 输出。
 
 遗漏的单词：{words_str}
 
 上下文句子：{context}
 
 请为每个单词提供：
-1. word: 单词本身
-2. ipa: 发音标注。使用该语言最常用、最被广泛认可的注音系统
-3. context_meaning: 基于上下文的 {target_lang_name} 释义
-4. translation: {target_lang_name} 翻译
-5. tokens: 分词结果
-6. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
+1. text: 单词本身
+2. translation: {target_lang_name} 翻译
+3. phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
+4. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
+5. context_meaning: 基于上下文的 {target_lang_name} 释义，只需几个独立的词，不需要用完整句子解释
 
 【重要】必须为每一个遗漏的单词都生成条目，不要遗漏任何一个！
 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。"""
@@ -706,12 +647,12 @@ TEXT_CONTENT
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    entries = args.get("dictionary_entries", [])
+                    entries = args.get("words", [])
                     if isinstance(entries, str):
                         entries = _repair_truncated_json(entries)
                     if not isinstance(entries, list):
                         entries = []
-                    valid_entries = [e for e in entries if isinstance(e, dict) and "word" in e]
+                    valid_entries = [e for e in entries if isinstance(e, dict) and "text" in e]
                     print(f"[DEBUG] process_remaining_words returned {len(valid_entries)} valid entries")
                     return valid_entries
             return []
