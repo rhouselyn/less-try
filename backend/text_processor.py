@@ -448,16 +448,7 @@ class TextProcessor:
                 for token in result['translation']:
                     if isinstance(token, dict) and 'text' in token:
                         token_text = token['text'].strip()
-                        if not token_text or is_punctuation_only(token_text):
-                            continue
-                        cleaned = token_text
-                        while cleaned and is_punctuation_only(cleaned[-1]):
-                            cleaned = cleaned[:-1]
-                        while cleaned and is_punctuation_only(cleaned[0]):
-                            cleaned = cleaned[1:]
-                        if cleaned:
-                            if cleaned != token_text:
-                                token['text'] = cleaned
+                        if token_text and not is_punctuation_only(token_text):
                             filtered_translation.append(token)
                 result['translation'] = filtered_translation
         
@@ -469,33 +460,12 @@ class TextProcessor:
             return translation_result
         
         original_words = self.tokenize_sentence(sentence, language=source_lang)
-        cleaned_original = []
-        for w in original_words:
-            if is_punctuation_only(w):
-                continue
-            cw = w
-            while cw and is_punctuation_only(cw[-1]):
-                cw = cw[:-1]
-            while cw and is_punctuation_only(cw[0]):
-                cw = cw[1:]
-            if cw:
-                cleaned_original.append(cw)
-        original_words = cleaned_original
+        original_words = [w for w in original_words if not is_punctuation_only(w)]
         
         existing_tokens = []
         if 'translation' in translation_result:
             for token in translation_result['translation']:
                 if isinstance(token, dict) and 'text' in token:
-                    token_text = token['text']
-                    if is_punctuation_only(token_text):
-                        continue
-                    cleaned = token_text
-                    while cleaned and is_punctuation_only(cleaned[-1]):
-                        cleaned = cleaned[:-1]
-                    while cleaned and is_punctuation_only(cleaned[0]):
-                        cleaned = cleaned[1:]
-                    if cleaned != token_text:
-                        token['text'] = cleaned
                     existing_tokens.append(token)
         
         if not existing_tokens:

@@ -366,7 +366,7 @@ class NvidiaAPI:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "text": {"type": "string", "description": "A single word from the source text. Rules: (1) NEVER include punctuation — tokens like '!', '?', '.', ',', '。', '！' are FORBIDDEN as text values. (2) Each entry must be one complete word: the smallest meaningful unit usable independently or findable in a dictionary. (3) Hyphenated words (e.g. 'allez-vous', 'self-esteem') are ONE word, do NOT split them. (4) Inflected/conjugated forms count as single words (e.g. 'studying' is one word, NOT 'study'+'ing'). (5) Clitic-attached forms (e.g. French 'l'homme', 'j'ai', 'c'est') are ONE entry each. (6) Respect natural word boundaries of the language. (7) NEVER split a word into characters, syllables, morphemes, or stem+affix. (8) Punctuation in the source text is simply SKIPPED — do not create entries for punctuation marks."},
+                                    "text": {"type": "string", "description": "A single word from the source text (no punctuation). Each entry must be one complete word — a contiguous sequence in the source text that is the smallest meaningful unit usable independently or findable in a dictionary. Inflected/conjugated forms count as single words (e.g. 'studying' is one word, NOT 'study'+'ing'; 'ran' is one word, NOT 'run'+'ed'). If multiple words appear consecutively and each can be used independently, they must be separate entries. Respect natural word boundaries. CRITICAL: all 'text' values concatenated in order must equal the original source text (ignoring punctuation). NEVER split a word into characters, syllables, morphemes, or stem+affix."},
                                     "translation": {"type": "string"},
                                     "phonetic": {"type": "string"},
                                     "morphology": {"type": "string"}
@@ -404,7 +404,7 @@ class NvidiaAPI:
                                     "tokens": {
                                         "type": "array",
                                         "items": {"type": "string"},
-                                        "description": "Component words of this entry. Rules: (1) NEVER include punctuation marks as tokens. (2) For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). (3) For single words, the tokens list should contain only the word itself (e.g. 'brightly' -> ['brightly'], 'studying' -> ['studying'], 'mountains' -> ['mountains']). (4) Hyphenated words (e.g. 'allez-vous') have tokens containing the whole hyphenated form: ['allez-vous']. (5) Inflected/conjugated forms are also single words — tokens must contain the whole form (e.g. 'ran' -> ['ran']), NOT stem+affix. Do NOT split single words into morphemes, characters, or syllables."
+                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list should contain only the word itself (e.g. 'brightly' -> ['brightly'], 'studying' -> ['studying'], 'mountains' -> ['mountains']). Inflected/conjugated forms are also single words — tokens must contain the whole form (e.g. 'ran' -> ['ran']), NOT stem+affix. Do NOT split single words into morphemes, characters, or syllables."
                                     },
                                     "morphology": {
                                         "type": "string",
@@ -451,14 +451,12 @@ class NvidiaAPI:
 按照以下结构处理文本：
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
-  - text: 原文中的一个词。【极其重要·分词粒度规则】：
-    * 【绝对禁止】生成纯标点符号的条目！'!', '?', '.', ',', '。', '！', '？', '،', '؟', '।' 等标点符号绝不能作为 text 的值！标点直接跳过，不创建条目
-    * 【绝对禁止】text 值不能以标点开头或结尾！如 'beau.' 是错误的，必须是 'beau'；'Привет!' 是错误的，必须是 'Привет'
+  - text: 原文中的一个词（不带标点）。【极其重要·分词粒度规则】：
     * 每个条目必须是原文中一个完整的词——即原文中连续出现的、能独立使用或能在词典中查到的最小意义单位
-    * 连字符连接的词视为单个词（如法语 'allez-vous' 是一个词，不是 'allez' + '-vous'；英语 'self-esteem' 是一个词）
-    * 缩写/省音形式视为单个词（如法语 "l'homme" 是一个条目，"j'ai" 是一个条目，"c'est" 是一个条目）
     * 变位/活用/屈折形式视为单个词，不要拆分为词干+词缀（如 studying 是一个词不是 study+ing，ran 是一个词不是 run+ed）
+    * 如果多个词在原文中连续出现且每个都能独立使用，必须各自作为独立条目，不能合并为一个条目
     * 尊重该语言的自然词边界：如果语言用空格分隔词语，就按空格分词；如果语言不用空格，就按语言学上的词边界分词
+    * 【极其重要】所有条目的 text 按顺序拼接后必须等于原文内容（去除标点差异后），不能遗漏或增加内容
     * 【绝对禁止】将一个完整的词拆分成字符、音节或语素！一个词就是一个条目，不能更小
   - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
   - phonetic: 音标(IPA)（如果该语言没有标准音标，可为空）
@@ -476,10 +474,6 @@ class NvidiaAPI:
 同时，为文本中出现的词汇生成完整词典条目（dictionary_entries）：
 
 【极其重要！！！dictionary_entries的分组规则！！！】
-- 【绝对禁止】生成纯标点符号的条目！'!', '?', '.', ',', '。', '！', '؟', '।' 等标点符号绝不能作为 word 或 tokens 的值
-- 【绝对禁止】word 值不能以标点开头或结尾！如 'beau.' 是错误的，必须是 'beau'；'Привет!' 是错误的，必须是 'Привет'
-- 连字符连接的词视为单个词（如法语 'allez-vous' 是一个条目，不是 'allez' 和 '-vous' 两个条目）
-- 缩写/省音形式视为单个词（如法语 "l'homme" 是一个条目，"j'ai" 是一个条目，"c'est" 是一个条目）
 - 【优先拆分原则】当一个词组可以被拆分为多个独立单词时，必须拆分为独立条目，不要作为整体！例如 "頑張ってください" 必须拆成 "頑張って" 和 "ください" 两个条目，不能作为一个整体条目
 - 每个条目必须是一个完整的词——即原文中连续出现的、能独立使用或能在词典中查到的最小意义单位。尊重该语言的自然词边界
 - 变位/活用/屈折形式视为单个词，不要拆分为词干+词缀（如 studying 是一个词不是 study+ing，ran 是一个词不是 run+ed）。词的形态变化信息应放在 morphology 字段，不要通过拆分 tokens 来表达
@@ -495,7 +489,7 @@ class NvidiaAPI:
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. translation: Translation of the word to TARGET_LANG
-5. tokens: 列出词条包含的原文单词。【绝对禁止】tokens 中不能包含标点符号！固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。连字符词的 tokens 包含整个连字符形式（如 "allez-vous" -> ["allez-vous"]）。单个词的 tokens 只包含自身（如 "brightly" -> ["brightly"], "studying" -> ["studying"], "mountains" -> ["mountains"]）。变位/活用形式也是单个词，tokens 只包含其自身（如 "ran" -> ["ran"]），不要拆分为词干+词缀、字符或音节！
+5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。单个词的 tokens 只包含自身（如 "brightly" -> ["brightly"], "studying" -> ["studying"], "mountains" -> ["mountains"]）。变位/活用形式也是单个词，tokens 只包含其自身（如 "ran" -> ["ran"]），不要拆分为词干+词缀、字符或音节！
 6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】

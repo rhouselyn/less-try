@@ -2729,13 +2729,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                         if isinstance(entry, dict):
                             for t in entry.get("tokens", []):
                                 if isinstance(t, str) and t.strip():
-                                    ct = t.strip()
-                                    while ct and is_punctuation_only(ct[-1]):
-                                        ct = ct[:-1]
-                                    while ct and is_punctuation_only(ct[0]):
-                                        ct = ct[1:]
-                                    if ct and not is_punctuation_only(ct):
-                                        all_dict_tokens.append(ct)
+                                    all_dict_tokens.append(t.strip())
                     
                     if all_dict_tokens:
                         seen = set()
@@ -2752,31 +2746,11 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 if not original_tokens and "translation" in translation_result:
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
-                            token_text = token["text"]
-                            if token_text.strip() and not is_punctuation_only(token_text):
-                                cleaned = token_text
-                                while cleaned and is_punctuation_only(cleaned[-1]):
-                                    cleaned = cleaned[:-1]
-                                while cleaned and is_punctuation_only(cleaned[0]):
-                                    cleaned = cleaned[1:]
-                                if cleaned:
-                                    original_tokens.append(cleaned)
+                            if token["text"].strip() and not is_punctuation_only(token["text"]):
+                                original_tokens.append(token["text"])
                 
                 if not original_tokens:
                     original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)
-                
-                cleaned_tokens = []
-                for t in original_tokens:
-                    if is_punctuation_only(t):
-                        continue
-                    ct = t
-                    while ct and is_punctuation_only(ct[-1]):
-                        ct = ct[:-1]
-                    while ct and is_punctuation_only(ct[0]):
-                        ct = ct[1:]
-                    if ct:
-                        cleaned_tokens.append(ct)
-                original_tokens = cleaned_tokens
                 
                 import random
                 distractors = []
