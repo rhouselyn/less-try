@@ -112,7 +112,7 @@ function App() {
   }
   
   // 获取当前语言的翻译
-  const t = translations[sourceLang] || translations.zh;
+  const t = translations[targetLang] || translations.zh;
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -1317,7 +1317,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} sourceLang={sourceLang} onSourceLangChange={setSourceLang} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} t={t} />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="确认退出"

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages } from 'lucide-react'
 import { api } from '../utils/api'
 
-function SettingsModal({ isOpen, onClose, sourceLang, onSourceLangChange, t }) {
+function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
   const [apiKey, setApiKey] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [model, setModel] = useState('')
@@ -13,7 +13,7 @@ function SettingsModal({ isOpen, onClose, sourceLang, onSourceLangChange, t }) {
   const [loading, setLoading] = useState(true)
   const [maskedKey, setMaskedKey] = useState('')
   const [rpm, setRpm] = useState(60)
-  const [localSourceLang, setLocalSourceLang] = useState(sourceLang || 'en')
+  const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
 
   useEffect(() => {
     if (isOpen) {
@@ -29,7 +29,7 @@ function SettingsModal({ isOpen, onClose, sourceLang, onSourceLangChange, t }) {
         setMaskedKey(data.api_key || '')
         setApiKey('')
         if (prefs.rpm) setRpm(prefs.rpm)
-        if (prefs.source_lang) setLocalSourceLang(prefs.source_lang)
+        if (prefs.target_lang) setLocalTargetLang(prefs.target_lang)
         setLoading(false)
       }).catch(() => setLoading(false))
     }
@@ -55,10 +55,10 @@ function SettingsModal({ isOpen, onClose, sourceLang, onSourceLangChange, t }) {
       setMaskedKey(data.api_key || '')
       setApiKey('')
 
-      await api.saveUserPreferences({ rpm, source_lang: localSourceLang })
+      await api.saveUserPreferences({ rpm, target_lang: localTargetLang })
 
-      if (onSourceLangChange && localSourceLang !== sourceLang) {
-        onSourceLangChange(localSourceLang)
+      if (onTargetLangChange && localTargetLang !== targetLang) {
+        onTargetLangChange(localTargetLang)
       }
 
       setSaved(true)
@@ -202,9 +202,9 @@ function SettingsModal({ isOpen, onClose, sourceLang, onSourceLangChange, t }) {
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => setLocalSourceLang(opt.value)}
+                      onClick={() => setLocalTargetLang(opt.value)}
                       className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                        localSourceLang === opt.value
+                        localTargetLang === opt.value
                           ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
                           : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
                       }`}
