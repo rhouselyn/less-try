@@ -124,12 +124,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const handleTokenClick = useCallback(async (sourceWord) => {
     const sourceLower = sourceWord.toLowerCase()
     const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
+    const sourceStripped = stripPunctuation(sourceLower).trim()
     const matchedWord = vocab.find(w => {
       const wordLower = w.word.toLowerCase()
       if (wordLower === sourceLower) return true
       if (wordLower === sourceNoHyphen) return true
       if (wordLower.replace(/-/g, ' ') === sourceLower) return true
-      if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      if (wordLower === sourceStripped) return true
+      if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower || t.toLowerCase() === sourceStripped)) return true
       return false
     })
 
@@ -177,15 +179,21 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     speakText(text, sourceLang)
   }, [sourceLang])
 
+  const stripPunctuation = (text) => {
+    return text.replace(/[.,!?;:…·•\-–—""''«»„""`'()\[\]{}<>\/\\@#$%^&*+=~|，。！？；：、（）【】《》「」『』¿¡،؟।॥။၊។៕៖՜՞።፣‽‼⁇⁈⁉]/g, '')
+  }
+
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
     const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
+    const sourceStripped = stripPunctuation(sourceLower).trim()
     return vocab.some(w => {
       const wordLower = w.word.toLowerCase()
       if (wordLower === sourceLower) return true
       if (wordLower === sourceNoHyphen) return true
       if (wordLower.replace(/-/g, ' ') === sourceLower) return true
-      if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      if (wordLower === sourceStripped) return true
+      if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower || t.toLowerCase() === sourceStripped)) return true
       return false
     })
   }, [vocab])
@@ -196,7 +204,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const tokens = (tr && tr.translation && Array.isArray(tr.translation)) ? tr.translation : null
 
     const tokenTexts = tokens
-      ? tokens.filter(t => typeof t === 'object' && t.text).map(t => t.text)
+      ? tokens.filter(t => typeof t === 'object' && t.text).map(t => t.text).map(t => stripPunctuation(t).trim() || t)
       : []
 
     const vocabTexts = vocab.map(w => w.word).filter(Boolean)
