@@ -83,6 +83,14 @@ function App() {
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
   useEffect(() => {
+    api.getUserPreferences().then(prefs => {
+      if (prefs.source_lang) setSourceLang(prefs.source_lang)
+      if (prefs.target_lang) setTargetLang(prefs.target_lang)
+      if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
+    }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
     if (!currentFileId) return
     if (learningSteps.includes(step)) {
       api.startWordGen(currentFileId).catch(() => {})
@@ -1309,7 +1317,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} sourceLang={sourceLang} onSourceLangChange={setSourceLang} skipListening={skipListening} onSkipListeningChange={setSkipListening} t={t} />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="确认退出"

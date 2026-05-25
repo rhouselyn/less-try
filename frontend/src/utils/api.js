@@ -165,13 +165,13 @@ export const api = {
     return response.data;
   },
 
-  getAppSettings: async () => {
-    const response = await axios.get(`${baseUrl}/api/app-settings`)
+  getUserPreferences: async () => {
+    const response = await axios.get(`${baseUrl}/api/user-preferences`)
     return response.data
   },
 
-  saveAppSettings: async (settings) => {
-    const response = await axios.post(`${baseUrl}/api/app-settings`, settings)
+  saveUserPreferences: async (prefs) => {
+    const response = await axios.post(`${baseUrl}/api/user-preferences`, prefs)
     return response.data
   },
 

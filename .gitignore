@@ -4,6 +4,8 @@
 
 # Config files with sensitive data
 backend/config/llm_settings.json
+data/llm_settings.json
+data/user_preferences.json
 
 # Data directory
 data/

@@ -3,7 +3,7 @@ import json
 import requests
 import asyncio
 from typing import List, Dict, Any
-from dotenv import load_dotenv
+from pathlib import Path
 
 
 def _repair_truncated_json(json_str):
@@ -46,41 +46,34 @@ def _repair_truncated_json(json_str):
     return []
 
 
-ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
+LLM_SETTINGS_FILE = Path("/workspace/data/llm_settings.json")
+
+_DEFAULT_LLM_SETTINGS = {
+    "api_key": "",
+    "base_url": "https://api.siliconflow.cn/v1",
+    "model": "Qwen/Qwen3.6-27B"
+}
 
 def _load_settings():
-    load_dotenv(ENV_FILE, override=True)
-    api_key = os.environ.get("NVIDIA_API_KEY", "")
-    base_url = os.environ.get("LLM_BASE_URL", "https://api.siliconflow.cn/v1")
-    model = os.environ.get("LLM_MODEL", "Qwen/Qwen3.6-27B")
-    return {
-        "api_key": api_key,
-        "base_url": base_url,
-        "model": model
-    }
+    if LLM_SETTINGS_FILE.exists():
+        try:
+            with open(LLM_SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return {
+                "api_key": data.get("api_key", _DEFAULT_LLM_SETTINGS["api_key"]),
+                "base_url": data.get("base_url", _DEFAULT_LLM_SETTINGS["base_url"]),
+                "model": data.get("model", _DEFAULT_LLM_SETTINGS["model"])
+            }
+        except (json.JSONDecodeError, IOError):
+            pass
+    return dict(_DEFAULT_LLM_SETTINGS)
 
-def _save_env_file(updates: dict):
-    env_vars = {}
-    if os.path.exists(ENV_FILE):
-        with open(ENV_FILE, "r", encoding="utf-8") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#") and "=" in line:
-                    key, _, value = line.partition("=")
-                    env_vars[key.strip()] = value.strip()
-    
-    key_mapping = {
-        "api_key": "NVIDIA_API_KEY",
-        "base_url": "LLM_BASE_URL",
-        "model": "LLM_MODEL",
-    }
-    for settings_key, env_key in key_mapping.items():
-        if settings_key in updates:
-            env_vars[env_key] = updates[settings_key]
-    
-    with open(ENV_FILE, "w", encoding="utf-8") as f:
-        for key, value in env_vars.items():
-            f.write(f"{key}={value}\n")
+def _save_settings(settings: dict):
+    LLM_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    current = _load_settings()
+    current.update(settings)
+    with open(LLM_SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(current, f, ensure_ascii=False, indent=2)
 
 def get_settings():
     return _load_settings()
@@ -93,10 +86,7 @@ def update_settings(api_key: str = None, base_url: str = None, model: str = None
         updates["base_url"] = base_url
     if model is not None:
         updates["model"] = model
-    _save_env_file(updates)
-    os.environ["NVIDIA_API_KEY"] = updates.get("api_key", os.environ.get("NVIDIA_API_KEY", ""))
-    os.environ["LLM_BASE_URL"] = updates.get("base_url", os.environ.get("LLM_BASE_URL", ""))
-    os.environ["LLM_MODEL"] = updates.get("model", os.environ.get("LLM_MODEL", ""))
+    _save_settings(updates)
     return _load_settings()
 
 
@@ -368,7 +358,7 @@ class NvidiaAPI:
                                 "properties": {
                                     "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) must be one token. (4) All 'text' values concatenated in order must equal the original source text ignoring punctuation, with no overlap — each character belongs to exactly one token. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
                                     "translation": {"type": "string"},
-                                    "phonetic": {"type": "string"},
+                                    "phonetic": {"type": "string", "description": "IPA pronunciation of this word. MUST use standard International Phonetic Alphabet symbols only. Do NOT use pinyin, romaji, or any other transliteration system. For tonal languages, include tone markers (e.g. tone numbers or diacritics). Example: Mandarin '喝' → /xɤ˥˩/ NOT /he/; Japanese '食べる' → /tabeɾɯ/ NOT /taberu/."},
                                     "morphology": {"type": "string"}
                                 },
                                 "required": ["text", "translation", "phonetic", "morphology"]
@@ -398,7 +388,7 @@ class NvidiaAPI:
                                 "type": "object",
                                 "properties": {
                                     "word": {"type": "string", "description": "The word or phrase. Fixed collocations must be kept as one entry (e.g. 'what's up', 'run out of')"},
-                                    "ipa": {"type": "string"},
+                                    "ipa": {"type": "string", "description": "IPA pronunciation. MUST use standard International Phonetic Alphabet symbols only. Do NOT use pinyin, romaji, or any other transliteration system. For tonal languages, include tone markers."},
                                     "context_meaning": {"type": "string"},
                                     "translation": {"type": "string"},
                                     "tokens": {
@@ -469,7 +459,7 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 - translation: 对象数组，每个对象包含：
   - text: 原文中的一个词（严格遵循源语言的自然词边界！）
   - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
-  - phonetic: 音标(IPA)（如果该语言没有标准音标，可为空）
+  - phonetic: 国际音标(IPA)发音。必须使用标准 IPA 符号，严禁使用拼音、罗马字或其他转写系统。声调语言需标注声调（如声调符号或数字）。正确示例：普通话"喝"→/xɤ˥˩/（不是/he/）；日语"食べる"→/tabeɾɯ/（不是/taberu/）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
@@ -490,7 +480,7 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 
 为每个条目提供：
 1. word: The word or phrase itself
-2. ipa: International Phonetic Alphabet pronunciation
+2. ipa: 国际音标(IPA)发音。必须使用标准 IPA 符号，严禁使用拼音、罗马字或其他转写系统(IPA)发音。必须使用标准 IPA 符号，严禁使用拼音、罗马字或其他转写系统
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. translation: Translation of the word to TARGET_LANG
 5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词。单个词的 tokens 只包含自身。变位/活用形式也是单个词，tokens 只包含其自身，不要拆分为词干+词缀、字符或音节！
@@ -580,7 +570,7 @@ TEXT_CONTENT
                                 "type": "object",
                                 "properties": {
                                     "word": {"type": "string"},
-                                    "ipa": {"type": "string"},
+                                    "ipa": {"type": "string", "description": "IPA pronunciation. MUST use standard International Phonetic Alphabet symbols only. Do NOT use pinyin, romaji, or any other transliteration system. For tonal languages, include tone markers."},
                                     "context_meaning": {"type": "string"},
                                     "translation": {"type": "string"},
                                     "tokens": {

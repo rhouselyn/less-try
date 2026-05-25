@@ -382,14 +382,32 @@ class Storage:
                 return True
         return False
 
-    def save_app_settings(self, settings: Dict):
-        settings_path = self.base_dir / "app_settings.json"
-        with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump(settings, f, ensure_ascii=False, indent=2)
+    def save_user_preferences(self, prefs: Dict):
+        prefs_path = self.base_dir / "user_preferences.json"
+        with open(prefs_path, 'w', encoding='utf-8') as f:
+            json.dump(prefs, f, ensure_ascii=False, indent=2)
 
-    def load_app_settings(self) -> Dict:
-        settings_path = self.base_dir / "app_settings.json"
-        if settings_path.exists():
-            with open(settings_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        return {"rpm": 60, "target_lang": "zh"}
+    def load_user_preferences(self) -> Dict:
+        prefs_path = self.base_dir / "user_preferences.json"
+        if prefs_path.exists():
+            try:
+                with open(prefs_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
+        old_path = self.base_dir / "app_settings.json"
+        if old_path.exists():
+            try:
+                with open(old_path, 'r', encoding='utf-8') as f:
+                    old_data = json.load(f)
+                migrated = {
+                    "source_lang": old_data.get("source_lang", "en"),
+                    "target_lang": old_data.get("target_lang", "zh"),
+                    "rpm": old_data.get("rpm", 60),
+                    "skip_listening": old_data.get("skip_listening", False)
+                }
+                self.save_user_preferences(migrated)
+                return migrated
+            except (json.JSONDecodeError, IOError):
+                pass
+        return {"source_lang": "en", "target_lang": "zh", "rpm": 60, "skip_listening": False}

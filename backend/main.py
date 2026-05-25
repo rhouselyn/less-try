@@ -7,15 +7,11 @@ import json
 import random
 import asyncio
 import time
-from dotenv import load_dotenv
-from pathlib import Path
 import re
 
 from nvidia_api import NvidiaAPI, get_settings, update_settings
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, fix_translation_dict_consistency
 from storage import Storage
-
-load_dotenv()
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
@@ -1144,7 +1140,7 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         now = datetime.datetime.now()
         file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
         
-        app_settings = storage.load_app_settings()
+        app_settings = storage.load_user_preferences()
         rpm = app_settings.get("rpm", 60)
         
         t_title_start = time.time()
@@ -3207,29 +3203,35 @@ async def update_llm_settings(req: SettingsUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/app-settings")
-async def get_app_settings():
+@app.get("/api/user-preferences")
+async def get_user_preferences():
     try:
-        settings = storage.load_app_settings()
-        return settings
+        prefs = storage.load_user_preferences()
+        return prefs
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class AppSettingsUpdate(BaseModel):
-    rpm: Optional[int] = None
+class UserPreferencesUpdate(BaseModel):
+    source_lang: Optional[str] = None
     target_lang: Optional[str] = None
+    rpm: Optional[int] = None
+    skip_listening: Optional[bool] = None
 
 
-@app.post("/api/app-settings")
-async def update_app_settings(req: AppSettingsUpdate):
+@app.post("/api/user-preferences")
+async def update_user_preferences(req: UserPreferencesUpdate):
     try:
-        current = storage.load_app_settings()
-        if req.rpm is not None:
-            current["rpm"] = req.rpm
+        current = storage.load_user_preferences()
+        if req.source_lang is not None:
+            current["source_lang"] = req.source_lang
         if req.target_lang is not None:
             current["target_lang"] = req.target_lang
-        storage.save_app_settings(current)
+        if req.rpm is not None:
+            current["rpm"] = req.rpm
+        if req.skip_listening is not None:
+            current["skip_listening"] = req.skip_listening
+        storage.save_user_preferences(current)
         return current
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
