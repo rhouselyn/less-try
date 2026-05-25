@@ -109,6 +109,46 @@ SUPPORTED_LANGUAGES = [
     "ja", "ko", "ka", "eu", "ht", "pap", "kea", "tpi", "sw",
 ]
 
+LANG_NAMES = {
+    "en": "English", "fr": "French", "pt": "Portuguese", "de": "German",
+    "ro": "Romanian", "sv": "Swedish", "da": "Danish", "bg": "Bulgarian",
+    "ru": "Russian", "cs": "Czech", "el": "Greek", "uk": "Ukrainian",
+    "es": "Spanish", "nl": "Dutch", "sk": "Slovak", "hr": "Croatian",
+    "pl": "Polish", "lt": "Lithuanian", "nb": "Norwegian Bokmål", "nn": "Norwegian Nynorsk",
+    "fa": "Persian", "sl": "Slovenian", "gu": "Gujarati", "lv": "Latvian",
+    "it": "Italian", "oc": "Occitan", "ne": "Nepali", "mr": "Marathi",
+    "be": "Belarusian", "sr": "Serbian", "lb": "Luxembourgish", "vec": "Venetian",
+    "as": "Assamese", "cy": "Welsh", "szl": "Silesian", "ast": "Asturian",
+    "hne": "Chhattisgarhi", "awa": "Awadhi", "mai": "Maithili", "bho": "Bhojpuri",
+    "sd": "Sindhi", "ga": "Irish", "fo": "Faroese", "hi": "Hindi",
+    "pa": "Punjabi", "bn": "Bengali", "or": "Odia", "tg": "Tajik",
+    "yi": "Yiddish", "lmo": "Lombard", "lij": "Ligurian", "scn": "Sicilian",
+    "fur": "Friulian", "sc": "Sardinian", "gl": "Galician", "ca": "Catalan",
+    "is": "Icelandic", "sq": "Albanian", "li": "Limburgish", "prs": "Dari",
+    "af": "Afrikaans", "mk": "Macedonian", "si": "Sinhala", "ur": "Urdu",
+    "mag": "Magahi", "bs": "Bosnian", "hy": "Armenian",
+    "zh": "Chinese (Simplified)", "zh-TW": "Chinese (Traditional)", "yue": "Cantonese", "my": "Burmese",
+    "ar": "Arabic (Standard)", "ars": "Arabic (Najdi)", "apc": "Arabic (Levantine)",
+    "arz": "Arabic (Egyptian)", "ary": "Arabic (Moroccan)", "acm": "Arabic (Mesopotamian)",
+    "acq": "Arabic (Ta'izzi-Adeni)", "aeb": "Arabic (Tunisian)",
+    "he": "Hebrew", "mt": "Maltese",
+    "id": "Indonesian", "ms": "Malay", "tl": "Tagalog", "ceb": "Cebuano",
+    "jv": "Javanese", "su": "Sundanese", "min": "Minangkabau", "ban": "Balinese",
+    "bjn": "Banjar", "pag": "Pangasinan", "ilo": "Ilokano", "war": "Waray",
+    "ta": "Tamil", "te": "Telugu", "kn": "Kannada", "ml": "Malayalam",
+    "tr": "Turkish", "az": "Azerbaijani", "uz": "Uzbek", "kk": "Kazakh",
+    "ba": "Bashkir", "tt": "Tatar",
+    "th": "Thai", "lo": "Lao",
+    "fi": "Finnish", "et": "Estonian", "hu": "Hungarian",
+    "vi": "Vietnamese", "km": "Khmer",
+    "ja": "Japanese", "ko": "Korean", "ka": "Georgian", "eu": "Basque",
+    "ht": "Haitian Creole", "pap": "Papiamento", "kea": "Kabuverdianu",
+    "tpi": "Tok Pisin", "sw": "Swahili",
+}
+
+def get_lang_name(code):
+    return LANG_NAMES.get(code, code)
+
 
 async def detect_language(text: str) -> str:
     api = NvidiaAPI()

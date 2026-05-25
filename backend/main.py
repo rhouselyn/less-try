@@ -9,7 +9,7 @@ import asyncio
 import time
 import re
 
-from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language
+from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, fix_translation_dict_consistency
 from storage import Storage
 
@@ -3375,11 +3375,13 @@ async def generate_text(request: dict):
         if not prompt:
             raise HTTPException(status_code=400, detail="Prompt is required")
 
+        source_lang_name = get_lang_name(source_lang)
+
         nvidia_api.reload()
         messages = [
             {
                 "role": "system",
-                "content": f"You are a text generator. Generate a text in {source_lang} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else."
+                "content": f"You are a text generator. Generate a text in {source_lang_name} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else."
             },
             {
                 "role": "user",

@@ -154,6 +154,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
     setExpandedWord(wordKey)
     scrollToWord(wordKey, 100)
+    speakText(wordKey, sourceLang)
     const detail = await fetchWordDetail(wordKey)
     if (detail) {
       scrollToWord(wordKey, 300)
