@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, Globe2, PenLine, Languages, Wand2 } from 'lucide-react'
+import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, Globe2, PenLine, Languages, Wand2, Zap } from 'lucide-react'
 
 const LANGUAGES = [
   { value: 'en', native: 'English', en: 'English', zh: '英语', family: 'indo-european', flag: '🇬🇧' },
@@ -150,12 +150,16 @@ const FAMILY_ORDER = [
   'other',
 ]
 
-function LanguageSelector({ value, onChange, targetLang }) {
+function LanguageSelector({ value, onChange, targetLang, inputMode, recentLanguages }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [collapsed, setCollapsed] = useState({})
   const containerRef = useRef(null)
   const searchRef = useRef(null)
+
+  const showAuto = inputMode === 'direct'
+  const isAuto = value === 'auto'
+  const recentLimit = showAuto ? 5 : 5
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -174,7 +178,7 @@ function LanguageSelector({ value, onChange, targetLang }) {
     if (open && searchRef.current) searchRef.current.focus()
   }, [open])
 
-  const selectedLang = LANGUAGES.find((l) => l.value === value)
+  const selectedLang = isAuto ? null : LANGUAGES.find((l) => l.value === value)
 
   const getLabel = (lang) => targetLang === 'zh' ? lang.zh : lang.en
 
@@ -182,6 +186,12 @@ function LanguageSelector({ value, onChange, targetLang }) {
     const primary = getLabel(lang)
     return lang.native !== primary ? lang.native : null
   }
+
+  const recentLangs = (recentLanguages || [])
+    .filter(code => code !== 'auto')
+    .map(code => LANGUAGES.find(l => l.value === code))
+    .filter(Boolean)
+    .slice(0, recentLimit)
 
   const filteredLanguages = LANGUAGES.filter((l) => {
     if (!search) return true
@@ -203,6 +213,8 @@ function LanguageSelector({ value, onChange, targetLang }) {
     setSearch('')
   }
 
+  const autoLabel = targetLang === 'zh' ? '自动检测' : 'Auto Detect'
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -214,11 +226,22 @@ function LanguageSelector({ value, onChange, targetLang }) {
             : 'border-stone-200/80 bg-white hover:border-stone-300 hover:shadow-sm'
         }`}
       >
-        <span className="text-xl leading-none">{selectedLang?.flag}</span>
+        {isAuto ? (
+          <span className="text-xl leading-none">🌐</span>
+        ) : (
+          <span className="text-xl leading-none">{selectedLang?.flag}</span>
+        )}
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-stone-800">{selectedLang ? getLabel(selectedLang) : value}</span>
-          {selectedLang && getSecondary(selectedLang) && (
+          <span className="text-sm font-medium text-stone-800">
+            {isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value}
+          </span>
+          {!isAuto && selectedLang && getSecondary(selectedLang) && (
             <span className="text-xs text-stone-400 ml-2">{getSecondary(selectedLang)}</span>
+          )}
+          {isAuto && (
+            <span className="text-xs text-stone-400 ml-2">
+              <Zap className="w-3 h-3 inline -mt-0.5" />
+            </span>
           )}
         </div>
         <ChevronDown className={`w-4 h-4 text-stone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
@@ -252,6 +275,40 @@ function LanguageSelector({ value, onChange, targetLang }) {
             </div>
 
             <div className="max-h-72 overflow-y-auto overscroll-contain">
+              {!search && (showAuto || recentLangs.length > 0) && (
+                <div className="border-b border-stone-100">
+                  {showAuto && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelect('auto')}
+                      className={`w-full flex items-center gap-2.5 px-5 py-2 text-sm transition-colors ${
+                        isAuto ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-50'
+                      }`}
+                    >
+                      <span className="text-base leading-none flex-shrink-0">🌐</span>
+                      <span className={isAuto ? 'font-medium' : ''}>{autoLabel}</span>
+                      <span className="text-xs text-stone-400">
+                        <Zap className="w-3 h-3 inline -mt-0.5" />
+                      </span>
+                    </button>
+                  )}
+                  {recentLangs.map((lang) => (
+                    <button
+                      key={`recent-${lang.value}`}
+                      type="button"
+                      onClick={() => handleSelect(lang.value)}
+                      className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
+                        value === lang.value ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-50'
+                      }`}
+                    >
+                      <span className="text-base leading-none flex-shrink-0">{lang.flag}</span>
+                      <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
+                      {getSecondary(lang) && <span className="text-xs text-stone-400">{getSecondary(lang)}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {Object.keys(groupedLanguages).length === 0 && (
                 <div className="py-8 text-center text-sm text-stone-400">
                   {targetLang === 'zh' ? '未找到语言' : 'No languages found'}
@@ -365,7 +422,14 @@ function ModeDescription({ mode, t }) {
   )
 }
 
-function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode }) {
+function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
+  const handleModeChange = (newMode) => {
+    setInputMode(newMode)
+    if (newMode !== 'direct' && sourceLang === 'auto') {
+      const firstRecent = (recentLanguages || []).find(l => l !== 'auto')
+      setSourceLang(firstRecent || 'en')
+    }
+  }
   const getPlaceholder = () => {
     if (inputMode === 'translate') return t.modeTranslatePlaceholder
     if (inputMode === 'generate') return t.modeGeneratePlaceholder
@@ -373,7 +437,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   }
 
   const getLabel = () => {
-    if (inputMode === 'translate') return t.nativeLang
+    if (inputMode === 'translate') return t.inputText
     if (inputMode === 'generate') return t.inputText
     return t.inputText
   }
@@ -450,7 +514,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
               {t.modeLabel}
             </label>
-            <ModeSelector mode={inputMode} setMode={setInputMode} t={t} />
+            <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
             <div className="mt-2 min-h-[28px]">
               <AnimatePresence mode="wait">
                 <ModeDescription mode={inputMode} t={t} />
@@ -468,7 +532,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
               <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
                 {t.learnLang}
               </label>
-              <LanguageSelector value={sourceLang} onChange={setSourceLang} targetLang={targetLang} />
+              <LanguageSelector value={sourceLang} onChange={setSourceLang} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
             </div>
           </motion.div>
 

@@ -9,7 +9,7 @@ import asyncio
 import time
 import re
 
-from nvidia_api import NvidiaAPI, get_settings, update_settings
+from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, fix_translation_dict_consistency
 from storage import Storage
 
@@ -1136,12 +1136,23 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
         
+        if source_lang == "auto":
+            source_lang = await detect_language(text)
+        
         import datetime
         now = datetime.datetime.now()
         file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
         
         app_settings = storage.load_user_preferences()
         rpm = app_settings.get("rpm", 60)
+        
+        recent_langs = app_settings.get("recent_languages", [])
+        if source_lang in recent_langs:
+            recent_langs.remove(source_lang)
+        recent_langs.insert(0, source_lang)
+        recent_langs = recent_langs[:10]
+        app_settings["recent_languages"] = recent_langs
+        storage.save_user_preferences(app_settings)
         
         t_title_start = time.time()
         title = await generate_title(text, source_lang)
@@ -3217,6 +3228,7 @@ class UserPreferencesUpdate(BaseModel):
     target_lang: Optional[str] = None
     rpm: Optional[int] = None
     skip_listening: Optional[bool] = None
+    recent_languages: Optional[List[str]] = None
 
 
 @app.post("/api/user-preferences")
@@ -3231,8 +3243,22 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["rpm"] = req.rpm
         if req.skip_listening is not None:
             current["skip_listening"] = req.skip_listening
+        if req.recent_languages is not None:
+            current["recent_languages"] = req.recent_languages
         storage.save_user_preferences(current)
         return current
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/detect-language")
+async def detect_language_endpoint(request: dict):
+    try:
+        text = request.get("text", "")
+        if not text:
+            raise HTTPException(status_code=400, detail="Text is required")
+        lang = await detect_language(text)
+        return {"detected_language": lang}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

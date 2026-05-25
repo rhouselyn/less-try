@@ -25,7 +25,7 @@ import SettingsModal from './components/SettingsModal'
 function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
-  const [sourceLang, setSourceLang] = useState('en')
+  const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
@@ -75,6 +75,7 @@ function App() {
   const [unitStarCounts, setUnitStarCounts] = useState({})
   const unitErrorCountRef = useRef(0)
   const [skipListening, setSkipListening] = useState(false)
+  const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
@@ -84,9 +85,10 @@ function App() {
 
   useEffect(() => {
     api.getUserPreferences().then(prefs => {
-      if (prefs.source_lang) setSourceLang(prefs.source_lang)
+      if (prefs.source_lang && prefs.source_lang !== 'auto') setSourceLang(prefs.source_lang)
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
+      if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
     }).catch(() => {})
   }, [])
 
@@ -290,6 +292,9 @@ function App() {
         const fileId = response.file_id
         setFileId(fileId)
         setCurrentFileId(fileId)
+        api.getUserPreferences().then(prefs => {
+          if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
+        }).catch(() => {})
       } else {
         throw new Error('无效的API响应')
       }
@@ -1031,6 +1036,7 @@ function App() {
                       t={t}
                       inputMode={inputMode}
                       setInputMode={setInputMode}
+                      recentLanguages={recentLanguages}
                     />
                   </AnimatePresence>
                 </>

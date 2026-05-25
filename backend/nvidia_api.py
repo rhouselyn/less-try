@@ -90,6 +90,49 @@ def update_settings(api_key: str = None, base_url: str = None, model: str = None
     return _load_settings()
 
 
+SUPPORTED_LANGUAGES = [
+    "en", "fr", "pt", "de", "ro", "sv", "da", "bg", "ru", "cs", "el", "uk",
+    "es", "nl", "sk", "hr", "pl", "lt", "nb", "nn", "fa", "sl", "gu", "lv",
+    "it", "oc", "ne", "mr", "be", "sr", "lb", "vec", "as", "cy", "szl",
+    "ast", "hne", "awa", "mai", "bho", "sd", "ga", "fo", "hi", "pa", "bn",
+    "or", "tg", "yi", "lmo", "lij", "scn", "fur", "sc", "gl", "ca", "is",
+    "sq", "li", "prs", "af", "mk", "si", "ur", "mag", "bs", "hy",
+    "zh", "zh-TW", "yue", "my",
+    "ar", "ars", "apc", "arz", "ary", "acm", "acq", "aeb",
+    "he", "mt",
+    "id", "ms", "tl", "ceb", "jv", "su", "min", "ban", "bjn", "pag", "ilo", "war",
+    "ta", "te", "kn", "ml",
+    "tr", "az", "uz", "kk", "ba", "tt",
+    "th", "lo",
+    "fi", "et", "hu",
+    "vi", "km",
+    "ja", "ko", "ka", "eu", "ht", "pap", "kea", "tpi", "sw",
+]
+
+
+async def detect_language(text: str) -> str:
+    api = NvidiaAPI()
+    lang_list_str = ", ".join(SUPPORTED_LANGUAGES)
+    messages = [
+        {
+            "role": "system",
+            "content": f"You are a language detection expert. Identify the language of the given text. You must respond with ONLY the language code from this exact list: [{lang_list_str}]. Do not output anything else. Pick the single most matching code."
+        },
+        {
+            "role": "user",
+            "content": text[:500]
+        }
+    ]
+    result = await api.call_minimax(messages, temperature=0.0, max_tokens=32)
+    content = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip().strip('"').strip("'")
+    if content in SUPPORTED_LANGUAGES:
+        return content
+    for lang in SUPPORTED_LANGUAGES:
+        if lang.lower() == content.lower():
+            return lang
+    return "en"
+
+
 class NvidiaAPI:
     def __init__(self):
         self._reload()
