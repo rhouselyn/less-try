@@ -479,11 +479,7 @@ function ModeDescription({ mode, t }) {
 
 function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
   const handleModeChange = (newMode) => {
-    const prevMode = inputMode
     setInputMode(newMode)
-    if (newMode === 'direct' && prevMode !== 'direct') {
-      setSourceLang('auto')
-    }
     if (newMode !== 'direct' && sourceLang === 'auto') {
       const firstRecent = (recentLanguages || []).find(l => l !== 'auto')
       setSourceLang(firstRecent || 'en')

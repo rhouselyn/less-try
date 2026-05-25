@@ -193,6 +193,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
   const [renameValue, setRenameValue] = useState('')
   const [recentExpanded, setRecentExpanded] = useState(false)
   const [deleteConfirm, setDeleteConfirm] = useState({ open: false, fileId: null, title: '' })
+  const scrollContainerRef = useRef(null)
 
   useEffect(() => {
     loadHistory()
@@ -306,7 +307,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
+              <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
                 {records.length === 0 && (
                   <div className="px-4 py-12 text-center">
                     <div className="text-2xl mb-2">📚</div>
@@ -334,7 +335,14 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                     </div>
                     {hasMoreRecent && (
                       <button
-                        onClick={() => setRecentExpanded(prev => !prev)}
+                        onClick={() => {
+                          setRecentExpanded(prev => {
+                            if (prev && scrollContainerRef.current) {
+                              scrollContainerRef.current.scrollTop = 0
+                            }
+                            return !prev
+                          })
+                        }}
                         className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
                       >
                         {recentExpanded ? (
