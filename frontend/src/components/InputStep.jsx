@@ -478,8 +478,21 @@ function ModeDescription({ mode, t }) {
 }
 
 function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
+  const directModeLangRef = useRef('auto')
+
+  const handleSourceLangChange = (lang) => {
+    setSourceLang(lang)
+    if (inputMode === 'direct') {
+      directModeLangRef.current = lang
+    }
+  }
+
   const handleModeChange = (newMode) => {
+    const prevMode = inputMode
     setInputMode(newMode)
+    if (newMode === 'direct' && prevMode !== 'direct') {
+      setSourceLang(directModeLangRef.current)
+    }
     if (newMode !== 'direct' && sourceLang === 'auto') {
       const firstRecent = (recentLanguages || []).find(l => l !== 'auto')
       setSourceLang(firstRecent || 'en')
@@ -587,7 +600,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
               <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
                 {t.learnLang}
               </label>
-              <LanguageSelector value={sourceLang} onChange={setSourceLang} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
+              <LanguageSelector value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
             </div>
           </motion.div>
 
