@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
 import { api } from '../utils/api'
+import { LangIcon, LANGUAGES } from './InputStep'
 
 const LANG_LABELS = {
   en: 'English',
@@ -26,27 +27,11 @@ const LANG_LABELS = {
   uk: 'Українська'
 }
 
-const LANG_ICONS = {
-  en: '🇬🇧',
-  zh: '🇨🇳',
-  es: '🇪🇸',
-  de: '🇩🇪',
-  fr: '🇫🇷',
-  ja: '🇯🇵',
-  ko: '🇰🇷',
-  pt: '🇧🇷',
-  ru: '🇷🇺',
-  it: '🇮🇹',
-  ar: '🇸🇦',
-  hi: '🇮🇳',
-  th: '🇹🇭',
-  vi: '🇻🇳',
-  id: '🇮🇩',
-  tr: '🇹🇷',
-  nl: '🇳🇱',
-  sv: '🇸🇪',
-  pl: '🇵🇱',
-  uk: '🇺🇦'
+function getLangLabel(code) {
+  if (LANG_LABELS[code]) return LANG_LABELS[code]
+  const found = LANGUAGES.find(l => l.value === code)
+  if (found) return found.native || found.en
+  return code
 }
 
 const SIDEBAR_COLORS = [
@@ -195,7 +180,7 @@ function RecentItem({ record, onNavigate }) {
     >
       <ProgressBadge progress={record.progress} />
       <span className="text-[13px] text-stone-700 truncate flex-1">{record.title}</span>
-      <span className="text-xs flex-shrink-0">{LANG_ICONS[record.source_lang] || '📝'}</span>
+      <span className="flex-shrink-0"><LangIcon langCode={record.source_lang} size="sm" /></span>
     </button>
   )
 }
@@ -372,9 +357,9 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 {Object.entries(grouped).map(([lang, items], langIdx) => (
                   <div key={lang} className="mb-1">
                     <div className="flex items-center gap-1.5 px-4 py-1.5 mt-1">
-                      <span className="text-xs">{LANG_ICONS[lang] || '📝'}</span>
+                      <LangIcon langCode={lang} size="sm" />
                       <span className="text-[11px] font-medium text-stone-400 tracking-wide">
-                        {LANG_LABELS[lang] || lang}
+                        {getLangLabel(lang)}
                       </span>
                       <span className="text-[10px] text-stone-300">{items.length}</span>
                       <button
@@ -446,9 +431,9 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                     ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-md'
                     : 'hover:bg-stone-200/70 text-stone-400 hover:text-stone-600'
                 }`}
-                title={`${LANG_LABELS[lang] || lang} - ${t.wordList || '单词总表'}`}
+                title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
               >
-                <Library className="w-4 h-4" />
+                <LangIcon langCode={lang} size="sm" />
               </button>
             ))}
 
@@ -464,7 +449,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
                   title={record.title}
                 >
-                  <Pencil className="w-4 h-4" />
+                  <LangIcon langCode={record.source_lang} size="sm" />
                 </button>
               ))
             )}

@@ -85,7 +85,7 @@ function App() {
 
   useEffect(() => {
     api.getUserPreferences().then(prefs => {
-      if (prefs.source_lang && prefs.source_lang !== 'auto') setSourceLang(prefs.source_lang)
+      if (prefs.source_lang) setSourceLang(prefs.source_lang)
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)

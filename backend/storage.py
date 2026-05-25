@@ -401,7 +401,7 @@ class Storage:
                 with open(old_path, 'r', encoding='utf-8') as f:
                     old_data = json.load(f)
                 migrated = {
-                    "source_lang": old_data.get("source_lang", "en"),
+                    "source_lang": old_data.get("source_lang", "auto"),
                     "target_lang": old_data.get("target_lang", "zh"),
                     "rpm": old_data.get("rpm", 60),
                     "skip_listening": old_data.get("skip_listening", False)
@@ -416,7 +416,7 @@ class Storage:
                 with open(old_path2, 'r', encoding='utf-8') as f:
                     old_data = json.load(f)
                 migrated = {
-                    "source_lang": old_data.get("source_lang", "en"),
+                    "source_lang": old_data.get("source_lang", "auto"),
                     "target_lang": old_data.get("target_lang", "zh"),
                     "rpm": old_data.get("rpm", 60),
                     "skip_listening": old_data.get("skip_listening", False)
@@ -425,4 +425,4 @@ class Storage:
                 return migrated
             except (json.JSONDecodeError, IOError):
                 pass
-        return {"source_lang": "en", "target_lang": "zh", "rpm": 60, "skip_listening": False}
+        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False}

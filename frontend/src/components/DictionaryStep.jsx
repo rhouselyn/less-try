@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, EyeOff } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, EyeOff, Eye } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
@@ -15,6 +15,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [vocabSearch, setVocabSearch] = useState('')
   const [hideTranslations, setHideTranslations] = useState(false)
   const [hideMeanings, setHideMeanings] = useState(false)
+  const [hiddenMeaningWords, setHiddenMeaningWords] = useState(new Set())
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
@@ -176,6 +177,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (e) e.stopPropagation()
     speakText(text, sourceLang)
   }, [sourceLang])
+
+  const toggleWordMeaning = useCallback((wordKey, e) => {
+    if (e) e.stopPropagation()
+    setHiddenMeaningWords(prev => {
+      const next = new Set(prev)
+      if (next.has(wordKey)) {
+        next.delete(wordKey)
+      } else {
+        next.add(wordKey)
+      }
+      return next
+    })
+  }, [])
 
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
@@ -430,6 +444,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         const isExpanded = expandedWord === wordKey
                         const isLoading = loadingWords[wordKey]
                         const detail = wordDetails[wordKey]
+                        const isMeaningHidden = hiddenMeaningWords.has(wordKey)
 
                         return (
                           <motion.div
@@ -444,6 +459,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               onClick={() => handleVocabWordClick(word)}
                               className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group"
                             >
+                              <div
+                                className={`shrink-0 cursor-pointer p-0.5 rounded transition-colors ${isMeaningHidden ? 'text-amber-500 hover:text-amber-600' : 'text-stone-300 hover:text-stone-500'}`}
+                                onClick={(e) => toggleWordMeaning(wordKey, e)}
+                              >
+                                {isMeaningHidden ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                              </div>
                               <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                                 <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
                                   {word.word}
@@ -458,7 +479,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     {word.morphology}
                                   </span>
                                 )}
-                                <span className={`text-[12px] text-stone-500 truncate ${hideMeanings ? 'invisible' : ''}`}>
+                                <span className={`text-[12px] text-stone-500 truncate ${(hideMeanings || isMeaningHidden) ? 'invisible' : ''}`}>
                                   {word.context_meaning || word.translation}
                                 </span>
                               </div>

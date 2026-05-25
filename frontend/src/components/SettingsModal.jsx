@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages } from 'lucide-react'
 import { api } from '../utils/api'
+import { LangIcon } from './InputStep'
 
 function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
   const [apiKey, setApiKey] = useState('')
@@ -196,8 +197,8 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                 </label>
                 <div className="flex gap-2">
                   {[
-                    { value: 'zh', label: '中文', flag: '🇨🇳' },
-                    { value: 'en', label: 'English', flag: '🇬🇧' },
+                    { value: 'zh', label: '中文' },
+                    { value: 'en', label: 'English' },
                   ].map((opt) => (
                     <button
                       key={opt.value}
@@ -209,7 +210,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                           : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
                       }`}
                     >
-                      <span className="text-base leading-none">{opt.flag}</span>
+                      <LangIcon langCode={opt.value} size="sm" />
                       {opt.label}
                     </button>
                   ))}
