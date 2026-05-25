@@ -46,7 +46,7 @@ def _repair_truncated_json(json_str):
     return []
 
 
-LLM_SETTINGS_FILE = Path("/workspace/data/llm_settings.json")
+LLM_SETTINGS_FILE = Path("/workspace/config/llm_settings.json")
 
 _DEFAULT_LLM_SETTINGS = {
     "api_key": "",

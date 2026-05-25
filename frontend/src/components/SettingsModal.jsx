@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, Ear } from 'lucide-react'
+import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages } from 'lucide-react'
 import { api } from '../utils/api'
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, sourceLang, onSourceLangChange, skipListening, onSkipListeningChange, t }) {
+function SettingsModal({ isOpen, onClose, sourceLang, onSourceLangChange, t }) {
   const [apiKey, setApiKey] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [model, setModel] = useState('')
@@ -13,9 +13,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, source
   const [loading, setLoading] = useState(true)
   const [maskedKey, setMaskedKey] = useState('')
   const [rpm, setRpm] = useState(60)
-  const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
   const [localSourceLang, setLocalSourceLang] = useState(sourceLang || 'en')
-  const [localSkipListening, setLocalSkipListening] = useState(skipListening || false)
 
   useEffect(() => {
     if (isOpen) {
@@ -31,9 +29,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, source
         setMaskedKey(data.api_key || '')
         setApiKey('')
         if (prefs.rpm) setRpm(prefs.rpm)
-        if (prefs.target_lang) setLocalTargetLang(prefs.target_lang)
         if (prefs.source_lang) setLocalSourceLang(prefs.source_lang)
-        if (prefs.skip_listening !== undefined) setLocalSkipListening(prefs.skip_listening)
         setLoading(false)
       }).catch(() => setLoading(false))
     }
@@ -59,16 +55,10 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, source
       setMaskedKey(data.api_key || '')
       setApiKey('')
 
-      await api.saveUserPreferences({ rpm, target_lang: localTargetLang, source_lang: localSourceLang, skip_listening: localSkipListening })
+      await api.saveUserPreferences({ rpm, source_lang: localSourceLang })
 
-      if (onTargetLangChange && localTargetLang !== targetLang) {
-        onTargetLangChange(localTargetLang)
-      }
       if (onSourceLangChange && localSourceLang !== sourceLang) {
         onSourceLangChange(localSourceLang)
-      }
-      if (onSkipListeningChange && localSkipListening !== skipListening) {
-        onSkipListeningChange(localSkipListening)
       }
 
       setSaved(true)
@@ -224,51 +214,6 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, source
                     </button>
                   ))}
                 </div>
-              </div>
-
-              <div>
-                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
-                  <Languages className="w-3 h-3" />
-                  {t.targetLang || '目标语言'}
-                </label>
-                <div className="flex gap-2">
-                  {[
-                    { value: 'zh', label: '中文', flag: '🇨🇳' },
-                    { value: 'en', label: 'English', flag: '🇬🇧' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setLocalTargetLang(opt.value)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
-                        localTargetLang === opt.value
-                          ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-                          : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
-                      }`}
-                    >
-                      <span className="text-base leading-none">{opt.flag}</span>
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest">
-                  <Ear className="w-3 h-3" />
-                  {t.skipListening || '跳过听力'}
-                </label>
-                <button
-                  type="button"
-                  onClick={() => setLocalSkipListening(!localSkipListening)}
-                  className={`relative w-10 h-5.5 rounded-full transition-colors duration-200 ${
-                    localSkipListening ? 'bg-amber-400' : 'bg-stone-200'
-                  }`}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-4.5 h-4.5 bg-white rounded-full shadow transition-transform duration-200 ${
-                    localSkipListening ? 'translate-x-4.5' : 'translate-x-0'
-                  }`} style={{ width: '18px', height: '18px', top: '2px', left: localSkipListening ? '20px' : '2px' }} />
-                </button>
               </div>
 
               <motion.button
