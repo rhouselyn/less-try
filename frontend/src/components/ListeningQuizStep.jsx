@@ -41,7 +41,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const correctWords = quizData.correct_words || []
   const options = quizData.options || []
 
-  const stripPunct = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
+  const stripPunct = (str) => typeof str === 'string' ? str.replace(/[\u3000-\u303F\uFF00-\uFFEF\u2000-\u206F\u0080-\u00BF，。、；：！？·…—–―‐‒„""''«»‹›〈〉《》【】〔〕〖〗〘〙〚〛⟦⟧⟨⟩‖§¶@*#†‡•‰‱′″‴‸※‼⁇⁈⁉⁊⁋⁌⁍○●◎☉★☆☇☈⊕⊗⊙⊜⊞⊟⊠⊡⦾⦿,.:;!?]/g, '') : str
 
   const handleWordSelect = (word, index) => {
     if (isChecked) return
@@ -91,7 +91,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </motion.button>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-stone-500 font-medium">第 {stepInUnit} / {totalItemsInUnit} 题</span>
+            <span className="text-sm text-stone-500 font-medium">{t.step || '第'} {stepInUnit} / {totalItemsInUnit} {t.question || '题'}</span>
           )}
           {onOpenVocabList && (
             <motion.button
@@ -101,7 +101,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               whileTap={{ scale: 0.95 }}
             >
               <BookOpen className="w-4 h-4" />
-              单词表
+              {t.vocabList || '单词表'}
             </motion.button>
           )}
         </div>
@@ -127,7 +127,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             >
               <Volume2 className="w-8 h-8" />
             </motion.button>
-            <span className="text-sm text-stone-400">点击播放</span>
+            <span className="text-sm text-stone-400">{t.clickToPlay || '点击播放'}</span>
           </div>
         </div>
 
@@ -157,7 +157,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               ))}
             </AnimatePresence>
             {selectedWords.length === 0 && (
-              <span className="italic text-stone-400 text-sm">按顺序点击下方单词组成句子</span>
+              <span className="italic text-stone-400 text-sm">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
             )}
           </div>
         </div>
@@ -200,7 +200,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             </div>
             {!isCorrect && (
               <p className="text-stone-700 font-medium">
-                正确答案：{correctWords.map(w => stripPunct(w)).join(' ')}
+                {t.correctAnswer || '正确答案'}：{correctWords.map(w => stripPunct(w)).join(' ')}
               </p>
             )}
           </motion.div>

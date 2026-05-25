@@ -47,7 +47,7 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
           >
             🎉 {t.completed}
           </motion.h2>
-          <p className="text-lg text-stone-600 mb-8">所有单元学习完成！</p>
+          <p className="text-lg text-stone-600 mb-8">{t.allUnitsComplete || '所有单元学习完成！'}</p>
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -56,7 +56,7 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
             onClick={onBack}
             className="px-6 py-3 bg-stone-800 text-white font-medium rounded-lg hover:bg-stone-700 transition-colors"
           >
-            返回单词表
+            {t.backToVocab || '返回单词表'}
           </motion.button>
         </div>
       ) : (

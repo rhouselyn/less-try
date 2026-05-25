@@ -5,7 +5,7 @@ import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
 
-function WordDetailCard({ word, sourceLang, detailLoading }) {
+function WordDetailCard({ word, sourceLang, detailLoading, t }) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -18,7 +18,7 @@ function WordDetailCard({ word, sourceLang, detailLoading }) {
         {detailLoading && (
           <div className="flex items-center gap-2 py-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
-            <span className="text-xs text-stone-400">生成详细内容...</span>
+            <span className="text-xs text-stone-400">{t.generatingDetails || '生成详细内容...'}</span>
           </div>
         )}
 
@@ -26,7 +26,7 @@ function WordDetailCard({ word, sourceLang, detailLoading }) {
           <div>
             <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
               <GitBranch className="w-3 h-3" />
-              词形变化
+              {t.variants || '词形变化'}
             </h3>
             <div className="pl-5 flex flex-wrap gap-x-3 gap-y-1">
               {word.variants_detail.map((variant, index) => (
@@ -45,7 +45,7 @@ function WordDetailCard({ word, sourceLang, detailLoading }) {
           <div>
             <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
               <BookText className="w-3 h-3" />
-              例句
+              {t.examples || '例句'}
             </h3>
             <div className="pl-5 space-y-1.5">
               {word.examples.slice(0, 3).map((ex, i) => (
@@ -74,7 +74,7 @@ function WordDetailCard({ word, sourceLang, detailLoading }) {
           <div>
             <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
               <Lightbulb className="w-3 h-3" />
-              记忆辅助
+              {t.memoryHint || '记忆辅助'}
             </h3>
             <p className="text-[13px] text-stone-600 leading-relaxed bg-amber-50/70 px-3 py-2 rounded-lg border border-amber-100">
               {word.memory_hint}
@@ -169,7 +169,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
       return (
         <div className="flex items-center justify-center py-16">
           <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
-          <span className="ml-2 text-sm text-stone-400">加载单词表...</span>
+          <span className="ml-2 text-sm text-stone-400">{t.loadingVocab || '加载单词表...'}</span>
         </div>
       )
     }
@@ -179,7 +179,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
         <div className="py-16 text-center">
           <BookOpen className="w-8 h-8 text-stone-200 mx-auto mb-2" />
           <p className="text-sm text-stone-400">
-            {searchQuery ? '未找到匹配的单词' : '暂无单词，开始学习后将自动收录'}
+            {searchQuery ? (t.noMatchFound || '未找到匹配的单词') : (t.noWordsYetHint || '暂无单词，开始学习后将自动收录')}
           </p>
         </div>
       )
@@ -256,6 +256,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                         word={wordDetails[word.word] || word}
                         sourceLang={sourceLang}
                         detailLoading={detailLoading[word.word]}
+                        t={t}
                       />
                     )}
                   </AnimatePresence>
@@ -274,9 +275,9 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-amber-50/50 to-white">
           <div className="flex items-center gap-2.5">
             <BookOpen className="w-5 h-5 text-amber-500" />
-            <span className="text-base font-semibold text-stone-800">词汇总览</span>
+            <span className="text-base font-semibold text-stone-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
-              <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} 词</span>
+              <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
             )}
           </div>
           <button
@@ -284,7 +285,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
             className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            返回
+            {t.back || '返回'}
           </button>
         </div>
 
@@ -295,7 +296,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="搜索单词或释义..."
+              placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
               className="w-full pl-9 pr-9 py-2 text-sm bg-stone-50 border border-stone-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder-stone-400 transition-all"
             />
             {searchQuery && (
@@ -326,9 +327,9 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
       >
         <div className="flex items-center gap-2.5">
           <BookOpen className="w-4 h-4 text-amber-500" />
-          <span className="text-sm font-semibold text-stone-700">词汇总览</span>
+          <span className="text-sm font-semibold text-stone-700">{t.vocabOverview || '词汇总览'}</span>
           {!isOpen && words.length > 0 && (
-            <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} 词</span>
+            <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
           )}
         </div>
         <motion.div
@@ -356,7 +357,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="搜索单词或释义..."
+                    placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
                     className="w-full pl-9 pr-9 py-2.5 text-sm bg-stone-50 border border-stone-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder-stone-400 transition-all"
                   />
                   {searchQuery && (
@@ -370,7 +371,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                 </div>
                 <div className="flex items-center justify-between mt-2.5">
                   <span className="text-xs text-stone-400">
-                    {loading ? '加载中...' : `共 ${filteredWords.length} 个单词`}
+                    {loading ? (t.loading || '加载中...') : (t.totalWordCount || '共 {0} 个单词').replace('{0}', filteredWords.length)}
                   </span>
                 </div>
               </div>

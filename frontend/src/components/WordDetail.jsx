@@ -84,7 +84,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang }) {
           <div>
             <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
               <Quote className="w-3 h-3" />
-              原文例句
+              {t.originalSent || '原文例句'}
             </h3>
             <div className="space-y-1.5">
               {word.context_sentences.map((cs, index) => (

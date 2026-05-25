@@ -27,7 +27,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           transition={{ delay: 0.3 }}
           className="text-3xl font-bold text-stone-800 mb-4"
         >
-          🎉 单元完成！
+          🎉 {t.unitComplete || '单元完成！'}
         </motion.h2>
 
         <motion.p
@@ -36,7 +36,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           transition={{ delay: 0.4 }}
           className="text-lg text-stone-600 mb-2"
         >
-          {phase === 1 ? '阶段一' : '阶段二'} · 第 {unitNumber + 1} 单元
+          {phase === 1 ? (t.phase1 || '阶段一') : (t.phase2 || '阶段二')} · {(t.unitNumberFormat || '第 {0} 单元').replace('{0}', unitNumber + 1)}
         </motion.p>
 
         <motion.p
@@ -46,8 +46,8 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           className="text-base text-stone-500 mb-8"
         >
           {errorCount === 0
-            ? '太棒了！全部答对，完美表现！'
-            : `答错 ${errorCount} 题，再接再厉！`}
+            ? (t.perfectScore || '太棒了！全部答对，完美表现！')
+            : (t.errorsMade || '答错 {0} 题，再接再厉！').replace('{0}', errorCount)}
         </motion.p>
 
         <motion.div
@@ -83,10 +83,10 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           >
             <div className="flex items-center gap-2 justify-center mb-2">
               <RotateCcw className="w-4 h-4 text-amber-600" />
-              <span className="text-amber-800 font-medium">错题复习</span>
+              <span className="text-amber-800 font-medium">{t.wrongItemReview || '错题复习'}</span>
             </div>
             <p className="text-sm text-amber-700">
-              你有 {wrongItemsCount ?? errorCount} 道错题需要复习，完成后才能继续
+              {(t.wrongItemsToReview || '你有 {0} 道错题需要复习').replace('{0}', wrongItemsCount ?? errorCount)}
             </p>
           </motion.div>
         )}
@@ -100,8 +100,8 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           <Sparkles className="w-5 h-5 text-amber-500" />
           <span className="text-stone-500 text-sm">
             {unitNumber + 1 < totalUnits
-              ? `还有 ${totalUnits - unitNumber - 1} 个单元等你挑战`
-              : '恭喜完成所有单元！'}
+              ? (t.moreUnitsToGo || '还有 {0} 个单元等你挑战').replace('{0}', totalUnits - unitNumber - 1)
+              : (t.congratsAllUnits || '恭喜完成所有单元！')}
           </span>
           <Sparkles className="w-5 h-5 text-amber-500" />
         </motion.div>
@@ -120,7 +120,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
               className="px-10 py-4 bg-amber-500 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-5 h-5" />
-              开始错题复习
+              {t.startWrongItemReview || '开始错题复习'}
             </motion.button>
           ) : (
             <motion.button
@@ -129,7 +129,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
               onClick={onContinue}
               className="px-10 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2"
             >
-              继续学习
+              {t.continueLearning || '继续学习'}
               <ChevronRight className="w-5 h-5" />
             </motion.button>
           )}

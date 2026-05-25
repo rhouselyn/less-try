@@ -253,8 +253,19 @@ def get_listening_correct_words(sentence, sentence_data):
     clean_sentence = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', sentence)
     
     tr = sentence_data.get("translation_result", {})
-    dict_entries = tr.get("dictionary_entries", [])
 
+    translation_tokens = tr.get("translation", [])
+    if translation_tokens and isinstance(translation_tokens, list):
+        words = []
+        for token in translation_tokens:
+            if isinstance(token, dict) and "text" in token:
+                t = token["text"].strip()
+                if t and not is_punctuation_only(t):
+                    words.append(t)
+        if words:
+            return words
+
+    dict_entries = tr.get("dictionary_entries", [])
     if dict_entries and isinstance(dict_entries, list):
         all_tokens = []
         for entry in dict_entries:
@@ -266,7 +277,7 @@ def get_listening_correct_words(sentence, sentence_data):
             for token in tokens:
                 if isinstance(token, str) and token.strip():
                     t = token.strip()
-                    if len(t) <= 2 and not any(c.isalpha() and ord(c) > 127 for c in t) and t.lower() in ('a', 'b', 'c', 'd', 'e'):
+                    if is_punctuation_only(t):
                         continue
                     all_tokens.append(t)
 
@@ -276,7 +287,7 @@ def get_listening_correct_words(sentence, sentence_data):
             used_positions = []
 
             for token in all_tokens:
-                token_clean = token.strip('.,;:!?，。；：！？、')
+                token_clean = strip_edge_punctuation(token)
                 if not token_clean:
                     continue
                 search_from = 0
@@ -300,8 +311,8 @@ def get_listening_correct_words(sentence, sentence_data):
     words = [w for w in clean_sentence.split() if w.strip()]
     filtered = []
     for w in words:
-        w_clean = w.strip('.,;:!?，。；：！？、')
-        if w_clean and w_clean.lower() not in ('a', 'b', 'c', 'd', 'e'):
+        w_clean = strip_edge_punctuation(w)
+        if w_clean and not is_punctuation_only(w_clean):
             filtered.append(w_clean)
     return filtered
 
@@ -315,24 +326,33 @@ def get_listening_distractors_from_sentences(sentence, all_sentences, correct_lo
         if not other_s or other_s == sentence:
             continue
         other_tr = sd.get("translation_result", {})
-        other_de = other_tr.get("dictionary_entries", [])
-        if other_de and isinstance(other_de, list):
-            for entry in other_de:
-                if not isinstance(entry, dict):
-                    continue
-                for vt in entry.get("tokens", []):
-                    if isinstance(vt, str):
-                        vt_clean = vt.strip('.,;:!?，。；：！？、')
-                        if vt_clean and vt_clean.lower() not in correct_lower_set and vt_clean.lower() not in distractor_set:
-                            distractor_words.append(vt_clean)
-                            distractor_set.add(vt_clean.lower())
+        other_translation = other_tr.get("translation", [])
+        if other_translation and isinstance(other_translation, list):
+            for token in other_translation:
+                if isinstance(token, dict) and "text" in token:
+                    vt = token["text"].strip()
+                    if vt and not is_punctuation_only(vt) and vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
+                        distractor_words.append(vt)
+                        distractor_set.add(vt.lower())
         else:
-            clean_other = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', other_s)
-            for w in clean_other.split():
-                w_clean = w.strip('.,;:!?，。；：！？、')
-                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
-                    distractor_words.append(w_clean)
-                    distractor_set.add(w_clean.lower())
+            other_de = other_tr.get("dictionary_entries", [])
+            if other_de and isinstance(other_de, list):
+                for entry in other_de:
+                    if not isinstance(entry, dict):
+                        continue
+                    for vt in entry.get("tokens", []):
+                        if isinstance(vt, str):
+                            vt_clean = strip_edge_punctuation(vt)
+                            if vt_clean and not is_punctuation_only(vt_clean) and vt_clean.lower() not in correct_lower_set and vt_clean.lower() not in distractor_set:
+                                distractor_words.append(vt_clean)
+                                distractor_set.add(vt_clean.lower())
+            else:
+                clean_other = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', other_s)
+                for w in clean_other.split():
+                    w_clean = strip_edge_punctuation(w)
+                    if w_clean and not is_punctuation_only(w_clean) and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
+                        distractor_words.append(w_clean)
+                        distractor_set.add(w_clean.lower())
     return distractor_words, distractor_set
 
 

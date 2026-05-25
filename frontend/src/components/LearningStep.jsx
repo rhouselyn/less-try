@@ -65,7 +65,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
             <span className="text-sm text-stone-500 font-medium">
-              第 {stepInUnit} / {totalItemsInUnit} 题
+              {(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}
             </span>
           )}
           {onOpenVocabList && (
@@ -76,7 +76,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
               className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
             >
               <BookOpen className="w-4 h-4" />
-              单词表
+              {t.vocabList || '单词表'}
             </motion.button>
           )}
         </div>
@@ -245,7 +245,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   transition={{ delay: 0.25 }}
                   className="bg-amber-50 p-4 rounded-lg border border-amber-200"
                 >
-                  <h4 className="text-sm font-medium text-amber-800 mb-2">上下文释义</h4>
+                  <h4 className="text-sm font-medium text-amber-800 mb-2">{t.contextMeaning || '上下文释义'}</h4>
                   <p className="text-stone-700">{learningData.context_meaning}</p>
                 </motion.div>
               )}

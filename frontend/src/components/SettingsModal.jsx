@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages } from 'lucide-react'
 import { api } from '../utils/api'
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
+function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
   const [apiKey, setApiKey] = useState('')
   const [baseUrl, setBaseUrl] = useState('')
   const [model, setModel] = useState('')
@@ -97,7 +97,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
             <div className="flex items-center gap-2.5">
               <Settings className="w-4 h-4 text-stone-500" />
-              <h2 className="text-sm font-semibold text-stone-800">设置</h2>
+              <h2 className="text-sm font-semibold text-stone-800">{t.settings || '设置'}</h2>
             </div>
             <button
               onClick={onClose}
@@ -117,7 +117,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
                 <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Key className="w-3 h-3" />
                   API Key
-                  {hasKey && <span className="text-[10px] text-green-500 normal-case tracking-normal">● 已配置</span>}
+                  {hasKey && <span className="text-[10px] text-green-500 normal-case tracking-normal">● {t.configured || '已配置'}</span>}
                 </label>
                 <input
                   type="password"
@@ -127,7 +127,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
                   className="w-full px-3 py-2 text-sm bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
                 />
                 {hasKey && !apiKey && (
-                  <p className="text-[11px] text-stone-400 mt-1">留空则保持当前 Key 不变</p>
+                  <p className="text-[11px] text-stone-400 mt-1">{t.leaveEmptyKeepKey || '留空则保持当前 Key 不变'}</p>
                 )}
               </div>
 
@@ -162,11 +162,11 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
               <div className="pt-1">
                 <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Gauge className="w-3 h-3" />
-                  LLM 速率
+                  {t.llmRate || 'LLM 速率'}
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-stone-400">每分钟 LLM 请求次数</span>
+                    <span className="text-[11px] text-stone-400">{t.llmRequestsPerMinute || '每分钟 LLM 请求次数'}</span>
                     <span className="text-xs font-semibold text-amber-600">{rpm} RPM</span>
                   </div>
                   <div className="relative">
@@ -192,7 +192,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
               <div>
                 <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Languages className="w-3 h-3" />
-                  母语
+                  {t.nativeLang || '母语'}
                 </label>
                 <div className="flex gap-2">
                   {[
@@ -228,7 +228,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
                 ) : saved ? (
                   <Check className="w-4 h-4" />
                 ) : null}
-                {saving ? '保存中...' : saved ? '已保存' : '保存'}
+                {saving ? (t.saving || '保存中...') : saved ? (t.saved || '已保存') : (t.save || '保存')}
               </motion.button>
             </div>
           )}
