@@ -821,3 +821,113 @@ class TextProcessor:
                 distractors.append(word)
         
         return distractors
+
+
+NO_SPACE_LANGS = {'zh', 'ja', 'ko', 'th', 'lo', 'my', 'km', 'bo', 'yue'}
+
+def fix_no_space_language_tokenization(translation_result, source_lang):
+    if source_lang not in NO_SPACE_LANGS:
+        return translation_result
+
+    if not isinstance(translation_result, dict):
+        return translation_result
+
+    translation = translation_result.get("translation", [])
+    dict_entries = translation_result.get("dictionary_entries", [])
+
+    if not translation or not dict_entries:
+        return translation_result
+
+    if not isinstance(dict_entries, list):
+        return translation_result
+
+    combined_entries = {}
+    for entry in dict_entries:
+        if not isinstance(entry, dict):
+            continue
+        word = entry.get("word", "")
+        tokens = entry.get("tokens", [])
+        if len(word) > 1 and isinstance(tokens, list) and tokens == [word]:
+            combined_entries[word] = entry
+
+    if not combined_entries:
+        return translation_result
+
+    print(f"[DEBUG] fix_no_space_language_tokenization: Found {len(combined_entries)} combined entries: {list(combined_entries.keys())}")
+
+    sorted_combined = sorted(combined_entries.keys(), key=len, reverse=True)
+
+    merged_translation = []
+    i = 0
+    while i < len(translation):
+        token = translation[i]
+        if not isinstance(token, dict) or "text" not in token:
+            merged_translation.append(token)
+            i += 1
+            continue
+
+        matched = False
+        for combined_word in sorted_combined:
+            combined_entry = combined_entries[combined_word]
+            combined_len = len(combined_word)
+            candidate = ""
+            candidate_tokens = []
+            j = i
+            while j < len(translation) and len(candidate) < combined_len:
+                t = translation[j]
+                if isinstance(t, dict) and "text" in t:
+                    next_text = t["text"]
+                    if candidate + next_text == combined_word[:len(candidate) + len(next_text)]:
+                        candidate += next_text
+                        candidate_tokens.append(t)
+                        j += 1
+                    else:
+                        break
+                else:
+                    break
+
+            if candidate == combined_word:
+                merged_token = {
+                    "text": combined_word,
+                    "translation": combined_entry.get("translation", ""),
+                    "phonetic": combined_entry.get("ipa", ""),
+                    "morphology": combined_entry.get("morphology", "")
+                }
+                merged_translation.append(merged_token)
+                i = j
+                matched = True
+                break
+
+        if not matched:
+            merged_translation.append(token)
+            i += 1
+
+    translation_result["translation"] = merged_translation
+
+    merged_texts = set()
+    for token in merged_translation:
+        if isinstance(token, dict) and "text" in token:
+            merged_texts.add(token["text"])
+
+    covered_chars = set()
+    for combined_word in combined_entries:
+        if combined_word in merged_texts:
+            for ch in combined_word:
+                covered_chars.add(ch)
+
+    filtered_entries = []
+    for entry in dict_entries:
+        if not isinstance(entry, dict):
+            filtered_entries.append(entry)
+            continue
+        word = entry.get("word", "")
+        if word in merged_texts:
+            filtered_entries.append(entry)
+        elif len(word) == 1 and word in covered_chars:
+            continue
+        else:
+            filtered_entries.append(entry)
+
+    translation_result["dictionary_entries"] = filtered_entries
+
+    return translation_result

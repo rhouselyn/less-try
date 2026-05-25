@@ -102,14 +102,14 @@ function AllUnitsStep({
           animate={{ opacity: 1 }}
           className="text-2xl font-semibold text-stone-800 mb-2"
         >
-          学习单元
+          {t.learningUnits || '学习单元'}
         </motion.h2>
-        <p className="text-base text-stone-400">按顺序完成单元，解锁下一单元</p>
+        <p className="text-base text-stone-400">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
         
         <label className="absolute right-0 top-1 flex items-center gap-2 cursor-pointer select-none group">
           <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
             <Headphones className="w-3.5 h-3.5" />
-            跳过听力
+            {t.skipListening || '跳过听力'}
           </span>
           <div className="relative">
             <input

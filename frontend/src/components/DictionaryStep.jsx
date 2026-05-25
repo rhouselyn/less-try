@@ -252,7 +252,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       {processingInfo && (
         <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-stone-600">{t.processing}: 句子 {safeProcessingInfo.current} / {safeProcessingInfo.total}</span>
+            <span className="text-sm text-stone-600">{t.processing}: {t.sentence || '句子'} {safeProcessingInfo.current} / {safeProcessingInfo.total}</span>
             <span className="text-sm text-stone-600">{progress}%</span>
           </div>
           <div className="w-full bg-stone-100 rounded-full h-2.5">
@@ -267,7 +267,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       {!processingInfo && loading && !preprocessStatus && (
         <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-stone-600">{t.processing}: 句子 0 / ...</span>
+            <span className="text-sm text-stone-600">{t.processing}: {t.sentence || '句子'} 0 / ...</span>
             <span className="text-sm text-stone-600">0%</span>
           </div>
           <div className="w-full bg-stone-100 rounded-full h-2.5">
@@ -303,7 +303,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           ) : (
             <>
               <Shuffle className="w-5 h-5" />
-              开始学习
+              {t.startLearning || '开始学习'}
             </>
           )}
         </motion.button>

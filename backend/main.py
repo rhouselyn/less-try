@@ -12,7 +12,7 @@ from pathlib import Path
 import re
 
 from nvidia_api import NvidiaAPI, get_settings, update_settings
-from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation
+from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, fix_no_space_language_tokenization
 from storage import Storage
 
 load_dotenv()
@@ -539,6 +539,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                     translation_text_lower.append(word.lower())
                     
                     print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
+            
+            sentence_translation_result = fix_no_space_language_tokenization(
+                sentence_translation_result, source_lang
+            )
             
             sentence_data = {
                 "sentence": sentence,
@@ -2793,33 +2797,35 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 tokenized_translation = translation_result.get("tokenized_translation", "")
                 
                 original_tokens = []
-                dict_entries = translation_result.get("dictionary_entries", [])
-                if dict_entries and isinstance(dict_entries, list):
-                    all_dict_tokens = []
-                    for entry in dict_entries:
-                        if isinstance(entry, dict):
-                            for t in entry.get("tokens", []):
-                                if isinstance(t, str) and t.strip():
-                                    all_dict_tokens.append(t.strip())
-                    
-                    if all_dict_tokens:
-                        seen = set()
-                        unique_tokens = []
-                        for t in all_dict_tokens:
-                            if t.lower() not in seen and not is_punctuation_only(t):
-                                seen.add(t.lower())
-                                unique_tokens.append(t)
-                        
-                        sentence_lower = current_sentence.lower()
-                        unique_tokens.sort(key=lambda tok: sentence_lower.find(tok.lower()) if sentence_lower.find(tok.lower()) >= 0 else len(sentence_lower))
-                        original_tokens = unique_tokens
                 
-                if not original_tokens and "translation" in translation_result:
+                if "translation" in translation_result:
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
                             token_text = strip_edge_punctuation(token["text"].strip())
                             if token_text and not is_punctuation_only(token_text):
                                 original_tokens.append(token_text)
+                
+                if not original_tokens:
+                    dict_entries = translation_result.get("dictionary_entries", [])
+                    if dict_entries and isinstance(dict_entries, list):
+                        all_dict_tokens = []
+                        for entry in dict_entries:
+                            if isinstance(entry, dict):
+                                for t in entry.get("tokens", []):
+                                    if isinstance(t, str) and t.strip():
+                                        all_dict_tokens.append(t.strip())
+                        
+                        if all_dict_tokens:
+                            seen = set()
+                            unique_tokens = []
+                            for t in all_dict_tokens:
+                                if t.lower() not in seen and not is_punctuation_only(t):
+                                    seen.add(t.lower())
+                                    unique_tokens.append(t)
+                            
+                            sentence_lower = current_sentence.lower()
+                            unique_tokens.sort(key=lambda tok: sentence_lower.find(tok.lower()) if sentence_lower.find(tok.lower()) >= 0 else len(sentence_lower))
+                            original_tokens = unique_tokens
                 
                 if not original_tokens:
                     original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)
