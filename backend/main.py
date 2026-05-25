@@ -248,18 +248,40 @@ def get_listening_correct_words(sentence, sentence_data):
     import re
     clean_sentence = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', sentence)
     
-    tr = sentence_data.get("translation_result", {})
+    def normalize_for_compare(text):
+        return re.sub(r'[\s\u3000]+', '', re.sub(r'[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]', '', text)).lower()
 
+    sentence_normalized = normalize_for_compare(clean_sentence)
+    
+    tr = sentence_data.get("translation_result", {})
     translation_tokens = tr.get("translation", [])
+    
     if translation_tokens and isinstance(translation_tokens, list):
-        words = []
+        raw_words = []
         for token in translation_tokens:
             if isinstance(token, dict) and "text" in token:
                 t = token["text"].strip()
                 if t and not is_punctuation_only(t):
-                    words.append(t)
-        if words:
-            return words
+                    cleaned = strip_edge_punctuation(t)
+                    if cleaned:
+                        raw_words.append(cleaned)
+        
+        if raw_words:
+            tokens_normalized = normalize_for_compare(''.join(raw_words))
+            
+            if tokens_normalized == sentence_normalized:
+                return raw_words
+            
+            words_from_sentence = [w for w in clean_sentence.split() if w.strip()]
+            words_cleaned = []
+            for w in words_from_sentence:
+                w_clean = strip_edge_punctuation(w)
+                if w_clean and not is_punctuation_only(w_clean):
+                    words_cleaned.append(w_clean)
+            if words_cleaned and normalize_for_compare(''.join(words_cleaned)) == sentence_normalized:
+                return words_cleaned
+            
+            return raw_words
 
     dict_entries = tr.get("dictionary_entries", [])
     if dict_entries and isinstance(dict_entries, list):
