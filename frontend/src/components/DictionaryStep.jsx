@@ -124,12 +124,15 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const handleTokenClick = useCallback(async (sourceWord) => {
     const sourceLower = sourceWord.toLowerCase()
     const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
+    const sourceStripped = stripEdgePunct(sourceLower)
     const matchedWord = vocab.find(w => {
       const wordLower = w.word.toLowerCase()
       if (wordLower === sourceLower) return true
       if (wordLower === sourceNoHyphen) return true
       if (wordLower.replace(/-/g, ' ') === sourceLower) return true
       if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      if (sourceStripped && sourceStripped !== sourceLower && wordLower === sourceStripped) return true
+      if (sourceStripped && sourceStripped !== sourceLower && w.tokens && w.tokens.some(t => t.toLowerCase() === sourceStripped)) return true
       return false
     })
 
@@ -177,15 +180,22 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     speakText(text, sourceLang)
   }, [sourceLang])
 
+  const stripEdgePunct = (text) => {
+    return text.replace(/^[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]+|[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]+$/g, '')
+  }
+
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
     const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
+    const sourceStripped = stripEdgePunct(sourceLower)
     return vocab.some(w => {
       const wordLower = w.word.toLowerCase()
       if (wordLower === sourceLower) return true
       if (wordLower === sourceNoHyphen) return true
       if (wordLower.replace(/-/g, ' ') === sourceLower) return true
       if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      if (sourceStripped && sourceStripped !== sourceLower && wordLower === sourceStripped) return true
+      if (sourceStripped && sourceStripped !== sourceLower && w.tokens && w.tokens.some(t => t.toLowerCase() === sourceStripped)) return true
       return false
     })
   }, [vocab])
@@ -196,7 +206,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const tokens = (tr && tr.translation && Array.isArray(tr.translation)) ? tr.translation : null
 
     const tokenTexts = tokens
-      ? tokens.filter(t => typeof t === 'object' && t.text).map(t => t.text)
+      ? tokens.filter(t => typeof t === 'object' && t.text).flatMap(t => {
+          const raw = t.text
+          const stripped = stripEdgePunct(raw)
+          return stripped && stripped !== raw ? [raw, stripped] : [raw]
+        })
       : []
 
     const vocabTexts = vocab.map(w => w.word).filter(Boolean)
