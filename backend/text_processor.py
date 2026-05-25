@@ -460,6 +460,7 @@ class TextProcessor:
             return translation_result
         
         original_words = self.tokenize_sentence(sentence, language=source_lang)
+        original_words = [w for w in original_words if not is_punctuation_only(w)]
         
         existing_tokens = []
         if 'translation' in translation_result:

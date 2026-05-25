@@ -417,5 +417,57 @@ class TestMaskedSentencePunctuationStripping:
             assert '।' not in aw
 
 
+class TestVocabPunctuationCleaning:
+    def test_punctuation_only_entry_filtered(self):
+        assert is_punctuation_only('!')
+        assert is_punctuation_only('؟')
+        assert is_punctuation_only('।')
+
+    def test_word_with_trailing_punctuation_cleaned(self):
+        word = 'Привет!'
+        cleaned = word
+        while cleaned and is_punctuation_only(cleaned[-1]):
+            cleaned = cleaned[:-1]
+        while cleaned and is_punctuation_only(cleaned[0]):
+            cleaned = cleaned[1:]
+        assert cleaned == 'Привет'
+
+    def test_word_with_trailing_cjk_punctuation(self):
+        word = '你好。'
+        cleaned = word
+        while cleaned and is_punctuation_only(cleaned[-1]):
+            cleaned = cleaned[:-1]
+        while cleaned and is_punctuation_only(cleaned[0]):
+            cleaned = cleaned[1:]
+        assert cleaned == '你好'
+
+    def test_word_with_trailing_arabic_punctuation(self):
+        word = 'مرحبا؟'
+        cleaned = word
+        while cleaned and is_punctuation_only(cleaned[-1]):
+            cleaned = cleaned[:-1]
+        while cleaned and is_punctuation_only(cleaned[0]):
+            cleaned = cleaned[1:]
+        assert cleaned == 'مرحبا'
+
+    def test_word_with_trailing_hindi_punctuation(self):
+        word = 'नमस्ते।'
+        cleaned = word
+        while cleaned and is_punctuation_only(cleaned[-1]):
+            cleaned = cleaned[:-1]
+        while cleaned and is_punctuation_only(cleaned[0]):
+            cleaned = cleaned[1:]
+        assert cleaned == 'नमस्ते'
+
+    def test_clean_word_unchanged(self):
+        word = 'Bonjour'
+        cleaned = word
+        while cleaned and is_punctuation_only(cleaned[-1]):
+            cleaned = cleaned[:-1]
+        while cleaned and is_punctuation_only(cleaned[0]):
+            cleaned = cleaned[1:]
+        assert cleaned == 'Bonjour'
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

@@ -562,13 +562,27 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 if isinstance(dictionary_entries, list):
                     for dict_entry in dictionary_entries:
                         if isinstance(dict_entry, dict):
+                            word = dict_entry.get("word", "")
+                            if not word or is_punctuation_only(word):
+                                continue
                             dict_entry["sentence_index"] = i
                             all_vocab.append(dict_entry)
         
         seen = set()
         unique_vocab = []
         for entry in all_vocab:
-            word = entry.get("word", "").lower()
+            word = entry.get("word", "")
+            cleaned = word
+            while cleaned and is_punctuation_only(cleaned[-1]):
+                cleaned = cleaned[:-1]
+            while cleaned and is_punctuation_only(cleaned[0]):
+                cleaned = cleaned[1:]
+            if cleaned != word:
+                entry["word"] = cleaned
+                tokens = entry.get("tokens", [])
+                if tokens:
+                    entry["tokens"] = [cleaned if t == word else t for t in tokens]
+            word = cleaned.lower()
             if word not in seen and word:
                 seen.add(word)
                 unique_vocab.append(entry)
@@ -2670,7 +2684,9 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             if "translation" in translation_result:
                 for token in translation_result["translation"]:
                     if isinstance(token, dict) and "text" in token:
-                        translation_tokens.append(token["text"])
+                        token_text = token["text"]
+                        if not is_punctuation_only(token_text):
+                            translation_tokens.append(token_text)
             
             exercise_index_in_unit = current_exercise_index - exercise_start
             total_exercises_in_unit = exercise_end - exercise_start
