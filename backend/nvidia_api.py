@@ -366,7 +366,7 @@ class NvidiaAPI:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). CRITICAL TOKENIZATION RULES: (1) HYPHENATED WORDS ARE ALWAYS ONE TOKEN. French 'allez-vous' → ONE token 'allez-vous', NOT two tokens 'allez'+'-vous'. French 'aujourd'hui' → ONE token, NOT 'aujourd'+'hui'. English 'so-called' → ONE token. German 'E-Mail' → ONE token. The hyphen is PART OF THE WORD, not a separator. (2) APOSTROPHE WORDS ARE ALWAYS ONE TOKEN. English 'don't', 'it's', 'what's' → ONE token each. French 'l'homme', 'j'ai', 'c'est' → ONE token each. Italian 'del', 'nella' → ONE token each. The apostrophe is PART OF THE WORD. (3) INFLECTED FORMS ARE ONE TOKEN. 'studying' → ONE token, NOT 'study'+'ing'. 'ran' → ONE token, NOT 'run'+'ed'. (4) Each space-separated token (in space-using languages) is one entry. (5) All 'text' values concatenated in order must equal the original source text ignoring punctuation. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
+                                    "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. If a hyphenated or apostrophized form is a single lexical unit in that language, it must be one token. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) In languages that use spaces, each space-delimited unit is typically one token (unless it's a multi-word fixed expression). In languages without spaces, follow linguistic word boundaries. (4) All 'text' values concatenated in order must equal the original source text ignoring punctuation. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
                                     "translation": {"type": "string"},
                                     "phonetic": {"type": "string"},
                                     "morphology": {"type": "string"}
@@ -449,125 +449,69 @@ class NvidiaAPI:
 6. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 
 ═══════════════════════════════════════════════════════════
-【最最最重要！！！translation 数组的分词规则！！！】
+【最最最重要！！！translation 数组的分词原则！！！】
 ═══════════════════════════════════════════════════════════
 
 translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 
+【核心原则：遵循源语言的自然词边界】
+你是一个语言专家，你精通所有语言的正字法和语法规则。请根据 TEXT_LANG 自身的语言规则来判断什么是"一个词"，而不是套用其他语言的分词标准。
+
 【什么是一个"词"？】
-一个"词"是原文中连续出现的、在词典中可以查到的最小意义单位。
-关键判断标准：这个词能否独立出现在词典中？
+一个"词"是原文中连续出现的、在该语言的词典中可以查到的最小意义单位。
+判断标准：这个形式能否作为独立条目出现在该语言的词典中？
 
-【规则1：连字符(-)连接的词 = 一个词，绝对不能拆分！！！】
-连字符是词的内部组成部分，不是分隔符！
-✅ 正确：allez-vous → text:"allez-vous"（一个条目）
-❌ 错误：allez-vous → text:"allez" + text:"-vous"（两个条目）
-❌ 错误：allez-vous → text:"allez" + text:"vous"（两个条目）
-
-更多例子：
-✅ aujourd'hui → text:"aujourd'hui"（一个条目）
-❌ aujourd'hui → text:"aujourd" + text:"hui"
-✅ so-called → text:"so-called"（一个条目）
-✅ E-Mail → text:"E-Mail"（一个条目）
-✅ est-ce → text:"est-ce"（一个条目）
-✅ vis-à-vis → text:"vis-à-vis"（一个条目）
-✅ rendez-vous → text:"rendez-vous"（一个条目）
-
-【规则2：撇号(')连接的词 = 一个词，绝对不能拆分！！！】
-撇号是词的内部组成部分，不是分隔符！
-✅ 正确：l'homme → text:"l'homme"（一个条目）
-❌ 错误：l'homme → text:"l'" + text:"homme"
-✅ j'ai → text:"j'ai"（一个条目）
-✅ don't → text:"don't"（一个条目）
-✅ it's → text:"it's"（一个条目）
-✅ c'est → text:"c'est"（一个条目）
-✅ qu'est → text:"qu'est"（一个条目）
-
-【规则3：变位/屈折形式 = 一个词，不能拆分为词干+词缀】
-✅ studying → text:"studying"（一个条目）
-❌ studying → text:"study" + text:"ing"
-✅ ran → text:"ran"（一个条目）
-✅ beautiful → text:"beautiful"（一个条目）
-
-【规则4：绝对禁止包含标点符号】
-text 字段不能包含句号、逗号、问号、感叹号、冒号、分号，以及任何语言的标点符号
-（如中文的。！？、阿拉伯语的؟、印地语的।等）
-但连字符(-)和撇号(')不是标点符号，它们是词的组成部分，必须保留！
-
-【规则5：所有条目的 text 按顺序拼接后必须等于原文内容（去除标点差异后）】
-
-═══════════════════════════════════════════════════════════
-【分词示例】
-═══════════════════════════════════════════════════════════
-
-法语 "Comment allez-vous aujourd'hui?" 的正确分词：
-  text:"Comment", text:"allez-vous", text:"aujourd'hui"
-  （3个条目，不是5个！）
-
-英语 "I don't know what's going on." 的正确分词：
-  text:"I", text:"don't", text:"know", text:"what's", text:"going", text:"on"
-  （6个条目）
-
-俄语 "Привет! Как дела?" 的正确分词：
-  text:"Привет", text:"Как", text:"дела"
-  （3个条目，标点符号不作为条目）
-
-土耳其语 "Merhaba, nasılsın?" 的正确分词：
-  text:"Merhaba", text:"nasılsın"
-  （2个条目，标点符号不作为条目）
+【关键规则】
+1. 遵循该语言的正字法惯例：每种语言都有自己的词边界规则。连字符(-)、撇号(')等字符在某些语言中是词的内部组成部分，在另一些语言中可能是分隔符。请根据该语言自身的正字法来判断。
+2. 变位/屈折形式是单个词：不要将变位形式拆分为词干+词缀。词的形态信息放在 morphology 字段，不通过拆分来表达。
+3. 尊重该语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词。
+4. text 字段绝对禁止包含标点符号（句号、逗号、问号、感叹号等），但连字符和撇号如果在该语言中是词的组成部分则必须保留。
+5. 所有条目的 text 按顺序拼接后必须等于原文内容（去除标点差异后），不能遗漏或增加内容。
+6. 绝对禁止将一个完整的词拆分成字符、音节或语素。
 
 ═══════════════════════════════════════════════════════════
 
 按照以下结构处理文本：
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
-  - text: 原文中的一个词（严格按照上面的分词规则！）
+  - text: 原文中的一个词（严格遵循源语言的自然词边界！）
   - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
   - phonetic: 音标(IPA)（如果该语言没有标准音标，可为空）
   - morphology: 只能是词性缩写（如 n, v, adj）
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
-- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
+- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
-
-【极其重要！！！固定搭配与连字符词处理规则！！！
-- 对于固定搭配（如 what's up, live in, how are you, look forward to 等），请将整个固定搭配作为一个整体处理，不要拆分！！！
-- 固定搭配的text字段应该包含整个短语，如 "what's up" 而不是分开的 "what's" 和 "up"
-- 对于缩写形式（如 what's, don't, he's 等）也要作为一个整体处理，不要拆分！！！
-- 【极其重要】对于连字符连接的词（如法语 allez-vous, 英文 so-called, 德语 E-Mail 等），必须作为一个整体处理，绝对不能拆分成连字符前后的部分！连字符是词的组成部分，不是分隔符
-- 【极其重要】对于撇号连接的词（如法语 aujourd'hui, l'homme, 英文 don't, it's 等），必须作为一个整体处理，绝对不能拆分！
 
 同时，为文本中出现的词汇生成完整词典条目（dictionary_entries）：
 
 【极其重要！！！dictionary_entries的分组规则！！！】
-- 【优先拆分原则】当一个词组可以被拆分为多个独立单词时，必须拆分为独立条目，不要作为整体！例如 "頑張ってください" 必须拆成 "頑張って" 和 "ください" 两个条目，不能作为一个整体条目
-- 每个条目必须是一个完整的词——即原文中连续出现的、能独立使用或能在词典中查到的最小意义单位。尊重该语言的自然词边界
-- 变位/活用/屈折形式视为单个词，不要拆分为词干+词缀（如 studying 是一个词不是 study+ing，ran 是一个词不是 run+ed）。词的形态变化信息应放在 morphology 字段，不要通过拆分 tokens 来表达
-- 只有真正的不可拆分的固定搭配（如英语 "what's up"、法语 "au revoir"）才作为单个条目
+- 【优先拆分原则】当一个词组可以被拆分为多个独立单词时，必须拆分为独立条目，不要作为整体！
+- 每个条目必须是一个完整的词——即原文中连续出现的、能独立使用或能在词典中查到的最小意义单位。遵循该语言的自然词边界
+- 变位/活用/屈折形式视为单个词，不要拆分为词干+词缀。词的形态变化信息应放在 morphology 字段，不要通过拆分 tokens 来表达
+- 只有真正的不可拆分的固定搭配才作为单个条目
 - 判断标准：如果拆分后每个部分都有独立的含义和用法，就必须拆分；只有当整体的意思完全不等于各部分之和时才保持整体
-- 缩写形式（如 what's, don't, he's）必须作为单个条目，不要拆分
-- 【连字符词规则同样适用于 dictionary_entries】连字符连接的词（如 allez-vous）是一个条目，word="allez-vous"，tokens=["allez-vous"]
-- 每个条目的 tokens 字段列出该条目包含的原文单词（如 word="what's up" 则 tokens=["what's", "up"]）
+- 每个条目的 tokens 字段列出该条目包含的原文单词（如固定搭配 word="what's up" 则 tokens=["what's", "up"]）。单个词的 tokens 只包含自身。遵循该语言自然词边界的词，tokens 只包含自身
 - 【极其重要】文本中的每一个单词都必须被某个条目的 tokens 覆盖，一个都不能遗漏！
 - 【绝对禁止】将一个完整的词拆分成字符、音节或语素作为单独的条目！
 
 为每个条目提供：
-1. word: The word or phrase itself (固定搭配用完整短语，如 "what's up")
+1. word: The word or phrase itself
 2. ipa: International Phonetic Alphabet pronunciation
 3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
 4. translation: Translation of the word to TARGET_LANG
-5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。单个词的 tokens 只包含自身（如 "brightly" -> ["brightly"], "studying" -> ["studying"], "mountains" -> ["mountains"]）。连字符词的 tokens 只包含自身（如 "allez-vous" -> ["allez-vous"]）。变位/活用形式也是单个词，tokens 只包含其自身（如 "ran" -> ["ran"]），不要拆分为词干+词缀、字符或音节！
+5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词。单个词的 tokens 只包含自身。变位/活用形式也是单个词，tokens 只包含其自身，不要拆分为词干+词缀、字符或音节！
 6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
 
 【重要要求】
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
 - 生成冗余词时要注意：
   1. 必须使用TARGET_LANG（目标语言）生成冗余词
-  2. 【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组。例如：正确可以是"苹果"、"快乐"，错误的是"红色的苹果"、"非常快乐"
+  2. 【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
   3. 冗余词的意思不能太相近，要避免多个冗余词都表达类似的含义
   4. 确保使用错误的答案组成的意思不是合理的，也不能是与正确答案近似的意思
   5. 冗余词应该是容易混淆但明显不同的概念
-  6. 【极其重要】冗余词替换正确答案中的对应词后，组成的句子意思不能与原句意思相同或近似。例如正确答案是"读书"，冗余词不能是"看"（因为"看书"≈"读书"），而应该是"写"、"买"等意思明显不同的词
+  6. 【极其重要】冗余词替换正确答案中的对应词后，组成的句子意思不能与原句意思相同或近似
 
 翻译时请参考上下文，使用符合TARGET_LANG母语者日常表达的翻译，不要机械直译，要自然流畅但不需要文学化。
 

@@ -335,7 +335,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   <div className="mb-2">
                     <div className="px-4 py-1.5 mt-1">
                       <span className="text-[11px] font-medium text-stone-400 tracking-wide">
-                        最近
+                        {t.recent || '最近'}
                       </span>
                     </div>
                     <div className="space-y-0.5 px-1">
@@ -355,12 +355,12 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                         {recentExpanded ? (
                           <>
                             <ChevronUp className="w-3 h-3" />
-                            收起
+                            {t.collapse || '收起'}
                           </>
                         ) : (
                           <>
                             <ChevronDown className="w-3 h-3" />
-                            显示更多
+                            {t.showMore || '显示更多'}
                           </>
                         )}
                       </button>
@@ -413,7 +413,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
 
               <div className="px-3 py-2 border-t border-stone-200/60 flex-shrink-0">
                 <div className="text-[10px] text-stone-300 text-center">
-                  {records.length} {records.length === 1 ? 'record' : 'records'}
+                  {records.length} {t.record || '条记录'}
                 </div>
               </div>
             </motion.div>

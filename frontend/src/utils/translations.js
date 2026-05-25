@@ -78,7 +78,11 @@ export const translations = {
     confirmDelete: "确认删除",
     deleteCannotUndo: "删除后不可恢复，确定要删除吗？",
     cancel: "取消",
-    confirmDeleteAction: "删除"
+    confirmDeleteAction: "删除",
+    recent: "最近",
+    collapse: "收起",
+    showMore: "显示更多",
+    record: "条记录"
   },
   en: {
     title: "Lesslingo",
@@ -158,6 +162,10 @@ export const translations = {
     confirmDelete: "Confirm Delete",
     deleteCannotUndo: "This action cannot be undone. Are you sure you want to delete?",
     cancel: "Cancel",
-    confirmDeleteAction: "Delete"
+    confirmDeleteAction: "Delete",
+    recent: "Recent",
+    collapse: "Collapse",
+    showMore: "Show more",
+    record: "records"
   }
 };
