@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, ChevronDown, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft, EyeOff, Eye } from 'lucide-react'
+import { Search, X, ChevronDown, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
@@ -95,20 +95,6 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
   const [detailLoading, setDetailLoading] = useState({})
   const [isOpen, setIsOpen] = useState(false)
   const [hideMeanings, setHideMeanings] = useState(false)
-  const [hiddenMeaningWords, setHiddenMeaningWords] = useState(new Set())
-
-  const toggleWordMeaning = useCallback((wordText, e) => {
-    if (e) e.stopPropagation()
-    setHiddenMeaningWords(prev => {
-      const next = new Set(prev)
-      if (next.has(wordText)) {
-        next.delete(wordText)
-      } else {
-        next.add(wordText)
-      }
-      return next
-    })
-  }, [])
 
   const loadWords = useCallback(async () => {
     setLoading(true)
@@ -229,14 +215,8 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                     tabIndex={0}
                     onClick={() => handleWordClick(word.word)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleWordClick(word.word) }}
-                    className="w-full flex items-center gap-2 px-5 py-2.5 hover:bg-stone-50/80 transition-colors text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-stone-50/80 transition-colors text-left cursor-pointer"
                   >
-                    <div
-                      className={`shrink-0 cursor-pointer p-0.5 rounded transition-colors ${hiddenMeaningWords.has(word.word) ? 'text-amber-500 hover:text-amber-600' : 'text-stone-300 hover:text-stone-500'}`}
-                      onClick={(e) => toggleWordMeaning(word.word, e)}
-                    >
-                      {hiddenMeaningWords.has(word.word) ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-semibold text-stone-800">{word.word}</span>
@@ -252,7 +232,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                         )}
                       </div>
                       {word.meaning && (
-                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${(hideMeanings || hiddenMeaningWords.has(word.word)) ? 'invisible' : ''}`}>{word.meaning}</p>
+                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${(hideMeanings && expandedWord !== word.word) ? 'invisible' : ''}`}>{word.meaning}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -295,7 +275,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
       <div className="h-full flex flex-col bg-white rounded-xl border border-stone-200/60 shadow-sm overflow-hidden min-h-0">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-amber-50/50 to-white">
           <div className="flex items-center gap-2.5">
-            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${hideMeanings ? 'text-amber-500' : 'text-amber-500'}`} onClick={() => setHideMeanings(v => !v)} />
+            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${hideMeanings ? 'text-stone-300 hover:text-amber-400' : 'text-amber-500 hover:text-amber-600'}`} onClick={() => setHideMeanings(v => !v)} />
             <span className="text-base font-semibold text-stone-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
               <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>

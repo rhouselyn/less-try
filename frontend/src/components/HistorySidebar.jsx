@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
 import { api } from '../utils/api'
-import { LANGUAGES } from './InputStep'
+import { LangIcon, LANGUAGES } from './InputStep'
 
 const LANG_LABELS = {
   en: 'English',
@@ -357,7 +357,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 {Object.entries(grouped).map(([lang, items], langIdx) => (
                   <div key={lang} className="mb-1">
                     <div className="flex items-center gap-1.5 px-4 py-1.5 mt-1">
-                      <span className="text-[10px] font-semibold text-stone-400 uppercase">{lang.substring(0, 2)}</span>
+                      <LangIcon langCode={lang} size="sm" />
                       <span className="text-[11px] font-medium text-stone-400 tracking-wide">
                         {getLangLabel(lang)}
                       </span>
@@ -433,7 +433,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 }`}
                 title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
               >
-                <span className="text-[10px] font-bold uppercase">{lang.substring(0, 2)}</span>
+                <LangIcon langCode={lang} size="sm" />
               </button>
             ))}
 
@@ -449,7 +449,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
                   title={record.title}
                 >
-                  <span className="text-[9px] font-bold uppercase">{(record.source_lang || '?').substring(0, 2)}</span>
+                  <LangIcon langCode={record.source_lang} size="sm" />
                 </button>
               ))
             )}
