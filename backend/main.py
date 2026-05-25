@@ -1147,7 +1147,7 @@ async def generate_title(text: str, source_lang: str) -> str:
     try:
         messages = [
             {"role": "system", "content": "You are a title generator. Generate a very short title (max 20 characters) that summarizes the given text. If the text already has a clear title in the first line, use that as the title. Output ONLY the title, nothing else."},
-            {"role": "user", "content": f"Generate a short title for this text (language: {source_lang}):\n\n{text[:500]}"}
+            {"role": "user", "content": f"Generate a short title for this text (language: {get_lang_name(source_lang)}):\n\n{text[:500]}"}
         ]
         result = await nvidia_api.call_minimax(messages, temperature=0.3)
         title = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
@@ -3338,11 +3338,14 @@ async def translate_text(request: dict):
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
 
+        source_lang_name = get_lang_name(source_lang)
+        target_lang_name = get_lang_name(target_lang)
+
         nvidia_api.reload()
         messages = [
             {
                 "role": "system",
-                "content": f"You are a professional translator. Translate the following text from {source_lang} to {target_lang}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent."
+                "content": f"You are a professional translator. Translate the following text from {source_lang_name} to {target_lang_name}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent."
             },
             {
                 "role": "user",

@@ -332,8 +332,9 @@ class NvidiaAPI:
             }
         }
 
+        target_lang_name = get_lang_name(target_lang)
         prompt = f"""
-为单词 '{word}' 生成丰富的信息，使用 {target_lang} 输出。
+为单词 '{word}' 生成丰富的信息，使用 {target_lang_name} 输出。
 
 上下文释义：{correct_meaning}
 
@@ -343,7 +344,7 @@ class NvidiaAPI:
 
 1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
 2. variants_detail: 词形变化列表，带类型说明。【极其重要】对于派生词（如 previously, prestigious, studying, published），必须列出其词根/原形作为词形变化（如 previously -> {{"form": "previous", "type": "形容词原形"}}, prestigious -> {{"form": "prestige", "type": "名词原形"}}, studying -> {{"form": "study", "type": "动词原形"}}, published -> {{"form": "publish", "type": "动词原形"}}）。对于基础词，列出其常见的屈折变化（如名词的复数、动词的过去式/过去分词/现在分词、形容词的比较级/最高级等）。只包含确实存在的词形变化，如果没有则返回空数组
-3. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
+3. examples: 两个符合上下文含义的例句，每个都有 {target_lang_name} 的翻译
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
    - question: 可为空（默认为单词本身）
@@ -351,7 +352,7 @@ class NvidiaAPI:
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
 
 要求：
-- 所有输出必须使用 {target_lang}
+- 所有输出必须使用 {target_lang_name}
 - 例句要自然，符合上下文
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
@@ -380,8 +381,8 @@ class NvidiaAPI:
                 "enriched_meaning": correct_meaning,
                 "variants_detail": [],
                 "examples": [
-                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
-                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang}."}
+                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang_name}."},
+                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang_name}."}
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
@@ -389,9 +390,9 @@ class NvidiaAPI:
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
-                        {"text": f"Option 1 in {target_lang}", "is_correct": False},
-                        {"text": f"Option 2 in {target_lang}", "is_correct": False},
-                        {"text": f"Option 3 in {target_lang}", "is_correct": False}
+                        {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
+                        {"text": f"Option 2 in {target_lang_name}", "is_correct": False},
+                        {"text": f"Option 3 in {target_lang_name}", "is_correct": False}
                     ]
                 }
             }
@@ -404,8 +405,8 @@ class NvidiaAPI:
                 "enriched_meaning": correct_meaning,
                 "variants_detail": [],
                 "examples": [
-                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
-                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang}."}
+                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang_name}."},
+                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang_name}."}
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
@@ -413,9 +414,9 @@ class NvidiaAPI:
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
-                        {"text": f"Option 1 in {target_lang}", "is_correct": False},
-                        {"text": f"Option 2 in {target_lang}", "is_correct": False},
-                        {"text": f"Option 3 in {target_lang}", "is_correct": False}
+                        {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
+                        {"text": f"Option 2 in {target_lang_name}", "is_correct": False},
+                        {"text": f"Option 3 in {target_lang_name}", "is_correct": False}
                     ]
                 }
             }
@@ -590,8 +591,8 @@ TEXT_CONTENT
 请严格按照 tool 定义的 JSON 结构返回所有字段，不要遗漏任何 required 字段。
 """
 
-        prompt = prompt.replace("TEXT_LANG", source_lang)
-        prompt = prompt.replace("TARGET_LANG", target_lang)
+        prompt = prompt.replace("TEXT_LANG", get_lang_name(source_lang))
+        prompt = prompt.replace("TARGET_LANG", get_lang_name(target_lang))
         prompt = prompt.replace("TEXT_CONTENT", text)
 
         if context_sentences:
@@ -678,7 +679,8 @@ TEXT_CONTENT
         }
 
         words_str = ", ".join(words)
-        prompt = f"""以下单词在之前的处理中被遗漏了，请为它们生成完整的词典条目，使用 {target_lang} 输出。
+        target_lang_name = get_lang_name(target_lang)
+        prompt = f"""以下单词在之前的处理中被遗漏了，请为它们生成完整的词典条目，使用 {target_lang_name} 输出。
 
 遗漏的单词：{words_str}
 
@@ -687,8 +689,8 @@ TEXT_CONTENT
 请为每个单词提供：
 1. word: 单词本身
 2. ipa: 发音标注。使用该语言最常用、最被广泛认可的注音系统
-3. context_meaning: 基于上下文的 {target_lang} 释义
-4. translation: {target_lang} 翻译
+3. context_meaning: 基于上下文的 {target_lang_name} 释义
+4. translation: {target_lang_name} 翻译
 5. tokens: 分词结果
 6. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
 
