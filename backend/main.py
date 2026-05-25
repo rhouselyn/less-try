@@ -160,7 +160,7 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
                 filtered_options.append(opt)
             elif placeholder_pattern.match(opt["text"].strip()):
                 continue
-            elif not is_source_lang_text(opt["text"], source_lang):
+            else:
                 filtered_options.append(opt)
         
         if len(filtered_options) < 4:
