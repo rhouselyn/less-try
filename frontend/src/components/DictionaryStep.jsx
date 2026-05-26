@@ -40,8 +40,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     return vocab.filter(w =>
       w.word.toLowerCase().includes(q) ||
       (w.enriched_meaning && w.enriched_meaning.toLowerCase().includes(q)) ||
-      (w.context_meaning && w.context_meaning.toLowerCase().includes(q)) ||
-      (w.translation && w.translation.toLowerCase().includes(q))
+      (w.meaning && w.meaning.toLowerCase().includes(q)) ||
+      (w.context_meaning && w.context_meaning.toLowerCase().includes(q))
     )
   }, [vocab, vocabSearch])
 
@@ -483,7 +483,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   </span>
                                 )}
                                 <span className={`text-[12px] text-stone-500 truncate ${hideMeanings ? 'invisible' : ''}`}>
-                                  {word.context_meaning || word.translation}
+                                  {word.meaning || word.context_meaning}
                                 </span>
                               </div>
                               <Volume2

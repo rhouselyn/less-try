@@ -512,7 +512,7 @@ class TextProcessor:
                 if cw:
                     cleaned_original.append(cw)
             translation_result['translation'] = [
-                {'text': w, 'translation': '', 'phonetic': '', 'morphology': '', 'context_meaning': ''}
+                {'text': w, 'phonetic': '', 'morphology': '', 'meaning': ''}
                 for w in cleaned_original
             ]
             return translation_result
@@ -535,10 +535,9 @@ class TextProcessor:
                     if remaining_clean:
                         existing_tokens.append({
                             'text': remaining_clean,
-                            'translation': '',
                             'phonetic': '',
                             'morphology': '',
-                            'context_meaning': ''
+                            'meaning': ''
                         })
                 translation_result['translation'] = existing_tokens
                 return translation_result
@@ -578,7 +577,7 @@ class TextProcessor:
             else:
                 for prev in deduped_tokens:
                     if prev['text'].lower() == key:
-                        for field in ('translation', 'phonetic', 'morphology', 'context_meaning'):
+                        for field in ('phonetic', 'morphology', 'meaning'):
                             if not prev.get(field) and token.get(field):
                                 prev[field] = token[field]
                         break
@@ -608,10 +607,9 @@ class TextProcessor:
                         else:
                             merged.append({
                                 'text': orig,
-                                'translation': '；'.join(t.get('translation', '') for t in combined_tokens if t.get('translation')),
                                 'phonetic': combined_tokens[0].get('phonetic', ''),
                                 'morphology': '；'.join(t.get('morphology', '') for t in combined_tokens if t.get('morphology')),
-                                'context_meaning': '；'.join(t.get('context_meaning', '') for t in combined_tokens if t.get('context_meaning')),
+                                'meaning': '；'.join(t.get('meaning', '') or t.get('context_meaning', '') or t.get('translation', '') for t in combined_tokens if t.get('meaning') or t.get('context_meaning') or t.get('translation')),
                             })
                         tok_idx += 1
                         break
@@ -653,10 +651,9 @@ class TextProcessor:
             if not found:
                 completed_translation.append({
                     'text': orig_word,
-                    'translation': '',
                     'phonetic': '',
                     'morphology': '',
-                    'context_meaning': ''
+                    'meaning': ''
                 })
         
         translation_result['translation'] = completed_translation
@@ -672,7 +669,7 @@ class TextProcessor:
                 deduped.append(token)
             else:
                 prev = seen_keys[key]
-                for field in ('translation', 'phonetic', 'morphology', 'context_meaning'):
+                for field in ('phonetic', 'morphology', 'meaning'):
                     if not prev.get(field) and token.get(field):
                         prev[field] = token[field]
         

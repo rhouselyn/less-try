@@ -216,7 +216,7 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
                     "options": mc_options
                 }
     if "multiple_choice" not in result or not isinstance(result.get("multiple_choice"), dict) or "options" not in result.get("multiple_choice", {}):
-        correct_meaning = result.get("enriched_meaning", result.get("context_meaning", ""))
+        correct_meaning = result.get("enriched_meaning", result.get("meaning", ""))
         fallback_distractors = get_fallback_options(correct_meaning, file_id, count=3)
         fb_opts = [{"text": correct_meaning, "is_correct": True}]
         for fd in fallback_distractors:
@@ -236,7 +236,7 @@ def get_fallback_options(correct_meaning, file_id, count=3):
         all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
         candidates = []
         for v in all_vocab:
-            meaning = v.get("context_meaning") or v.get("translation") or v.get("enriched_meaning") or ""
+            meaning = v.get("meaning") or v.get("enriched_meaning") or ""
             if meaning and meaning != correct_meaning:
                 candidates.append(meaning)
         rnd.shuffle(candidates)
@@ -532,8 +532,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                             entry = {
                                 "word": token["text"],
                                 "ipa": token.get("phonetic", ""),
-                                "context_meaning": token.get("context_meaning", ""),
-                                "translation": token.get("translation", ""),
+                                "meaning": token.get("meaning", "") or token.get("context_meaning", ""),
                                 "tokens": [token["text"]],
                                 "morphology": token.get("morphology", ""),
                                 "sentence_index": si
@@ -574,8 +573,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                         entry = {
                             "word": word,
                             "ipa": token.get("phonetic", ""),
-                            "context_meaning": token.get("context_meaning", ""),
-                            "translation": token.get("translation", ""),
+                            "meaning": token.get("meaning", "") or token.get("context_meaning", ""),
                             "tokens": [word],
                             "morphology": token.get("morphology", ""),
                             "sentence_index": i
@@ -707,12 +705,12 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                         })
             if not context and sentences:
                 context = sentences[0].get("sentence", "")
-        correct_meaning = word_entry.get("context_meaning", "")
+        correct_meaning = word_entry.get("meaning", "")
         if not correct_meaning:
             if "translation" in word_entry:
                 correct_meaning = word_entry["translation"]
-            elif "meaning" in word_entry:
-                correct_meaning = word_entry["meaning"]
+            elif "context_meaning" in word_entry:
+                correct_meaning = word_entry["context_meaning"]
         print(f"[DEBUG] Background word gen: {word_to_gen}")
         options_result = await nvidia_api.generate_multiple_choice(
             word_to_gen,
@@ -741,8 +739,7 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word_to_gen)
         cache_data["ipa"] = word_entry.get("ipa", "")
-        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = correct_meaning
+        cache_data["meaning"] = correct_meaning
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
@@ -857,7 +854,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
         for token in translation_tokens:
             if isinstance(token, dict) and "text" in token:
                 token_text = token["text"]
-                token_translation = token.get("translation", "")
+                token_translation = token.get("meaning", "")
                 token_morphology = token.get("morphology", "")
                 if len(token_text) <= 2 and not token_translation and not token_morphology:
                     continue
@@ -1477,7 +1474,7 @@ async def get_random_word(file_id: str):
                     "examples": cached_word.get("examples", []),
                     "memory_hint": cached_word.get("memory_hint", ""),
                     "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
-                    "context_meaning": cached_word.get("context_meaning", cached_word.get("meaning", "")),
+                    "context_meaning": cached_word.get("meaning", cached_word.get("context_meaning", "")),
                     "unit_end_index": unit_end_index,
                     "current_index": current_index,
                     "unit_start_index": unit_start_index,
@@ -1509,14 +1506,14 @@ async def get_random_word(file_id: str):
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
-        correct_meaning = random_word.get("context_meaning", "")
+        correct_meaning = random_word.get("meaning", "")
         
         if not correct_meaning:
             # 尝试从其他字段获取释义
-            if "translation" in random_word:
+            if "context_meaning" in random_word:
+                correct_meaning = random_word["context_meaning"]
+            elif "translation" in random_word:
                 correct_meaning = random_word["translation"]
-            elif "meaning" in random_word:
-                correct_meaning = random_word["meaning"]
         
         options_result = await nvidia_api.generate_multiple_choice(
             word,
@@ -1551,7 +1548,7 @@ async def get_random_word(file_id: str):
             "examples": options_result.get("examples", []),
             "memory_hint": options_result.get("memory_hint", ""),
             "enriched_meaning": options_result.get("enriched_meaning", correct_meaning),
-            "context_meaning": correct_meaning,
+            "meaning": correct_meaning,
             "unit_end_index": unit_end_index,
             "current_index": current_index,
             "unit_start_index": unit_start_index,
@@ -1564,8 +1561,7 @@ async def get_random_word(file_id: str):
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word)
         cache_data["ipa"] = random_word.get("ipa", "")
-        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = correct_meaning
+        cache_data["meaning"] = correct_meaning
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
@@ -1806,14 +1802,14 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
-        correct_meaning = random_word.get("context_meaning", "")
+        correct_meaning = random_word.get("meaning", "")
         
         if not correct_meaning:
             # 尝试从其他字段获取释义
-            if "translation" in random_word:
+            if "context_meaning" in random_word:
+                correct_meaning = random_word["context_meaning"]
+            elif "translation" in random_word:
                 correct_meaning = random_word["translation"]
-            elif "meaning" in random_word:
-                correct_meaning = random_word["meaning"]
         
         print(f"[DEBUG] 后台预生成单词信息: {word}")
         
@@ -1830,8 +1826,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word)
         cache_data["ipa"] = random_word.get("ipa", "")
-        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = correct_meaning
+        cache_data["meaning"] = correct_meaning
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
@@ -1966,14 +1961,14 @@ async def get_word_details(file_id: str, word: str):
             if not context and sentences:
                 context = sentences[0].get("sentence", "")
 
-        correct_meaning = word_data.get("context_meaning", "")
+        correct_meaning = word_data.get("meaning", "")
 
         if not correct_meaning:
             # 尝试从其他字段获取释义
-            if "translation" in word_data:
+            if "context_meaning" in word_data:
+                correct_meaning = word_data["context_meaning"]
+            elif "translation" in word_data:
                 correct_meaning = word_data["translation"]
-            elif "meaning" in word_data:
-                correct_meaning = word_data["meaning"]
 
         # 调用generate_multiple_choice获取丰富的单词信息
         options_result = await nvidia_api.generate_multiple_choice(
@@ -2008,7 +2003,7 @@ async def get_word_details(file_id: str, word: str):
         response_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
         response_data["correct_meaning"] = options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning))
         response_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        response_data["context_meaning"] = correct_meaning
+        response_data["meaning"] = correct_meaning
         response_data["examples"] = options_result.get("examples", [])
         response_data["context_sentences"] = context_sentences_with_translations
         response_data["context"] = context
@@ -2111,14 +2106,14 @@ async def get_unit_words(file_id: str, unit_id: int):
                     # 如果没找到，使用第一个句子作为上下文
                     context = sentences[0].get("sentence", "")
             
-            correct_meaning = word_data.get("context_meaning", "")
+            correct_meaning = word_data.get("meaning", "")
             
             if not correct_meaning:
                 # 尝试从其他字段获取释义
-                if "translation" in word_data:
+                if "context_meaning" in word_data:
+                    correct_meaning = word_data["context_meaning"]
+                elif "translation" in word_data:
                     correct_meaning = word_data["translation"]
-                elif "meaning" in word_data:
-                    correct_meaning = word_data["meaning"]
             
             # 调用generate_multiple_choice获取丰富的单词信息
             options_result = await nvidia_api.generate_multiple_choice(
@@ -3011,7 +3006,7 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
             cached = storage.load_word_cache(file_id, word)
 
             ipa = entry.get("ipa", "")
-            meaning = entry.get("context_meaning", "") or entry.get("translation", "")
+            meaning = entry.get("meaning", "") or entry.get("context_meaning", "")
             part_of_speech = entry.get("morphology", "")
             examples = []
             memory_hint = ""
@@ -3021,8 +3016,8 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
                 if cached.get("ipa"):
                     ipa = cached["ipa"]
                 meaning = cached.get("enriched_meaning", "") or cached.get("meaning", "") or meaning
-                if cached.get("context_meaning") and not meaning:
-                    meaning = cached["context_meaning"]
+                if cached.get("meaning") and not meaning:
+                    meaning = cached["meaning"]
                 if cached.get("examples"):
                     examples = cached["examples"]
                 if cached.get("memory_hint"):

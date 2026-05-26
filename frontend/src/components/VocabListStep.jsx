@@ -56,9 +56,9 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
     const q = searchQuery.toLowerCase()
     return vocab.filter(w =>
       w.word.toLowerCase().includes(q) ||
+      (w.meaning && w.meaning.toLowerCase().includes(q)) ||
       (w.context_meaning && w.context_meaning.toLowerCase().includes(q)) ||
-      (w.enriched_meaning && w.enriched_meaning.toLowerCase().includes(q)) ||
-      (w.translation && w.translation.toLowerCase().includes(q))
+      (w.enriched_meaning && w.enriched_meaning.toLowerCase().includes(q))
     )
   }, [vocab, searchQuery])
 
@@ -179,7 +179,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                     {words.map((word, index) => {
                       const isExpanded = expandedWord === word.word
                       const enriched = getEnriched(word.word)
-                      const displayMeaning = word.enriched_meaning || word.context_meaning || word.translation
+                      const displayMeaning = word.enriched_meaning || word.meaning || word.context_meaning
                       return (
                         <motion.div
                           key={word.word}

@@ -238,7 +238,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 </motion.div>
               )}
 
-              {learningData.context_meaning && learningData.context_meaning !== learningData.enriched_meaning && (
+              {(learningData.meaning || learningData.context_meaning) && (learningData.meaning || learningData.context_meaning) !== learningData.enriched_meaning && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -246,7 +246,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   className="bg-amber-50 p-4 rounded-lg border border-amber-200"
                 >
                   <h4 className="text-sm font-medium text-amber-800 mb-2">{t.contextMeaning || '上下文释义'}</h4>
-                  <p className="text-stone-700">{learningData.context_meaning}</p>
+                  <p className="text-stone-700">{learningData.meaning || learningData.context_meaning}</p>
                 </motion.div>
               )}
 

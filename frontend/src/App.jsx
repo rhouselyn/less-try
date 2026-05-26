@@ -913,8 +913,6 @@ function App() {
     setSkipPolling(true)
     setLoading(true)
     try {
-      setSourceLang(srcLang)
-      setTargetLang(tgtLang)
       setCurrentFileId(fileId)
       setFileId(fileId)
       const vocabData = await api.getVocab(fileId)

@@ -441,12 +441,11 @@ class NvidiaAPI:
                                 "type": "object",
                                 "properties": {
                                     "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). Punctuation does NOT belong to any token — it is completely discarded. Hyphens(-) and apostrophes(') must be preserved if they are internal parts of a word in that language. TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) must be one token. (4) After removing punctuation from all 'text' values, their concatenation in order MUST equal the original source text with punctuation removed — no characters may be omitted or added. Each character belongs to exactly ONE token; no overlap, no duplication. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
-                                    "translation": {"type": "string"},
                                     "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
                                     "morphology": {"type": "string"},
-                                    "context_meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - just a few independent words, not a full sentence explanation"}
+                                    "meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - concise, just a few independent words, not a full sentence explanation"}
                                 },
-                                "required": ["text", "translation", "phonetic", "morphology", "context_meaning"]
+                                "required": ["text", "phonetic", "morphology", "meaning"]
                             }
                         },
                         "tokenized_translation": {
@@ -518,10 +517,9 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
   - text: 原文中的一个词（严格遵循源语言的自然词边界！）
-  - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
   - phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
   - morphology: 只能是词性缩写（如 n, v, adj）
-  - context_meaning: 基于上下文的 TARGET_LANG 释义，只需几个独立的词，不需要用完整句子解释
+  - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
@@ -603,14 +601,13 @@ TEXT_CONTENT
                                 "type": "object",
                                 "properties": {
                                     "text": {"type": "string"},
-                                    "translation": {"type": "string"},
                                     "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
                                     "morphology": {"type": "string"},
-                                    "context_meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - just a few independent words, not a full sentence explanation"}
+                                    "meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - concise, just a few independent words, not a full sentence explanation"}
                                 },
                                 "required": [
-                                    "text", "translation", "phonetic",
-                                    "morphology", "context_meaning"
+                                    "text", "phonetic",
+                                    "morphology", "meaning"
                                 ]
                             }
                         }
@@ -630,10 +627,9 @@ TEXT_CONTENT
 
 请为每个单词提供：
 1. text: 单词本身
-2. translation: {target_lang_name} 翻译
-3. phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
-4. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
-5. context_meaning: 基于上下文的 {target_lang_name} 释义，只需几个独立的词，不需要用完整句子解释
+2. phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
+3. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
+4. meaning: 基于上下文的 {target_lang_name} 释义，简洁的几个独立词，不需要用完整句子解释
 
 【重要】必须为每一个遗漏的单词都生成条目，不要遗漏任何一个！
 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。"""
