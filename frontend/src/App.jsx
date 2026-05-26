@@ -74,6 +74,7 @@ function App() {
   const [completedPhase, setCompletedPhase] = useState(1)
   const [unitStarCounts, setUnitStarCounts] = useState({})
   const unitErrorCountRef = useRef(0)
+  const isFetchingNextRef = useRef(false)
   const [skipListening, setSkipListening] = useState(false)
   const [generatingUnits, setGeneratingUnits] = useState(new Set())
   const [recentLanguages, setRecentLanguages] = useState([])
@@ -783,6 +784,8 @@ function App() {
 
   const getNextWord = async (retryCount = 0) => {
     if (!currentFileId) return
+    if (isFetchingNextRef.current) return
+    isFetchingNextRef.current = true
     
     setLoading(true)
     try {
@@ -821,6 +824,7 @@ function App() {
       
       if (nextWordResponse.listening_quiz) {
         if (skipListening) {
+          isFetchingNextRef.current = false
           return getNextWord(retryCount)
         }
         const endIdx = nextWordResponse.unit_end_index || unitEndIndex
@@ -839,7 +843,8 @@ function App() {
         setStep('sentence-quiz')
       } else if (response.type === 'listening_quiz') {
         if (skipListening) {
-          return getNextWord(0)
+          isFetchingNextRef.current = false
+          return getNextWord(retryCount)
         }
         setListeningQuizData(response)
         setUnitEndIndex(response.unit_end_index)
@@ -875,14 +880,17 @@ function App() {
     } catch (error) {
       console.error('获取下一个单词错误:', error)
       if (error.response && error.response.status === 401 && retryCount < 2) {
+        isFetchingNextRef.current = false
         setTimeout(() => getNextWord(retryCount + 1), 1000)
         return
       }
       if (error.response && (error.response.status === 401 || error.response.status === 502 || error.response.status === 503 || error.response.status === 504)) {
+        isFetchingNextRef.current = false
         setTimeout(() => getNextWord(retryCount + 1), 2000)
         return
       }
     } finally {
+      isFetchingNextRef.current = false
       setLoading(false)
     }
   }
@@ -1125,7 +1133,7 @@ function App() {
           
           {step === 'sentence-quiz' && (
             <SentenceQuizStep
-              key={`sentence-quiz-${quizData?.original_sentence}-${quizData?.step_in_unit}`}
+              key={`sentence-quiz-${quizData?.flat_index ?? quizData?.original_sentence}`}
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => handleConfirmBack('all-units')}
@@ -1153,7 +1161,7 @@ function App() {
           
           {step === 'listening-quiz' && (
             <ListeningQuizStep
-              key={`listening-quiz-${listeningQuizData?.original_sentence}-${listeningQuizData?.step_in_unit}`}
+              key={`listening-quiz-${listeningQuizData?.flat_index ?? listeningQuizData?.original_sentence}`}
               quizData={listeningQuizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => handleConfirmBack('all-units')}

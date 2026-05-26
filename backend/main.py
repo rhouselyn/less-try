@@ -30,8 +30,6 @@ class RateLimiter:
             elapsed = now - self.last_call
             if elapsed < self.interval:
                 wait_time = self.interval - elapsed
-                if elapsed < 0.5:
-                    wait_time += 0.5 - elapsed
                 await asyncio.sleep(wait_time)
             self.last_call = time.time()
 
@@ -674,94 +672,104 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
         return
     processing.add(word_to_gen)
     try:
-        if storage.load_word_cache(file_id, word_to_gen):
-            return
-        word_entry = None
-        for v in vocab:
-            if v.get("word", "").lower() == word_to_gen.lower():
-                word_entry = v
-                break
-        if not word_entry:
-            return
-        sentences = storage.load_pipeline_data(file_id)
-        context = ""
-        context_sentences = []
-        if sentences:
-            has_cjk = any('\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' or '\uac00' <= c <= '\ud7af' for c in word_to_gen[:10])
-            if has_cjk:
-                word_pattern = re.compile(re.escape(word_to_gen), re.IGNORECASE)
-            else:
-                word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
-            for sent_idx, sentence_data in enumerate(sentences):
-                if "sentence" in sentence_data:
-                    if word_pattern.search(sentence_data["sentence"]):
-                        context = sentence_data["sentence"]
-                        translation = ""
-                        if "translation_result" in sentence_data:
-                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                        context_sentences.append({
-                            "sentence": sentence_data["sentence"],
-                            "translation": translation,
-                            "sentence_index": sent_idx
-                        })
-            if not context and sentences:
-                context = sentences[0].get("sentence", "")
-        correct_meaning = word_entry.get("meaning", "")
-        if not correct_meaning:
-            if "translation" in word_entry:
-                correct_meaning = word_entry["translation"]
-            elif "context_meaning" in word_entry:
-                correct_meaning = word_entry["context_meaning"]
-        
-        global word_gen_rate_limiter
-        if word_gen_rate_limiter:
-            await word_gen_rate_limiter.acquire()
-        
-        print(f"[DEBUG] Background word gen: {word_to_gen}")
-        options_result = await nvidia_api.generate_multiple_choice(
-            word_to_gen,
-            correct_meaning,
-            context,
-            target_lang
-        )
-        
-        placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
-        enriched = options_result.get("enriched_meaning", "")
-        if placeholder_pattern.search(enriched):
-            print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
-            if word_gen_rate_limiter:
-                await word_gen_rate_limiter.acquire()
-            options_result = await nvidia_api.generate_multiple_choice(
-                word_to_gen,
-                correct_meaning,
-                context,
-                target_lang
-            )
-            enriched = options_result.get("enriched_meaning", "")
-            if placeholder_pattern.search(enriched):
-                print(f"[WARN] Still placeholder text after retry for '{word_to_gen}', using fallback")
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                if storage.load_word_cache(file_id, word_to_gen):
+                    return
+                word_entry = None
+                for v in vocab:
+                    if v.get("word", "").lower() == word_to_gen.lower():
+                        word_entry = v
+                        break
+                if not word_entry:
+                    return
+                sentences = storage.load_pipeline_data(file_id)
+                context = ""
+                context_sentences = []
+                if sentences:
+                    has_cjk = any('\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' or '\uac00' <= c <= '\ud7af' for c in word_to_gen[:10])
+                    if has_cjk:
+                        word_pattern = re.compile(re.escape(word_to_gen), re.IGNORECASE)
+                    else:
+                        word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
+                    for sent_idx, sentence_data in enumerate(sentences):
+                        if "sentence" in sentence_data:
+                            if word_pattern.search(sentence_data["sentence"]):
+                                context = sentence_data["sentence"]
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                context_sentences.append({
+                                    "sentence": sentence_data["sentence"],
+                                    "translation": translation,
+                                    "sentence_index": sent_idx
+                                })
+                    if not context and sentences:
+                        context = sentences[0].get("sentence", "")
+                correct_meaning = word_entry.get("meaning", "")
+                if not correct_meaning:
+                    if "translation" in word_entry:
+                        correct_meaning = word_entry["translation"]
+                    elif "context_meaning" in word_entry:
+                        correct_meaning = word_entry["context_meaning"]
+                
+                global word_gen_rate_limiter
+                if word_gen_rate_limiter:
+                    await word_gen_rate_limiter.acquire()
+                
+                print(f"[DEBUG] Background word gen: {word_to_gen} (attempt {attempt + 1})")
+                options_result = await nvidia_api.generate_multiple_choice(
+                    word_to_gen,
+                    correct_meaning,
+                    context,
+                    target_lang
+                )
+                
+                placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
+                enriched = options_result.get("enriched_meaning", "")
                 if placeholder_pattern.search(enriched):
-                    options_result["enriched_meaning"] = correct_meaning
-        
-        options_result = fix_llm_options_result(options_result, source_lang, file_id)
-        cache_data = dict(options_result)
-        cache_data["word"] = options_result.get("word", word_to_gen)
-        cache_data["ipa"] = word_entry.get("ipa", "")
-        cache_data["meaning"] = correct_meaning
-        cache_data["examples"] = options_result.get("examples", [])
-        cache_data["context"] = context
-        cache_data["context_sentences"] = context_sentences
-        cache_data["morphology"] = word_entry.get("morphology", "")
-        cache_data["variants_detail"] = options_result.get("variants_detail", [])
-        cache_data["memory_hint"] = options_result.get("memory_hint", "")
-        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
-        if "context_translations" in cache_data:
-            del cache_data["context_translations"]
-        storage.save_word_cache(file_id, word_to_gen, cache_data)
-        print(f"[DEBUG] Cached word gen: {word_to_gen}")
-    except Exception as e:
-        print(f"[ERROR] Word gen failed for {word_to_gen}: {e}")
+                    print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
+                    if word_gen_rate_limiter:
+                        await word_gen_rate_limiter.acquire()
+                    options_result = await nvidia_api.generate_multiple_choice(
+                        word_to_gen,
+                        correct_meaning,
+                        context,
+                        target_lang
+                    )
+                    enriched = options_result.get("enriched_meaning", "")
+                    if placeholder_pattern.search(enriched):
+                        print(f"[WARN] Still placeholder text after retry for '{word_to_gen}', using fallback")
+                        if placeholder_pattern.search(enriched):
+                            options_result["enriched_meaning"] = correct_meaning
+                
+                options_result = fix_llm_options_result(options_result, source_lang, file_id)
+                cache_data = dict(options_result)
+                cache_data["word"] = options_result.get("word", word_to_gen)
+                cache_data["ipa"] = word_entry.get("ipa", "")
+                cache_data["meaning"] = correct_meaning
+                cache_data["examples"] = options_result.get("examples", [])
+                cache_data["context"] = context
+                cache_data["context_sentences"] = context_sentences
+                cache_data["morphology"] = word_entry.get("morphology", "")
+                cache_data["variants_detail"] = options_result.get("variants_detail", [])
+                cache_data["memory_hint"] = options_result.get("memory_hint", "")
+                cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
+                cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+                if "context_translations" in cache_data:
+                    del cache_data["context_translations"]
+                storage.save_word_cache(file_id, word_to_gen, cache_data)
+                print(f"[DEBUG] Cached word gen: {word_to_gen}")
+                return
+            except Exception as e:
+                print(f"[ERROR] Word gen failed for {word_to_gen} (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    retry_delay = 5 * (attempt + 1)
+                    print(f"[DEBUG] Retrying {word_to_gen} in {retry_delay}s...")
+                    await asyncio.sleep(retry_delay)
+                else:
+                    print(f"[ERROR] Word gen permanently failed for {word_to_gen} after {max_retries} attempts")
     finally:
         processing.discard(word_to_gen)
 
@@ -1369,6 +1377,7 @@ async def get_random_word(file_id: str):
                     rnd.shuffle(tokens)
                     return {
                         "type": "sentence_quiz",
+                        "flat_index": current_index,
                         "original_sentence": current_item["sentence"],
                         "correct_translation": current_item.get("correct_translation", ""),
                         "correct_tokens": current_item.get("correct_tokens", []),
@@ -1432,6 +1441,7 @@ async def get_random_word(file_id: str):
                     rnd.shuffle(options)
                     return {
                         "type": "listening_quiz",
+                        "flat_index": current_index,
                         "original_sentence": correct_sentence,
                         "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', correct_sentence),
                         "correct_words": sentence_words_display,
@@ -1686,6 +1696,7 @@ async def next_word(file_id: str):
                         "new_index": new_index,
                         "unit_end_index": unit_end_index,
                         "sentence_quiz": {
+                            "flat_index": new_index,
                             "original_sentence": next_item["sentence"],
                             "correct_translation": next_item.get("correct_translation", ""),
                             "correct_tokens": next_item.get("correct_tokens", []),
@@ -1750,6 +1761,7 @@ async def next_word(file_id: str):
                         "new_index": new_index,
                         "unit_end_index": unit_end_index,
                         "listening_quiz": {
+                            "flat_index": new_index,
                             "original_sentence": correct_sentence,
                             "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', correct_sentence),
                             "correct_words": sentence_words_display,
