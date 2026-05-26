@@ -390,6 +390,7 @@ storage = Storage()
 # 存储处理状态
 processing_status = {}
 word_gen_state = {}
+word_gen_rate_limiter = None
 
 
 @app.get("/")
@@ -711,6 +712,11 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                 correct_meaning = word_entry["translation"]
             elif "context_meaning" in word_entry:
                 correct_meaning = word_entry["context_meaning"]
+        
+        global word_gen_rate_limiter
+        if word_gen_rate_limiter:
+            await word_gen_rate_limiter.acquire()
+        
         print(f"[DEBUG] Background word gen: {word_to_gen}")
         options_result = await nvidia_api.generate_multiple_choice(
             word_to_gen,
@@ -723,6 +729,8 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
         enriched = options_result.get("enriched_meaning", "")
         if placeholder_pattern.search(enriched):
             print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
+            if word_gen_rate_limiter:
+                await word_gen_rate_limiter.acquire()
             options_result = await nvidia_api.generate_multiple_choice(
                 word_to_gen,
                 correct_meaning,
@@ -796,6 +804,12 @@ async def background_word_gen(file_id: str):
         else:
             state["plan_position"] = len(plan_word_order)
 
+    global word_gen_rate_limiter
+    if not word_gen_rate_limiter:
+        app_settings = storage.load_user_preferences()
+        rpm = app_settings.get("rpm", 60)
+        word_gen_rate_limiter = RateLimiter(rpm)
+
     while state["running"]:
         word_to_gen = None
         if state["priority_queue"]:
@@ -818,7 +832,7 @@ async def background_word_gen(file_id: str):
             continue
 
         asyncio.create_task(process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang))
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(0.1)
 
     state["task"] = None
 
@@ -1031,6 +1045,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     unit_quiz_items.append({
                         "type": "listening_quiz",
                         "sentence": sentence,
+                        "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', sentence),
                         "correct_words": sentence_words_display,
                         "distractor_words": distractor_words,
                         "_last_covering_shuffled_pos": last_pos
@@ -1418,6 +1433,7 @@ async def get_random_word(file_id: str):
                     return {
                         "type": "listening_quiz",
                         "original_sentence": correct_sentence,
+                        "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', correct_sentence),
                         "correct_words": sentence_words_display,
                         "options": options,
                         "unit_end_index": unit_end_index,
@@ -1735,6 +1751,7 @@ async def next_word(file_id: str):
                         "unit_end_index": unit_end_index,
                         "listening_quiz": {
                             "original_sentence": correct_sentence,
+                            "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', correct_sentence),
                             "correct_words": sentence_words_display,
                             "options": options,
                             "step_in_unit": step_in_unit,
@@ -2537,12 +2554,22 @@ async def get_phase_units(file_id: str, phase_number: int):
                 end_index = accumulated + len(items)
                 word_count = sum(1 for item in items if item["type"] == "word")
                 completed = max_index >= end_index
+                word_items = [item for item in items if item["type"] == "word"]
+                all_words_cached = True
+                for item in word_items:
+                    vi = item.get("vocab_index")
+                    if vi is not None and vi < len(vocab):
+                        w = vocab[vi].get("word", "")
+                        if w and not storage.load_word_cache(file_id, w):
+                            all_words_cached = False
+                            break
                 phase1_units.append({
                     "word_count": word_count,
                     "exercises_count": len(items),
                     "completed": completed,
                     "start_index": start_index,
-                    "end_index": end_index
+                    "end_index": end_index,
+                    "generating": not all_words_cached
                 })
                 accumulated += len(items)
             
@@ -2563,7 +2590,8 @@ async def get_phase_units(file_id: str, phase_number: int):
                         "exercises_count": unit["exercises_count"],
                         "completed": unit["completed"],
                         "start_index": unit["start_index"],
-                        "end_index": unit["end_index"]
+                        "end_index": unit["end_index"],
+                        "generating": unit["generating"]
                     }
                     for i, unit in enumerate(phase1_units)
                 ],

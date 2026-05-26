@@ -16,7 +16,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
 
   const autoSpeak = useCallback(() => {
     if (quizData?.original_sentence) {
-      setTimeout(() => speakText(quizData.original_sentence, sourceLang), 300)
+      setTimeout(() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang), 300)
     }
   }, [quizData?.original_sentence, sourceLang])
 
@@ -144,7 +144,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <motion.button
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => speakText(quizData.original_sentence, sourceLang)}
+              onClick={() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang)}
               className="p-3 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
             >
               <Volume2 className="w-8 h-8" />
