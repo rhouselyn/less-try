@@ -633,7 +633,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         if file_id not in word_gen_state:
             word_gen_state[file_id] = {
                 "running": False,
-                "position": 0,
                 "vocab": all_vocab,
                 "priority_queue": [],
                 "task": None,
@@ -643,13 +642,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         state["vocab"] = all_vocab
         if "processing_words" not in state:
             state["processing_words"] = set()
-        for i, word_entry in enumerate(all_vocab):
-            word = word_entry.get("word", "")
-            if word and not storage.load_word_cache(file_id, word):
-                state["position"] = i
-                break
-        else:
-            state["position"] = len(all_vocab)
+        if "plan_position" not in state:
+            state["plan_position"] = 0
         if not state["running"]:
             state["running"] = True
             state["task"] = asyncio.create_task(background_word_gen(file_id))
@@ -767,14 +761,44 @@ async def background_word_gen(file_id: str):
     source_lang = language_settings.get("source_lang", "en")
     vocab = state["vocab"]
 
+    plan = storage.load_learning_plan(file_id)
+    plan_word_order = []
+    if plan:
+        seen_vocab_indices = set()
+        for unit_id in sorted(plan.keys()):
+            items = plan[unit_id].get("items", [])
+            for item in items:
+                vi = item.get("vocab_index")
+                if vi is not None and vi not in seen_vocab_indices:
+                    seen_vocab_indices.add(vi)
+                    plan_word_order.append(vi)
+        for i in range(len(vocab)):
+            if i not in seen_vocab_indices:
+                plan_word_order.append(i)
+
+    if not plan_word_order:
+        plan_word_order = list(range(len(vocab)))
+
+    if "plan_position" not in state:
+        state["plan_position"] = 0
+        for pi, vi in enumerate(plan_word_order):
+            if vi < len(vocab):
+                w = vocab[vi].get("word", "")
+                if w and not storage.load_word_cache(file_id, w):
+                    state["plan_position"] = pi
+                    break
+        else:
+            state["plan_position"] = len(plan_word_order)
+
     while state["running"]:
         word_to_gen = None
         if state["priority_queue"]:
             word_to_gen = state["priority_queue"].pop(0)
-        elif state["position"] < len(vocab):
-            word_entry = vocab[state["position"]]
-            word_to_gen = word_entry.get("word", "")
-            state["position"] += 1
+        elif state["plan_position"] < len(plan_word_order):
+            vocab_idx = plan_word_order[state["plan_position"]]
+            state["plan_position"] += 1
+            if vocab_idx < len(vocab):
+                word_to_gen = vocab[vocab_idx].get("word", "")
 
         if not word_to_gen:
             await asyncio.sleep(1)
@@ -1150,7 +1174,6 @@ async def start_word_gen(file_id: str):
         if file_id not in word_gen_state:
             word_gen_state[file_id] = {
                 "running": False,
-                "position": 0,
                 "vocab": vocab,
                 "priority_queue": [],
                 "task": None,
@@ -1162,13 +1185,8 @@ async def start_word_gen(file_id: str):
         if "processing_words" not in state:
             state["processing_words"] = set()
 
-        for i, word_entry in enumerate(vocab):
-            word = word_entry.get("word", "")
-            if word and not storage.load_word_cache(file_id, word):
-                state["position"] = i
-                break
-        else:
-            state["position"] = len(vocab)
+        if "plan_position" not in state:
+            state["plan_position"] = 0
 
         if state["running"]:
             return {"status": "already_running"}
@@ -1212,7 +1230,6 @@ async def priority_word_gen(file_id: str, request: dict):
         if file_id not in word_gen_state:
             word_gen_state[file_id] = {
                 "running": False,
-                "position": 0,
                 "vocab": vocab,
                 "priority_queue": [],
                 "task": None,
@@ -1223,6 +1240,8 @@ async def priority_word_gen(file_id: str, request: dict):
         state["vocab"] = vocab
         if "processing_words" not in state:
             state["processing_words"] = set()
+        if "plan_position" not in state:
+            state["plan_position"] = 0
 
         if word not in state["priority_queue"]:
             state["priority_queue"].append(word)
@@ -1483,104 +1502,104 @@ async def get_random_word(file_id: str):
                     "step_in_unit": step_in_unit
                 }
         
-        # 构建上下文（包含翻译）
-        sentences = storage.load_pipeline_data(file_id)
-        context = ""
-        context_sentences = []
-        if sentences:
-            import re
-            word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
-            for sent_idx, sentence_data in enumerate(sentences):
-                if "sentence" in sentence_data:
-                    if word_pattern.search(sentence_data["sentence"]):
-                        context = sentence_data["sentence"]
-                        translation = ""
-                        if "translation_result" in sentence_data:
-                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                        context_sentences.append({
-                            "sentence": sentence_data["sentence"],
-                            "translation": translation,
-                            "sentence_index": sent_idx
-                        })
-            if not context and sentences:
-                context = sentences[0].get("sentence", "")
+        # 无缓存：触发优先生成并等待缓存
+        print(f"[DEBUG] 单词无缓存，触发优先生成: {word}")
+        state = word_gen_state.get(file_id)
+        if state:
+            if word not in state.get("priority_queue", []):
+                state["priority_queue"].append(word)
+            if not state.get("running"):
+                state["running"] = True
+                state["task"] = asyncio.create_task(background_word_gen(file_id))
+        else:
+            word_gen_state[file_id] = {
+                "running": True,
+                "vocab": vocab,
+                "priority_queue": [word],
+                "task": asyncio.create_task(background_word_gen(file_id)),
+                "processing_words": set()
+            }
         
-        # 生成选项
+        for _ in range(60):
+            await asyncio.sleep(1)
+            cached_word = storage.load_word_cache(file_id, word)
+            if cached_word:
+                mc = cached_word.get("multiple_choice", {})
+                mc_options = []
+                if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                    mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+                if mc_options:
+                    break
+        
+        if cached_word and isinstance(cached_word.get("multiple_choice"), dict):
+            mc = cached_word["multiple_choice"]
+            mc_options = [o for o in mc.get("options", []) if isinstance(o, dict) and "text" in o]
+            options = []
+            correct_index = 0
+            for i, opt in enumerate(mc_options):
+                options.append(opt["text"])
+                if opt.get("is_correct"):
+                    correct_index = i
+            if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
+                for i, opt in enumerate(mc_options):
+                    if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
+                        correct_index = i
+                        break
+            
+            context_sents = cached_word.get("context_sentences", [])
+            
+            asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
+            
+            return {
+                "word": cached_word.get("word", word),
+                "ipa": cached_word.get("ipa", ""),
+                "correct_meaning": cached_word.get("meaning", ""),
+                "options": options,
+                "correct_index": correct_index,
+                "context": cached_word.get("context", ""),
+                "context_sentences": context_sents,
+                "variants_detail": cached_word.get("variants_detail", []),
+                "examples": cached_word.get("examples", []),
+                "memory_hint": cached_word.get("memory_hint", ""),
+                "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
+                "context_meaning": cached_word.get("meaning", cached_word.get("context_meaning", "")),
+                "unit_end_index": unit_end_index,
+                "current_index": current_index,
+                "unit_start_index": unit_start_index,
+                "total_items_in_unit": total_items_in_unit,
+                "listening_count_in_unit": listening_count_in_unit,
+                "step_in_unit": step_in_unit
+            }
+        
+        # 超时仍未获得缓存，返回基本数据
+        print(f"[WARN] 等待单词缓存超时: {word}")
         correct_meaning = random_word.get("meaning", "")
-        
         if not correct_meaning:
-            # 尝试从其他字段获取释义
             if "context_meaning" in random_word:
                 correct_meaning = random_word["context_meaning"]
             elif "translation" in random_word:
                 correct_meaning = random_word["translation"]
         
-        options_result = await nvidia_api.generate_multiple_choice(
-            word,
-            correct_meaning,
-            context,
-            target_lang
-        )
-        options_result = fix_llm_options_result(options_result, source_lang, file_id)
-        
-        # 提取选项和正确索引
-        options = []
-        correct_index = 0
-        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
-            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
-                options.append(opt["text"])
-                if opt["is_correct"]:
-                    correct_index = i
-        else:
-            fallback_opts = get_fallback_options(correct_meaning, file_id, 3)
-            options = options_result.get("options", [correct_meaning] + fallback_opts)
-            correct_index = options_result.get("correct_index", 0)
-        
-        # 构建响应数据
-        response_data = {
-            "word": options_result.get("word", word),
+        return {
+            "word": word,
             "ipa": random_word.get("ipa", ""),
-            "correct_meaning": options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning)),
-            "options": options,
-            "correct_index": correct_index,
-            "context": context,
-            "variants_detail": options_result.get("variants_detail", []),
-            "examples": options_result.get("examples", []),
-            "memory_hint": options_result.get("memory_hint", ""),
-            "enriched_meaning": options_result.get("enriched_meaning", correct_meaning),
+            "correct_meaning": correct_meaning,
+            "options": [correct_meaning, "—", "—", "—"],
+            "correct_index": 0,
+            "context": "",
+            "context_sentences": [],
+            "variants_detail": [],
+            "examples": [],
+            "memory_hint": "",
+            "enriched_meaning": correct_meaning,
             "meaning": correct_meaning,
             "unit_end_index": unit_end_index,
             "current_index": current_index,
             "unit_start_index": unit_start_index,
             "total_items_in_unit": total_items_in_unit,
-                        "listening_count_in_unit": listening_count_in_unit,
+            "listening_count_in_unit": listening_count_in_unit,
             "step_in_unit": step_in_unit
         }
-        
-        # 构建缓存数据
-        cache_data = dict(options_result)
-        cache_data["word"] = options_result.get("word", word)
-        cache_data["ipa"] = random_word.get("ipa", "")
-        cache_data["meaning"] = correct_meaning
-        cache_data["examples"] = options_result.get("examples", [])
-        cache_data["context"] = context
-        cache_data["context_sentences"] = context_sentences
-        cache_data["morphology"] = random_word.get("morphology", "")
-        cache_data["variants_detail"] = options_result.get("variants_detail", [])
-        cache_data["memory_hint"] = options_result.get("memory_hint", "")
-        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
-        if "context_translations" in cache_data:
-            del cache_data["context_translations"]
-        
-        # 缓存结果
-        storage.save_word_cache(file_id, word, cache_data)
-        print(f"[DEBUG] 缓存随机单词信息: {word}")
-        
-        # 启动后台任务预生成下一个单词
-        asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
-        
-        return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting random word: {str(e)}")
 
