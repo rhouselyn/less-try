@@ -1249,8 +1249,15 @@ async def priority_word_gen(file_id: str, request: dict):
         if "plan_position" not in state:
             state["plan_position"] = 0
 
-        if word not in state["priority_queue"]:
-            state["priority_queue"].append(word)
+        if storage.load_word_cache(file_id, word):
+            return {"status": "already_cached"}
+
+        processing = state.get("processing_words", set())
+        if word.lower() in {w.lower() for w in processing}:
+            return {"status": "already_processing"}
+
+        state["priority_queue"] = [w for w in state["priority_queue"] if w.lower() != word.lower()]
+        state["priority_queue"].insert(0, word)
 
         if not state["running"]:
             state["running"] = True
@@ -1512,8 +1519,8 @@ async def get_random_word(file_id: str):
         print(f"[DEBUG] 单词无缓存，触发优先生成: {word}")
         state = word_gen_state.get(file_id)
         if state:
-            if word not in state.get("priority_queue", []):
-                state["priority_queue"].append(word)
+            state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
+            state["priority_queue"].insert(0, word)
             if not state.get("running"):
                 state["running"] = True
                 state["task"] = asyncio.create_task(background_word_gen(file_id))
@@ -1946,8 +1953,8 @@ async def get_word_details(file_id: str, word: str):
         print(f"[DEBUG] 单词详情无缓存，触发优先生成: {word}")
         state = word_gen_state.get(file_id)
         if state:
-            if word not in state.get("priority_queue", []):
-                state["priority_queue"].append(word)
+            state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
+            state["priority_queue"].insert(0, word)
             if not state.get("running"):
                 state["running"] = True
                 state["task"] = asyncio.create_task(background_word_gen(file_id))
