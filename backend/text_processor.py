@@ -751,7 +751,6 @@ class TextProcessor:
         masked_tokens = []
         answer_words = []
         
-        # 如果提供了translation_tokens，使用它们来构建蒙版句子
         if translation_tokens:
             for i, token in enumerate(translation_tokens):
                 if i in mask_indices:
@@ -760,14 +759,10 @@ class TextProcessor:
                 else:
                     masked_tokens.append(token)
         else:
-            # 回退到自动分词
             import re
-            # 正确处理缩写形式，如 I'm, don't 等
             tokens_with_punc = re.findall(r"\b\w+(?:'\w+)?\b|[^\w\s]", sentence)
-            # 映射单词位置到token位置
             current_word_idx = 0
             for token in tokens_with_punc:
-                # 检查是否是单词（包括缩写形式）
                 if re.match(r"\b\w+(?:'\w+)?\b", token) and current_word_idx < len(words):
                     if current_word_idx in mask_indices:
                         masked_tokens.append("___")
@@ -826,12 +821,37 @@ class TextProcessor:
         # 打乱所有选项
         random.shuffle(options)
         
-        # 构建蒙版句子，保持原始句子的格式
+        # 构建蒙版句子，保留原始句子的标点
         if translation_tokens:
-            # 当使用LLM生成的tokens时，简单地用空格连接
-            masked_sentence = " ".join(masked_tokens)
+            import re as _re
+            token_positions = []
+            search_start = 0
+            for token in translation_tokens:
+                escaped = _re.escape(token)
+                m = _re.search(escaped, sentence[search_start:], _re.IGNORECASE)
+                if m:
+                    token_positions.append((search_start + m.start(), search_start + m.end(), token))
+                    search_start = search_start + m.end()
+                else:
+                    token_positions.append(None)
+            
+            result_parts = []
+            last_end = 0
+            for i, pos_info in enumerate(token_positions):
+                if pos_info is None:
+                    continue
+                start, end, token = pos_info
+                if start > last_end:
+                    result_parts.append(sentence[last_end:start])
+                if i in mask_indices:
+                    result_parts.append("___")
+                else:
+                    result_parts.append(token)
+                last_end = end
+            if last_end < len(sentence):
+                result_parts.append(sentence[last_end:])
+            masked_sentence = "".join(result_parts)
         else:
-            # 当使用自动分词时，保持原始格式
             masked_sentence = "".join(
                 [
                     " " + token if token not in [".", ",", "!", "?", ":", ";", ")"] and i > 0 else token 

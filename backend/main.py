@@ -37,6 +37,12 @@ class RateLimiter:
 
 ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
 
+def is_speaker_label(text):
+    if not text or not isinstance(text, str):
+        return False
+    stripped = text.strip()
+    return bool(re.match(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]$', stripped))
+
 def vocab_sort_key(entry):
     import unicodedata
     word = entry.get("word", "")
@@ -249,7 +255,7 @@ def get_fallback_options(correct_meaning, file_id, count=3):
 
 def get_listening_correct_words(sentence, sentence_data):
     import re
-    clean_sentence = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', sentence)
+    clean_sentence = re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', sentence)
     
     def normalize_for_compare(text):
         return re.sub(r'[\s\u3000]+', '', re.sub(r'[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]', '', text)).lower()
@@ -264,9 +270,9 @@ def get_listening_correct_words(sentence, sentence_data):
         for token in translation_tokens:
             if isinstance(token, dict) and "text" in token:
                 t = token["text"].strip()
-                if t and not is_punctuation_only(t):
+                if t and not is_punctuation_only(t) and not is_speaker_label(t):
                     cleaned = strip_edge_punctuation(t)
-                    if cleaned:
+                    if cleaned and not is_speaker_label(cleaned):
                         raw_words.append(cleaned)
         
         if raw_words:
@@ -1630,7 +1636,8 @@ async def next_word(file_id: str):
                     "success": True,
                     "type": "unit_complete",
                     "new_index": current_unit_end,
-                    "unit_end_index": current_unit_end
+                    "unit_end_index": current_unit_end,
+                    "completed_unit_id": current_unit_id
                 }
         
         new_index = current_index + 1
@@ -1935,114 +1942,60 @@ async def get_word_details(file_id: str, word: str):
             
             return cached_word
 
-        vocab = storage.load_vocab(file_id)
-        if not vocab:
-            raise HTTPException(status_code=404, detail="Vocab not found")
-
-        # 查找单词
-        word_data = None
-        for entry in vocab:
-            print(f"[DEBUG] 检查词汇表条目: {entry['word']}")
-            if entry["word"].lower() == word.lower():
-                word_data = entry
-                print(f"[DEBUG] 找到单词: {word}")
-                break
-
-        if not word_data:
-            print(f"[DEBUG] 未找到单词: {word}")
-            raise HTTPException(status_code=404, detail="Word not found")
-
-        # 构建上下文（包含翻译）
-        sentences = storage.load_pipeline_data(file_id)
-        context = ""
-        context_sentences = []
-        context_sentences_with_translations = []
-        if sentences:
-            word_pattern = re.compile(r'\b' + re.escape(word_data["word"]) + r'\b', re.IGNORECASE)
-            
-            for sent_idx, sentence_data in enumerate(sentences):
-                if "sentence" in sentence_data:
-                    sentence = sentence_data["sentence"]
-                    if word_pattern.search(sentence):
-                        context_sentences.append(sentence)
-                        translation = ""
-                        if "translation_result" in sentence_data:
-                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                        context_sentences_with_translations.append({
-                            "sentence": sentence,
-                            "translation": translation,
-                            "sentence_index": sent_idx
-                        })
-            
-            if context_sentences:
-                context = context_sentences[0]
-            
-            if not context and sentences:
-                context = sentences[0].get("sentence", "")
-
-        correct_meaning = word_data.get("meaning", "")
-
-        if not correct_meaning:
-            # 尝试从其他字段获取释义
-            if "context_meaning" in word_data:
-                correct_meaning = word_data["context_meaning"]
-            elif "translation" in word_data:
-                correct_meaning = word_data["translation"]
-
-        # 调用generate_multiple_choice获取丰富的单词信息
-        options_result = await nvidia_api.generate_multiple_choice(
-            word_data["word"],
-            correct_meaning,
-            context,
-            target_lang
-        )
-        options_result = fix_llm_options_result(options_result, source_lang, file_id)
-        
-        # 提取选项和正确索引
-        options = []
-        correct_index = 0
-        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
-            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
-                options.append(opt["text"])
-                if opt["is_correct"]:
-                    correct_index = i
+        # 无缓存：触发优先生成并等待
+        print(f"[DEBUG] 单词详情无缓存，触发优先生成: {word}")
+        state = word_gen_state.get(file_id)
+        if state:
+            if word not in state.get("priority_queue", []):
+                state["priority_queue"].append(word)
+            if not state.get("running"):
+                state["running"] = True
+                state["task"] = asyncio.create_task(background_word_gen(file_id))
         else:
-            fallback_opts = get_fallback_options(correct_meaning, file_id, 3)
-            options = options_result.get("options", [correct_meaning] + fallback_opts)
-            correct_index = options_result.get("correct_index", 0)
+            vocab = storage.load_vocab(file_id)
+            word_gen_state[file_id] = {
+                "running": True,
+                "vocab": vocab or [],
+                "priority_queue": [word],
+                "task": asyncio.create_task(background_word_gen(file_id)),
+                "processing_words": set()
+            }
         
-        # 构建响应数据（同时支持单词详情和学习模式）
-        print(f"[DEBUG] options_result keys: {list(options_result.keys())}")
-        print(f"[DEBUG] options_result['context_sentences']: {options_result.get('context_sentences')}")
-        print(f"[DEBUG] context_sentences_with_translations: {context_sentences_with_translations}")
-        # 先构建 response_data 完全 manually, to avoid issues
-        response_data = {}
-        response_data["word"] = options_result.get("word", word_data["word"])
-        response_data["ipa"] = word_data.get("ipa", "")
-        response_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        response_data["correct_meaning"] = options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning))
-        response_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        response_data["meaning"] = correct_meaning
-        response_data["examples"] = options_result.get("examples", [])
-        response_data["context_sentences"] = context_sentences_with_translations
-        response_data["context"] = context
-        response_data["morphology"] = word_data.get("morphology", "")
-        response_data["variants_detail"] = options_result.get("variants_detail", [])
-        response_data["memory_hint"] = options_result.get("memory_hint", "")
-        response_data["options"] = options
-        response_data["correct_index"] = correct_index
-        response_data["multiple_choice"] = options_result.get("multiple_choice", {})
-        # Add any other keys from options_result except context_sentences, context_translations
-        for key, value in options_result.items():
-            if key not in response_data and key not in ["context_translations"]:
-                response_data[key] = value
-        print(f"[DEBUG] response_data['context_sentences']: {response_data['context_sentences']}")
+        for _ in range(60):
+            await asyncio.sleep(1)
+            cached_word = storage.load_word_cache(file_id, word)
+            if cached_word:
+                mc = cached_word.get("multiple_choice", {})
+                mc_options = []
+                if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                    mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+                if mc_options:
+                    break
         
-        # 缓存结果
-        storage.save_word_cache(file_id, word, response_data)
-        print(f"[DEBUG] 缓存单词信息: {word}")
+        if cached_word:
+            cached_word = fix_llm_options_result(cached_word, source_lang, file_id)
+            mc = cached_word.get("multiple_choice", {})
+            mc_options = []
+            placeholder_check = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+            if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o and not placeholder_check.match(o["text"].strip())]
+            if mc_options:
+                options = []
+                correct_index = 0
+                for i, opt in enumerate(mc_options):
+                    options.append(opt["text"])
+                    if opt.get("is_correct"):
+                        correct_index = i
+                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
+                    for i, opt in enumerate(mc_options):
+                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
+                            correct_index = i
+                            break
+                cached_word["options"] = options
+                cached_word["correct_index"] = correct_index
+                return cached_word
         
-        return response_data
+        raise HTTPException(status_code=404, detail="Word detail generation timed out")
     except HTTPException:
         raise
     except Exception as e:
@@ -2747,7 +2700,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 for token in translation_result["translation"]:
                     if isinstance(token, dict) and "text" in token:
                         token_text = token["text"]
-                        if not is_punctuation_only(token_text):
+                        if not is_punctuation_only(token_text) and not is_speaker_label(token_text):
                             translation_tokens.append(token_text)
             
             exercise_index_in_unit = current_exercise_index - exercise_start
@@ -2792,7 +2745,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
                             token_text = strip_edge_punctuation(token["text"].strip())
-                            if token_text and not is_punctuation_only(token_text):
+                            if token_text and not is_punctuation_only(token_text) and not is_speaker_label(token_text):
                                 original_tokens.append(token_text)
                 
                 if not original_tokens:

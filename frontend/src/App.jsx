@@ -782,7 +782,7 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        const completedUnit = phase1UnitsData.current_unit
+        const completedUnit = nextWordResponse.completed_unit_id ?? phase1UnitsData.current_unit
         setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
@@ -835,7 +835,7 @@ function App() {
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        const completedUnit = phase1UnitsData.current_unit
+        const completedUnit = nextWordResponse?.completed_unit_id ?? phase1UnitsData.current_unit
         setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
