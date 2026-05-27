@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, Languages, GripVertical } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, Languages } from 'lucide-react'
 import { speakText } from '../utils/speech'
+import { useTouchDragSwap } from '../hooks/useTouchDragSwap'
 
 function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedTokens, setSelectedTokens] = useState([])
@@ -10,6 +11,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   const [dragOverPos, setDragOverPos] = useState(null)
   const [swapSelectPos, setSwapSelectPos] = useState(null)
   const dragPosRef = useRef(null)
+  const answerBoxRef = useRef(null)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((exerciseIndexInUnit ?? 0) + 1)
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (totalExercisesInUnit ?? 0)
@@ -37,6 +39,25 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
       return next
     })
   }, [])
+
+  const getItemAtPoint = useCallback((x, y) => {
+    if (!answerBoxRef.current) return null
+    const slots = answerBoxRef.current.querySelectorAll('[data-slot-pos]')
+    for (const slot of slots) {
+      const rect = slot.getBoundingClientRect()
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+        const pos = parseInt(slot.getAttribute('data-slot-pos'), 10)
+        if (!isNaN(pos)) return pos
+      }
+    }
+    return null
+  }, [])
+
+  const touchDrag = useTouchDragSwap({
+    getItemAtPoint,
+    onSwap: swapPositions,
+    enabled: () => !answerChecked,
+  })
 
   const handleSelectedClick = (idx) => {
     if (answerChecked) return
@@ -163,7 +184,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
+          <div ref={answerBoxRef} className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
             <AnimatePresence>
               {selectedTokens.map((item, idx) => {
                 const isTokenCorrect = idx < data.original_tokens.length &&
@@ -173,6 +194,9 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 return (
                   <motion.div
                     key={`sel-${item.index}-${idx}`}
+                    data-slot-pos={idx}
+                    layout
+                    layoutId={`recon-token-${item.index}`}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
@@ -182,6 +206,9 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                     onDragLeave={handleSelectedDragLeave}
                     onDrop={(e) => handleSelectedDrop(e, idx)}
                     onDragEnd={handleSelectedDragEnd}
+                    onTouchStart={!answerChecked ? (e) => touchDrag.handleTouchStart(e, idx) : undefined}
+                    onTouchMove={!answerChecked ? touchDrag.handleTouchMove : undefined}
+                    onTouchEnd={!answerChecked ? touchDrag.handleTouchEnd : undefined}
                     onClick={() => handleSelectedClick(idx)}
                     className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
                       answerChecked
@@ -197,10 +224,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                             : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing'
                     }`}
                   >
-                    <span className="inline-flex items-center gap-1">
-                      {!answerChecked && <GripVertical className="w-3 h-3 opacity-50" />}
-                      {item.token}
-                    </span>
+                    {item.token}
                   </motion.div>
                 )
               })}
@@ -227,13 +251,14 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               return (
                 <motion.button
                   key={`opt-${idx}`}
+                  layoutId={`recon-token-${idx}`}
                   whileHover={!answerChecked && !isSelected ? { scale: 1.05 } : {}}
                   whileTap={!answerChecked && !isSelected ? { scale: 0.95 } : {}}
                   onClick={() => handleTokenSelect(token, idx)}
                   disabled={isSelected || answerChecked}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     isSelected || answerChecked
-                      ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+                      ? 'opacity-0 pointer-events-none h-0 py-0 overflow-hidden border-0 min-w-0'
                       : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
                   }`}
                 >

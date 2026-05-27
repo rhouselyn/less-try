@@ -1089,6 +1089,7 @@ function App() {
                   sourceLang={wordListLang}
                   t={t}
                   onBack={() => setWordListLang(null)}
+                  pageSize={pageSize}
                 />
               ) : (
                 <>

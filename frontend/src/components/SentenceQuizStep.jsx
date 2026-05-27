@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages, GripVertical } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages } from 'lucide-react'
 import { speakText } from '../utils/speech'
+import { useTouchDragSwap } from '../hooks/useTouchDragSwap'
 
 function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedIndices, setSelectedIndices] = useState([])
@@ -10,6 +11,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
   const [dragOverPos, setDragOverPos] = useState(null)
   const [swapSelectPos, setSwapSelectPos] = useState(null)
   const dragPosRef = useRef(null)
+  const answerBoxRef = useRef(null)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((quizData?.step_in_unit ?? 0) + 1)
   const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
@@ -66,6 +68,25 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
       return next
     })
   }, [])
+
+  const getItemAtPoint = useCallback((x, y) => {
+    if (!answerBoxRef.current) return null
+    const slots = answerBoxRef.current.querySelectorAll('[data-slot-pos]')
+    for (const slot of slots) {
+      const rect = slot.getBoundingClientRect()
+      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+        const pos = parseInt(slot.getAttribute('data-slot-pos'), 10)
+        if (!isNaN(pos)) return pos
+      }
+    }
+    return null
+  }, [])
+
+  const touchDrag = useTouchDragSwap({
+    getItemAtPoint,
+    onSwap: swapPositions,
+    enabled: () => !isChecked,
+  })
 
   const handleSelectedClick = (pos) => {
     if (isChecked) return
@@ -202,7 +223,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
+          <div ref={answerBoxRef} className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
             <AnimatePresence>
               {selectedTokens.map((token, pos) => {
                 const isTokenCorrect = pos < quizData.correct_tokens.length &&
@@ -212,6 +233,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 return (
                   <motion.div
                     key={`sel-${selectedIndices[pos]}`}
+                    data-slot-pos={pos}
+                    layout
+                    layoutId={`quiz-token-${selectedIndices[pos]}`}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
@@ -221,6 +245,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                     onDragLeave={handleSelectedDragLeave}
                     onDrop={(e) => handleSelectedDrop(e, pos)}
                     onDragEnd={handleSelectedDragEnd}
+                    onTouchStart={!isChecked ? (e) => touchDrag.handleTouchStart(e, pos) : undefined}
+                    onTouchMove={!isChecked ? touchDrag.handleTouchMove : undefined}
+                    onTouchEnd={!isChecked ? touchDrag.handleTouchEnd : undefined}
                     onClick={() => handleSelectedClick(pos)}
                     className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
                       isChecked
@@ -236,10 +263,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                             : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing'
                     }`}
                   >
-                    <span className="inline-flex items-center gap-1">
-                      {!isChecked && <GripVertical className="w-3 h-3 opacity-50" />}
-                      {displayToken(token)}
-                    </span>
+                    <span>{displayToken(token)}</span>
                   </motion.div>
                 )
               })}
@@ -261,13 +285,14 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             {quizData.tokens.map((token, index) => (
               <motion.button
                 key={`opt-${index}`}
+                layoutId={`quiz-token-${index}`}
                 whileHover={!isChecked && !selectedIndices.includes(index) ? { scale: 1.05 } : {}}
                 whileTap={!isChecked && !selectedIndices.includes(index) ? { scale: 0.95 } : {}}
                 onClick={() => handleTokenClick(index)}
                 disabled={selectedIndices.includes(index) || isChecked}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   selectedIndices.includes(index) || isChecked
-                    ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+                    ? 'opacity-0 pointer-events-none h-0 py-0 overflow-hidden border-0 min-w-0'
                     : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
                 }`}
               >

@@ -358,6 +358,37 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
 
               <div>
                 <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                  <BookOpen className="w-3 h-3" />
+                  {t.itemsPerPage || '每页数量'}
+                </label>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-stone-400">{t.wordsPerPage || '每页显示单词数'}</span>
+                    <span className="text-[11px] font-semibold text-amber-600">{localPageSize}</span>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="range"
+                      min={10}
+                      max={200}
+                      step={10}
+                      value={localPageSize}
+                      onChange={e => setLocalPageSize(Number(e.target.value))}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer bg-stone-100"
+                      style={{
+                        background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${((localPageSize - 10) / (200 - 10)) * 100}%, #f5f5f4 ${((localPageSize - 10) / (200 - 10)) * 100}%, #f5f5f4 100%)`
+                      }}
+                    />
+                    <div className="flex justify-between mt-1">
+                      <span className="text-[10px] text-stone-300">10</span>
+                      <span className="text-[10px] text-stone-300">200</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Languages className="w-3 h-3" />
                   {t.nativeLang || '母语'}
                 </label>
@@ -378,29 +409,6 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                     >
                       <LangIcon langCode={opt.value} size="sm" />
                       {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
-                  <BookOpen className="w-3 h-3" />
-                  {t.itemsPerPage || '每页数量'}
-                </label>
-                <div className="flex gap-2">
-                  {[20, 50, 100].map((size) => (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setLocalPageSize(size)}
-                      className={`flex-1 flex items-center justify-center px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-200 ${
-                        localPageSize === size
-                          ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-                          : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
-                      }`}
-                    >
-                      {size}
                     </button>
                   ))}
                 </div>
