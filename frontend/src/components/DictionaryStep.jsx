@@ -74,14 +74,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     return () => { cancelled = true }
   }, [showGlobalVocab, actualSourceLang, sourceLang])
 
-  useEffect(() => {
-    if (!showGlobalVocab && pendingScrollWord.current) {
-      const wordKey = pendingScrollWord.current
-      pendingScrollWord.current = null
-      scrollToWord(wordKey, 300)
-    }
-  }, [showGlobalVocab, scrollToWord])
-
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
 
@@ -209,6 +201,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       }
     }, delay)
   }, [])
+
+  useEffect(() => {
+    if (!showGlobalVocab && pendingScrollWord.current) {
+      const wordKey = pendingScrollWord.current
+      pendingScrollWord.current = null
+      scrollToWord(wordKey, 300)
+    }
+  }, [showGlobalVocab, scrollToWord])
 
   const handleTokenClick = useCallback(async (sourceWord) => {
     const sourceLower = sourceWord.toLowerCase()
