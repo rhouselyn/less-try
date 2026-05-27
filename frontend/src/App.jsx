@@ -22,6 +22,25 @@ import HistorySidebar from './components/HistorySidebar'
 import WordListPanel from './components/WordListPanel'
 import SettingsModal from './components/SettingsModal'
 
+function FrogLogo({ size = 40 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
+      <circle cx="34" cy="38" r="16" fill="#4ade80" />
+      <circle cx="66" cy="38" r="16" fill="#4ade80" />
+      <circle cx="34" cy="38" r="13" fill="#fff" />
+      <circle cx="66" cy="38" r="13" fill="#fff" />
+      <circle cx="36" cy="37" r="6" fill="#166534" />
+      <circle cx="68" cy="37" r="6" fill="#166534" />
+      <circle cx="38" cy="35" r="2" fill="#fff" />
+      <circle cx="70" cy="35" r="2" fill="#fff" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
+      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
@@ -1045,12 +1064,12 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-amber-100" />
+                <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
+                  <FrogLogo size={22} />
                 </div>
                 <div>
                   <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
-                  <p className="text-sm text-stone-400">{t.subtitle || 'Lesslingo'}</p>
+                  <p className="text-sm text-stone-400">{t.subtitle}</p>
                 </div>
               </div>
             </div>
@@ -1060,13 +1079,12 @@ function App() {
 
       <main>
         {step === 'input' ? (
-          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ height: 'calc(100vh - 80px)' }}>
+          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ height: 'calc(100vh - 72px)' }}>
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
             <div className="flex-1 min-w-0 relative h-full">
               {wordListLang ? (
                 <WordListPanel
                   sourceLang={wordListLang}
-                  targetLang={targetLang}
                   t={t}
                   onBack={() => setWordListLang(null)}
                 />
@@ -1127,6 +1145,7 @@ function App() {
               preprocessStatus={preprocessStatus}
               onBack={() => setStep('input')}
               fileTitle={fileTitle}
+              onTitleChange={(newTitle) => setFileTitle(newTitle)}
             />
           )}
           

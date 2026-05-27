@@ -1,8 +1,8 @@
 // 语言翻译字典
 export const translations = {
   zh: {
-    title: "少邻国",
-    subtitle: "Lesslingo",
+    title: "呱邻国",
+    subtitle: "Gualingo",
     startLearning: "开始学习",
     inputHint: "输入任意文本，AI 将自动生成单词表和学习资料",
     learnLang: "学习语言",
@@ -16,7 +16,7 @@ export const translations = {
     startRandomLearn: "开始随机单词学习",
     preparing: "准备中...",
     sentTranslation: "句子翻译",
-    vocabList: "单词表",
+    vocabList: "单词分表",
     wordLabel: "单词",
     meaningLabel: "意思",
     posLabel: "词性",
@@ -93,7 +93,7 @@ export const translations = {
     record: "条记录",
     step: "第",
     question: "题",
-    vocabList: "单词表",
+    vocabList: "单词分表",
     clickToPlay: "点击播放",
     tapToBuildSentence: "按顺序点击下方单词组成句子",
     correctAnswer: "正确答案",
@@ -144,7 +144,7 @@ export const translations = {
     dontWantReview: "不想复习"
   },
   en: {
-    title: "Lesslingo",
+    title: "Gualingo",
     subtitle: "",
     startLearning: "Start Learning",
     inputHint: "Enter any text, AI will automatically generate word list and study materials",
@@ -159,7 +159,7 @@ export const translations = {
     startRandomLearn: "Start Random Word Learning",
     preparing: "Preparing...",
     sentTranslation: "Sentence Translations",
-    vocabList: "Vocabulary List",
+    vocabList: "Word List",
     wordLabel: "Word",
     meaningLabel: "Meaning",
     posLabel: "Part of Speech",
@@ -230,7 +230,7 @@ export const translations = {
     record: "records",
     step: "Step",
     question: "of",
-    vocabList: "Vocabulary",
+    vocabList: "Word List",
     clickToPlay: "Click to play",
     tapToBuildSentence: "Tap words below in order to build the sentence",
     correctAnswer: "Correct answer",

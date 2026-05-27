@@ -139,7 +139,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
       setTimeout(() => {
         setSaved(false)
         onClose()
-      }, 800)
+      }, 250)
     } catch (e) {
       console.error('Failed to save settings:', e)
     } finally {
