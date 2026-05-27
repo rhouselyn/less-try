@@ -211,18 +211,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const scrollToWord = useCallback((wordKey, delay = 100) => {
     const doScroll = () => {
-      const el = wordRefs.current[wordKey]
+      let el = wordRefs.current[wordKey]
+      if (!el && vocabListRef.current) {
+        el = vocabListRef.current.querySelector(`[data-word-key="${CSS.escape(wordKey)}"]`)
+      }
       if (el && vocabListRef.current) {
-        const container = vocabListRef.current
-        const containerRect = container.getBoundingClientRect()
-        const elRect = el.getBoundingClientRect()
-        const stickyOffset = 40
-        const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
-        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' })
       }
     }
     setTimeout(doScroll, delay)
     setTimeout(doScroll, delay + 300)
+    setTimeout(doScroll, delay + 600)
   }, [])
 
   useEffect(() => {
@@ -234,6 +233,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       scrollToWord(wordKey, 800)
     }
   }, [showGlobalVocab, scrollToWord])
+
+  useEffect(() => {
+    if (expandedWord && !expandedWord.startsWith('global-') && !showGlobalVocab) {
+      scrollToWord(expandedWord, 150)
+    }
+  }, [expandedWord, showGlobalVocab, scrollToWord])
 
   const handleTokenClick = useCallback(async (sourceWord) => {
     const sourceLower = sourceWord.toLowerCase()
@@ -455,7 +460,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             onClick={handleTitleClick}
             className="flex items-center gap-1.5 max-w-[250px] group"
           >
-            <span className="truncate text-[13px] font-medium text-stone-500 group-hover:text-stone-700 transition-colors">{fileTitle}</span>
+            <span className="truncate text-[15px] font-semibold text-stone-600 group-hover:text-stone-800 transition-colors">{fileTitle}</span>
             <Pencil className="w-2.5 h-2.5 text-stone-300 group-hover:text-stone-400 shrink-0 transition-colors" />
           </button>
         )}
@@ -779,6 +784,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           <motion.div
                             key={wordKey}
                             ref={el => { wordRefs.current[wordKey] = el }}
+                            data-word-key={wordKey}
                             initial={{ opacity: 0, y: 6 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
