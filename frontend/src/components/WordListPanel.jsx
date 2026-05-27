@@ -142,10 +142,18 @@ function WordListPanel({ sourceLang, t, onBack }) {
     }
     setExpandedWord(wordText)
 
+    const existing = words.find(w => w.word === wordText)
+    const hasDetail = existing && (existing.examples?.length > 0 || existing.memory_hint || existing.variants_detail?.length > 0)
+
+    if (hasDetail) {
+      setWordDetails(prev => ({ ...prev, [wordText]: existing }))
+      return
+    }
+
     if (!wordDetails[wordText] && !detailLoading[wordText]) {
       setDetailLoading(prev => ({ ...prev, [wordText]: true }))
       try {
-        const detail = await api.getWordDetail(wordText, sourceLang, targetLang)
+        const detail = await api.getWordDetail(wordText, sourceLang)
         setWordDetails(prev => ({ ...prev, [wordText]: detail }))
         setWords(prev => prev.map(w =>
           w.word === wordText
