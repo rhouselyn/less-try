@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, PenLine } from 'lucide-react'
 import { speakText } from '../utils/speech'
 import { useTouchDragSwap } from '../hooks/useTouchDragSwap'
@@ -19,21 +19,14 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
 
   const handleWordSelect = (word, index) => {
     if (answerChecked) return
-    const newSelected = [...selectedWords]
-    const emptyIndex = newSelected.findIndex(w => w === null || w === undefined)
-    if (emptyIndex !== -1) {
-      newSelected[emptyIndex] = { word, index }
-    } else {
-      newSelected.push({ word, index })
-    }
-    setSelectedWords(newSelected)
+    if (selectedWords.length >= data.answer_words.length) return
+    if (selectedWords.some(w => w.index === index)) return
+    setSelectedWords([...selectedWords, { word, index }])
   }
 
-  const handleRemoveWord = (index) => {
+  const handleSelectedClick = (pos) => {
     if (answerChecked) return
-    const newSelected = [...selectedWords]
-    newSelected[index] = null
-    setSelectedWords(newSelected)
+    setSelectedWords(prev => prev.filter((_, i) => i !== pos))
   }
 
   const swapSlots = useCallback((sourceIdx, targetIdx) => {
@@ -66,25 +59,8 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
     enabled: () => !answerChecked,
   })
 
-  const handleSlotClick = (idx) => {
-    if (answerChecked) return
-    if (!selectedWords[idx]) return
-    if (swapSelectIdx !== null) {
-      if (swapSelectIdx === idx) {
-        setSwapSelectIdx(null)
-      } else if (selectedWords[swapSelectIdx]) {
-        swapSlots(swapSelectIdx, idx)
-        setSwapSelectIdx(null)
-      } else {
-        setSwapSelectIdx(idx)
-      }
-    } else {
-      handleRemoveWord(idx)
-    }
-  }
-
   const handleDragStart = (e, idx) => {
-    if (answerChecked || !selectedWords[idx]) return
+    if (answerChecked) return
     dragSlotRef.current = idx
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/plain', String(idx))
@@ -92,9 +68,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
 
   const handleDragOver = (e, idx) => {
     e.preventDefault()
-    if (selectedWords[idx]) {
-      setDragOverIdx(idx)
-    }
+    setDragOverIdx(idx)
   }
 
   const handleDragLeave = () => {
@@ -106,7 +80,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
     setDragOverIdx(null)
     const sourceIdx = dragSlotRef.current
     if (sourceIdx === null || sourceIdx === targetIdx) return
-    if (!selectedWords[sourceIdx] || !selectedWords[targetIdx]) return
     swapSlots(sourceIdx, targetIdx)
     dragSlotRef.current = null
   }
@@ -117,7 +90,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
   }
 
   const checkAnswer = () => {
-    const userAnswerWords = selectedWords.filter(w => w).map(w => w.word.toLowerCase())
+    const userAnswerWords = selectedWords.map(w => w.word.toLowerCase())
     const correctAnswerWords = data.answer_words.map(w => w.toLowerCase())
 
     const correct = userAnswerWords.length === correctAnswerWords.length &&
@@ -132,6 +105,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
     setSelectedWords([])
     setAnswerChecked(false)
     setIsCorrect(false)
+    setSwapSelectIdx(null)
     onNext()
   }
 
@@ -195,51 +169,51 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         </div>
 
         <div className="mb-8">
-          <div ref={answerBoxRef} className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
-            {data.answer_words.map((answerWord, idx) => {
-              const filled = selectedWords[idx]
-              const isSlotCorrect = filled && filled.word.toLowerCase() === answerWord.toLowerCase()
-              const isDragOver = dragOverIdx === idx
-              const isSwapSelected = swapSelectIdx === idx
+          <div ref={answerBoxRef} className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start bg-stone-50/50">
+            {selectedWords.map((item, pos) => {
+              const isDragOver = dragOverIdx === pos
+              const isSwapSelected = swapSelectIdx === pos
               return (
                 <motion.div
-                  key={`slot-${idx}`}
-                  data-slot-idx={idx}
-                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                  draggable={!!filled && !answerChecked}
-                  onDragStart={(e) => handleDragStart(e, idx)}
-                  onDragOver={(e) => handleDragOver(e, idx)}
+                  key={`slot-${item.index}`}
+                  data-slot-idx={pos}
+                  initial={{ opacity: 0, y: 15, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                  draggable={!answerChecked}
+                  onDragStart={(e) => handleDragStart(e, pos)}
+                  onDragOver={(e) => handleDragOver(e, pos)}
                   onDragLeave={handleDragLeave}
-                  onDrop={(e) => handleDrop(e, idx)}
+                  onDrop={(e) => handleDrop(e, pos)}
                   onDragEnd={handleDragEnd}
-                  onTouchStart={filled && !answerChecked ? (e) => touchDrag.handleTouchStart(e, idx) : undefined}
-                  onTouchMove={filled && !answerChecked ? touchDrag.handleTouchMove : undefined}
-                  onTouchEnd={filled && !answerChecked ? touchDrag.handleTouchEnd : undefined}
-                  className={`px-4 py-2 rounded-full text-sm font-medium min-w-[80px] text-center transition-all select-none ${
-                    filled
-                      ? answerChecked
-                        ? isCorrect
-                          ? 'bg-green-100 text-green-800 border border-green-300'
-                          : isSlotCorrect
-                            ? 'bg-green-100 text-green-800 border border-green-300'
-                            : 'bg-red-100 text-red-800 border border-red-300'
-                        : isDragOver
-                          ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-grab'
-                          : isSwapSelected
-                            ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-pointer'
-                            : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing'
+                  onTouchStart={!answerChecked ? (e) => touchDrag.handleTouchStart(e, pos) : undefined}
+                  onTouchMove={!answerChecked ? touchDrag.handleTouchMove : undefined}
+                  onTouchEnd={!answerChecked ? touchDrag.handleTouchEnd : undefined}
+                  onClick={() => handleSelectedClick(pos)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                    answerChecked
+                      ? isCorrect
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : (() => {
+                            const correctWord = data.answer_words[pos]
+                            return correctWord && item.word.toLowerCase() === correctWord.toLowerCase()
+                              ? 'bg-green-100 text-green-800 border border-green-300'
+                              : 'bg-red-100 text-red-800 border border-red-300'
+                          })()
                       : isDragOver
-                        ? 'border-2 border-amber-400 text-amber-400'
-                        : 'border-2 border-dashed border-stone-300 text-stone-400'
+                        ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-grab'
+                        : isSwapSelected
+                          ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-pointer'
+                          : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing'
                   }`}
-                  onClick={() => handleSlotClick(idx)}
                 >
-                  {filled ? filled.word : '____'}
+                  {item.word}
                 </motion.div>
               )
             })}
+            {selectedWords.length === 0 && !answerChecked && (
+              <span className="text-stone-300 text-sm">点击下方选项填入...</span>
+            )}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -255,7 +229,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         <div className="mb-8">
           <div className="flex flex-wrap gap-2">
             {data.options.map((word, idx) => {
-              const isSelected = selectedWords.some(w => w && w.index === idx)
+              const isSelected = selectedWords.some(w => w.index === idx)
               return (
                 <motion.button
                   key={`opt-${idx}`}
@@ -305,7 +279,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={checkAnswer}
-              disabled={selectedWords.filter(w => w).length === 0}
+              disabled={selectedWords.length === 0}
               className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}
