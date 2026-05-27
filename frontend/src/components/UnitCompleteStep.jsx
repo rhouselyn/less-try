@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
-import { ChevronRight, Trophy, Star, Sparkles, RotateCcw } from 'lucide-react'
+import { ChevronRight, Trophy, Star, Sparkles, RotateCcw, X } from 'lucide-react'
 
-function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview, errorCount, hasWrongItems, wrongItemsCount, t }) {
+function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview, errorCount, hasWrongItems, wrongItemsCount, t, onSkipReview }) {
   const starCount = Math.max(0, 3 - Math.floor(errorCount / 3))
 
   return (
@@ -9,8 +9,20 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-3xl mx-auto"
+      className="max-w-3xl mx-auto relative"
     >
+      {hasWrongItems && onSkipReview && (
+        <motion.button
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+          onClick={onSkipReview}
+          className="absolute -top-2 left-0 z-10 flex items-center gap-1.5 px-3 py-1.5 text-stone-400 hover:text-stone-600 text-xs font-medium rounded-lg border border-stone-200 hover:border-stone-300 bg-white/80 backdrop-blur-sm transition-all"
+        >
+          <X className="w-3 h-3" />
+          {t.skipReview || '不想复习了'}
+        </motion.button>
+      )}
       <div className="bg-white border border-stone-200/80 rounded-2xl p-12 shadow-sm text-center">
         <motion.div
           initial={{ scale: 0 }}
@@ -117,7 +129,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
               whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={onReview}
-              className="px-10 py-4 bg-amber-500 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2"
+              className="px-8 py-4 bg-amber-500 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-5 h-5" />
               {t.startWrongItemReview || '开始错题复习'}

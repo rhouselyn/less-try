@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages, SkipForward } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount, onSkipReview }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
@@ -93,17 +93,6 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             <ArrowLeft className="w-4 h-4" />
             {t.back}
           </motion.button>
-          {reviewMode && onSkipReview && (
-            <motion.button
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              onClick={onSkipReview}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-            >
-              <SkipForward className="w-3.5 h-3.5" />
-              {t.dontWantReview || t.skipReview || '不想复习'}
-            </motion.button>
-          )}
         </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (

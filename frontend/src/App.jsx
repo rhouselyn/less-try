@@ -1147,17 +1147,9 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
-              onSkipReview={() => {
-                setReviewMode(false)
-                setReviewIndex(0)
-                setWrongItems([])
-                setUnitErrorCount(0)
-                unitErrorCountRef.current = 0
-                setStep('unit-complete')
-              }}
             />
           )}
-          
+
           {step === 'sentence-quiz' && (
             <SentenceQuizStep
               key={`sentence-quiz-${quizData?.flat_index ?? quizData?.original_sentence}`}
@@ -1183,17 +1175,9 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
-              onSkipReview={() => {
-                setReviewMode(false)
-                setReviewIndex(0)
-                setWrongItems([])
-                setUnitErrorCount(0)
-                unitErrorCountRef.current = 0
-                setStep('unit-complete')
-              }}
             />
           )}
-          
+
           {step === 'listening-quiz' && (
             <ListeningQuizStep
               key={`listening-quiz-${listeningQuizData?.flat_index ?? listeningQuizData?.original_sentence}`}
@@ -1210,17 +1194,9 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
-              onSkipReview={() => {
-                setReviewMode(false)
-                setReviewIndex(0)
-                setWrongItems([])
-                setUnitErrorCount(0)
-                unitErrorCountRef.current = 0
-                setStep('unit-complete')
-              }}
             />
           )}
-          
+
           {step === 'unit-complete' && (
             <UnitCompleteStep
               key="unit-complete"
@@ -1261,6 +1237,14 @@ function App() {
               hasWrongItems={wrongItems.length > 0}
               wrongItemsCount={wrongItems.length}
               t={t}
+              onSkipReview={() => {
+                setReviewMode(false)
+                setReviewIndex(0)
+                setWrongItems([])
+                setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
+                setStep('all-units')
+              }}
             />
           )}
           
@@ -1345,17 +1329,9 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
-              onSkipReview={() => {
-                setReviewMode(false)
-                setReviewIndex(0)
-                setWrongItems([])
-                setUnitErrorCount(0)
-                unitErrorCountRef.current = 0
-                setStep('unit-complete')
-              }}
             />
           )}
-          
+
           {step === 'phase-exercise' && exerciseType === 'translation_reconstruction' && (
             <TranslationReconstructionStep
               key={`reconstruction-exercise-${currentExerciseData?.exercise_index_in_unit}`}
@@ -1391,17 +1367,9 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
-              onSkipReview={() => {
-                setReviewMode(false)
-                setReviewIndex(0)
-                setWrongItems([])
-                setUnitErrorCount(0)
-                unitErrorCountRef.current = 0
-                setStep('unit-complete')
-              }}
             />
           )}
-          
+
           {step === 'vocab-list' && (
             <VocabListStep
               key="vocab-list"

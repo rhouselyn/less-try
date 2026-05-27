@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain, BookOpen, Volume2, SkipForward } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain, BookOpen, Volume2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { speakText } from '../utils/speech'
 
-function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t, sourceLang, skipListening, reviewMode, reviewIndex, wrongItemsCount, onSkipReview }) {
+function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, onOptionSelect, onNextWord, onBack, onOpenVocabList, loading, t, sourceLang, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
   const speakTimerRef = useRef(null)
 
   useEffect(() => {
@@ -63,17 +63,6 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             <ArrowLeft className="w-4 h-4" />
             {t.back}
           </motion.button>
-          {reviewMode && onSkipReview && (
-            <motion.button
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              onClick={onSkipReview}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-            >
-              <SkipForward className="w-3.5 h-3.5" />
-              {t.dontWantReview || t.skipReview || '不想复习'}
-            </motion.button>
-          )}
         </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (

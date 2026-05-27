@@ -64,14 +64,10 @@ function AllUnitsStep({
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
         ) : isLocked ? (
           <Lock className="w-3.5 h-3.5" />
+        ) : isCompleted ? (
+          <span className="text-xs font-bold text-green-700">{index + 1}</span>
         ) : (
-          <MapPin className={`w-3.5 h-3.5 ${
-            isCompleted
-              ? 'text-green-600'
-              : isCurrent
-              ? 'text-amber-500'
-              : 'text-gray-400'
-          }`} />
+          <MapPin className="w-3.5 h-3.5 text-amber-500" />
         )}
         {isCompleted && typeof starCount === 'number' && (
           <div className="flex items-center justify-center gap-px mt-0.5">

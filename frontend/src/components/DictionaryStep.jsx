@@ -27,25 +27,31 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const sentenceRefs = useRef({})
 
   useEffect(() => {
-    if (currentFileId && sourceLang === 'auto') {
+    if (currentFileId) {
       fetch(`/api/status/${currentFileId}`)
         .then(r => r.json())
         .then(data => {
-          if (data.source_lang && data.source_lang !== 'auto') {
-            setActualSourceLang(data.source_lang)
+          const lang = data.source_lang || sourceLang
+          if (lang && lang !== 'auto') {
+            setActualSourceLang(lang)
+          } else if (data.vocab && data.vocab.length > 0) {
+            setActualSourceLang('en')
           }
         })
         .catch(() => {})
-    } else {
+    }
+    if (sourceLang && sourceLang !== 'auto') {
       setActualSourceLang(sourceLang)
     }
   }, [currentFileId, sourceLang])
 
   useEffect(() => {
-    if (!showGlobalVocab || !actualSourceLang || actualSourceLang === 'auto') return
+    if (!showGlobalVocab) return
+    const lang = actualSourceLang && actualSourceLang !== 'auto' ? actualSourceLang : sourceLang
+    if (!lang) return
     let cancelled = false
     setGlobalVocabLoading(true)
-    api.getWordList(actualSourceLang).then(data => {
+    api.getWordList(lang).then(data => {
       if (!cancelled) {
         setGlobalVocab(data.words || [])
         setGlobalVocabLoading(false)
@@ -54,7 +60,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       if (!cancelled) setGlobalVocabLoading(false)
     })
     return () => { cancelled = true }
-  }, [showGlobalVocab, actualSourceLang])
+  }, [showGlobalVocab, actualSourceLang, sourceLang])
 
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
@@ -366,19 +372,25 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       )}
 
       {!processingInfo && !preprocessStatus && vocab.length > 0 && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between bg-white border border-stone-200/80 rounded-xl px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-2.5">
             <LangIcon langCode={actualSourceLang} size="md" />
-            <span className="text-sm text-stone-500 font-medium">
-              {LANGUAGES.find(l => l.value === actualSourceLang)?.native || actualSourceLang}
-            </span>
+            <div className="flex flex-col">
+              <span className="text-xs font-medium text-stone-600 leading-tight">
+                {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang}
+              </span>
+              <span className="text-[10px] text-stone-400 leading-tight">
+                {LANGUAGES.find(l => l.value === actualSourceLang)?.native || ''}
+              </span>
+            </div>
           </div>
+          <div className="w-px h-8 bg-stone-200/80 mx-3" />
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={onStartLearning}
             disabled={loading}
-            className="px-8 py-3 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="px-6 py-2.5 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
           >
             {loading ? (
               <>

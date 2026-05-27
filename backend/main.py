@@ -2629,7 +2629,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                     exercises_per_sent.append(1)
             expected_length = sum(exercises_per_sent)
             
-            if exercise_order is None or len(exercise_order) != expected_length:
+            if exercise_order is None:
                 seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
                 exercise_order = text_processor.generate_interleaved_exercise_order(
                     len(eligible_sentences), masks_per_sentence=3, seed=seed,
@@ -2706,7 +2706,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     exercises_per_sent.append(1)
             expected_length = sum(exercises_per_sent)
             
-            if exercise_order is None or len(exercise_order) != expected_length:
+            if exercise_order is None:
                 seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
                 exercise_order = text_processor.generate_interleaved_exercise_order(
                     len(eligible_sentences), masks_per_sentence=3, seed=seed,
@@ -2730,8 +2730,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             if current_exercise_index >= exercise_end:
                 storage.save_phase2_progress(file_id, exercise_start)
                 current_exercise_index = exercise_start
-            
-            if current_exercise_index < exercise_start:
+            elif current_exercise_index < exercise_start:
                 storage.save_phase2_progress(file_id, exercise_start)
                 current_exercise_index = exercise_start
             
@@ -2990,12 +2989,36 @@ async def get_word_detail(word: str, source_lang: str = "en", target_lang: str =
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/file/{file_id}/info")
+async def get_file_info(file_id: str):
+    try:
+        settings = storage.load_language_settings(file_id)
+        return {
+            "source_lang": settings.get("source_lang", "en"),
+            "target_lang": settings.get("target_lang", "zh")
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/word-list")
 async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional[str] = None):
     try:
         records = storage.load_history()
         if source_lang:
-            records = [r for r in records if r.get("source_lang") == source_lang]
+            filtered = []
+            for r in records:
+                rlang = r.get("source_lang", "")
+                if rlang == source_lang:
+                    filtered.append(r)
+                    continue
+                if rlang == "auto" or not rlang:
+                    file_id = r.get("file_id")
+                    if file_id:
+                        settings = storage.load_language_settings(file_id)
+                        if settings and settings.get("source_lang") == source_lang:
+                            filtered.append(r)
+                            continue
+            records = filtered
         if target_lang:
             records = [r for r in records if r.get("target_lang") == target_lang]
 
