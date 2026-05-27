@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2 } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
@@ -8,7 +8,7 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack }) {
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
@@ -361,54 +361,58 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       className="flex flex-col gap-3"
       style={{ height: '100%' }}
     >
-      <div className="flex items-center gap-4 bg-white border border-stone-200/80 rounded-xl px-5 py-2.5 shadow-sm">
-        <div className="flex items-center gap-2.5">
-          <LangIcon langCode={actualSourceLang} size="md" />
-          <div className="flex flex-col leading-tight">
-            <span className="text-[14px] font-semibold text-stone-800">
-              {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
-            </span>
-            <span className="text-[10px] text-stone-400">
-              {LANGUAGES.find(l => l.value === actualSourceLang)?.flag || ''} {LANGUAGES.find(l => l.value === actualSourceLang)?.native || ''}
-            </span>
-          </div>
+      <div className="flex items-center gap-4 px-1">
+        <button
+          onClick={onBack}
+          className="p-1.5 -ml-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors"
+          title={t.backToHome || '返回主页'}
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+
+        <div className="flex items-center gap-2">
+          <LangIcon langCode={actualSourceLang} size="sm" />
+          <span className="text-[13px] font-semibold text-stone-700">
+            {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
+          </span>
+          <span className="text-[10px] text-stone-400">
+            {LANGUAGES.find(l => l.value === actualSourceLang)?.native || ''}
+          </span>
         </div>
 
         {(processingInfo || preprocessStatus) && (
-          <div className="flex-1 flex items-center gap-3 min-w-0">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
             {preprocessStatus ? (
-              <div className="flex items-center gap-2 flex-1">
-                <span className="relative flex h-2 w-2">
+              <>
+                <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
                 </span>
-                <span className="text-[12px] text-blue-600 font-medium truncate">
+                <span className="text-[11px] text-blue-500 font-medium truncate">
                   {preprocessStatus === 'detecting' ? (t.detectingLanguage || '识别语言中...') : 
                    preprocessStatus === 'translating' ? (t.translating || '翻译中...') : (t.generating || '生成文本中...')}
                 </span>
-              </div>
+              </>
             ) : (
-              <div className="flex-1 flex items-center gap-2.5">
-                <span className="text-[11px] text-stone-400 tabular-nums whitespace-nowrap">
+              <>
+                <span className="text-[10px] text-stone-400 tabular-nums whitespace-nowrap">
                   {safeProcessingInfo.current}/{safeProcessingInfo.total}
                 </span>
-                <div className="flex-1 h-1 bg-stone-100 rounded-full overflow-hidden">
+                <div className="flex-1 h-0.5 bg-stone-100 rounded-full overflow-hidden max-w-[200px]">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
                     transition={{ duration: 0.4, ease: 'easeOut' }}
-                    className="h-full bg-stone-700 rounded-full"
+                    className="h-full bg-stone-500 rounded-full"
                   />
                 </div>
-                <span className="text-[11px] text-stone-400 tabular-nums">{progress}%</span>
-              </div>
+                <span className="text-[10px] text-stone-400 tabular-nums">{progress}%</span>
+              </>
             )}
           </div>
         )}
 
-        {!processingInfo && !preprocessStatus && vocab.length > 0 && (
-          <div className="flex-1" />
-        )}
+        {!processingInfo && !preprocessStatus && <div className="flex-1" />}
 
         {vocab.length > 0 && (
           <motion.button
@@ -416,7 +420,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             whileTap={{ scale: 0.98 }}
             onClick={onStartLearning}
             disabled={loading || !!preprocessStatus}
-            className="px-4 py-1.5 bg-stone-800 text-white text-[12px] font-medium rounded-lg hover:bg-stone-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shrink-0"
+            className="px-3.5 py-1.5 bg-stone-800 text-white text-[11px] font-medium rounded-lg hover:bg-stone-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all flex items-center gap-1.5 shrink-0"
           >
             {loading ? (
               <>

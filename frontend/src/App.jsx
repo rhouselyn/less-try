@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft, Settings, Home } from 'lucide-react'
+import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import ConfirmDialog from './components/ConfirmDialog'
 
-import InputStep, { LangIcon, LANGUAGES } from './components/InputStep'
+import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
 import ProgressStep from './components/ProgressStep'
@@ -82,7 +82,6 @@ function App() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
-  const [headerLang, setHeaderLang] = useState(null)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -314,7 +313,6 @@ function App() {
           const detectResult = await api.detectLanguage(finalText)
           if (detectResult.detected_language) {
             finalSourceLang = detectResult.detected_language
-            setHeaderLang(detectResult.detected_language)
           }
         } catch (e) {
           console.error('Language detection failed:', e)
@@ -322,7 +320,6 @@ function App() {
         setPreprocessStatus(null)
       } else {
         setPreprocessStatus(null)
-        setHeaderLang(sourceLang)
       }
       
       const response = await api.processText(finalText, finalSourceLang, targetLang)
@@ -982,7 +979,6 @@ function App() {
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
-      setHeaderLang(srcLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)
@@ -1034,53 +1030,23 @@ function App() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {step !== 'input' && headerLang ? (
-                <>
-                  <LangIcon langCode={headerLang} size="md" />
-                  <div className="flex flex-col leading-tight">
-                    <span className="text-[15px] font-semibold text-stone-800">
-                      {LANGUAGES.find(l => l.value === headerLang)?.en || headerLang?.toUpperCase()}
-                    </span>
-                    <span className="text-[10px] text-stone-400">
-                      {LANGUAGES.find(l => l.value === headerLang)?.flag || ''} {LANGUAGES.find(l => l.value === headerLang)?.native || ''}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center">
-                    <BookOpen className="w-5 h-5 text-amber-100" />
-                  </div>
-                  <div>
-                    <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
-                    <p className="text-sm text-stone-400">{t.subtitle || 'Lesslingo'}</p>
-                  </div>
-                </>
-              )}
+      {step === 'input' && (
+        <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-amber-100" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
+                  <p className="text-sm text-stone-400">{t.subtitle || 'Lesslingo'}</p>
+                </div>
+              </div>
             </div>
-            <AnimatePresence>
-              {step !== 'input' && (
-                <motion.button
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  onClick={() => {
-                    setStep('input');
-                  }}
-                  className="p-2 text-stone-500 hover:text-amber-600 transition-colors rounded-lg hover:bg-amber-50"
-                  title="主页面"
-                >
-                  <Home className="w-5 h-5" />
-                </motion.button>
-              )}
-            </AnimatePresence>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       <main>
         {step === 'input' ? (
@@ -1126,7 +1092,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: '100vh', overflowY: 'auto' }}>
             <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
@@ -1149,6 +1115,7 @@ function App() {
               sourceLang={sourceLang}
               targetLang={targetLang}
               preprocessStatus={preprocessStatus}
+              onBack={() => setStep('input')}
             />
           )}
           
