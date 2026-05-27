@@ -1,22 +1,24 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { createPortal } from 'react-dom'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages } from 'lucide-react'
 import { speakText } from '../utils/speech'
-import { useTouchDragSwap } from '../hooks/useTouchDragSwap'
+import { useDragSwap } from '../hooks/useDragSwap'
 
 function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
-  const [dragOverPos, setDragOverPos] = useState(null)
   const [swapSelectPos, setSwapSelectPos] = useState(null)
-  const dragPosRef = useRef(null)
   const answerBoxRef = useRef(null)
+  const optionRefs = useRef({})
+  const [flyingWord, setFlyingWord] = useState(null)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((quizData?.step_in_unit ?? 0) + 1)
   const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
   const rawTotalItemsInUnit = quizData?.total_items_in_unit ?? 0
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit)
+  const maxWords = quizData?.correct_tokens?.length ?? 0
 
   const autoSpeak = useCallback(() => {
     if (quizData?.original_sentence) {
@@ -43,98 +45,90 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
     )
   }
 
+  const stripPunctuation = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
+  const displayToken = (token) => typeof token === 'string' ? token.replace(/[，。、；：！？,.:;!?]/g, '') : token
+
+  const handleInsert = useCallback((sourceType, sourceIdx, insertIdx) => {
+    if (isChecked) return
+
+    if (sourceType === 'answer') {
+      setSelectedIndices(prev => {
+        const next = [...prev]
+        const [moved] = next.splice(sourceIdx, 1)
+        const adjusted = insertIdx > sourceIdx ? insertIdx - 1 : insertIdx
+        next.splice(adjusted, 0, moved)
+        return next
+      })
+    } else if (sourceType === 'option') {
+      if (selectedIndices.includes(sourceIdx)) return
+      if (selectedIndices.length >= maxWords) return
+      setSelectedIndices(prev => {
+        const next = [...prev]
+        next.splice(insertIdx, 0, sourceIdx)
+        return next
+      })
+      speakText(displayToken(quizData.tokens[sourceIdx]), sourceLang)
+    }
+  }, [isChecked, selectedIndices, maxWords, quizData.tokens, sourceLang])
+
+  const drag = useDragSwap({
+    containerRef: answerBoxRef,
+    onInsert: handleInsert,
+    enabled: () => !isChecked,
+    itemCount: selectedIndices.length,
+  })
+
   const handleTokenClick = (tokenIndex) => {
     if (isChecked) return
+    if (drag.dragInfo) return
     const pos = selectedIndices.indexOf(tokenIndex)
     if (pos > -1) {
       setSelectedIndices([...selectedIndices.slice(0, pos), ...selectedIndices.slice(pos + 1)])
     } else {
-      setSelectedIndices([...selectedIndices, tokenIndex])
-    }
-  }
-
-  const handleRemoveToken = (pos) => {
-    if (isChecked) return
-    setSelectedIndices([...selectedIndices.slice(0, pos), ...selectedIndices.slice(pos + 1)])
-  }
-
-  const swapPositions = useCallback((posA, posB) => {
-    if (posA === posB) return
-    setSelectedIndices(prev => {
-      const next = [...prev]
-      const temp = next[posA]
-      next[posA] = next[posB]
-      next[posB] = temp
-      return next
-    })
-  }, [])
-
-  const getItemAtPoint = useCallback((x, y) => {
-    if (!answerBoxRef.current) return null
-    const slots = answerBoxRef.current.querySelectorAll('[data-slot-pos]')
-    for (const slot of slots) {
-      const rect = slot.getBoundingClientRect()
-      if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-        const pos = parseInt(slot.getAttribute('data-slot-pos'), 10)
-        if (!isNaN(pos)) return pos
+      if (selectedIndices.length >= maxWords) return
+      const optionEl = optionRefs.current[tokenIndex]
+      if (optionEl) {
+        const rect = optionEl.getBoundingClientRect()
+        setFlyingWord({
+          tokenIndex,
+          startX: rect.left,
+          startY: rect.top,
+          width: rect.width,
+          height: rect.height,
+        })
+      } else {
+        setSelectedIndices([...selectedIndices, tokenIndex])
       }
+      speakText(displayToken(quizData.tokens[tokenIndex]), sourceLang)
     }
-    return null
-  }, [])
+  }
 
-  const touchDrag = useTouchDragSwap({
-    getItemAtPoint,
-    onSwap: swapPositions,
-    enabled: () => !isChecked,
-  })
+  const handleFlyComplete = useCallback(() => {
+    if (!flyingWord) return
+    setSelectedIndices(prev => [...prev, flyingWord.tokenIndex])
+    setFlyingWord(null)
+  }, [flyingWord])
 
   const handleSelectedClick = (pos) => {
     if (isChecked) return
+    if (drag.dragInfo) return
     if (swapSelectPos !== null) {
       if (swapSelectPos === pos) {
         setSwapSelectPos(null)
       } else {
-        swapPositions(swapSelectPos, pos)
+        setSelectedIndices(prev => {
+          const next = [...prev]
+          const temp = next[swapSelectPos]
+          next[swapSelectPos] = next[pos]
+          next[pos] = temp
+          return next
+        })
         setSwapSelectPos(null)
       }
     } else {
-      handleRemoveToken(pos)
+      setSelectedIndices([...selectedIndices.slice(0, pos), ...selectedIndices.slice(pos + 1)])
     }
   }
-
-  const handleSelectedDragStart = (e, pos) => {
-    if (isChecked) return
-    dragPosRef.current = pos
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('text/plain', String(pos))
-  }
-
-  const handleSelectedDragOver = (e, pos) => {
-    e.preventDefault()
-    setDragOverPos(pos)
-  }
-
-  const handleSelectedDragLeave = () => {
-    setDragOverPos(null)
-  }
-
-  const handleSelectedDrop = (e, targetPos) => {
-    e.preventDefault()
-    setDragOverPos(null)
-    const sourcePos = dragPosRef.current
-    if (sourcePos === null || sourcePos === targetPos) return
-    swapPositions(sourcePos, targetPos)
-    dragPosRef.current = null
-  }
-
-  const handleSelectedDragEnd = () => {
-    dragPosRef.current = null
-    setDragOverPos(null)
-  }
-
-  const stripPunctuation = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
-
-  const displayToken = (token) => typeof token === 'string' ? token.replace(/[，。、；：！？,.:;!?]/g, '') : token
 
   const handleCheckAnswer = () => {
     const userTokens = selectedIndices.map(i => stripPunctuation(quizData.tokens[i]))
@@ -149,10 +143,104 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
     setSelectedIndices([])
     setIsChecked(false)
     setIsCorrect(false)
+    setSwapSelectPos(null)
+    setFlyingWord(null)
     onNextQuestion()
   }
 
   const selectedTokens = selectedIndices.map(i => quizData.tokens[i])
+
+  const isDragging = drag.dragInfo !== null
+  const dragSourceIdx = drag.dragInfo?.sourceType === 'answer' ? drag.dragInfo.sourceIdx : -1
+  const insertIdx = drag.dragInfo?.insertIdx ?? -1
+
+  const renderAnswerItems = () => {
+    const items = []
+    let renderIdx = 0
+
+    for (let i = 0; i < selectedIndices.length; i++) {
+      const isDragSource = isDragging && i === dragSourceIdx
+
+      if (renderIdx === insertIdx && isDragging && !isDragSource) {
+        items.push(
+          <motion.div
+            key="gap-indicator"
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 80, opacity: 0.6 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+            className="h-9 border-2 border-dashed border-amber-300 rounded-full bg-amber-50 flex-shrink-0"
+          />
+        )
+      }
+
+      if (isDragSource) {
+        items.push(
+          <div
+            key={`placeholder-${i}`}
+            className="rounded-full flex-shrink-0"
+            style={{ width: 80, height: 36, opacity: 0.15, backgroundColor: '#d6d3d1' }}
+          />
+        )
+      } else {
+        const tokenIdx = selectedIndices[i]
+        const token = quizData.tokens[tokenIdx]
+        const isTokenCorrect = i < quizData.correct_tokens.length &&
+          stripPunctuation(token) === stripPunctuation(quizData.correct_tokens[i])
+        const isSwapSelected = swapSelectPos === i
+        items.push(
+          <motion.div
+            key={`sel-${tokenIdx}`}
+            data-slot-idx={renderIdx}
+            layout="position"
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.85 }}
+            transition={{
+              layout: { type: 'spring', stiffness: 350, damping: 30 },
+              opacity: { duration: 0.15 },
+              scale: { type: 'spring', stiffness: 500, damping: 30 },
+            }}
+            onMouseDown={(e) => drag.handleMouseDown(e, 'answer', i, displayToken(token))}
+            onTouchStart={(e) => drag.handleTouchStart(e, 'answer', i, displayToken(token))}
+            onClick={() => handleSelectedClick(i)}
+            className={`px-4 py-2 rounded-full text-sm font-medium select-none touch-none ${
+              isChecked
+                ? isCorrect
+                  ? 'bg-green-100 text-green-800 border border-green-300'
+                  : isTokenCorrect
+                    ? 'bg-green-100 text-green-800 border border-green-300'
+                    : 'bg-red-100 text-red-800 border border-red-300'
+                : isSwapSelected
+                  ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-pointer shadow-sm'
+                  : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md'
+            }`}
+          >
+            {displayToken(token)}
+          </motion.div>
+        )
+      }
+
+      renderIdx++
+    }
+
+    if (renderIdx === insertIdx && isDragging) {
+      items.push(
+        <motion.div
+          key="gap-indicator-end"
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: 80, opacity: 0.6 }}
+          exit={{ width: 0, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+          className="h-9 border-2 border-dashed border-amber-300 rounded-full bg-amber-50 flex-shrink-0"
+        />
+      )
+    }
+
+    return items
+  }
+
+  const answerBoxTop = answerBoxRef.current?.getBoundingClientRect().top ?? 0
 
   return (
     <motion.div
@@ -223,51 +311,11 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
 
         <div className="mb-8">
-          <div ref={answerBoxRef} className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
+          <div ref={answerBoxRef} className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50">
             <AnimatePresence>
-              {selectedTokens.map((token, pos) => {
-                const isTokenCorrect = pos < quizData.correct_tokens.length &&
-                  stripPunctuation(token) === stripPunctuation(quizData.correct_tokens[pos])
-                const isDragOver = dragOverPos === pos
-                const isSwapSelected = swapSelectPos === pos
-                return (
-                  <motion.div
-                    key={`sel-${selectedIndices[pos]}`}
-                    data-slot-pos={pos}
-                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-                    exit={{ opacity: 0, scale: 0 }}
-                    draggable={!isChecked}
-                    onDragStart={(e) => handleSelectedDragStart(e, pos)}
-                    onDragOver={(e) => handleSelectedDragOver(e, pos)}
-                    onDragLeave={handleSelectedDragLeave}
-                    onDrop={(e) => handleSelectedDrop(e, pos)}
-                    onDragEnd={handleSelectedDragEnd}
-                    onTouchStart={!isChecked ? (e) => touchDrag.handleTouchStart(e, pos) : undefined}
-                    onTouchMove={!isChecked ? touchDrag.handleTouchMove : undefined}
-                    onTouchEnd={!isChecked ? touchDrag.handleTouchEnd : undefined}
-                    onClick={() => handleSelectedClick(pos)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
-                      isChecked
-                        ? isCorrect
-                          ? 'bg-green-100 text-green-800 border border-green-300'
-                          : isTokenCorrect
-                            ? 'bg-green-100 text-green-800 border border-green-300'
-                            : 'bg-red-100 text-red-800 border border-red-300'
-                        : isDragOver
-                          ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-grab'
-                          : isSwapSelected
-                            ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-pointer'
-                            : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing'
-                    }`}
-                  >
-                    <span>{displayToken(token)}</span>
-                  </motion.div>
-                )
-              })}
+              {renderAnswerItems()}
             </AnimatePresence>
-            {selectedTokens.length === 0 && (
+            {selectedTokens.length === 0 && !isDragging && (
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -281,22 +329,33 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
 
         <div className="mb-8">
           <div className="flex flex-wrap gap-3">
-            {quizData.tokens.map((token, index) => (
-              <motion.button
-                key={`opt-${index}`}
-                whileHover={!isChecked && !selectedIndices.includes(index) ? { scale: 1.05 } : {}}
-                whileTap={!isChecked && !selectedIndices.includes(index) ? { scale: 0.95 } : {}}
-                onClick={() => handleTokenClick(index)}
-                disabled={selectedIndices.includes(index) || isChecked}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  selectedIndices.includes(index) || isChecked
-                    ? 'opacity-0 pointer-events-none scale-75'
-                    : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
-                }`}
-              >
-                {displayToken(token)}
-              </motion.button>
-            ))}
+            {quizData.tokens.map((token, index) => {
+              const isSelected = selectedIndices.includes(index)
+              return (
+                <motion.button
+                  key={`opt-${index}`}
+                  animate={{
+                    opacity: isSelected ? 0 : 1,
+                    scale: isSelected ? 0.85 : 1,
+                  }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  whileHover={!isChecked && !isSelected ? { scale: 1.05, y: -2 } : {}}
+                  whileTap={!isChecked && !isSelected ? { scale: 0.95 } : {}}
+                  onClick={() => handleTokenClick(index)}
+                  onMouseDown={(e) => { if (!isSelected && !isChecked) drag.handleMouseDown(e, 'option', index, displayToken(token)) }}
+                  onTouchStart={(e) => { if (!isSelected && !isChecked) drag.handleTouchStart(e, 'option', index, displayToken(token)) }}
+                  ref={el => { if (el) optionRefs.current[index] = el }}
+                  style={{ pointerEvents: isSelected || isChecked ? 'none' : 'auto' }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium select-none touch-none ${
+                    isSelected || isChecked
+                      ? ''
+                      : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
+                  }`}
+                >
+                  {displayToken(token)}
+                </motion.button>
+              )
+            })}
           </div>
         </div>
 
@@ -354,6 +413,45 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           )}
         </div>
       </div>
+
+      {drag.dragInfo && createPortal(
+        <div
+          style={{
+            position: 'fixed',
+            left: drag.dragInfo.ghostX,
+            top: drag.dragInfo.ghostY,
+            width: drag.dragInfo.width,
+            zIndex: 9999,
+            pointerEvents: 'none',
+          }}
+          className="px-4 py-2 rounded-full text-sm font-medium bg-stone-800 text-white shadow-xl ring-2 ring-amber-400/50"
+        >
+          {drag.dragInfo.word}
+        </div>,
+        document.body
+      )}
+
+      {flyingWord && createPortal(
+        <motion.div
+          initial={{
+            position: 'fixed',
+            left: flyingWord.startX,
+            top: flyingWord.startY,
+            width: flyingWord.width,
+            scale: 1,
+          }}
+          animate={{
+            top: answerBoxTop + 16,
+            scale: 0.95,
+          }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          onAnimationComplete={handleFlyComplete}
+          className="px-4 py-2 rounded-full text-sm font-medium bg-stone-800 text-white shadow-xl z-50 pointer-events-none"
+        >
+          {displayToken(quizData.tokens[flyingWord.tokenIndex])}
+        </motion.div>,
+        document.body
+      )}
     </motion.div>
   )
 }

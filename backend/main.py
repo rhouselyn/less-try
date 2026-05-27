@@ -2829,7 +2829,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 random.seed(hash(current_sentence) + type_idx)
                 distractors = []
                 original_lower_set = set(t.lower() for t in original_tokens)
-                max_distractors = 2
+                max_distractors = 3
                 
                 for sent_data in eligible_sentences:
                     if sent_data is current_sentence_data:
