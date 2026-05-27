@@ -34,6 +34,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const pendingScrollWord = useRef(null)
   const localVocabScrollPos = useRef(0)
   const globalVocabScrollPos = useRef(0)
+  const filteredVocabRef = useRef(filteredVocab)
+  filteredVocabRef.current = filteredVocab
+  const vocabPageRef = useRef(vocabPage)
+  vocabPageRef.current = vocabPage
+  const pageSizeRef = useRef(pageSize)
+  pageSizeRef.current = pageSize
 
   useEffect(() => {
     if (currentFileId) {
@@ -145,9 +151,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     return filteredGlobalVocab.slice(start, start + pageSize)
   }, [filteredGlobalVocab, globalVocabPage, pageSize])
 
-  const vocabTotalPages = Math.max(1, Math.ceil(filteredVocab.length / pageSize))
-  const sentenceTotalPages = Math.max(1, Math.ceil(filteredSentences.length / pageSize))
-  const globalVocabTotalPages = Math.max(1, Math.ceil(filteredGlobalVocab.length / pageSize))
+  const vocabTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredVocab.length / pageSize)), [filteredVocab, pageSize])
+  const sentenceTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredSentences.length / pageSize)), [filteredSentences, pageSize])
+  const globalVocabTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredGlobalVocab.length / pageSize)), [filteredGlobalVocab, pageSize])
 
   useEffect(() => {
     setVocabPage(1)
@@ -309,21 +315,25 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
     setExpandedWord(wordKey)
 
+    const currentFilteredVocab = filteredVocabRef.current
+    const currentPage = vocabPageRef.current
+    const currentPageSize = pageSizeRef.current
+
     if (showGlobalVocab) {
       pendingScrollWord.current = wordKey
       if (vocabSearch) setVocabSearch('')
-      const wordIdx = filteredVocab.findIndex(w => w.word.toLowerCase() === wordKey.toLowerCase())
+      const wordIdx = currentFilteredVocab.findIndex(w => w.word.toLowerCase() === wordKey.toLowerCase())
       if (wordIdx >= 0) {
-        const targetPage = Math.floor(wordIdx / pageSize) + 1
-        if (targetPage !== vocabPage) setVocabPage(targetPage)
+        const targetPage = Math.floor(wordIdx / currentPageSize) + 1
+        if (targetPage !== currentPage) setVocabPage(targetPage)
       }
       setShowGlobalVocab(false)
     } else {
       if (vocabSearch) setVocabSearch('')
-      const wordIdx = filteredVocab.findIndex(w => w.word.toLowerCase() === wordKey.toLowerCase())
+      const wordIdx = currentFilteredVocab.findIndex(w => w.word.toLowerCase() === wordKey.toLowerCase())
       if (wordIdx >= 0) {
-        const targetPage = Math.floor(wordIdx / pageSize) + 1
-        if (targetPage !== vocabPage) {
+        const targetPage = Math.floor(wordIdx / currentPageSize) + 1
+        if (targetPage !== currentPage) {
           setVocabPage(targetPage)
           pendingScrollWord.current = wordKey
         } else {
@@ -337,7 +347,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (detail) {
       scrollToWord(wordKey, 300)
     }
-  }, [vocab, expandedWord, scrollToWord, fetchWordDetail, showGlobalVocab, filteredVocab, vocabPage, pageSize])
+  }, [vocab, expandedWord, scrollToWord, fetchWordDetail, showGlobalVocab])
 
   const handleVocabWordClick = useCallback(async (word) => {
     const wordKey = word.word
