@@ -137,9 +137,6 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         return result
     mc = result.get("multiple_choice")
     if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-        correct_answer = mc.get("correct_answer", "")
-        correct_answer_lower = correct_answer.lower().strip() if correct_answer else ""
-        
         normalized_options = []
         for opt in mc["options"]:
             if not isinstance(opt, dict) or "text" not in opt:
@@ -150,12 +147,12 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
                 is_correct = is_correct.lower() in ("true", "yes", "1")
             elif isinstance(is_correct, (int, float)):
                 is_correct = bool(is_correct)
-            if not is_correct and correct_answer_lower and text.lower().strip() == correct_answer_lower:
-                is_correct = True
             normalized_options.append({"text": text, "is_correct": bool(is_correct)})
         
-        if not any(o["is_correct"] for o in normalized_options) and correct_answer:
-            normalized_options.insert(0, {"text": correct_answer, "is_correct": True})
+        if not any(o["is_correct"] for o in normalized_options):
+            correct_meaning = result.get("enriched_meaning", result.get("meaning", ""))
+            if correct_meaning:
+                normalized_options.insert(0, {"text": correct_meaning, "is_correct": True})
         
         filtered_options = []
         placeholder_pattern = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
@@ -169,7 +166,12 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         
         if len(filtered_options) < 4:
             existing_texts = {o["text"] for o in filtered_options}
-            fallback_distractors = get_fallback_options(correct_answer, file_id, count=4 - len(filtered_options))
+            correct_text = ""
+            for o in filtered_options:
+                if o["is_correct"]:
+                    correct_text = o["text"]
+                    break
+            fallback_distractors = get_fallback_options(correct_text, file_id, count=4 - len(filtered_options))
             for fd in fallback_distractors:
                 if len(filtered_options) >= 4:
                     break
@@ -188,11 +190,7 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
                     existing_texts.add(fb)
         
         mc["options"] = filtered_options[:4]
-        if not mc.get("correct_answer") and filtered_options:
-            for o in filtered_options:
-                if o["is_correct"]:
-                    mc["correct_answer"] = o["text"]
-                    break
+        mc.pop("correct_answer", None)
         result["multiple_choice"] = mc
         return result
     if isinstance(mc, str) and not mc.strip():
@@ -205,17 +203,14 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
             except (json.JSONDecodeError, TypeError):
                 raw_opts = []
         if isinstance(raw_opts, list):
-            correct_answer = result.get("correct_answer", "")
             mc_options = []
             for opt in raw_opts:
                 if isinstance(opt, dict) and "text" in opt:
                     mc_options.append(opt)
                 elif isinstance(opt, str):
-                    is_correct = (opt == correct_answer)
-                    mc_options.append({"text": opt, "is_correct": is_correct})
+                    mc_options.append({"text": opt, "is_correct": False})
             if mc_options:
                 result["multiple_choice"] = {
-                    "correct_answer": correct_answer,
                     "options": mc_options
                 }
     if "multiple_choice" not in result or not isinstance(result.get("multiple_choice"), dict) or "options" not in result.get("multiple_choice", {}):
@@ -225,7 +220,6 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         for fd in fallback_distractors:
             fb_opts.append({"text": fd, "is_correct": False})
         result["multiple_choice"] = {
-            "correct_answer": correct_meaning,
             "options": fb_opts[:4]
         }
     return result
@@ -1479,11 +1473,6 @@ async def get_random_word(file_id: str):
                     options.append(opt["text"])
                     if opt.get("is_correct"):
                         correct_index = i
-                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
-                    for i, opt in enumerate(mc_options):
-                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
-                            correct_index = i
-                            break
                 
                 asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
                 
@@ -1577,11 +1566,6 @@ async def get_random_word(file_id: str):
                 options.append(opt["text"])
                 if opt.get("is_correct"):
                     correct_index = i
-            if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
-                for i, opt in enumerate(mc_options):
-                    if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
-                        correct_index = i
-                        break
             
             context_sents = cached_word.get("context_sentences", [])
             
@@ -1936,11 +1920,6 @@ async def get_word_details(file_id: str, word: str):
                     options.append(opt["text"])
                     if opt.get("is_correct"):
                         correct_index = i
-                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
-                    for i, opt in enumerate(mc_options):
-                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
-                            correct_index = i
-                            break
                 cached_word["options"] = options
                 cached_word["correct_index"] = correct_index
             
@@ -2020,11 +1999,6 @@ async def get_word_details(file_id: str, word: str):
                     options.append(opt["text"])
                     if opt.get("is_correct"):
                         correct_index = i
-                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
-                    for i, opt in enumerate(mc_options):
-                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
-                            correct_index = i
-                            break
                 cached_word["options"] = options
                 cached_word["correct_index"] = correct_index
                 return cached_word

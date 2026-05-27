@@ -414,7 +414,7 @@ class NvidiaAPI:
                         },
                         "examples": {
                             "type": "array",
-                            "description": "两个与原文语义一致的例句",
+                            "description": "两个全新的例句（绝不能复用原文句子，必须是不同的句子）",
                             "items": {
                                 "type": "object",
                                 "properties": {
@@ -432,10 +432,6 @@ class NvidiaAPI:
                         "multiple_choice": {
                             "type": "object",
                             "properties": {
-                                "correct_answer": {
-                                    "type": "string",
-                                    "description": "单词的常见、正常释义，不是上下文特定释义"
-                                },
                                 "options": {
                                     "type": "array",
                                     "items": {
@@ -471,7 +467,6 @@ class NvidiaAPI:
 3. examples: 两个符合上下文含义的例句，每个都有 {target_lang_name} 的翻译
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
-   - correct_answer: 单词的常见、正常释义，不是上下文特定释义
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
 
 要求：
@@ -509,7 +504,6 @@ class NvidiaAPI:
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
-                    "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
                         {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
@@ -532,7 +526,6 @@ class NvidiaAPI:
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
-                    "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
                         {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
@@ -599,16 +592,12 @@ class NvidiaAPI:
         prompt = """处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
 
 【非常非常重要的说明！！！】
-1. 首先检查输入文本的语言：
-   - 如果输入文本的语言与 TARGET_LANG 一致，则不需要翻译，保持原样
-   - 如果输入文本的语言与 TEXT_LANG 一致，则 original 字段保持输入文本原样
-   - 如果输入文本的语言既不是 TEXT_LANG 也不是 TARGET_LANG，则先翻译成 TEXT_LANG，然后 original 字段填入翻译后的 TEXT_LANG 文本
-2. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
-3. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
-4. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
+1. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
+2. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
+3. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
    - n (名词), v (动词), adj (形容词), adv (副词), pron (代词), prep (介词), conj (连词), interj (感叹词), det (限定词)
-5. morphology 字段必须只包含缩写，不要有其他内容！
-6. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
+4. morphology 字段必须只包含缩写，不要有其他内容！
+5. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 
 ═══════════════════════════════════════════════════════════
 【最最最重要！！！translation 数组的分词原则！！！】
@@ -635,13 +624,13 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 ═══════════════════════════════════════════════════════════
 
 按照以下结构处理文本：
-- original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
+- original: 原文文本 - 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
   - text: 原文中的一个词（严格遵循源语言的自然词边界！）
   - phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
   - morphology: 只能是词性缩写（如 n, v, adj）
   - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释
-- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
+- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式。【极其重要】必须翻译完整，不能遗漏任何内容，原文的每个语义成分都必须体现在翻译中
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
