@@ -256,7 +256,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
   }, [currentFileId, wordDetails, wordDetailCache])
 
-  const scrollToWord = useCallback((wordKey, delay = 100) => {
+  const scrollToWord = useCallback((wordKey, delay = 50) => {
     const doScroll = () => {
       let el = wordRefs.current[wordKey]
       if (!el && vocabListRef.current) {
@@ -268,27 +268,27 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         const elRect = el.getBoundingClientRect()
         const stickyOffset = 36
         const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
-        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
+        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'instant' })
       }
     }
-    setTimeout(doScroll, delay)
-    setTimeout(doScroll, delay + 300)
-    setTimeout(doScroll, delay + 600)
+    if (delay <= 0) {
+      requestAnimationFrame(doScroll)
+    } else {
+      setTimeout(() => requestAnimationFrame(doScroll), delay)
+    }
   }, [])
 
   useEffect(() => {
     if (!showGlobalVocab && pendingScrollWord.current) {
       const wordKey = pendingScrollWord.current
       pendingScrollWord.current = null
-      scrollToWord(wordKey, 200)
-      scrollToWord(wordKey, 500)
-      scrollToWord(wordKey, 800)
+      scrollToWord(wordKey, 100)
     }
   }, [showGlobalVocab, scrollToWord, vocabPage])
 
   useEffect(() => {
     if (expandedWord && !expandedWord.startsWith('global-') && !showGlobalVocab) {
-      scrollToWord(expandedWord, 150)
+      scrollToWord(expandedWord, 50)
     }
   }, [expandedWord, showGlobalVocab, scrollToWord, vocabPage])
 
@@ -344,10 +344,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
 
     speakText(wordKey, sourceLang)
-    const detail = await fetchWordDetail(wordKey)
-    if (detail) {
-      scrollToWord(wordKey, 300)
-    }
+    fetchWordDetail(wordKey)
   }, [vocab, expandedWord, scrollToWord, fetchWordDetail, showGlobalVocab])
 
   const handleVocabWordClick = useCallback(async (word) => {
@@ -357,14 +354,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       return
     }
     setExpandedWord(wordKey)
-    scrollToWord(wordKey, 100)
-    const detail = await fetchWordDetail(wordKey)
-    if (detail) {
-      scrollToWord(wordKey, 300)
-    }
+    scrollToWord(wordKey, 50)
+    fetchWordDetail(wordKey)
   }, [expandedWord, fetchWordDetail, scrollToWord])
 
-  const scrollToGlobalWord = useCallback((wordKey, delay = 100) => {
+  const scrollToGlobalWord = useCallback((wordKey, delay = 50) => {
     const doScroll = () => {
       if (!vocabListRef.current) return
       const el = vocabListRef.current.querySelector(`[data-global-word-key="${CSS.escape(wordKey)}"]`)
@@ -374,11 +368,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         const elRect = el.getBoundingClientRect()
         const stickyOffset = 36
         const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
-        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
+        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'instant' })
       }
     }
-    setTimeout(doScroll, delay)
-    setTimeout(doScroll, delay + 300)
+    if (delay <= 0) {
+      requestAnimationFrame(doScroll)
+    } else {
+      setTimeout(() => requestAnimationFrame(doScroll), delay)
+    }
   }, [])
 
   const handleGlobalVocabWordClick = useCallback(async (word) => {
@@ -388,12 +385,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       return
     }
     setExpandedWord(globalKey)
-    scrollToGlobalWord(word.word, 100)
+    scrollToGlobalWord(word.word, 50)
 
     const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)
     if (hasDetail) {
       setWordDetails(prev => ({ ...prev, [globalKey]: word }))
-      scrollToGlobalWord(word.word, 300)
       return
     }
 
@@ -402,7 +398,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       try {
         const detail = await api.getWordDetail(word.word, actualSourceLang)
         setWordDetails(prev => ({ ...prev, [globalKey]: detail }))
-        scrollToGlobalWord(word.word, 500)
       } catch (err) {
         console.error('Failed to load global word detail:', err)
       } finally {
