@@ -434,14 +434,14 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               <button
                 key={lang}
                 onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+                className={`w-9 h-9 flex items-center justify-center rounded-lg text-[13px] font-bold transition-all ${
                   activeWordListLang === lang
                     ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-md'
-                    : 'hover:bg-stone-200/70 text-stone-400 hover:text-stone-600'
+                    : 'bg-stone-100 text-stone-500 hover:bg-stone-200/70 hover:text-stone-700'
                 }`}
                 title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
               >
-                <LangIcon langCode={lang} size="sm" />
+                {lang.substring(0, 2).toUpperCase()}
               </button>
             ))}
 
@@ -454,10 +454,10 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 <button
                   key={record.file_id}
                   onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-[10px] font-medium text-stone-400 hover:text-stone-600 transition-colors"
                   title={record.title}
                 >
-                  <LangIcon langCode={record.source_lang} size="sm" />
+                  {(record.source_lang || '?').substring(0, 2).toUpperCase()}
                 </button>
               ))
             )}

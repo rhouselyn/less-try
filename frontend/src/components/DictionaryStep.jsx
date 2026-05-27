@@ -8,7 +8,7 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, preprocessStatus }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus }) {
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
@@ -28,17 +28,25 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   useEffect(() => {
     if (currentFileId) {
-      fetch(`/api/status/${currentFileId}`)
+      fetch(`/api/file/${currentFileId}/info`)
         .then(r => r.json())
         .then(data => {
-          const lang = data.source_lang || sourceLang
+          const lang = data.source_lang
           if (lang && lang !== 'auto') {
             setActualSourceLang(lang)
-          } else if (data.vocab && data.vocab.length > 0) {
-            setActualSourceLang('en')
           }
         })
-        .catch(() => {})
+        .catch(() => {
+          fetch(`/api/status/${currentFileId}`)
+            .then(r => r.json())
+            .then(data => {
+              const lang = data.source_lang || sourceLang
+              if (lang && lang !== 'auto') {
+                setActualSourceLang(lang)
+              }
+            })
+            .catch(() => {})
+        })
     }
     if (sourceLang && sourceLang !== 'auto') {
       setActualSourceLang(sourceLang)
@@ -51,7 +59,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (!lang) return
     let cancelled = false
     setGlobalVocabLoading(true)
-    api.getWordList(lang).then(data => {
+    api.getWordList(lang, targetLang).then(data => {
       if (!cancelled) {
         setGlobalVocab(data.words || [])
         setGlobalVocabLoading(false)
@@ -235,6 +243,26 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
   }, [expandedWord, fetchWordDetail, scrollToWord])
 
+  const handleGlobalVocabWordClick = useCallback(async (word) => {
+    const globalKey = `global-${word.word}`
+    if (expandedWord === globalKey) {
+      setExpandedWord(null)
+      return
+    }
+    setExpandedWord(globalKey)
+    if (!wordDetails[globalKey] && !loadingWords[globalKey]) {
+      setLoadingWords(prev => ({ ...prev, [globalKey]: true }))
+      try {
+        const detail = await api.getWordDetail(word.word, actualSourceLang, targetLang)
+        setWordDetails(prev => ({ ...prev, [globalKey]: detail }))
+      } catch (err) {
+        console.error('Failed to load global word detail:', err)
+      } finally {
+        setLoadingWords(prev => ({ ...prev, [globalKey]: false }))
+      }
+    }
+  }, [expandedWord, wordDetails, loadingWords, actualSourceLang, targetLang])
+
   const handleSentenceJump = useCallback((sentenceIndex) => {
     onSentenceClick(sentenceIndex)
     setTimeout(() => {
@@ -348,58 +376,46 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </div>
       )}
 
-      {!processingInfo && loading && !preprocessStatus && (
-        <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
-          <div className="flex justify-between mb-2">
-            <span className="text-sm text-stone-600">{t.processing}: {t.sentence || '句子'} 0 / ...</span>
-            <span className="text-sm text-stone-600">0%</span>
-          </div>
-          <div className="w-full bg-stone-100 rounded-full h-2.5">
-            <div className="bg-stone-800 h-2.5 rounded-full transition-all duration-300" style={{ width: '0%' }}></div>
-          </div>
-        </div>
-      )}
-
       {preprocessStatus && (
         <div className="bg-white border border-blue-200 rounded-2xl p-4 shadow-sm">
           <div className="flex items-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
             <span className="text-sm text-blue-700 font-medium">
-              {preprocessStatus === 'translating' ? (t.translating || '翻译中...') : (t.generating || '生成文本中...')}
+              {preprocessStatus === 'detecting' ? (t.detectingLanguage || '识别语言中...') : 
+               preprocessStatus === 'translating' ? (t.translating || '翻译中...') : (t.generating || '生成文本中...')}
             </span>
           </div>
         </div>
       )}
 
       {!processingInfo && !preprocessStatus && vocab.length > 0 && (
-        <div className="flex items-center justify-between bg-white border border-stone-200/80 rounded-xl px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between bg-white border border-stone-200/80 rounded-xl px-5 py-3 shadow-sm">
+          <div className="flex items-center gap-3">
             <LangIcon langCode={actualSourceLang} size="md" />
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-stone-600 leading-tight">
-                {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang}
+            <div className="flex flex-col leading-tight">
+              <span className="text-[13px] font-semibold text-stone-700">
+                {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
               </span>
-              <span className="text-[10px] text-stone-400 leading-tight">
-                {LANGUAGES.find(l => l.value === actualSourceLang)?.native || ''}
+              <span className="text-[10px] text-stone-400">
+                {LANGUAGES.find(l => l.value === actualSourceLang)?.flag || ''} {LANGUAGES.find(l => l.value === actualSourceLang)?.native || ''}
               </span>
             </div>
           </div>
-          <div className="w-px h-8 bg-stone-200/80 mx-3" />
           <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            whileHover={{ scale: 1.02, y: -1 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onStartLearning}
             disabled={loading}
-            className="px-6 py-2.5 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            className="px-5 py-2 bg-stone-800 text-white text-[13px] font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shadow-sm"
           >
             {loading ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 {t.preparing}
               </>
             ) : (
               <>
-                <Shuffle className="w-4 h-4" />
+                <Shuffle className="w-3.5 h-3.5" />
                 {t.startLearning || '开始学习'}
               </>
             )}
@@ -547,6 +563,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                       <div className="space-y-px">
                         {words.map((word, index) => {
                           const wordKey = word.word
+                          const isExpanded = expandedWord === `global-${wordKey}`
+                          const isLoading = loadingWords[`global-${wordKey}`]
+                          const detail = wordDetails[`global-${wordKey}`]
                           return (
                             <motion.div
                               key={wordKey}
@@ -555,8 +574,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
                               className="bg-white"
                             >
-                              <div className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group">
-                                <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                              <button
+                                onClick={() => handleGlobalVocabWordClick(word)}
+                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group"
+                              >
+                                <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                   <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
                                     {word.word}
                                   </span>
@@ -578,7 +600,35 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
                                   onClick={(e) => speakWord(word.word, e)}
                                 />
-                              </div>
+                              </button>
+                              <AnimatePresence>
+                                {isExpanded && (
+                                  <motion.div
+                                    initial={{ height: 0, opacity: 0 }}
+                                    animate={{ height: 'auto', opacity: 1 }}
+                                    exit={{ height: 0, opacity: 0 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="overflow-hidden"
+                                  >
+                                    <div className="px-4 pb-3.5 border-t border-stone-100/80">
+                                      {isLoading ? (
+                                        <div className="pt-4 flex flex-col items-center justify-center gap-3">
+                                          <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+                                          <p className="text-[12px] text-stone-400">正在生成单词详解...</p>
+                                        </div>
+                                      ) : detail ? (
+                                        <div className="pt-3">
+                                          <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} />
+                                        </div>
+                                      ) : (
+                                        <div className="pt-3 text-center text-stone-400 text-[12px]">
+                                          暂无详情
+                                        </div>
+                                      )}
+                                    </div>
+                                  </motion.div>
+                                )}
+                              </AnimatePresence>
                             </motion.div>
                           )
                         })}
@@ -626,7 +676,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               onClick={() => handleVocabWordClick(word)}
                               className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group"
                             >
-                              <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                              <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                 <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
                                   {word.word}
                                 </span>

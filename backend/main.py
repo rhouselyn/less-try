@@ -2796,6 +2796,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)
                 
                 import random
+                random.seed(hash(current_sentence) + type_idx)
                 distractors = []
                 original_lower_set = set(t.lower() for t in original_tokens)
                 max_distractors = 2

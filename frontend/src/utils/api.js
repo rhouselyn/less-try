@@ -19,6 +19,13 @@ export const api = {
     return response.data;
   },
 
+  detectLanguage: async (text) => {
+    const response = await axios.post(`${baseUrl}/api/detect-language`, {
+      text: text.trim(),
+    });
+    return response.data;
+  },
+
   // 获取处理状态
   getStatus: async (fileId) => {
     const response = await axios.get(`${baseUrl}/api/status/${fileId}`);

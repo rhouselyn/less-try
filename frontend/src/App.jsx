@@ -288,6 +288,8 @@ function App() {
       setPreprocessStatus('translating')
     } else if (inputMode === 'generate') {
       setPreprocessStatus('generating')
+    } else if (sourceLang === 'auto') {
+      setPreprocessStatus('detecting')
     } else {
       setPreprocessStatus(null)
     }
@@ -296,6 +298,7 @@ function App() {
     
     try {
       let finalText = text.trim()
+      let finalSourceLang = sourceLang
       
       if (inputMode === 'translate') {
         const translateResponse = await api.translateText(text.trim(), targetLang, sourceLang)
@@ -305,9 +308,21 @@ function App() {
         finalText = generateResponse.generated_text
       }
       
-      setPreprocessStatus(null)
+      if (finalSourceLang === 'auto') {
+        try {
+          const detectResult = await api.detectLanguage(finalText)
+          if (detectResult.detected_language) {
+            finalSourceLang = detectResult.detected_language
+          }
+        } catch (e) {
+          console.error('Language detection failed:', e)
+        }
+        setPreprocessStatus(null)
+      } else {
+        setPreprocessStatus(null)
+      }
       
-      const response = await api.processText(finalText, sourceLang, targetLang)
+      const response = await api.processText(finalText, finalSourceLang, targetLang)
       
       if (response && response.file_id) {
         const fileId = response.file_id
@@ -1112,6 +1127,7 @@ function App() {
               t={t}
               currentFileId={currentFileId}
               sourceLang={sourceLang}
+              targetLang={targetLang}
               preprocessStatus={preprocessStatus}
             />
           )}
