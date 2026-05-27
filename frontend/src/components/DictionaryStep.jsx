@@ -282,13 +282,13 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (!showGlobalVocab && pendingScrollWord.current) {
       const wordKey = pendingScrollWord.current
       pendingScrollWord.current = null
-      scrollToWord(wordKey, 100)
+      scrollToWord(wordKey, 200)
     }
   }, [showGlobalVocab, scrollToWord, vocabPage])
 
   useEffect(() => {
     if (expandedWord && !expandedWord.startsWith('global-') && !showGlobalVocab) {
-      scrollToWord(expandedWord, 50)
+      scrollToWord(expandedWord, 200)
     }
   }, [expandedWord, showGlobalVocab, scrollToWord, vocabPage])
 
@@ -338,7 +338,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           setVocabPage(targetPage)
           pendingScrollWord.current = wordKey
         } else {
-          scrollToWord(wordKey, 100)
+          scrollToWord(wordKey, 200)
         }
       }
     }
@@ -354,7 +354,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       return
     }
     setExpandedWord(wordKey)
-    scrollToWord(wordKey, 50)
+    scrollToWord(wordKey, 200)
     fetchWordDetail(wordKey)
   }, [expandedWord, fetchWordDetail, scrollToWord])
 
@@ -385,7 +385,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       return
     }
     setExpandedWord(globalKey)
-    scrollToGlobalWord(word.word, 50)
+    scrollToGlobalWord(word.word, 200)
 
     const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)
     if (hasDetail) {
