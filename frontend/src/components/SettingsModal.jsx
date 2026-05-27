@@ -169,7 +169,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15 }}
-          className="bg-white rounded-xl shadow-2xl border border-stone-200/80 w-[340px] overflow-hidden mt-2 max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-xl shadow-2xl border border-stone-200/80 w-[340px] overflow-hidden mt-2"
           onClick={e => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
@@ -202,7 +202,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                       className="flex items-center gap-1 text-[10px] text-stone-400 hover:text-red-500 transition-colors"
                     >
                       <Minus className="w-3 h-3" />
-                      {t.remove || '删除'}
+                      {t.remove || 'Remove'}
                     </button>
                   )}
                 </div>

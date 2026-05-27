@@ -215,13 +215,13 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         const container = vocabListRef.current
         const containerRect = container.getBoundingClientRect()
         const elRect = el.getBoundingClientRect()
-        const stickyOffset = 32
+        const stickyOffset = 40
         const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
-        container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
       }
     }
     setTimeout(doScroll, delay)
-    if (delay < 300) setTimeout(doScroll, 400)
+    setTimeout(doScroll, delay + 300)
   }, [])
 
   useEffect(() => {
@@ -443,9 +443,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           <LangIcon langCode={actualSourceLang} size="sm" />
           <span className="text-[13px] font-semibold text-stone-700">
             {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
-          </span>
-          <span className="text-[10px] text-stone-400">
-            {LANGUAGES.find(l => l.value === actualSourceLang)?.native || ''}
           </span>
         </div>
 
@@ -729,7 +726,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                         </div>
                                       ) : detail ? (
                                         <div className="pt-3">
-                                          <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} />
+                                          <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} hideContextSentences={showGlobalVocab} />
                                         </div>
                                       ) : (
                                         <div className="pt-3 text-center text-stone-400 text-[12px]">

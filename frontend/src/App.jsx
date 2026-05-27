@@ -1424,10 +1424,10 @@ function App() {
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} t={t} />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
-        title="确认退出"
-        message="你确定要退出当前练习吗？退出后进度将不会保存。"
-        confirmText="退出"
-        cancelText="继续练习"
+        title={t.confirmExit || '确认退出'}
+        message={t.exitMessage || '你确定要退出当前练习吗？退出后进度将不会保存。'}
+        confirmText={t.exitAction || '退出'}
+        cancelText={t.continueLearning || '继续练习'}
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog({ isOpen: false, onConfirm: null })}
       />
