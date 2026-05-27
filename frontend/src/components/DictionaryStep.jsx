@@ -140,6 +140,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   useEffect(() => {
     if (vocabListRef.current && !globalVocabLoading) {
+      if (!showGlobalVocab && pendingScrollWord.current) return
       const targetPos = showGlobalVocab ? globalVocabScrollPos.current : localVocabScrollPos.current
       vocabListRef.current.scrollTop = targetPos
     }
@@ -228,7 +229,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (!showGlobalVocab && pendingScrollWord.current) {
       const wordKey = pendingScrollWord.current
       pendingScrollWord.current = null
-      scrollToWord(wordKey, 300)
+      scrollToWord(wordKey, 200)
+      scrollToWord(wordKey, 500)
+      scrollToWord(wordKey, 800)
     }
   }, [showGlobalVocab, scrollToWord])
 
@@ -258,6 +261,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
     if (showGlobalVocab) {
       pendingScrollWord.current = wordKey
+      if (vocabSearch) setVocabSearch('')
       setShowGlobalVocab(false)
     } else {
       if (vocabSearch) setVocabSearch('')
