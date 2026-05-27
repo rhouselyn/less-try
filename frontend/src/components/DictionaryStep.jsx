@@ -34,12 +34,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const pendingScrollWord = useRef(null)
   const localVocabScrollPos = useRef(0)
   const globalVocabScrollPos = useRef(0)
-  const filteredVocabRef = useRef(filteredVocab)
-  filteredVocabRef.current = filteredVocab
-  const vocabPageRef = useRef(vocabPage)
-  vocabPageRef.current = vocabPage
+  const filteredVocabRef = useRef([])
+  const vocabPageRef = useRef(1)
   const pageSizeRef = useRef(pageSize)
-  pageSizeRef.current = pageSize
 
   useEffect(() => {
     if (currentFileId) {
@@ -111,30 +108,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     )
   }, [vocab, vocabSearch])
 
-  const groupedVocab = useMemo(() => {
-    return groupVocab(pagedFilteredVocab)
-  }, [pagedFilteredVocab])
-
-  const letterIndex = useMemo(() => {
-    return groupedVocab.map(([letter]) => letter)
-  }, [groupedVocab])
-
-  const filteredGlobalVocab = useMemo(() => {
-    if (!vocabSearch.trim()) return globalVocab
-    const q = vocabSearch.toLowerCase()
-    return globalVocab.filter(w =>
-      w.word.toLowerCase().includes(q) ||
-      (w.meaning && w.meaning.toLowerCase().includes(q))
-    )
-  }, [globalVocab, vocabSearch])
-
-  const groupedGlobalVocab = useMemo(() => {
-    return groupVocab(pagedFilteredGlobalVocab)
-  }, [pagedFilteredGlobalVocab])
-
-  const globalLetterIndex = useMemo(() => {
-    return groupedGlobalVocab.map(([letter]) => letter)
-  }, [groupedGlobalVocab])
+  filteredVocabRef.current = filteredVocab
+  vocabPageRef.current = vocabPage
+  pageSizeRef.current = pageSize
 
   const pagedFilteredVocab = useMemo(() => {
     const start = (vocabPage - 1) * pageSize
@@ -146,10 +122,35 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     return filteredSentences.slice(start, start + pageSize)
   }, [filteredSentences, sentencePage, pageSize])
 
+  const filteredGlobalVocab = useMemo(() => {
+    if (!vocabSearch.trim()) return globalVocab
+    const q = vocabSearch.toLowerCase()
+    return globalVocab.filter(w =>
+      w.word.toLowerCase().includes(q) ||
+      (w.meaning && w.meaning.toLowerCase().includes(q))
+    )
+  }, [globalVocab, vocabSearch])
+
   const pagedFilteredGlobalVocab = useMemo(() => {
     const start = (globalVocabPage - 1) * pageSize
     return filteredGlobalVocab.slice(start, start + pageSize)
   }, [filteredGlobalVocab, globalVocabPage, pageSize])
+
+  const groupedVocab = useMemo(() => {
+    return groupVocab(pagedFilteredVocab)
+  }, [pagedFilteredVocab])
+
+  const letterIndex = useMemo(() => {
+    return groupedVocab.map(([letter]) => letter)
+  }, [groupedVocab])
+
+  const groupedGlobalVocab = useMemo(() => {
+    return groupVocab(pagedFilteredGlobalVocab)
+  }, [pagedFilteredGlobalVocab])
+
+  const globalLetterIndex = useMemo(() => {
+    return groupedGlobalVocab.map(([letter]) => letter)
+  }, [groupedGlobalVocab])
 
   const vocabTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredVocab.length / pageSize)), [filteredVocab, pageSize])
   const sentenceTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredSentences.length / pageSize)), [filteredSentences, pageSize])
