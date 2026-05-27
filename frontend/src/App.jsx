@@ -5,7 +5,7 @@ import { api } from './utils/api'
 import { translations } from './utils/translations'
 import ConfirmDialog from './components/ConfirmDialog'
 
-import InputStep from './components/InputStep'
+import InputStep, { LangIcon, LANGUAGES } from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
 import LearningStep from './components/LearningStep'
 import ProgressStep from './components/ProgressStep'
@@ -82,6 +82,7 @@ function App() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
+  const [headerLang, setHeaderLang] = useState(null)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -313,6 +314,7 @@ function App() {
           const detectResult = await api.detectLanguage(finalText)
           if (detectResult.detected_language) {
             finalSourceLang = detectResult.detected_language
+            setHeaderLang(detectResult.detected_language)
           }
         } catch (e) {
           console.error('Language detection failed:', e)
@@ -320,6 +322,7 @@ function App() {
         setPreprocessStatus(null)
       } else {
         setPreprocessStatus(null)
+        setHeaderLang(sourceLang)
       }
       
       const response = await api.processText(finalText, finalSourceLang, targetLang)
@@ -979,6 +982,7 @@ function App() {
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
+      setHeaderLang(srcLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)
@@ -1034,13 +1038,29 @@ function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-amber-100" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
-                <p className="text-sm text-stone-400">{t.subtitle || 'Lesslingo'}</p>
-              </div>
+              {step !== 'input' && headerLang ? (
+                <>
+                  <LangIcon langCode={headerLang} size="md" />
+                  <div className="flex flex-col leading-tight">
+                    <span className="text-[15px] font-semibold text-stone-800">
+                      {LANGUAGES.find(l => l.value === headerLang)?.en || headerLang?.toUpperCase()}
+                    </span>
+                    <span className="text-[10px] text-stone-400">
+                      {LANGUAGES.find(l => l.value === headerLang)?.flag || ''} {LANGUAGES.find(l => l.value === headerLang)?.native || ''}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-amber-100" />
+                  </div>
+                  <div>
+                    <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
+                    <p className="text-sm text-stone-400">{t.subtitle || 'Lesslingo'}</p>
+                  </div>
+                </>
+              )}
             </div>
             <AnimatePresence>
               {step !== 'input' && (

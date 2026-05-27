@@ -437,8 +437,7 @@ class NvidiaAPI:
                                     "items": {
                                         "type": "object",
                                         "properties": {
-                                            "text": {"type": "string", "description": "A concrete, meaningful translation or definition. MUST NOT be a placeholder like 'meaning 1', '释义1', '含义1', etc."},
-                                            "is_correct": {"type": "boolean"}
+                                            "text": {"type": "string", "description": "A concrete, meaningful translation or definition. MUST NOT be a placeholder like 'meaning 1', '释义1', '含义1', etc."}
                                         }
                                     },
                                     "minItems": 4,
@@ -467,7 +466,7 @@ class NvidiaAPI:
 3. examples: 两个全新的例句，每个都有 {target_lang_name} 的翻译。尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
-   - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
+   - options: 4个选项，【极其重要】第一个选项必须是正确答案，其余3个是错误答案
 
 要求：
 - 所有输出必须使用 {target_lang_name}
@@ -505,10 +504,10 @@ class NvidiaAPI:
                 "memory_hint": "",
                 "multiple_choice": {
                     "options": [
-                        {"text": correct_meaning, "is_correct": True},
-                        {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
-                        {"text": f"Option 2 in {target_lang_name}", "is_correct": False},
-                        {"text": f"Option 3 in {target_lang_name}", "is_correct": False}
+                        {"text": correct_meaning},
+                        {"text": f"Option 1 in {target_lang_name}"},
+                        {"text": f"Option 2 in {target_lang_name}"},
+                        {"text": f"Option 3 in {target_lang_name}"}
                     ]
                 }
             }
@@ -527,10 +526,10 @@ class NvidiaAPI:
                 "memory_hint": "",
                 "multiple_choice": {
                     "options": [
-                        {"text": correct_meaning, "is_correct": True},
-                        {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
-                        {"text": f"Option 2 in {target_lang_name}", "is_correct": False},
-                        {"text": f"Option 3 in {target_lang_name}", "is_correct": False}
+                        {"text": correct_meaning},
+                        {"text": f"Option 1 in {target_lang_name}"},
+                        {"text": f"Option 2 in {target_lang_name}"},
+                        {"text": f"Option 3 in {target_lang_name}"}
                     ]
                 }
             }

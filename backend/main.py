@@ -137,41 +137,51 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         return result
     mc = result.get("multiple_choice")
     if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+        raw_options = mc["options"]
+        correct_text = result.get("enriched_meaning", result.get("meaning", ""))
+        
         normalized_options = []
-        for opt in mc["options"]:
-            if not isinstance(opt, dict) or "text" not in opt:
-                continue
-            text = opt["text"]
-            is_correct = opt.get("is_correct", False)
-            if isinstance(is_correct, str):
-                is_correct = is_correct.lower() in ("true", "yes", "1")
-            elif isinstance(is_correct, (int, float)):
-                is_correct = bool(is_correct)
-            normalized_options.append({"text": text, "is_correct": bool(is_correct)})
+        for opt in raw_options:
+            if isinstance(opt, dict) and "text" in opt:
+                text = opt["text"]
+                is_correct = opt.get("is_correct", None)
+                if is_correct is not None:
+                    if isinstance(is_correct, str):
+                        is_correct = is_correct.lower() in ("true", "yes", "1")
+                    elif isinstance(is_correct, (int, float)):
+                        is_correct = bool(is_correct)
+                    else:
+                        is_correct = bool(is_correct)
+                    normalized_options.append({"text": text, "is_correct": is_correct})
+                else:
+                    normalized_options.append({"text": text, "is_correct": False})
+            elif isinstance(opt, str):
+                normalized_options.append({"text": opt, "is_correct": False})
         
         if not any(o["is_correct"] for o in normalized_options):
-            correct_meaning = result.get("enriched_meaning", result.get("meaning", ""))
-            if correct_meaning:
-                normalized_options.insert(0, {"text": correct_meaning, "is_correct": True})
+            if normalized_options:
+                normalized_options[0]["is_correct"] = True
+            elif correct_text:
+                normalized_options.insert(0, {"text": correct_text, "is_correct": True})
         
         filtered_options = []
         placeholder_pattern = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+        correct_opt = None
         for opt in normalized_options:
             if opt["is_correct"]:
-                filtered_options.append(opt)
+                correct_opt = opt
             elif placeholder_pattern.match(opt["text"].strip()):
                 continue
             else:
                 filtered_options.append(opt)
         
+        if correct_opt:
+            filtered_options.insert(0, correct_opt)
+        
         if len(filtered_options) < 4:
             existing_texts = {o["text"] for o in filtered_options}
-            correct_text = ""
-            for o in filtered_options:
-                if o["is_correct"]:
-                    correct_text = o["text"]
-                    break
-            fallback_distractors = get_fallback_options(correct_text, file_id, count=4 - len(filtered_options))
+            correct_text_val = correct_opt["text"] if correct_opt else correct_text
+            fallback_distractors = get_fallback_options(correct_text_val, file_id, count=4 - len(filtered_options))
             for fd in fallback_distractors:
                 if len(filtered_options) >= 4:
                     break
@@ -189,7 +199,17 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
                     filtered_options.append({"text": fb, "is_correct": False})
                     existing_texts.add(fb)
         
-        mc["options"] = filtered_options[:4]
+        final_options = filtered_options[:4]
+        correct_idx = next((i for i, o in enumerate(final_options) if o["is_correct"]), 0)
+        correct_text_val = final_options[correct_idx]["text"]
+        for o in final_options:
+            o["is_correct"] = o["text"] == correct_text_val
+        
+        import random as _random
+        _random.seed(hash(correct_text_val) + hash(file_id or ""))
+        _random.shuffle(final_options)
+        
+        mc["options"] = final_options
         mc.pop("correct_answer", None)
         result["multiple_choice"] = mc
         return result
