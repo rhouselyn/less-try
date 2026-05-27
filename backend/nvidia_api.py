@@ -432,10 +432,6 @@ class NvidiaAPI:
                         "multiple_choice": {
                             "type": "object",
                             "properties": {
-                                "question": {
-                                    "type": "string",
-                                    "description": "题干（可为空，默认就是词）"
-                                },
                                 "correct_answer": {
                                     "type": "string",
                                     "description": "单词的常见、正常释义，不是上下文特定释义"
@@ -475,7 +471,6 @@ class NvidiaAPI:
 3. examples: 两个符合上下文含义的例句，每个都有 {target_lang_name} 的翻译
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
-   - question: 可为空（默认为单词本身）
    - correct_answer: 单词的常见、正常释义，不是上下文特定释义
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
 
@@ -514,7 +509,6 @@ class NvidiaAPI:
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
-                    "question": "",
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
@@ -538,7 +532,6 @@ class NvidiaAPI:
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
-                    "question": "",
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},

@@ -215,7 +215,6 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
                     mc_options.append({"text": opt, "is_correct": is_correct})
             if mc_options:
                 result["multiple_choice"] = {
-                    "question": result.get("question", ""),
                     "correct_answer": correct_answer,
                     "options": mc_options
                 }
@@ -226,7 +225,6 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         for fd in fallback_distractors:
             fb_opts.append({"text": fd, "is_correct": False})
         result["multiple_choice"] = {
-            "question": "",
             "correct_answer": correct_meaning,
             "options": fb_opts[:4]
         }
