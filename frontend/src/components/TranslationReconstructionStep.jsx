@@ -12,9 +12,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   const [swapSelectPos, setSwapSelectPos] = useState(null)
   const answerBoxRef = useRef(null)
   const optionRefs = useRef({})
-  const slotRefs = useRef({})
   const [flyingWord, setFlyingWord] = useState(null)
-  const [returningWord, setReturningWord] = useState(null)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((exerciseIndexInUnit ?? 0) + 1)
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (totalExercisesInUnit ?? 0)
@@ -52,27 +50,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
     itemCount: selectedTokens.length,
   })
 
-  const getSlotPosition = useCallback((targetIdx) => {
-    if (!answerBoxRef.current) return null
-    const slots = answerBoxRef.current.querySelectorAll('[data-slot-idx]')
-    for (const slot of slots) {
-      const idx = parseInt(slot.getAttribute('data-slot-idx'), 10)
-      if (idx === targetIdx) {
-        const rect = slot.getBoundingClientRect()
-        return { left: rect.left, top: rect.top, width: rect.width }
-      }
-    }
-    if (selectedTokens.length > 0) {
-      const lastSlot = slots[slots.length - 1]
-      if (lastSlot) {
-        const rect = lastSlot.getBoundingClientRect()
-        return { left: rect.right + 8, top: rect.top, width: rect.width }
-      }
-    }
-    const boxRect = answerBoxRef.current.getBoundingClientRect()
-    return { left: boxRect.left + 16, top: boxRect.top + 16, width: 80 }
-  }, [selectedTokens.length])
-
   const handleTokenSelect = (token, index) => {
     if (answerChecked) return
     if (drag.dragInfo) return
@@ -82,16 +59,13 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
     const optionEl = optionRefs.current[index]
     if (optionEl) {
       const rect = optionEl.getBoundingClientRect()
-      const targetPos = getSlotPosition(selectedTokens.length)
       setFlyingWord({
         token,
         index,
         startX: rect.left,
         startY: rect.top,
         width: rect.width,
-        targetX: targetPos?.left ?? rect.left,
-        targetY: targetPos?.top ?? rect.top,
-        targetWidth: targetPos?.width ?? rect.width,
+        height: rect.height,
       })
     } else {
       setSelectedTokens(prev => [...prev, { token, index }])
@@ -122,31 +96,11 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         setSwapSelectPos(null)
       }
     } else {
-      const removed = selectedTokens[idx]
-      const slotEl = slotRefs.current[idx]
-      const optionEl = optionRefs.current[removed.index]
-      if (slotEl && optionEl) {
-        const slotRect = slotEl.getBoundingClientRect()
-        const optionRect = optionEl.getBoundingClientRect()
-        setReturningWord({
-          word: removed.token,
-          startX: slotRect.left,
-          startY: slotRect.top,
-          width: slotRect.width,
-          targetX: optionRect.left,
-          targetY: optionRect.top,
-          targetWidth: optionRect.width,
-        })
-      }
       const newSelected = [...selectedTokens]
       newSelected.splice(idx, 1)
       setSelectedTokens(newSelected)
     }
   }
-
-  const handleReturnComplete = useCallback(() => {
-    setReturningWord(null)
-  }, [])
 
   const stripPunctuation = (str) => str.replace(/[，。、；：！？,.:;!?]/g, '')
 
@@ -168,13 +122,12 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
     setIsCorrect(false)
     setSwapSelectPos(null)
     setFlyingWord(null)
-    setReturningWord(null)
     onNext()
   }
 
   const isDragging = drag.dragInfo !== null
   const dragSourceIdx = drag.dragInfo?.sourceType === 'answer' ? drag.dragInfo.sourceIdx : -1
-  const confirmedInsertIdx = drag.dragInfo?.confirmedInsertIdx ?? -1
+  const insertIdx = drag.dragInfo?.insertIdx ?? -1
 
   const renderAnswerItems = () => {
     const items = []
@@ -183,7 +136,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
     for (let i = 0; i < selectedTokens.length; i++) {
       const isDragSource = isDragging && i === dragSourceIdx
 
-      if (renderIdx === confirmedInsertIdx && isDragging && !isDragSource) {
+      if (renderIdx === insertIdx && isDragging && !isDragSource) {
         items.push(
           <motion.div
             key="gap-indicator"
@@ -212,7 +165,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         items.push(
           <motion.div
             key={`sel-${item.index}-${i}`}
-            ref={el => { if (el) slotRefs.current[i] = el }}
             data-slot-idx={renderIdx}
             layout="position"
             initial={{ opacity: 0, scale: 0.85 }}
@@ -246,7 +198,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
       renderIdx++
     }
 
-    if (renderIdx === confirmedInsertIdx && isDragging) {
+    if (renderIdx === insertIdx && isDragging) {
       items.push(
         <motion.div
           key="gap-indicator-end"
@@ -261,6 +213,8 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
 
     return items
   }
+
+  const answerBoxTop = answerBoxRef.current?.getBoundingClientRect().top ?? 0
 
   return (
     <motion.div
@@ -460,40 +414,14 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             scale: 1,
           }}
           animate={{
-            left: flyingWord.targetX,
-            top: flyingWord.targetY,
-            width: flyingWord.targetWidth,
+            top: answerBoxTop + 16,
             scale: 0.95,
           }}
-          transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
           onAnimationComplete={handleFlyComplete}
           className="px-4 py-2 rounded-full text-sm font-medium bg-stone-800 text-white shadow-xl z-50 pointer-events-none"
         >
           {flyingWord.token}
-        </motion.div>,
-        document.body
-      )}
-
-      {returningWord && createPortal(
-        <motion.div
-          initial={{
-            position: 'fixed',
-            left: returningWord.startX,
-            top: returningWord.startY,
-            width: returningWord.width,
-            scale: 0.95,
-          }}
-          animate={{
-            left: returningWord.targetX,
-            top: returningWord.targetY,
-            width: returningWord.targetWidth,
-            scale: 1,
-          }}
-          transition={{ type: 'spring', stiffness: 400, damping: 28 }}
-          onAnimationComplete={handleReturnComplete}
-          className="px-4 py-2 rounded-full text-sm font-medium bg-white text-stone-800 border border-stone-200/80 shadow-xl z-50 pointer-events-none"
-        >
-          {returningWord.word}
         </motion.div>,
         document.body
       )}
