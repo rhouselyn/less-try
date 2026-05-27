@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2, MapPin } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, MapPin, Home } from 'lucide-react';
 
 function AllUnitsStep({
   phase1Units,
@@ -11,6 +11,7 @@ function AllUnitsStep({
   onPhase1UnitClick,
   onPhase2UnitClick,
   onBack,
+  onHome,
   loading,
   t,
   unitStarCounts,
@@ -95,20 +96,35 @@ function AllUnitsStep({
       exit={{ opacity: 0, y: -20 }}
       className="max-w-5xl mx-auto"
     >
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-stone-400 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100 mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t.back}
-      </motion.button>
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-3 py-1.5 text-stone-400 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">{t.back}</span>
+        </button>
+
+        <div className="flex-1 min-w-0" />
+
+        {fileTitle && (
+          <span className="text-sm font-medium text-stone-600 truncate max-w-[400px] text-center">
+            {fileTitle}
+          </span>
+        )}
+
+        <div className="flex-1 min-w-0" />
+
+        <button
+          onClick={onHome}
+          className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors"
+          title={t.backToHome || '返回主页'}
+        >
+          <Home className="w-4 h-4" />
+        </button>
+      </div>
 
       <div className="text-center mb-8 relative">
-        {fileTitle && (
-          <p className="text-sm font-medium text-stone-500 mb-1 truncate max-w-[400px] mx-auto">{fileTitle}</p>
-        )}
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

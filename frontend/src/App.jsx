@@ -83,6 +83,7 @@ function App() {
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
   const [fileTitle, setFileTitle] = useState('')
+  const learningContainerRef = useRef(null)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -103,6 +104,12 @@ function App() {
       api.stopWordGen(currentFileId).catch(() => {})
     }
   }, [step, currentFileId])
+
+  useEffect(() => {
+    if (learningContainerRef.current) {
+      learningContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [step, currentExerciseData, learningData, quizData, listeningQuizData])
   
   const updateUnitStars = (key, starCount) => {
     setUnitStarCounts(prev => {
@@ -1095,7 +1102,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: '100vh', overflowY: 'auto' }}>
+          <div ref={learningContainerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: '100vh', overflowY: 'auto' }}>
             <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
@@ -1265,6 +1272,7 @@ function App() {
               onPhase1UnitClick={handlePhase1UnitClick}
               onPhase2UnitClick={handlePhase2UnitClick}
               onBack={() => setStep('dictionary')}
+              onHome={() => setStep('input')}
               loading={loading}
               t={t}
               unitStarCounts={unitStarCounts}
