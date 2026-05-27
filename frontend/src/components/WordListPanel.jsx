@@ -94,7 +94,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
   const [wordDetails, setWordDetails] = useState({})
   const [detailLoading, setDetailLoading] = useState({})
   const [isOpen, setIsOpen] = useState(false)
-  const [hideMeanings, setHideMeanings] = useState(false)
+  const [displayMode, setDisplayMode] = useState(0)
 
   const loadWords = useCallback(async () => {
     setLoading(true)
@@ -219,9 +219,9 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-stone-800">{word.word}</span>
+                        <span className={`text-sm font-semibold text-stone-800 ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.word}</span>
                         {word.ipa && (
-                          <span className="text-xs text-stone-400 ipa-font">
+                          <span className={`text-xs text-stone-400 ipa-font ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>
                             {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
                           </span>
                         )}
@@ -232,7 +232,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                         )}
                       </div>
                       {word.meaning && (
-                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${(hideMeanings && expandedWord !== word.word) ? 'invisible' : ''}`}>{word.meaning}</p>
+                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.meaning}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -275,7 +275,10 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
       <div className="h-full flex flex-col bg-white rounded-xl border border-stone-200/60 shadow-sm overflow-hidden min-h-0">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-amber-50/50 to-white">
           <div className="flex items-center gap-2.5">
-            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${hideMeanings ? 'text-stone-300 hover:text-amber-400' : 'text-amber-500 hover:text-amber-600'}`} onClick={() => setHideMeanings(v => !v)} />
+            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-amber-500' : 'text-amber-500 hover:text-amber-600'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? '显示全部' : displayMode === 1 ? '隐藏释义' : '隐藏单词'} />
+            {displayMode !== 0 && (
+              <span className="text-[11px] text-amber-500 font-medium">{displayMode === 1 ? '隐译' : '隐原'}</span>
+            )}
             <span className="text-base font-semibold text-stone-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
               <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>

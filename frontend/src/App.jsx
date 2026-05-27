@@ -1280,6 +1280,7 @@ function App() {
               onSkipListeningChange={handleSkipListeningChange}
               generatingUnits={generatingUnits}
               fileTitle={fileTitle}
+              currentFileId={currentFileId}
             />
           )}
           

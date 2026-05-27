@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2, MapPin, Home } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, MapPin, Home, Pencil } from 'lucide-react';
+import { api } from '../utils/api';
 
 function AllUnitsStep({
   phase1Units,
@@ -18,8 +19,32 @@ function AllUnitsStep({
   skipListening,
   onSkipListeningChange,
   generatingUnits,
-  fileTitle
+  fileTitle,
+  currentFileId
 }) {
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleInput, setTitleInput] = useState('')
+  const titleInputRef = useRef(null)
+
+  const handleTitleClick = useCallback(() => {
+    setTitleInput(fileTitle)
+    setEditingTitle(true)
+    setTimeout(() => titleInputRef.current?.focus(), 50)
+  }, [fileTitle])
+
+  const handleTitleSave = useCallback(() => {
+    const trimmed = titleInput.trim()
+    if (trimmed && trimmed !== fileTitle && currentFileId) {
+      api.renameHistory(currentFileId, trimmed)
+    }
+    setEditingTitle(false)
+  }, [titleInput, fileTitle, currentFileId])
+
+  const handleTitleKeyDown = useCallback((e) => {
+    if (e.key === 'Enter') handleTitleSave()
+    if (e.key === 'Escape') setEditingTitle(false)
+  }, [handleTitleSave])
+
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
     for (let i = 0; i < index; i++) {
@@ -105,12 +130,25 @@ function AllUnitsStep({
           <span className="text-sm">{t.back}</span>
         </button>
 
-        <div className="flex-1 min-w-0" />
+        {fileTitle && !editingTitle && (
+          <button
+            onClick={handleTitleClick}
+            className="flex items-center gap-1 text-sm font-medium text-stone-500 hover:text-stone-700 transition-colors max-w-[350px]"
+          >
+            <span className="truncate">{fileTitle}</span>
+            <Pencil className="w-3 h-3 text-stone-300 shrink-0" />
+          </button>
+        )}
 
-        {fileTitle && (
-          <span className="text-sm font-medium text-stone-600 truncate max-w-[400px] text-center">
-            {fileTitle}
-          </span>
+        {editingTitle && (
+          <input
+            ref={titleInputRef}
+            value={titleInput}
+            onChange={e => setTitleInput(e.target.value)}
+            onBlur={handleTitleSave}
+            onKeyDown={handleTitleKeyDown}
+            className="text-sm font-medium text-stone-700 bg-stone-50 border border-stone-200 rounded px-2 py-0.5 max-w-[350px] focus:outline-none focus:ring-1 focus:ring-amber-300"
+          />
         )}
 
         <div className="flex-1 min-w-0" />
