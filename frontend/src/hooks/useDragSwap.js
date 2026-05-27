@@ -1,8 +1,18 @@
 import { useRef, useCallback, useEffect, useState } from 'react'
 
-export function useDragSwap({ containerRef, getItemAtPoint, onInsert, enabled, itemCount }) {
+const HOVER_DELAY = 120
+
+export function useDragSwap({ containerRef, onInsert, enabled, itemCount }) {
   const dragState = useRef(null)
   const [dragInfo, setDragInfo] = useState(null)
+  const hoverTimerRef = useRef(null)
+
+  const clearHoverTimer = useCallback(() => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+  }, [])
 
   const startDrag = useCallback((sourceType, sourceIdx, clientX, clientY, el, word) => {
     if (enabled && !enabled()) return
@@ -19,6 +29,7 @@ export function useDragSwap({ containerRef, getItemAtPoint, onInsert, enabled, i
       height: rect.height,
       insertIdx: null,
       moved: false,
+      confirmedInsertIdx: null,
     }
     dragState.current = state
     setDragInfo({
@@ -30,8 +41,38 @@ export function useDragSwap({ containerRef, getItemAtPoint, onInsert, enabled, i
       width: rect.width,
       height: rect.height,
       insertIdx: null,
+      confirmedInsertIdx: null,
     })
   }, [enabled])
+
+  const computeInsertIdx = useCallback((clientX, clientY) => {
+    if (!containerRef?.current) return null
+    const slots = containerRef.current.querySelectorAll('[data-slot-idx]')
+    let found = false
+    let insertIdx = null
+    for (let i = 0; i < slots.length; i++) {
+      const slotRect = slots[i].getBoundingClientRect()
+      const midX = slotRect.left + slotRect.width / 2
+      if (clientY < slotRect.bottom && clientY > slotRect.top) {
+        if (clientX < midX) {
+          const idx = parseInt(slots[i].getAttribute('data-slot-idx'), 10)
+          if (!isNaN(idx)) {
+            insertIdx = idx
+            found = true
+            break
+          }
+        }
+      }
+    }
+    if (!found) {
+      const boxRect = containerRef.current.getBoundingClientRect()
+      if (clientY > boxRect.top && clientY < boxRect.bottom &&
+          clientX > boxRect.left && clientX < boxRect.right) {
+        insertIdx = itemCount
+      }
+    }
+    return insertIdx
+  }, [containerRef, itemCount])
 
   const moveDrag = useCallback((clientX, clientY) => {
     const state = dragState.current
@@ -47,34 +88,22 @@ export function useDragSwap({ containerRef, getItemAtPoint, onInsert, enabled, i
     state.ghostX = ghostX
     state.ghostY = ghostY
 
-    let insertIdx = null
-    if (containerRef?.current) {
-      const slots = containerRef.current.querySelectorAll('[data-slot-idx]')
-      let found = false
-      for (let i = 0; i < slots.length; i++) {
-        const slotRect = slots[i].getBoundingClientRect()
-        const midX = slotRect.left + slotRect.width / 2
-        const midY = slotRect.top + slotRect.height / 2
-        if (clientY < slotRect.bottom && clientY > slotRect.top) {
-          if (clientX < midX) {
-            const idx = parseInt(slots[i].getAttribute('data-slot-idx'), 10)
-            if (!isNaN(idx)) {
-              insertIdx = idx
-              found = true
-              break
-            }
-          }
-        }
-      }
-      if (!found) {
-        const boxRect = containerRef.current.getBoundingClientRect()
-        if (clientY > boxRect.top && clientY < boxRect.bottom &&
-            clientX > boxRect.left && clientX < boxRect.right) {
-          insertIdx = itemCount
-        }
-      }
-    }
+    const insertIdx = computeInsertIdx(clientX, clientY)
     state.insertIdx = insertIdx
+
+    if (insertIdx !== null && insertIdx !== state.confirmedInsertIdx) {
+      clearHoverTimer()
+      hoverTimerRef.current = setTimeout(() => {
+        state.confirmedInsertIdx = insertIdx
+        setDragInfo(prev => prev ? {
+          ...prev,
+          confirmedInsertIdx: insertIdx,
+        } : null)
+      }, HOVER_DELAY)
+    } else if (insertIdx === null) {
+      clearHoverTimer()
+      state.confirmedInsertIdx = null
+    }
 
     setDragInfo(prev => prev ? {
       ...prev,
@@ -82,24 +111,21 @@ export function useDragSwap({ containerRef, getItemAtPoint, onInsert, enabled, i
       ghostY,
       insertIdx,
     } : null)
-  }, [containerRef, itemCount])
+  }, [computeInsertIdx, clearHoverTimer])
 
   const endDrag = useCallback(() => {
     const state = dragState.current
     if (!state) return
 
-    if (state.moved && state.insertIdx !== null) {
-      onInsert(state.sourceType, state.sourceIdx, state.insertIdx)
+    clearHoverTimer()
+
+    if (state.moved && state.confirmedInsertIdx !== null) {
+      onInsert(state.sourceType, state.sourceIdx, state.confirmedInsertIdx)
     }
 
     dragState.current = null
     setDragInfo(null)
-  }, [onInsert])
-
-  const cancelDrag = useCallback(() => {
-    dragState.current = null
-    setDragInfo(null)
-  }, [])
+  }, [onInsert, clearHoverTimer])
 
   const handleMouseDown = useCallback((e, sourceType, sourceIdx, word) => {
     if (e.button !== 0) return
@@ -124,9 +150,7 @@ export function useDragSwap({ containerRef, getItemAtPoint, onInsert, enabled, i
         moveDrag(e.touches[0].clientX, e.touches[0].clientY)
       }
     }
-    const onTouchEnd = (e) => {
-      endDrag()
-    }
+    const onTouchEnd = () => endDrag()
 
     window.addEventListener('mousemove', onMouseMove)
     window.addEventListener('mouseup', onMouseUp)
@@ -141,10 +165,13 @@ export function useDragSwap({ containerRef, getItemAtPoint, onInsert, enabled, i
     }
   }, [dragInfo, moveDrag, endDrag])
 
+  useEffect(() => {
+    return () => clearHoverTimer()
+  }, [clearHoverTimer])
+
   return {
     dragInfo,
     handleMouseDown,
     handleTouchStart,
-    cancelDrag,
   }
 }
