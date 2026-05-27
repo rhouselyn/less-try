@@ -3134,42 +3134,74 @@ async def get_history():
 @app.get("/api/settings")
 async def get_llm_settings():
     try:
-        settings = get_settings()
-        masked_key = settings.get("api_key", "")
-        if masked_key and len(masked_key) > 8:
-            masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+        from nvidia_api import get_settings as get_llm_settings_raw
+        settings = get_llm_settings_raw()
+        configs = settings.get("configs", [])
+        active_index = settings.get("active_index", 0)
+        masked_configs = []
+        for cfg in configs:
+            masked_key = cfg.get("api_key", "")
+            if masked_key and len(masked_key) > 8:
+                masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+            masked_configs.append({
+                "api_key": masked_key,
+                "base_url": cfg.get("base_url", ""),
+                "model": cfg.get("model", ""),
+                "has_key": bool(cfg.get("api_key", ""))
+            })
         return {
-            "api_key": masked_key,
-            "base_url": settings.get("base_url", ""),
-            "model": settings.get("model", ""),
-            "has_key": bool(settings.get("api_key", ""))
+            "configs": masked_configs,
+            "active_index": active_index
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class SettingsUpdate(BaseModel):
+class ConfigItem(BaseModel):
     api_key: Optional[str] = None
     base_url: Optional[str] = None
     model: Optional[str] = None
+
+class SettingsUpdate(BaseModel):
+    configs: Optional[List[ConfigItem]] = None
+    active_index: Optional[int] = None
 
 
 @app.post("/api/settings")
 async def update_llm_settings(req: SettingsUpdate):
     try:
-        current = get_settings()
-        api_key = req.api_key if req.api_key and not req.api_key.startswith("****") else None
-        base_url = req.base_url if req.base_url else None
-        model = req.model if req.model else None
-        new_settings = update_settings(api_key=api_key, base_url=base_url, model=model)
-        masked_key = new_settings.get("api_key", "")
-        if masked_key and len(masked_key) > 8:
-            masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+        from nvidia_api import get_settings as get_llm_settings_raw, save_configs, set_active_index
+        if req.configs is not None:
+            new_configs = []
+            for cfg in req.configs:
+                api_key = cfg.api_key if cfg.api_key and not cfg.api_key.startswith("****") else None
+                base_url = cfg.base_url
+                model = cfg.model
+                new_configs.append({
+                    "api_key": api_key or "",
+                    "base_url": base_url or "",
+                    "model": model or ""
+                })
+            save_configs(new_configs)
+        if req.active_index is not None:
+            set_active_index(req.active_index)
+        settings = get_llm_settings_raw()
+        configs = settings.get("configs", [])
+        active_index = settings.get("active_index", 0)
+        masked_configs = []
+        for cfg in configs:
+            masked_key = cfg.get("api_key", "")
+            if masked_key and len(masked_key) > 8:
+                masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+            masked_configs.append({
+                "api_key": masked_key,
+                "base_url": cfg.get("base_url", ""),
+                "model": cfg.get("model", ""),
+                "has_key": bool(cfg.get("api_key", ""))
+            })
         return {
-            "api_key": masked_key,
-            "base_url": new_settings.get("base_url", ""),
-            "model": new_settings.get("model", ""),
-            "has_key": bool(new_settings.get("api_key", ""))
+            "configs": masked_configs,
+            "active_index": active_index
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -13,7 +13,7 @@ def _repair_truncated_json(json_str):
         return json.loads(json_str)
     except (json.JSONDecodeError, TypeError):
         pass
-    
+
     try:
         if json_str.strip().startswith('['):
             depth = 0
@@ -26,11 +26,11 @@ def _repair_truncated_json(json_str):
                     if depth == 0:
                         last_valid_end = i
                         break
-            
+
             if last_valid_end > 0:
                 repaired = json_str[:last_valid_end + 1]
                 return json.loads(repaired)
-            
+
             brace_depth = 0
             for i in range(len(json_str) - 1, -1, -1):
                 if json_str[i] == '}':
@@ -42,52 +42,113 @@ def _repair_truncated_json(json_str):
                         return json.loads(repaired)
     except (json.JSONDecodeError, TypeError):
         pass
-    
+
     return []
 
 
 LLM_SETTINGS_FILE = Path("/workspace/config/llm_settings.json")
 
-_DEFAULT_LLM_SETTINGS = {
-    "api_key": "",
-    "base_url": "https://api.siliconflow.cn/v1",
-    "model": "Qwen/Qwen3.6-27B"
-}
+_DEFAULT_CONFIGS = [
+    {"api_key": "", "base_url": "https://api.siliconflow.cn/v1", "model": "Qwen/Qwen3.6-27B"},
+    {"api_key": "", "base_url": "https://api.siliconflow.cn/v1", "model": "Qwen/Qwen3.5-27B"},
+    {"api_key": "", "base_url": "https://api.siliconflow.cn/v1", "model": "deepseek-ai/DeepSeek-V3.2"},
+]
 
 def _load_settings():
     if LLM_SETTINGS_FILE.exists():
         try:
             with open(LLM_SETTINGS_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            return {
-                "api_key": data.get("api_key", _DEFAULT_LLM_SETTINGS["api_key"]),
-                "base_url": data.get("base_url", _DEFAULT_LLM_SETTINGS["base_url"]),
-                "model": data.get("model", _DEFAULT_LLM_SETTINGS["model"])
-            }
+            if "configs" in data and isinstance(data["configs"], list):
+                return {
+                    "configs": data["configs"],
+                    "active_index": data.get("active_index", 0)
+                }
+            if "api_key" in data or "base_url" in data or "model" in data:
+                migrated_config = {
+                    "api_key": data.get("api_key", ""),
+                    "base_url": data.get("base_url", _DEFAULT_CONFIGS[0]["base_url"]),
+                    "model": data.get("model", _DEFAULT_CONFIGS[0]["model"])
+                }
+                settings = {
+                    "configs": [migrated_config],
+                    "active_index": 0
+                }
+                _save_settings(settings)
+                return settings
         except (json.JSONDecodeError, IOError):
             pass
-    return dict(_DEFAULT_LLM_SETTINGS)
+    return {"configs": [dict(c) for c in _DEFAULT_CONFIGS], "active_index": 0}
 
 def _save_settings(settings: dict):
     LLM_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    current = _load_settings()
-    current.update(settings)
     with open(LLM_SETTINGS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(current, f, ensure_ascii=False, indent=2)
+        json.dump(settings, f, ensure_ascii=False, indent=2)
 
 def get_settings():
     return _load_settings()
 
-def update_settings(api_key: str = None, base_url: str = None, model: str = None):
-    updates = {}
+def update_settings(api_key: str = None, base_url: str = None, model: str = None, config_index: int = 0):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    if not configs:
+        configs = [dict(c) for c in _DEFAULT_CONFIGS]
+        settings["configs"] = configs
+    idx = config_index
+    if idx < 0 or idx >= len(configs):
+        idx = 0
     if api_key is not None:
-        updates["api_key"] = api_key
+        configs[idx]["api_key"] = api_key
     if base_url is not None:
-        updates["base_url"] = base_url
+        configs[idx]["base_url"] = base_url
     if model is not None:
-        updates["model"] = model
-    _save_settings(updates)
+        configs[idx]["model"] = model
+    _save_settings(settings)
     return _load_settings()
+
+def get_configs():
+    settings = _load_settings()
+    return settings.get("configs", [])
+
+def add_config(config: dict):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    new_config = {
+        "api_key": config.get("api_key", ""),
+        "base_url": config.get("base_url", _DEFAULT_CONFIGS[0]["base_url"]),
+        "model": config.get("model", _DEFAULT_CONFIGS[0]["model"])
+    }
+    configs.append(new_config)
+    settings["configs"] = configs
+    _save_settings(settings)
+    return settings
+
+def remove_config(index: int):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    if 0 <= index < len(configs):
+        configs.pop(index)
+        active_index = settings.get("active_index", 0)
+        if active_index >= len(configs):
+            active_index = max(0, len(configs) - 1)
+        settings["configs"] = configs
+        settings["active_index"] = active_index
+        _save_settings(settings)
+    return settings
+
+def update_config(index: int, config: dict):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    if 0 <= index < len(configs):
+        if "api_key" in config:
+            configs[index]["api_key"] = config["api_key"]
+        if "base_url" in config:
+            configs[index]["base_url"] = config["base_url"]
+        if "model" in config:
+            configs[index]["model"] = config["model"]
+        settings["configs"] = configs
+        _save_settings(settings)
+    return settings
 
 
 SUPPORTED_LANGUAGES = [
@@ -150,8 +211,34 @@ def get_lang_name(code):
     return LANG_NAMES.get(code, code)
 
 
+async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    active_index = settings.get("active_index", 0)
+    if not configs:
+        configs = [dict(c) for c in _DEFAULT_CONFIGS]
+        active_index = 0
+    num_configs = len(configs)
+    last_exception = None
+    for offset in range(num_configs):
+        idx = (active_index + offset) % num_configs
+        config = configs[idx]
+        try:
+            api = NvidiaAPI(config_index=idx)
+            result = await api.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
+            if idx != active_index:
+                print(f"[ROTATE] Switched from config {active_index} to config {idx} (model={config.get('model', '')})")
+                settings["active_index"] = idx
+                _save_settings(settings)
+            return result
+        except (requests.exceptions.HTTPError, requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            print(f"[ROTATE] Config {idx} (model={config.get('model', '')}) failed: {e}, trying config {(idx + 1) % num_configs}...")
+            last_exception = e
+            continue
+    raise last_exception
+
+
 async def detect_language(text: str) -> str:
-    api = NvidiaAPI()
     lang_list_str = ", ".join(SUPPORTED_LANGUAGES)
     messages = [
         {
@@ -163,7 +250,7 @@ async def detect_language(text: str) -> str:
             "content": text[:500]
         }
     ]
-    result = await api.call_minimax(messages, temperature=0.0, max_tokens=32)
+    result = await call_minimax_with_rotation(messages, temperature=0.0, max_tokens=32)
     content = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip().strip('"').strip("'")
     if content in SUPPORTED_LANGUAGES:
         return content
@@ -174,14 +261,24 @@ async def detect_language(text: str) -> str:
 
 
 class NvidiaAPI:
-    def __init__(self):
+    def __init__(self, config_index: int = None):
+        self._config_index = config_index
         self._reload()
 
     def _reload(self):
         settings = _load_settings()
-        self.api_key = settings.get("api_key", "")
-        self.base_url = settings.get("base_url", "https://api.siliconflow.cn/v1")
-        self.model = settings.get("model", "Qwen/Qwen3.6-27B")
+        configs = settings.get("configs", [])
+        if self._config_index is not None:
+            idx = self._config_index
+        else:
+            idx = settings.get("active_index", 0)
+        if not configs or idx < 0 or idx >= len(configs):
+            config = dict(_DEFAULT_CONFIGS[0])
+        else:
+            config = configs[idx]
+        self.api_key = config.get("api_key", "")
+        self.base_url = config.get("base_url", "https://api.siliconflow.cn/v1")
+        self.model = config.get("model", "Qwen/Qwen3.6-27B")
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -224,7 +321,7 @@ class NvidiaAPI:
             "max_tokens": max_tokens,
             "thinking": {"type": "disabled"}
         }
-        
+
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = "auto"
@@ -257,7 +354,9 @@ class NvidiaAPI:
             print(f"[TIMING] call_minimax retry (tools={has_tools}): {t1 - t0:.3f}s")
             return result
 
-
+    @classmethod
+    async def call_with_rotation(cls, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+        return await call_minimax_with_rotation(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
 
     async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str):
         tool_def = {
@@ -367,9 +466,9 @@ class NvidiaAPI:
 """
 
         messages = [{"role": "user", "content": prompt}]
-        
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)
-        
+
+        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
+
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
@@ -566,8 +665,8 @@ TEXT_CONTENT
             prompt = prompt.replace("CONTEXT_SENTENCES", "")
 
         messages = [{"role": "user", "content": prompt}]
-        
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)        
+
+        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
@@ -586,7 +685,7 @@ TEXT_CONTENT
     async def process_remaining_words(self, words: list, source_lang: str, target_lang: str, context: str = ""):
         if not words:
             return []
-        
+
         tool_def = {
             "type": "function",
             "function": {
@@ -635,9 +734,9 @@ TEXT_CONTENT
 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。"""
 
         messages = [{"role": "user", "content": prompt}]
-        
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)
-        
+
+        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
+
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
