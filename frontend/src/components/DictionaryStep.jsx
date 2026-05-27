@@ -999,7 +999,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               )}
             </div>
 
-              {((!showGlobalVocab && letterIndex.length > 3) || (showGlobalVocab && globalLetterIndex.length > 3)) && (
+              {((!showGlobalVocab && letterIndex.length > 1) || (showGlobalVocab && globalLetterIndex.length > 1)) && (
                 <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-l border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
                   {(showGlobalVocab ? globalLetterIndex : letterIndex).map(letter => (
                     <button
