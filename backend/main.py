@@ -2789,7 +2789,8 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     sentences,
                     mask_seed=mask_seed,
                     source_lang=source_lang,
-                    mask_version=type_idx
+                    mask_version=type_idx,
+                    max_distractors=3
                 )
                 
                 return {

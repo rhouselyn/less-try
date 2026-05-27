@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, PenLine } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, PenLine, GripVertical } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
 function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedWords, setSelectedWords] = useState([])
   const [answerChecked, setAnswerChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
+  const [dragOverIdx, setDragOverIdx] = useState(null)
+  const [swapSelectIdx, setSwapSelectIdx] = useState(null)
+  const dragSlotRef = useRef(null)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((exerciseIndexInUnit ?? 0) + 1)
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (totalExercisesInUnit ?? 0)
@@ -29,6 +32,67 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
     const newSelected = [...selectedWords]
     newSelected[index] = null
     setSelectedWords(newSelected)
+  }
+
+  const swapSlots = useCallback((sourceIdx, targetIdx) => {
+    if (sourceIdx === targetIdx) return
+    setSelectedWords(prev => {
+      const next = [...prev]
+      const temp = next[sourceIdx]
+      next[sourceIdx] = next[targetIdx]
+      next[targetIdx] = temp
+      return next
+    })
+  }, [])
+
+  const handleSlotClick = (idx) => {
+    if (answerChecked) return
+    if (!selectedWords[idx]) return
+    if (swapSelectIdx !== null) {
+      if (swapSelectIdx === idx) {
+        setSwapSelectIdx(null)
+      } else if (selectedWords[swapSelectIdx]) {
+        swapSlots(swapSelectIdx, idx)
+        setSwapSelectIdx(null)
+      } else {
+        setSwapSelectIdx(idx)
+      }
+    } else {
+      handleRemoveWord(idx)
+    }
+  }
+
+  const handleDragStart = (e, idx) => {
+    if (answerChecked || !selectedWords[idx]) return
+    dragSlotRef.current = idx
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(idx))
+  }
+
+  const handleDragOver = (e, idx) => {
+    e.preventDefault()
+    if (selectedWords[idx]) {
+      setDragOverIdx(idx)
+    }
+  }
+
+  const handleDragLeave = () => {
+    setDragOverIdx(null)
+  }
+
+  const handleDrop = (e, targetIdx) => {
+    e.preventDefault()
+    setDragOverIdx(null)
+    const sourceIdx = dragSlotRef.current
+    if (sourceIdx === null || sourceIdx === targetIdx) return
+    if (!selectedWords[sourceIdx] || !selectedWords[targetIdx]) return
+    swapSlots(sourceIdx, targetIdx)
+    dragSlotRef.current = null
+  }
+
+  const handleDragEnd = () => {
+    dragSlotRef.current = null
+    setDragOverIdx(null)
   }
 
   const checkAnswer = () => {
@@ -114,12 +178,20 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             {data.answer_words.map((answerWord, idx) => {
               const filled = selectedWords[idx]
               const isSlotCorrect = filled && filled.word.toLowerCase() === answerWord.toLowerCase()
+              const isDragOver = dragOverIdx === idx
+              const isSwapSelected = swapSelectIdx === idx
               return (
                 <motion.div
                   key={`slot-${idx}`}
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium min-w-[80px] text-center transition-all ${
+                  draggable={!!filled && !answerChecked}
+                  onDragStart={(e) => handleDragStart(e, idx)}
+                  onDragOver={(e) => handleDragOver(e, idx)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, idx)}
+                  onDragEnd={handleDragEnd}
+                  className={`px-4 py-2 rounded-full text-sm font-medium min-w-[80px] text-center transition-all select-none ${
                     filled
                       ? answerChecked
                         ? isCorrect
@@ -127,12 +199,23 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                           : isSlotCorrect
                             ? 'bg-green-100 text-green-800 border border-green-300'
                             : 'bg-red-100 text-red-800 border border-red-300'
-                        : 'bg-stone-800 text-white cursor-pointer'
-                      : 'border-2 border-dashed border-stone-300 text-stone-400'
+                        : isDragOver
+                          ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-grab'
+                          : isSwapSelected
+                            ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-pointer'
+                            : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing'
+                      : isDragOver
+                        ? 'border-2 border-amber-400 text-amber-400'
+                        : 'border-2 border-dashed border-stone-300 text-stone-400'
                   }`}
-                  onClick={() => filled && !answerChecked && handleRemoveWord(idx)}
+                  onClick={() => handleSlotClick(idx)}
                 >
-                  {filled ? filled.word : '____'}
+                  {filled ? (
+                    <span className="inline-flex items-center gap-1">
+                      {!answerChecked && <GripVertical className="w-3 h-3 opacity-50" />}
+                      {filled.word}
+                    </span>
+                  ) : '____'}
                 </motion.div>
               )
             })}

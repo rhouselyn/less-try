@@ -684,7 +684,7 @@ class TextProcessor:
             return _tokenize_by_char(sentence)
         return _tokenize_by_space(sentence)
     
-    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0) -> Dict[str, Any]:
+    def generate_masked_sentence(self, sentence: str, vocab: List[Dict], translation_tokens: List[str] = None, all_sentences: List[Dict] = None, mask_seed: int = None, source_lang: str = "en", mask_version: int = 0, max_distractors: int = 2) -> Dict[str, Any]:
         if translation_tokens:
             words = translation_tokens
         else:
@@ -785,8 +785,6 @@ class TextProcessor:
             current_sentence_words_lower = {w.lower() for w in self.tokenize_sentence(sentence, language=source_lang)}
         
         exclude_lower = set(answer_lower)
-        
-        max_distractors = 2
         
         if all_sentences:
             all_distractor_candidates = []

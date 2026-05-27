@@ -1,12 +1,15 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, Languages } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, Languages, GripVertical } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
 function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedTokens, setSelectedTokens] = useState([])
   const [answerChecked, setAnswerChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
+  const [dragOverPos, setDragOverPos] = useState(null)
+  const [swapSelectPos, setSwapSelectPos] = useState(null)
+  const dragPosRef = useRef(null)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((exerciseIndexInUnit ?? 0) + 1)
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (totalExercisesInUnit ?? 0)
@@ -22,6 +25,61 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
     const newSelected = [...selectedTokens]
     newSelected.splice(index, 1)
     setSelectedTokens(newSelected)
+  }
+
+  const swapPositions = useCallback((posA, posB) => {
+    if (posA === posB) return
+    setSelectedTokens(prev => {
+      const next = [...prev]
+      const temp = next[posA]
+      next[posA] = next[posB]
+      next[posB] = temp
+      return next
+    })
+  }, [])
+
+  const handleSelectedClick = (idx) => {
+    if (answerChecked) return
+    if (swapSelectPos !== null) {
+      if (swapSelectPos === idx) {
+        setSwapSelectPos(null)
+      } else {
+        swapPositions(swapSelectPos, idx)
+        setSwapSelectPos(null)
+      }
+    } else {
+      handleRemoveToken(idx)
+    }
+  }
+
+  const handleSelectedDragStart = (e, pos) => {
+    if (answerChecked) return
+    dragPosRef.current = pos
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(pos))
+  }
+
+  const handleSelectedDragOver = (e, pos) => {
+    e.preventDefault()
+    setDragOverPos(pos)
+  }
+
+  const handleSelectedDragLeave = () => {
+    setDragOverPos(null)
+  }
+
+  const handleSelectedDrop = (e, targetPos) => {
+    e.preventDefault()
+    setDragOverPos(null)
+    const sourcePos = dragPosRef.current
+    if (sourcePos === null || sourcePos === targetPos) return
+    swapPositions(sourcePos, targetPos)
+    dragPosRef.current = null
+  }
+
+  const handleSelectedDragEnd = () => {
+    dragPosRef.current = null
+    setDragOverPos(null)
   }
 
   const stripPunctuation = (str) => str.replace(/[，。、；：！？,.:;!?]/g, '')
@@ -110,25 +168,39 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               {selectedTokens.map((item, idx) => {
                 const isTokenCorrect = idx < data.original_tokens.length &&
                   stripPunctuation(item.token.toLowerCase()) === stripPunctuation(data.original_tokens[idx].toLowerCase())
+                const isDragOver = dragOverPos === idx
+                const isSwapSelected = swapSelectPos === idx
                 return (
                   <motion.div
                     key={`sel-${item.index}-${idx}`}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
-                    whileHover={{ scale: 1.05 }}
-                    className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer ${
+                    draggable={!answerChecked}
+                    onDragStart={(e) => handleSelectedDragStart(e, idx)}
+                    onDragOver={(e) => handleSelectedDragOver(e, idx)}
+                    onDragLeave={handleSelectedDragLeave}
+                    onDrop={(e) => handleSelectedDrop(e, idx)}
+                    onDragEnd={handleSelectedDragEnd}
+                    onClick={() => handleSelectedClick(idx)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
                       answerChecked
                         ? isCorrect
                           ? 'bg-green-100 text-green-800 border border-green-300'
                           : isTokenCorrect
                             ? 'bg-green-100 text-green-800 border border-green-300'
                             : 'bg-red-100 text-red-800 border border-red-300'
-                        : 'bg-stone-800 text-white'
+                        : isDragOver
+                          ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-grab'
+                          : isSwapSelected
+                            ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-pointer'
+                            : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing'
                     }`}
-                    onClick={() => handleRemoveToken(idx)}
                   >
-                    {item.token}
+                    <span className="inline-flex items-center gap-1">
+                      {!answerChecked && <GripVertical className="w-3 h-3 opacity-50" />}
+                      {item.token}
+                    </span>
                   </motion.div>
                 )
               })}

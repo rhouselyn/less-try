@@ -1,12 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages, GripVertical } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
 function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
+  const [dragOverPos, setDragOverPos] = useState(null)
+  const [swapSelectPos, setSwapSelectPos] = useState(null)
+  const dragPosRef = useRef(null)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((quizData?.step_in_unit ?? 0) + 1)
   const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
@@ -51,6 +54,61 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
   const handleRemoveToken = (pos) => {
     if (isChecked) return
     setSelectedIndices([...selectedIndices.slice(0, pos), ...selectedIndices.slice(pos + 1)])
+  }
+
+  const swapPositions = useCallback((posA, posB) => {
+    if (posA === posB) return
+    setSelectedIndices(prev => {
+      const next = [...prev]
+      const temp = next[posA]
+      next[posA] = next[posB]
+      next[posB] = temp
+      return next
+    })
+  }, [])
+
+  const handleSelectedClick = (pos) => {
+    if (isChecked) return
+    if (swapSelectPos !== null) {
+      if (swapSelectPos === pos) {
+        setSwapSelectPos(null)
+      } else {
+        swapPositions(swapSelectPos, pos)
+        setSwapSelectPos(null)
+      }
+    } else {
+      handleRemoveToken(pos)
+    }
+  }
+
+  const handleSelectedDragStart = (e, pos) => {
+    if (isChecked) return
+    dragPosRef.current = pos
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', String(pos))
+  }
+
+  const handleSelectedDragOver = (e, pos) => {
+    e.preventDefault()
+    setDragOverPos(pos)
+  }
+
+  const handleSelectedDragLeave = () => {
+    setDragOverPos(null)
+  }
+
+  const handleSelectedDrop = (e, targetPos) => {
+    e.preventDefault()
+    setDragOverPos(null)
+    const sourcePos = dragPosRef.current
+    if (sourcePos === null || sourcePos === targetPos) return
+    swapPositions(sourcePos, targetPos)
+    dragPosRef.current = null
+  }
+
+  const handleSelectedDragEnd = () => {
+    dragPosRef.current = null
+    setDragOverPos(null)
   }
 
   const stripPunctuation = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
@@ -149,25 +207,39 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               {selectedTokens.map((token, pos) => {
                 const isTokenCorrect = pos < quizData.correct_tokens.length &&
                   stripPunctuation(token) === stripPunctuation(quizData.correct_tokens[pos])
+                const isDragOver = dragOverPos === pos
+                const isSwapSelected = swapSelectPos === pos
                 return (
                   <motion.div
                     key={`sel-${selectedIndices[pos]}`}
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
-                    whileHover={!isChecked ? { scale: 1.1, y: -5 } : {}}
-                    onClick={() => !isChecked && handleRemoveToken(pos)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium ${
+                    draggable={!isChecked}
+                    onDragStart={(e) => handleSelectedDragStart(e, pos)}
+                    onDragOver={(e) => handleSelectedDragOver(e, pos)}
+                    onDragLeave={handleSelectedDragLeave}
+                    onDrop={(e) => handleSelectedDrop(e, pos)}
+                    onDragEnd={handleSelectedDragEnd}
+                    onClick={() => handleSelectedClick(pos)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
                       isChecked
                         ? isCorrect
                           ? 'bg-green-100 text-green-800 border border-green-300'
                           : isTokenCorrect
                             ? 'bg-green-100 text-green-800 border border-green-300'
                             : 'bg-red-100 text-red-800 border border-red-300'
-                        : 'bg-stone-800 text-white cursor-pointer'
+                        : isDragOver
+                          ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-grab'
+                          : isSwapSelected
+                            ? 'bg-amber-100 text-amber-800 border-2 border-amber-400 cursor-pointer'
+                            : 'bg-stone-800 text-white cursor-grab active:cursor-grabbing'
                     }`}
                   >
-                    <span>{displayToken(token)}</span>
+                    <span className="inline-flex items-center gap-1">
+                      {!isChecked && <GripVertical className="w-3 h-3 opacity-50" />}
+                      {displayToken(token)}
+                    </span>
                   </motion.div>
                 )
               })}
