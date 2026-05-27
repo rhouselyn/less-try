@@ -82,6 +82,7 @@ function App() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
+  const [fileTitle, setFileTitle] = useState('')
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -328,6 +329,7 @@ function App() {
         const fileId = response.file_id
         setFileId(fileId)
         setCurrentFileId(fileId)
+        if (response.title) setFileTitle(response.title)
         api.getUserPreferences().then(prefs => {
           if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
         }).catch(() => {})
@@ -973,12 +975,13 @@ function App() {
     })
   }
 
-  const handleNavigateToRecord = async (fileId, srcLang, tgtLang) => {
+  const handleNavigateToRecord = async (fileId, srcLang, tgtLang, title) => {
     setSkipPolling(true)
     setLoading(true)
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
+      if (title) setFileTitle(title)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)
@@ -1116,6 +1119,7 @@ function App() {
               targetLang={targetLang}
               preprocessStatus={preprocessStatus}
               onBack={() => setStep('input')}
+              fileTitle={fileTitle}
             />
           )}
           
@@ -1267,6 +1271,7 @@ function App() {
               skipListening={skipListening}
               onSkipListeningChange={handleSkipListeningChange}
               generatingUnits={generatingUnits}
+              fileTitle={fileTitle}
             />
           )}
           

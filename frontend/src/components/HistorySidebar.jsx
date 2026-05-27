@@ -150,7 +150,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
   return (
     <div
       className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-stone-100/70 transition-colors mx-2"
-      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
+      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
     >
       <ProgressBadge progress={record.progress} />
       <div className="flex-1 min-w-0">
@@ -175,7 +175,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
 function RecentItem({ record, onNavigate }) {
   return (
     <button
-      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
+      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100/70 transition-colors text-left"
     >
       <ProgressBadge progress={record.progress} />
@@ -453,7 +453,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               grouped[lang].slice(0, 3).map((record) => (
                 <button
                   key={record.file_id}
-                  onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang)}
+                  onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang, record.title)}
                   className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-[10px] font-medium text-stone-400 hover:text-stone-600 transition-colors"
                   title={record.title}
                 >

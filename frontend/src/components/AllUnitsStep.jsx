@@ -16,7 +16,8 @@ function AllUnitsStep({
   unitStarCounts,
   skipListening,
   onSkipListeningChange,
-  generatingUnits
+  generatingUnits,
+  fileTitle
 }) {
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
@@ -105,6 +106,9 @@ function AllUnitsStep({
       </motion.button>
 
       <div className="text-center mb-8 relative">
+        {fileTitle && (
+          <p className="text-sm font-medium text-stone-500 mb-1 truncate max-w-[400px] mx-auto">{fileTitle}</p>
+        )}
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

@@ -8,7 +8,7 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle }) {
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
@@ -381,7 +381,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </div>
 
         {(processingInfo || preprocessStatus) && (
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="flex items-center gap-2">
             {preprocessStatus ? (
               <>
                 <span className="relative flex h-1.5 w-1.5">
@@ -398,7 +398,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 <span className="text-[10px] text-stone-400 tabular-nums whitespace-nowrap">
                   {safeProcessingInfo.current}/{safeProcessingInfo.total}
                 </span>
-                <div className="flex-1 h-0.5 bg-stone-100 rounded-full overflow-hidden max-w-[200px]">
+                <div className="h-0.5 bg-stone-100 rounded-full overflow-hidden max-w-[200px]">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${progress}%` }}
@@ -412,7 +412,15 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           </div>
         )}
 
-        {!processingInfo && !preprocessStatus && <div className="flex-1" />}
+        <div className="flex-1 min-w-0" />
+
+        {fileTitle && (
+          <span className="text-[13px] font-medium text-stone-600 truncate max-w-[300px] text-center">
+            {fileTitle}
+          </span>
+        )}
+
+        <div className="flex-1 min-w-0" />
 
         {vocab.length > 0 && (
           <motion.button
