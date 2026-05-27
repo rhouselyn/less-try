@@ -46,6 +46,7 @@ function App() {
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
+  const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
@@ -112,6 +113,7 @@ function App() {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
+      if (prefs.page_size) setPageSize(prefs.page_size)
     }).catch(() => {})
   }, [])
 
@@ -1146,6 +1148,7 @@ function App() {
               onBack={() => setStep('input')}
               fileTitle={fileTitle}
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
+              pageSize={pageSize}
             />
           )}
           
@@ -1421,7 +1424,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={t.confirmExit || '确认退出'}

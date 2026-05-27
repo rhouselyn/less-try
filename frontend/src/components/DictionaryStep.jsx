@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft, Pencil } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
@@ -8,7 +8,7 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle, onTitleChange }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50 }) {
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
@@ -24,6 +24,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [actualSourceLang, setActualSourceLang] = useState(sourceLang)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
+  const [vocabPage, setVocabPage] = useState(1)
+  const [sentencePage, setSentencePage] = useState(1)
+  const [globalVocabPage, setGlobalVocabPage] = useState(1)
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
@@ -103,8 +106,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [vocab, vocabSearch])
 
   const groupedVocab = useMemo(() => {
-    return groupVocab(filteredVocab)
-  }, [filteredVocab])
+    return groupVocab(pagedFilteredVocab)
+  }, [pagedFilteredVocab])
 
   const letterIndex = useMemo(() => {
     return groupedVocab.map(([letter]) => letter)
@@ -120,12 +123,49 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [globalVocab, vocabSearch])
 
   const groupedGlobalVocab = useMemo(() => {
-    return groupVocab(filteredGlobalVocab)
-  }, [filteredGlobalVocab])
+    return groupVocab(pagedFilteredGlobalVocab)
+  }, [pagedFilteredGlobalVocab])
 
   const globalLetterIndex = useMemo(() => {
     return groupedGlobalVocab.map(([letter]) => letter)
   }, [groupedGlobalVocab])
+
+  const pagedFilteredVocab = useMemo(() => {
+    const start = (vocabPage - 1) * pageSize
+    return filteredVocab.slice(start, start + pageSize)
+  }, [filteredVocab, vocabPage, pageSize])
+
+  const pagedFilteredSentences = useMemo(() => {
+    const start = (sentencePage - 1) * pageSize
+    return filteredSentences.slice(start, start + pageSize)
+  }, [filteredSentences, sentencePage, pageSize])
+
+  const pagedFilteredGlobalVocab = useMemo(() => {
+    const start = (globalVocabPage - 1) * pageSize
+    return filteredGlobalVocab.slice(start, start + pageSize)
+  }, [filteredGlobalVocab, globalVocabPage, pageSize])
+
+  const vocabTotalPages = Math.max(1, Math.ceil(filteredVocab.length / pageSize))
+  const sentenceTotalPages = Math.max(1, Math.ceil(filteredSentences.length / pageSize))
+  const globalVocabTotalPages = Math.max(1, Math.ceil(filteredGlobalVocab.length / pageSize))
+
+  useEffect(() => {
+    setVocabPage(1)
+    setSentencePage(1)
+    setGlobalVocabPage(1)
+  }, [pageSize])
+
+  useEffect(() => {
+    if (vocabPage > vocabTotalPages) setVocabPage(vocabTotalPages)
+  }, [vocabPage, vocabTotalPages])
+
+  useEffect(() => {
+    if (sentencePage > sentenceTotalPages) setSentencePage(sentenceTotalPages)
+  }, [sentencePage, sentenceTotalPages])
+
+  useEffect(() => {
+    if (globalVocabPage > globalVocabTotalPages) setGlobalVocabPage(globalVocabTotalPages)
+  }, [globalVocabPage, globalVocabTotalPages])
 
   const handleToggleGlobalVocab = useCallback(() => {
     if (vocabListRef.current) {
@@ -216,7 +256,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         el = vocabListRef.current.querySelector(`[data-word-key="${CSS.escape(wordKey)}"]`)
       }
       if (el && vocabListRef.current) {
-        el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+        const container = vocabListRef.current
+        const containerRect = container.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        const stickyOffset = 36
+        const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
       }
     }
     setTimeout(doScroll, delay)
@@ -232,13 +277,13 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       scrollToWord(wordKey, 500)
       scrollToWord(wordKey, 800)
     }
-  }, [showGlobalVocab, scrollToWord])
+  }, [showGlobalVocab, scrollToWord, vocabPage])
 
   useEffect(() => {
     if (expandedWord && !expandedWord.startsWith('global-') && !showGlobalVocab) {
       scrollToWord(expandedWord, 150)
     }
-  }, [expandedWord, showGlobalVocab, scrollToWord])
+  }, [expandedWord, showGlobalVocab, scrollToWord, vocabPage])
 
   const handleTokenClick = useCallback(async (sourceWord) => {
     const sourceLower = sourceWord.toLowerCase()
@@ -267,10 +312,24 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (showGlobalVocab) {
       pendingScrollWord.current = wordKey
       if (vocabSearch) setVocabSearch('')
+      const wordIdx = filteredVocab.findIndex(w => w.word.toLowerCase() === wordKey.toLowerCase())
+      if (wordIdx >= 0) {
+        const targetPage = Math.floor(wordIdx / pageSize) + 1
+        if (targetPage !== vocabPage) setVocabPage(targetPage)
+      }
       setShowGlobalVocab(false)
     } else {
       if (vocabSearch) setVocabSearch('')
-      scrollToWord(wordKey, 100)
+      const wordIdx = filteredVocab.findIndex(w => w.word.toLowerCase() === wordKey.toLowerCase())
+      if (wordIdx >= 0) {
+        const targetPage = Math.floor(wordIdx / pageSize) + 1
+        if (targetPage !== vocabPage) {
+          setVocabPage(targetPage)
+          pendingScrollWord.current = wordKey
+        } else {
+          scrollToWord(wordKey, 100)
+        }
+      }
     }
 
     speakText(wordKey, sourceLang)
@@ -278,7 +337,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (detail) {
       scrollToWord(wordKey, 300)
     }
-  }, [vocab, expandedWord, scrollToWord, fetchWordDetail, showGlobalVocab])
+  }, [vocab, expandedWord, scrollToWord, fetchWordDetail, showGlobalVocab, filteredVocab, vocabPage, pageSize])
 
   const handleVocabWordClick = useCallback(async (word) => {
     const wordKey = word.word
@@ -294,6 +353,23 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
   }, [expandedWord, fetchWordDetail, scrollToWord])
 
+  const scrollToGlobalWord = useCallback((wordKey, delay = 100) => {
+    const doScroll = () => {
+      if (!vocabListRef.current) return
+      const el = vocabListRef.current.querySelector(`[data-global-word-key="${CSS.escape(wordKey)}"]`)
+      if (el) {
+        const container = vocabListRef.current
+        const containerRect = container.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        const stickyOffset = 36
+        const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
+      }
+    }
+    setTimeout(doScroll, delay)
+    setTimeout(doScroll, delay + 300)
+  }, [])
+
   const handleGlobalVocabWordClick = useCallback(async (word) => {
     const globalKey = `global-${word.word}`
     if (expandedWord === globalKey) {
@@ -301,10 +377,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       return
     }
     setExpandedWord(globalKey)
+    scrollToGlobalWord(word.word, 100)
 
     const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)
     if (hasDetail) {
       setWordDetails(prev => ({ ...prev, [globalKey]: word }))
+      scrollToGlobalWord(word.word, 300)
       return
     }
 
@@ -313,6 +391,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       try {
         const detail = await api.getWordDetail(word.word, actualSourceLang)
         setWordDetails(prev => ({ ...prev, [globalKey]: detail }))
+        scrollToGlobalWord(word.word, 500)
       } catch (err) {
         console.error('Failed to load global word detail:', err)
       } finally {
@@ -431,6 +510,54 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     return <div className={`text-stone-600 text-sm ${sentenceDisplayMode === 1 ? 'invisible' : ''}`}>{text}</div>
   }
 
+  const renderPagination = (currentPage, totalPages, onPageChange) => {
+    if (totalPages <= 1) return null
+    return (
+      <div className="flex items-center justify-center gap-1 py-1.5 border-t border-stone-200/60 bg-stone-50/40">
+        <button
+          onClick={() => onPageChange(p => Math.max(1, p - 1))}
+          disabled={currentPage <= 1}
+          className={`p-1 rounded transition-colors ${currentPage <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`}
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => {
+          if (totalPages <= 7) return true
+          if (p === 1 || p === totalPages) return true
+          if (Math.abs(p - currentPage) <= 1) return true
+          return false
+        }).reduce((acc, p, i, arr) => {
+          if (i > 0 && p - arr[i - 1] > 1) acc.push('...')
+          acc.push(p)
+          return acc
+        }, []).map((p, i) =>
+          p === '...' ? (
+            <span key={`dots-${i}`} className="text-[10px] text-stone-300 px-0.5">...</span>
+          ) : (
+            <button
+              key={p}
+              onClick={() => onPageChange(p)}
+              className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
+                currentPage === p
+                  ? 'bg-amber-100 text-amber-700 font-semibold'
+                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+              }`}
+            >
+              {p}
+            </button>
+          )
+        )}
+        <button
+          onClick={() => onPageChange(p => Math.min(totalPages, p + 1))}
+          disabled={currentPage >= totalPages}
+          className={`p-1 rounded transition-colors ${currentPage >= totalPages ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`}
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -460,7 +587,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             onClick={handleTitleClick}
             className="flex items-center gap-1.5 max-w-[250px] group"
           >
-            <span className="truncate text-[15px] font-semibold text-stone-600 group-hover:text-stone-800 transition-colors">{fileTitle}</span>
+            <span className="truncate text-[15px] font-medium text-stone-600 group-hover:text-stone-800 transition-colors">{fileTitle}</span>
             <Pencil className="w-2.5 h-2.5 text-stone-300 group-hover:text-stone-400 shrink-0 transition-colors" />
           </button>
         )}
@@ -567,7 +694,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               ) : filteredSentences.length > 0 ? (
                 <div className="divide-y divide-stone-200/60">
-                  {filteredSentences.map((item, index) => {
+                  {pagedFilteredSentences.map((item, index) => {
                     const originalIndex = safeSentenceTranslations.indexOf(item)
                     return (
                       <div key={originalIndex} ref={el => { sentenceRefs.current[originalIndex] = el }}>
@@ -621,6 +748,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               )}
             </div>
+            {renderPagination(sentencePage, sentenceTotalPages, setSentencePage)}
           </div>
         </div>
 
@@ -653,7 +781,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-scroll min-h-0" ref={vocabListRef} style={{ scrollbarGutter: 'stable' }}>
+            <div className="flex-1 flex min-h-0">
+              <div className="flex-1 overflow-y-scroll min-h-0" ref={vocabListRef} style={{ scrollbarGutter: 'stable' }}>
               {showGlobalVocab ? (
                 globalVocabLoading ? (
                   <div className="py-16 text-center">
@@ -686,6 +815,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           return (
                             <motion.div
                               key={wordKey}
+                              data-global-word-key={wordKey}
                               initial={{ opacity: 0, y: 6 }}
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
@@ -858,21 +988,24 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               )}
             </div>
 
-            {((!showGlobalVocab && letterIndex.length > 3) || (showGlobalVocab && globalLetterIndex.length > 3)) && (
-              <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-t border-stone-200/60 bg-stone-50/40">
-                <div className="flex flex-wrap justify-center gap-0.5 px-2">
+              {((!showGlobalVocab && letterIndex.length > 3) || (showGlobalVocab && globalLetterIndex.length > 3)) && (
+                <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-l border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
                   {(showGlobalVocab ? globalLetterIndex : letterIndex).map(letter => (
                     <button
                       key={letter}
                       onClick={() => scrollToLetter(letter)}
-                      className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                      className="w-5 h-5 flex items-center justify-center text-[9px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors shrink-0"
                     >
                       {letter}
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
+            {showGlobalVocab
+              ? renderPagination(globalVocabPage, globalVocabTotalPages, setGlobalVocabPage)
+              : renderPagination(vocabPage, vocabTotalPages, setVocabPage)
+            }
           </div>
         </div>
       </div>

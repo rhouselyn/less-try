@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, Plus, Minus } from 'lucide-react'
+import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, Plus, Minus, BookOpen } from 'lucide-react'
 import { api } from '../utils/api'
 import { LangIcon } from './InputStep'
 
@@ -10,7 +10,7 @@ const slideVariants = {
   exit: (dir) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
 }
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
+function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSize, onPageSizeChange, t }) {
   const [configs, setConfigs] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -19,6 +19,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
   const [loading, setLoading] = useState(true)
   const [rpm, setRpm] = useState(60)
   const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
+  const [localPageSize, setLocalPageSize] = useState(50)
 
   useEffect(() => {
     if (isOpen) {
@@ -41,6 +42,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
         setCurrentIndex(data.active_index || 0)
         if (prefs.rpm) setRpm(prefs.rpm)
         if (prefs.target_lang) setLocalTargetLang(prefs.target_lang)
+        if (prefs.page_size) setLocalPageSize(prefs.page_size)
         setLoading(false)
       }).catch(() => {
         setConfigs([{ api_key: '', base_url: '', model: '', has_key: false, masked_key: '' }])
@@ -129,10 +131,14 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
       setConfigs(loaded)
       setCurrentIndex(data.active_index ?? currentIndex)
 
-      await api.saveUserPreferences({ rpm, target_lang: localTargetLang })
+      await api.saveUserPreferences({ rpm, target_lang: localTargetLang, page_size: localPageSize })
 
       if (onTargetLangChange && localTargetLang !== targetLang) {
         onTargetLangChange(localTargetLang)
+      }
+
+      if (onPageSizeChange && localPageSize !== pageSize) {
+        onPageSizeChange(localPageSize)
       }
 
       setSaved(true)
@@ -372,6 +378,29 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                     >
                       <LangIcon langCode={opt.value} size="sm" />
                       {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                  <BookOpen className="w-3 h-3" />
+                  {t.itemsPerPage || '每页数量'}
+                </label>
+                <div className="flex gap-2">
+                  {[20, 50, 100].map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setLocalPageSize(size)}
+                      className={`flex-1 flex items-center justify-center px-3 py-2 rounded-xl border text-xs font-medium transition-all duration-200 ${
+                        localPageSize === size
+                          ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
+                          : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
+                      }`}
+                    >
+                      {size}
                     </button>
                   ))}
                 </div>

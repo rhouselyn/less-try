@@ -3266,6 +3266,7 @@ class UserPreferencesUpdate(BaseModel):
     rpm: Optional[int] = None
     skip_listening: Optional[bool] = None
     recent_languages: Optional[List[str]] = None
+    page_size: Optional[int] = None
 
 
 @app.post("/api/user-preferences")
@@ -3282,6 +3283,8 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["skip_listening"] = req.skip_listening
         if req.recent_languages is not None:
             current["recent_languages"] = req.recent_languages
+        if req.page_size is not None:
+            current["page_size"] = req.page_size
         storage.save_user_preferences(current)
         return current
     except Exception as e:

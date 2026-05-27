@@ -107,7 +107,7 @@ function AllUnitsStep({
         </button>
 
         {fileTitle && (
-          <span className="text-sm font-medium text-stone-500 truncate max-w-[350px]">
+          <span className="text-[15px] font-medium text-stone-600 truncate max-w-[350px]">
             {fileTitle}
           </span>
         )}
