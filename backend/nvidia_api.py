@@ -150,6 +150,35 @@ def update_config(index: int, config: dict):
         _save_settings(settings)
     return settings
 
+def save_configs(new_configs: list):
+    settings = _load_settings()
+    old_configs = settings.get("configs", [])
+    for i, cfg in enumerate(new_configs):
+        api_key = cfg.get("api_key", "")
+        if not api_key and i < len(old_configs):
+            api_key = old_configs[i].get("api_key", "")
+        if i < len(old_configs):
+            old_configs[i]["api_key"] = api_key
+            old_configs[i]["base_url"] = cfg.get("base_url", old_configs[i].get("base_url", ""))
+            old_configs[i]["model"] = cfg.get("model", old_configs[i].get("model", ""))
+        else:
+            old_configs.append({
+                "api_key": api_key,
+                "base_url": cfg.get("base_url", _DEFAULT_CONFIGS[0]["base_url"]),
+                "model": cfg.get("model", _DEFAULT_CONFIGS[0]["model"])
+            })
+    settings["configs"] = old_configs[:len(new_configs)]
+    _save_settings(settings)
+    return _load_settings()
+
+def set_active_index(index: int):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    if 0 <= index < len(configs):
+        settings["active_index"] = index
+        _save_settings(settings)
+    return settings
+
 
 SUPPORTED_LANGUAGES = [
     "en", "fr", "pt", "de", "ro", "sv", "da", "bg", "ru", "cs", "el", "uk",

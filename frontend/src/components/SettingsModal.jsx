@@ -105,7 +105,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
     try {
       const payload = {
         configs: configs.map(c => ({
-          api_key: c.api_key || `****${c.masked_key}`,
+          api_key: c.api_key || (c.has_key ? `****${c.masked_key}` : ''),
           base_url: c.base_url,
           model: c.model,
         })),
