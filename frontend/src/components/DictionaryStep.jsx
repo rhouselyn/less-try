@@ -152,6 +152,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     return groupedGlobalVocab.map(([letter]) => letter)
   }, [groupedGlobalVocab])
 
+  const allLetterIndex = useMemo(() => {
+    return groupVocab(filteredVocab).map(([letter]) => letter)
+  }, [filteredVocab])
+
+  const allGlobalLetterIndex = useMemo(() => {
+    return groupVocab(filteredGlobalVocab).map(([letter]) => letter)
+  }, [filteredGlobalVocab])
+
   const vocabTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredVocab.length / pageSize)), [filteredVocab, pageSize])
   const sentenceTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredSentences.length / pageSize)), [filteredSentences, pageSize])
   const globalVocabTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredGlobalVocab.length / pageSize)), [filteredGlobalVocab, pageSize])
@@ -202,6 +210,21 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       const stickyOffset = 32
       const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
       container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+    } else {
+      const currentList = showGlobalVocab ? filteredGlobalVocab : filteredVocab
+      const letterLower = letter.toLowerCase()
+      const wordIdx = currentList.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
+      if (wordIdx >= 0) {
+        const targetPage = Math.floor(wordIdx / pageSize) + 1
+        const currentPage = showGlobalVocab ? globalVocabPage : vocabPage
+        if (targetPage !== currentPage) {
+          if (showGlobalVocab) {
+            setGlobalVocabPage(targetPage)
+          } else {
+            setVocabPage(targetPage)
+          }
+        }
+      }
     }
   }
 
@@ -788,6 +811,27 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               </div>
             </div>
             <div className="flex-1 flex min-h-0">
+              {((!showGlobalVocab && allLetterIndex.length > 1) || (showGlobalVocab && allGlobalLetterIndex.length > 1)) && (
+                <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-r border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
+                  {(showGlobalVocab ? allGlobalLetterIndex : allLetterIndex).map(letter => {
+                    const currentIdx = showGlobalVocab ? globalLetterIndex : letterIndex
+                    const onCurrentPage = currentIdx.includes(letter)
+                    return (
+                      <button
+                        key={letter}
+                        onClick={() => scrollToLetter(letter)}
+                        className={`w-5 h-5 flex items-center justify-center text-[9px] font-semibold rounded transition-colors shrink-0 ${
+                          onCurrentPage
+                            ? 'text-stone-600 hover:text-amber-600 hover:bg-amber-50'
+                            : 'text-stone-300 hover:text-amber-500 hover:bg-amber-50/50'
+                        }`}
+                      >
+                        {letter}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
               <div className="flex-1 overflow-y-scroll min-h-0" ref={vocabListRef} style={{ scrollbarGutter: 'stable' }}>
               {showGlobalVocab ? (
                 globalVocabLoading ? (
@@ -992,21 +1036,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               )}
               </>
               )}
-            </div>
-
-              {((!showGlobalVocab && letterIndex.length > 1) || (showGlobalVocab && globalLetterIndex.length > 1)) && (
-                <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-l border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
-                  {(showGlobalVocab ? globalLetterIndex : letterIndex).map(letter => (
-                    <button
-                      key={letter}
-                      onClick={() => scrollToLetter(letter)}
-                      className="w-5 h-5 flex items-center justify-center text-[9px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors shrink-0"
-                    >
-                      {letter}
-                    </button>
-                  ))}
-                </div>
-              )}
+              </div>
             </div>
             {showGlobalVocab
               ? renderPagination(globalVocabPage, globalVocabTotalPages, setGlobalVocabPage)

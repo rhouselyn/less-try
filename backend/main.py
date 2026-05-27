@@ -1015,7 +1015,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                 correct_tokens = get_translation_phrases(tr, max_phrases=6)
                 correct_tokens = [ct for ct in correct_tokens if not is_punctuation_only(ct)]
                 
-                if len(correct_tokens) >= 2:
+                if len(correct_tokens) >= 2 and len(correct_tokens) <= 8:
                     redundant_tokens = tr.get("redundant_tokens", [])
                     cleaned_redundant = []
                     correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
@@ -2460,7 +2460,7 @@ async def generate_sentence_quiz(file_id: str):
         correct_tokens = get_translation_phrases(translation_result, max_phrases=6)
         print(f"[DEBUG] 正确翻译片段(LLM拆分): {correct_tokens}")
         
-        if len(correct_tokens) < 2:
+        if len(correct_tokens) < 2 or len(correct_tokens) > 8:
             raise HTTPException(status_code=404, detail="Not enough translated tokens for quiz")
         
         cleaned_redundant_tokens = []
@@ -2817,6 +2817,13 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 
                 if not original_tokens:
                     original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)
+                
+                if len(original_tokens) > 8:
+                    new_exercise_index = current_exercise_index + 1
+                    storage.save_phase2_progress(file_id, new_exercise_index)
+                    if new_exercise_index >= len(exercise_order):
+                        return {"unit_complete": True}
+                    return await get_phase_unit_exercise(file_id, phase_number, unit_id)
                 
                 import random
                 random.seed(hash(current_sentence) + type_idx)

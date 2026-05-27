@@ -196,7 +196,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
               <Loader2 className="w-5 h-5 animate-spin text-stone-300" />
             </div>
           ) : (
-            <div className="p-5 space-y-4">
+            <div className="p-5 space-y-4 overflow-y-auto max-h-[70vh]">
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">

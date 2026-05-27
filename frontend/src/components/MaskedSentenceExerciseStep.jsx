@@ -205,10 +205,9 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                 <motion.div
                   key={`slot-${idx}`}
                   data-slot-idx={idx}
-                  layout={!!filled}
-                  layoutId={filled ? `mask-word-${filled.index}` : undefined}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                   draggable={!!filled && !answerChecked}
                   onDragStart={(e) => handleDragStart(e, idx)}
                   onDragOver={(e) => handleDragOver(e, idx)}
@@ -260,14 +259,13 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               return (
                 <motion.button
                   key={`opt-${idx}`}
-                  layoutId={`mask-word-${idx}`}
                   whileHover={!answerChecked && !isSelected ? { scale: 1.05 } : {}}
                   whileTap={!answerChecked && !isSelected ? { scale: 0.95 } : {}}
                   onClick={() => handleWordSelect(word, idx)}
                   disabled={isSelected || answerChecked}
                   className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                     isSelected || answerChecked
-                      ? 'opacity-0 pointer-events-none h-0 py-0 overflow-hidden border-0 min-w-0'
+                      ? 'opacity-0 pointer-events-none scale-75'
                       : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
                   }`}
                 >

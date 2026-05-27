@@ -234,10 +234,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                   <motion.div
                     key={`sel-${selectedIndices[pos]}`}
                     data-slot-pos={pos}
-                    layout
-                    layoutId={`quiz-token-${selectedIndices[pos]}`}
-                    initial={{ opacity: 0, scale: 0 }}
+                    initial={{ opacity: 0, y: 20, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 400, damping: 25 }}
                     exit={{ opacity: 0, scale: 0 }}
                     draggable={!isChecked}
                     onDragStart={(e) => handleSelectedDragStart(e, pos)}
@@ -285,14 +284,13 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             {quizData.tokens.map((token, index) => (
               <motion.button
                 key={`opt-${index}`}
-                layoutId={`quiz-token-${index}`}
                 whileHover={!isChecked && !selectedIndices.includes(index) ? { scale: 1.05 } : {}}
                 whileTap={!isChecked && !selectedIndices.includes(index) ? { scale: 0.95 } : {}}
                 onClick={() => handleTokenClick(index)}
                 disabled={selectedIndices.includes(index) || isChecked}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   selectedIndices.includes(index) || isChecked
-                    ? 'opacity-0 pointer-events-none h-0 py-0 overflow-hidden border-0 min-w-0'
+                    ? 'opacity-0 pointer-events-none scale-75'
                     : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
                 }`}
               >
