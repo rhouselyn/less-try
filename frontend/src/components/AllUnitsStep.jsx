@@ -94,29 +94,26 @@ function AllUnitsStep({
       exit={{ opacity: 0, y: -20 }}
       className="max-w-5xl mx-auto"
     >
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-stone-400 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100 mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t.back}
-      </motion.button>
-
-      <div className="text-center mb-8 relative">
-        <motion.h2
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-2xl font-semibold text-stone-800 mb-2"
+      <div className="flex items-center px-1 mb-6">
+        <motion.button
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+          onClick={onBack}
+          className="p-1.5 -ml-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors"
+          title={t.back || '返回'}
         >
-          {t.learningUnits || '学习单元'}
-        </motion.h2>
-        <p className="text-base text-stone-400">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
-        
-        <label className="absolute right-0 top-1 flex items-center gap-2 cursor-pointer select-none group">
-          <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
-            <Headphones className="w-3.5 h-3.5" />
+          <ArrowLeft className="w-4 h-4" />
+        </motion.button>
+
+        <div className="flex-1 flex justify-center">
+          <h2 className="text-[15px] font-semibold text-stone-800">
+            {t.learningUnits || '学习单元'}
+          </h2>
+        </div>
+
+        <label className="flex items-center gap-2 cursor-pointer select-none group shrink-0">
+          <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
+            <Headphones className="w-3 h-3" />
             {t.skipListening || '跳过听力'}
           </span>
           <div className="relative">
@@ -131,6 +128,8 @@ function AllUnitsStep({
           </div>
         </label>
       </div>
+
+      <p className="text-sm text-stone-400 text-center mb-6">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
 
       {loading ? (
         <div className="text-center py-16">

@@ -361,7 +361,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       className="flex flex-col gap-3"
       style={{ height: '100%' }}
     >
-      <div className="flex items-center gap-4 px-1">
+      <div className="flex items-center px-1">
         <button
           onClick={onBack}
           className="p-1.5 -ml-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors"
@@ -370,51 +370,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           <ArrowLeft className="w-4 h-4" />
         </button>
 
-        <div className="flex items-center gap-2">
-          <LangIcon langCode={actualSourceLang} size="sm" />
-          <span className="text-[13px] font-semibold text-stone-700">
-            {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
-          </span>
-          <span className="text-[10px] text-stone-400">
-            {LANGUAGES.find(l => l.value === actualSourceLang)?.native || ''}
-          </span>
+        <div className="flex-1 flex justify-center">
+          <div className="flex items-center gap-2">
+            <LangIcon langCode={actualSourceLang} size="sm" />
+            <span className="text-[13px] font-semibold text-stone-700">
+              {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
+            </span>
+            <span className="text-[10px] text-stone-400">
+              {LANGUAGES.find(l => l.value === actualSourceLang)?.native || ''}
+            </span>
+          </div>
         </div>
 
-        {(processingInfo || preprocessStatus) && (
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            {preprocessStatus ? (
-              <>
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
-                </span>
-                <span className="text-[11px] text-blue-500 font-medium truncate">
-                  {preprocessStatus === 'detecting' ? (t.detectingLanguage || '识别语言中...') : 
-                   preprocessStatus === 'translating' ? (t.translating || '翻译中...') : (t.generating || '生成文本中...')}
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="text-[10px] text-stone-400 tabular-nums whitespace-nowrap">
-                  {safeProcessingInfo.current}/{safeProcessingInfo.total}
-                </span>
-                <div className="flex-1 h-0.5 bg-stone-100 rounded-full overflow-hidden max-w-[200px]">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.4, ease: 'easeOut' }}
-                    className="h-full bg-stone-500 rounded-full"
-                  />
-                </div>
-                <span className="text-[10px] text-stone-400 tabular-nums">{progress}%</span>
-              </>
-            )}
-          </div>
-        )}
-
-        {!processingInfo && !preprocessStatus && <div className="flex-1" />}
-
-        {vocab.length > 0 && (
+        {vocab.length > 0 ? (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -434,8 +402,42 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               </>
             )}
           </motion.button>
+        ) : (
+          <div className="w-[88px]" />
         )}
       </div>
+
+      {(processingInfo || preprocessStatus) && (
+        <div className="flex items-center gap-2 px-1">
+          {preprocessStatus ? (
+            <>
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+              </span>
+              <span className="text-[11px] text-blue-500 font-medium truncate">
+                {preprocessStatus === 'detecting' ? (t.detectingLanguage || '识别语言中...') : 
+                 preprocessStatus === 'translating' ? (t.translating || '翻译中...') : (t.generating || '生成文本中...')}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="text-[10px] text-stone-400 tabular-nums whitespace-nowrap">
+                {safeProcessingInfo.current}/{safeProcessingInfo.total}
+              </span>
+              <div className="flex-1 h-0.5 bg-stone-100 rounded-full overflow-hidden max-w-[200px]">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.4, ease: 'easeOut' }}
+                  className="h-full bg-stone-500 rounded-full"
+                />
+              </div>
+              <span className="text-[10px] text-stone-400 tabular-nums">{progress}%</span>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="flex gap-6 flex-1 min-h-0">
         <div className="w-1/2 flex flex-col min-h-0">
