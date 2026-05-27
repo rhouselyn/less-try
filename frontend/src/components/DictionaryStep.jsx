@@ -29,6 +29,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const sentenceRefs = useRef({})
   const titleInputRef = useRef(null)
   const pendingScrollWord = useRef(null)
+  const localVocabScrollPos = useRef(0)
+  const globalVocabScrollPos = useRef(0)
 
   useEffect(() => {
     if (currentFileId) {
@@ -124,6 +126,24 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const globalLetterIndex = useMemo(() => {
     return groupedGlobalVocab.map(([letter]) => letter)
   }, [groupedGlobalVocab])
+
+  const handleToggleGlobalVocab = useCallback(() => {
+    if (vocabListRef.current) {
+      if (showGlobalVocab) {
+        globalVocabScrollPos.current = vocabListRef.current.scrollTop
+      } else {
+        localVocabScrollPos.current = vocabListRef.current.scrollTop
+      }
+    }
+    setShowGlobalVocab(v => !v)
+  }, [showGlobalVocab])
+
+  useEffect(() => {
+    if (vocabListRef.current) {
+      const targetPos = showGlobalVocab ? globalVocabScrollPos.current : localVocabScrollPos.current
+      vocabListRef.current.scrollTop = targetPos
+    }
+  }, [showGlobalVocab])
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
@@ -449,7 +469,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
         <div className="flex-1 min-w-0" />
 
-        {currentFileId && (preprocessStatus || (processingInfo && safeProcessingInfo.total > 1 && progress < 100)) && (
+        {currentFileId && (preprocessStatus || (processingInfo && safeProcessingInfo.total > 0 && progress < 100)) && (
           <div className="flex items-center gap-2.5 shrink-0">
             {preprocessStatus ? (
               <div className="flex items-center gap-1.5">
@@ -501,8 +521,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </motion.button>
       </div>
 
-      <div className="flex gap-6 flex-1 min-h-0">
-        <div className="w-1/2 flex flex-col min-h-0">
+      <div className="flex gap-6 flex-1 min-h-0" style={{ overflow: 'hidden' }}>
+        <div className="w-1/2 flex flex-col min-h-0" style={{ overflow: 'hidden' }}>
           <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <div className="flex items-center gap-3">
@@ -595,14 +615,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           </div>
         </div>
 
-        <div className="w-1/2 flex flex-col min-h-0">
+        <div className="w-1/2 flex flex-col min-h-0" style={{ overflow: 'hidden' }}>
           <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
                   <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${vocabDisplayMode !== 0 ? 'text-amber-500' : 'text-stone-500 hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); setVocabDisplayMode(v => (v + 1) % 3) }} title={vocabDisplayMode === 0 ? '显示全部' : vocabDisplayMode === 1 ? '隐藏释义' : '隐藏单词'} />
                   <h3 className="text-sm font-semibold text-stone-700">
-                    <span className="cursor-pointer select-none" onClick={() => setShowGlobalVocab(v => !v)}>
+                    <span className="cursor-pointer select-none" onClick={handleToggleGlobalVocab}>
                       <span className={!showGlobalVocab ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}>{t.vocabList}</span>
                       <span className="text-stone-300 mx-1.5">/</span>
                       <span className={showGlobalVocab ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}>{t.globalVocabList}</span>
