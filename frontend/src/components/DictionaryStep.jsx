@@ -139,11 +139,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [showGlobalVocab])
 
   useEffect(() => {
-    if (vocabListRef.current) {
+    if (vocabListRef.current && !globalVocabLoading) {
       const targetPos = showGlobalVocab ? globalVocabScrollPos.current : localVocabScrollPos.current
       vocabListRef.current.scrollTop = targetPos
     }
-  }, [showGlobalVocab])
+  }, [showGlobalVocab, globalVocabLoading])
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
@@ -209,7 +209,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [currentFileId, wordDetails, wordDetailCache])
 
   const scrollToWord = useCallback((wordKey, delay = 100) => {
-    setTimeout(() => {
+    const doScroll = () => {
       const el = wordRefs.current[wordKey]
       if (el && vocabListRef.current) {
         const container = vocabListRef.current
@@ -219,7 +219,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
         container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
       }
-    }, delay)
+    }
+    setTimeout(doScroll, delay)
+    if (delay < 300) setTimeout(doScroll, 400)
   }, [])
 
   useEffect(() => {
@@ -258,6 +260,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       pendingScrollWord.current = wordKey
       setShowGlobalVocab(false)
     } else {
+      if (vocabSearch) setVocabSearch('')
       scrollToWord(wordKey, 100)
     }
 
