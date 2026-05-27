@@ -785,8 +785,8 @@ async def background_word_gen(file_id: str):
     plan_word_order = []
     if plan:
         seen_vocab_indices = set()
-        for unit_id in sorted(plan.keys()):
-            items = plan[unit_id].get("items", [])
+        for unit in plan:
+            items = unit.get("items", [])
             for item in items:
                 vi = item.get("vocab_index")
                 if vi is not None and vi not in seen_vocab_indices:
