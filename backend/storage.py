@@ -93,7 +93,11 @@ class Storage:
             if word_file.exists():
                 try:
                     with open(word_file, 'r', encoding='utf-8') as f:
-                        return json.load(f)
+                        data = json.load(f)
+                    cached_word = data.get("word", "").lower()
+                    if cached_word != word_lower:
+                        continue
+                    return data
                 except (json.JSONDecodeError, IOError):
                     continue
         return None

@@ -4,9 +4,11 @@ function SentenceDetail({ sentenceTranslation, t }) {
   const translationResult = sentenceTranslation?.translation_result
   
   return (
-    <p className="text-sm text-stone-600 leading-relaxed">
-      {translationResult?.grammar_explanation || t.loading}
-    </p>
+    <div className="border-l-2 border-amber-300 pl-3">
+      <p className="text-[13px] text-stone-500 leading-relaxed italic">
+        {translationResult?.grammar_explanation || t.loading}
+      </p>
+    </div>
   )
 }
 

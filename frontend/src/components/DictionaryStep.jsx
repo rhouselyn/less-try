@@ -21,15 +21,31 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [showGlobalVocab, setShowGlobalVocab] = useState(false)
   const [globalVocab, setGlobalVocab] = useState([])
   const [globalVocabLoading, setGlobalVocabLoading] = useState(false)
+  const [actualSourceLang, setActualSourceLang] = useState(sourceLang)
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
 
   useEffect(() => {
-    if (!showGlobalVocab || !sourceLang) return
+    if (currentFileId && sourceLang === 'auto') {
+      fetch(`/api/status/${currentFileId}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.source_lang && data.source_lang !== 'auto') {
+            setActualSourceLang(data.source_lang)
+          }
+        })
+        .catch(() => {})
+    } else {
+      setActualSourceLang(sourceLang)
+    }
+  }, [currentFileId, sourceLang])
+
+  useEffect(() => {
+    if (!showGlobalVocab || !actualSourceLang || actualSourceLang === 'auto') return
     let cancelled = false
     setGlobalVocabLoading(true)
-    api.getWordList(sourceLang).then(data => {
+    api.getWordList(actualSourceLang).then(data => {
       if (!cancelled) {
         setGlobalVocab(data.words || [])
         setGlobalVocabLoading(false)
@@ -38,7 +54,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       if (!cancelled) setGlobalVocabLoading(false)
     })
     return () => { cancelled = true }
-  }, [showGlobalVocab, sourceLang])
+  }, [showGlobalVocab, actualSourceLang])
 
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
@@ -350,30 +366,32 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       )}
 
       {!processingInfo && !preprocessStatus && vocab.length > 0 && (
-        <div className="flex items-center justify-center gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <LangIcon langCode={actualSourceLang} size="md" />
+            <span className="text-sm text-stone-500 font-medium">
+              {LANGUAGES.find(l => l.value === actualSourceLang)?.native || actualSourceLang}
+            </span>
+          </div>
           <motion.button
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={onStartLearning}
             disabled={loading}
-            className="px-8 py-4 bg-stone-800 text-white font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            className="px-8 py-3 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
                 {t.preparing}
               </>
             ) : (
               <>
-                <Shuffle className="w-5 h-5" />
+                <Shuffle className="w-4 h-4" />
                 {t.startLearning || '开始学习'}
               </>
             )}
           </motion.button>
-          <LangIcon langCode={sourceLang} size="md" />
-          <span className="text-sm text-stone-500 font-medium">
-            {LANGUAGES.find(l => l.value === sourceLang)?.native || sourceLang}
-          </span>
         </div>
       )}
 
@@ -385,9 +403,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 <div className="flex items-center gap-2 shrink-0">
                   <Languages className={`w-4 h-4 transition-colors cursor-pointer ${hideTranslations ? 'text-amber-500' : 'text-stone-500 hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); setHideTranslations(v => !v) }} />
                   <h3 className="text-sm font-semibold text-stone-700">
-                    <span className={`cursor-pointer ${!showOriginal ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}`} onClick={() => setShowOriginal(false)}>{t.sentTranslation}</span>
-                    <span className="text-stone-300 mx-1.5">/</span>
-                    <span className={`cursor-pointer ${showOriginal ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}`} onClick={() => setShowOriginal(true)}>{t.showOriginal}</span>
+                    <span className="cursor-pointer select-none" onClick={() => setShowOriginal(v => !v)}>
+                      <span className={!showOriginal ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}>{t.sentTranslation}</span>
+                      <span className="text-stone-300 mx-1.5">/</span>
+                      <span className={showOriginal ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}>{t.showOriginal}</span>
+                    </span>
                   </h3>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                     {filteredSentences.length}
@@ -406,7 +426,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               </div>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0">
-              {filteredSentences.length > 0 ? (
+              {showOriginal ? (
+                <div className="p-4">
+                  <pre className="text-sm text-stone-700 leading-relaxed whitespace-pre-wrap font-sans">{safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
+                </div>
+              ) : filteredSentences.length > 0 ? (
                 <div className="divide-y divide-stone-200/60">
                   {filteredSentences.map((item, index) => {
                     const originalIndex = safeSentenceTranslations.indexOf(item)
@@ -423,14 +447,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         >
                           <div className="flex items-start gap-2">
                             <div className="flex-1 min-w-0">
-                              {showOriginal ? (
-                                <div className="font-medium text-stone-800 leading-relaxed">{item.sentence || ''}</div>
-                              ) : (
-                                <>
-                                  {renderOriginalSentence(item)}
-                                  {renderTranslation(item)}
-                                </>
-                              )}
+                              {renderOriginalSentence(item)}
+                              {renderTranslation(item)}
                             </div>
                             <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 mt-1 transition-colors" onClick={(e) => speakWord(item.sentence || '', e)} />
                           </div>
@@ -468,9 +486,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 <div className="flex items-center gap-2 shrink-0">
                   <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${hideMeanings ? 'text-amber-500' : 'text-stone-500 hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); setHideMeanings(v => !v) }} />
                   <h3 className="text-sm font-semibold text-stone-700">
-                    <span className={`cursor-pointer ${!showGlobalVocab ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}`} onClick={() => setShowGlobalVocab(false)}>{t.vocabList}</span>
-                    <span className="text-stone-300 mx-1.5">/</span>
-                    <span className={`cursor-pointer ${showGlobalVocab ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}`} onClick={() => setShowGlobalVocab(true)}>{t.globalVocabList}</span>
+                    <span className="cursor-pointer select-none" onClick={() => setShowGlobalVocab(v => !v)}>
+                      <span className={!showGlobalVocab ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}>{t.vocabList}</span>
+                      <span className="text-stone-300 mx-1.5">/</span>
+                      <span className={showGlobalVocab ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}>{t.globalVocabList}</span>
+                    </span>
                   </h3>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                     {showGlobalVocab ? filteredGlobalVocab.length : filteredVocab.length}

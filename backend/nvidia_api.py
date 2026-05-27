@@ -630,7 +630,7 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
   - phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
   - morphology: 只能是词性缩写（如 n, v, adj）
   - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释
-- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式。【极其重要】必须翻译完整，不能遗漏任何内容，原文的每个语义成分都必须体现在翻译中
+- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式。【极其重要】必须翻译完整，不能遗漏任何内容，原文的每个语义成分都必须体现在翻译中。原文中的说话者标识（如 A:、B:、Speaker 1: 等）必须在译文中完整保留，不得省略
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
