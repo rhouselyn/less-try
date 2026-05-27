@@ -136,7 +136,11 @@ export const translations = {
     saving: "保存中...",
     saved: "已保存",
     save: "保存",
-    unitNumberFormat: "第 {0} 单元"
+    unitNumberFormat: "第 {0} 单元",
+    showOriginal: "显示原文",
+    globalVocabList: "单词总表",
+    skipReview: "不想复习了",
+    dontWantReview: "不想复习"
   },
   en: {
     title: "Lesslingo",
@@ -274,6 +278,10 @@ export const translations = {
     saving: "Saving...",
     saved: "Saved",
     save: "Save",
-    unitNumberFormat: "Unit {0}"
+    unitNumberFormat: "Unit {0}",
+    showOriginal: "Show Original",
+    globalVocabList: "All Words",
+    skipReview: "Skip Review",
+    dontWantReview: "Don't Review"
   }
 };

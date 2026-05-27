@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, MapPin } from 'lucide-react';
 
 function AllUnitsStep({
   phase1Units,
@@ -65,7 +65,13 @@ function AllUnitsStep({
         ) : isLocked ? (
           <Lock className="w-3.5 h-3.5" />
         ) : (
-          <span className="text-sm font-medium leading-none">{index + 1}</span>
+          <MapPin className={`w-3.5 h-3.5 ${
+            isCompleted
+              ? 'text-green-600'
+              : isCurrent
+              ? 'text-amber-500'
+              : 'text-gray-400'
+          }`} />
         )}
         {isCompleted && typeof starCount === 'number' && (
           <div className="flex items-center justify-center gap-px mt-0.5">

@@ -1,10 +1,12 @@
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2 } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
 import { speakText } from '../utils/speech'
+import { LangIcon, LANGUAGES } from './InputStep'
+import { api } from '../utils/api'
 
 function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, preprocessStatus }) {
   const [expandedWord, setExpandedWord] = useState(null)
@@ -15,9 +17,28 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [vocabSearch, setVocabSearch] = useState('')
   const [hideTranslations, setHideTranslations] = useState(false)
   const [hideMeanings, setHideMeanings] = useState(false)
+  const [showOriginal, setShowOriginal] = useState(false)
+  const [showGlobalVocab, setShowGlobalVocab] = useState(false)
+  const [globalVocab, setGlobalVocab] = useState([])
+  const [globalVocabLoading, setGlobalVocabLoading] = useState(false)
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
+
+  useEffect(() => {
+    if (!showGlobalVocab || !sourceLang) return
+    let cancelled = false
+    setGlobalVocabLoading(true)
+    api.getWordList(sourceLang).then(data => {
+      if (!cancelled) {
+        setGlobalVocab(data.words || [])
+        setGlobalVocabLoading(false)
+      }
+    }).catch(() => {
+      if (!cancelled) setGlobalVocabLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [showGlobalVocab, sourceLang])
 
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
@@ -52,6 +73,23 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const letterIndex = useMemo(() => {
     return groupedVocab.map(([letter]) => letter)
   }, [groupedVocab])
+
+  const filteredGlobalVocab = useMemo(() => {
+    if (!vocabSearch.trim()) return globalVocab
+    const q = vocabSearch.toLowerCase()
+    return globalVocab.filter(w =>
+      w.word.toLowerCase().includes(q) ||
+      (w.meaning && w.meaning.toLowerCase().includes(q))
+    )
+  }, [globalVocab, vocabSearch])
+
+  const groupedGlobalVocab = useMemo(() => {
+    return groupVocab(filteredGlobalVocab)
+  }, [filteredGlobalVocab])
+
+  const globalLetterIndex = useMemo(() => {
+    return groupedGlobalVocab.map(([letter]) => letter)
+  }, [groupedGlobalVocab])
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
@@ -312,25 +350,31 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       )}
 
       {!processingInfo && !preprocessStatus && vocab.length > 0 && (
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          onClick={onStartLearning}
-          disabled={loading}
-          className="w-full py-4 bg-stone-800 text-white font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="w-5 h-5 animate-spin" />
-              {t.preparing}
-            </>
-          ) : (
-            <>
-              <Shuffle className="w-5 h-5" />
-              {t.startLearning || '开始学习'}
-            </>
-          )}
-        </motion.button>
+        <div className="flex items-center justify-center gap-3">
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={onStartLearning}
+            disabled={loading}
+            className="px-8 py-4 bg-stone-800 text-white font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                {t.preparing}
+              </>
+            ) : (
+              <>
+                <Shuffle className="w-5 h-5" />
+                {t.startLearning || '开始学习'}
+              </>
+            )}
+          </motion.button>
+          <LangIcon langCode={sourceLang} size="md" />
+          <span className="text-sm text-stone-500 font-medium">
+            {LANGUAGES.find(l => l.value === sourceLang)?.native || sourceLang}
+          </span>
+        </div>
       )}
 
       <div className="flex gap-6 flex-1 min-h-0">
@@ -340,7 +384,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0">
                   <Languages className={`w-4 h-4 transition-colors cursor-pointer ${hideTranslations ? 'text-amber-500' : 'text-stone-500 hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); setHideTranslations(v => !v) }} />
-                  <h3 className="text-sm font-semibold text-stone-700">{t.sentTranslation}</h3>
+                  <h3 className="text-sm font-semibold text-stone-700">
+                    <span className={`cursor-pointer ${!showOriginal ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}`} onClick={() => setShowOriginal(false)}>{t.sentTranslation}</span>
+                    <span className="text-stone-300 mx-1.5">/</span>
+                    <span className={`cursor-pointer ${showOriginal ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}`} onClick={() => setShowOriginal(true)}>{t.showOriginal}</span>
+                  </h3>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
                     {filteredSentences.length}
                   </span>
@@ -375,8 +423,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         >
                           <div className="flex items-start gap-2">
                             <div className="flex-1 min-w-0">
-                              {renderOriginalSentence(item)}
-                              {renderTranslation(item)}
+                              {showOriginal ? (
+                                <div className="font-medium text-stone-800 leading-relaxed">{item.sentence || ''}</div>
+                              ) : (
+                                <>
+                                  {renderOriginalSentence(item)}
+                                  {renderTranslation(item)}
+                                </>
+                              )}
                             </div>
                             <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 mt-1 transition-colors" onClick={(e) => speakWord(item.sentence || '', e)} />
                           </div>
@@ -413,9 +467,13 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0">
                   <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${hideMeanings ? 'text-amber-500' : 'text-stone-500 hover:text-amber-500'}`} onClick={(e) => { e.stopPropagation(); setHideMeanings(v => !v) }} />
-                  <h3 className="text-sm font-semibold text-stone-700">{t.vocabList}</h3>
+                  <h3 className="text-sm font-semibold text-stone-700">
+                    <span className={`cursor-pointer ${!showGlobalVocab ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}`} onClick={() => setShowGlobalVocab(false)}>{t.vocabList}</span>
+                    <span className="text-stone-300 mx-1.5">/</span>
+                    <span className={`cursor-pointer ${showGlobalVocab ? 'font-semibold text-stone-700' : 'font-normal text-stone-400'}`} onClick={() => setShowGlobalVocab(true)}>{t.globalVocabList}</span>
+                  </h3>
                   <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
-                    {filteredVocab.length}
+                    {showGlobalVocab ? filteredGlobalVocab.length : filteredVocab.length}
                   </span>
                 </div>
                 <div className="relative w-1/2 ml-auto">
@@ -431,6 +489,74 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               </div>
             </div>
             <div className="flex-1 overflow-y-auto min-h-0" ref={vocabListRef}>
+              {showGlobalVocab ? (
+                globalVocabLoading ? (
+                  <div className="py-16 text-center">
+                    <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-amber-400" />
+                    <p className="text-stone-400 text-sm">{t.loading}</p>
+                  </div>
+                ) : groupedGlobalVocab.length === 0 ? (
+                  <div className="py-16 text-center">
+                    <BookOpen className="w-10 h-10 mx-auto mb-3 text-stone-200" />
+                    <p className="text-stone-400 text-sm">{vocabSearch ? '没有找到匹配的单词' : t.noWordsYetHint || '暂无单词'}</p>
+                  </div>
+                ) : (
+                <div className="space-y-3">
+                  {groupedGlobalVocab.map(([letter, words], groupIdx) => (
+                    <div key={letter} id={`dict-group-${letter}`}>
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: groupIdx * 0.04 }}
+                        className="sticky top-0 z-10 backdrop-blur-sm bg-stone-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
+                      >
+                        <span className="text-xs font-bold text-amber-600/80 tracking-widest">{letter}</span>
+                      </motion.div>
+                      <div className="space-y-px">
+                        {words.map((word, index) => {
+                          const wordKey = word.word
+                          return (
+                            <motion.div
+                              key={wordKey}
+                              initial={{ opacity: 0, y: 6 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
+                              className="bg-white"
+                            >
+                              <div className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group">
+                                <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                                  <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
+                                    {word.word}
+                                  </span>
+                                  {word.ipa && (
+                                    <span className="text-[11px] text-stone-400 ipa-font shrink-0">
+                                      {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
+                                    </span>
+                                  )}
+                                  {word.part_of_speech && (
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide shrink-0">
+                                      {word.part_of_speech}
+                                    </span>
+                                  )}
+                                  <span className={`text-[12px] text-stone-500 truncate ${hideMeanings ? 'invisible' : ''}`}>
+                                    {word.meaning}
+                                  </span>
+                                </div>
+                                <Volume2
+                                  className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                  onClick={(e) => speakWord(word.word, e)}
+                                />
+                              </div>
+                            </motion.div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                )
+              ) : (
+              <>
               {groupedVocab.length === 0 ? (
                 <div className="py-16 text-center">
                   <BookOpen className="w-10 h-10 mx-auto mb-3 text-stone-200" />
@@ -528,12 +654,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 ))}
               </div>
               )}
+              </>
+              )}
             </div>
 
-            {letterIndex.length > 3 && (
+            {((!showGlobalVocab && letterIndex.length > 3) || (showGlobalVocab && globalLetterIndex.length > 3)) && (
               <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-t border-stone-200/60 bg-stone-50/40">
                 <div className="flex flex-wrap justify-center gap-0.5 px-2">
-                  {letterIndex.map(letter => (
+                  {(showGlobalVocab ? globalLetterIndex : letterIndex).map(letter => (
                     <button
                       key={letter}
                       onClick={() => scrollToLetter(letter)}

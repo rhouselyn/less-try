@@ -71,6 +71,33 @@ class Storage:
                 return json.load(f)
         return None
 
+    def find_global_word_cache(self, word: str, source_lang: str) -> Optional[Dict]:
+        if not self.files_dir.exists():
+            return None
+        word_lower = word.lower()
+        for file_dir in self.files_dir.iterdir():
+            if not file_dir.is_dir():
+                continue
+            settings_path = file_dir / "language_settings.json"
+            if not settings_path.exists():
+                continue
+            try:
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                if settings.get("source_lang") != source_lang:
+                    continue
+            except (json.JSONDecodeError, IOError):
+                continue
+            cache_dir = file_dir / "word_cache"
+            word_file = cache_dir / f"{word_lower}.json"
+            if word_file.exists():
+                try:
+                    with open(word_file, 'r', encoding='utf-8') as f:
+                        return json.load(f)
+                except (json.JSONDecodeError, IOError):
+                    continue
+        return None
+
     def delete_word_cache(self, file_id: str, word: str):
         file_dir = self.get_file_dir(file_id)
         cache_dir = file_dir / "word_cache"

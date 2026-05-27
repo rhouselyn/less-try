@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Languages, SkipForward } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
-function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
+function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount, onSkipReview }) {
   const [selectedIndices, setSelectedIndices] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
@@ -83,15 +83,28 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
       className="max-w-3xl mx-auto"
     >
       <div className="flex items-center justify-between mb-8">
-        <motion.button
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
-          whileHover={{ scale: 1.05, x: -2 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.back}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+            whileHover={{ scale: 1.05, x: -2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t.back}
+          </motion.button>
+          {reviewMode && onSkipReview && (
+            <motion.button
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              onClick={onSkipReview}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+              {t.dontWantReview || t.skipReview || '不想复习'}
+            </motion.button>
+          )}
+        </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
             <span className="text-sm text-stone-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>

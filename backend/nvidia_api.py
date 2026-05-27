@@ -414,7 +414,7 @@ class NvidiaAPI:
                         },
                         "examples": {
                             "type": "array",
-                            "description": "两个全新的例句（绝不能复用原文句子，必须是不同的句子）",
+                            "description": "两个全新的例句（绝不能复用原文句子，必须是不同的句子。尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同）",
                             "items": {
                                 "type": "object",
                                 "properties": {
@@ -464,14 +464,14 @@ class NvidiaAPI:
 
 1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
 2. variants_detail: 词形变化列表，带类型说明。【极其重要】对于派生词（如 previously, prestigious, studying, published），必须列出其词根/原形作为词形变化（如 previously -> {{"form": "previous", "type": "形容词原形"}}, prestigious -> {{"form": "prestige", "type": "名词原形"}}, studying -> {{"form": "study", "type": "动词原形"}}, published -> {{"form": "publish", "type": "动词原形"}}）。对于基础词，列出其常见的屈折变化（如名词的复数、动词的过去式/过去分词/现在分词、形容词的比较级/最高级等）。只包含确实存在的词形变化，如果没有则返回空数组
-3. examples: 两个符合上下文含义的例句，每个都有 {target_lang_name} 的翻译
+3. examples: 两个全新的例句，每个都有 {target_lang_name} 的翻译。尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
 
 要求：
 - 所有输出必须使用 {target_lang_name}
-- 例句要自然，符合上下文
+- 例句要自然，尽量使用简单常见的词汇，不需要与原文中的意思相同
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
 - 【重要】正确答案必须是单词的常见、正常释义，不是上下文特定释义

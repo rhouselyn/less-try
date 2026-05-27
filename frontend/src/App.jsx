@@ -124,6 +124,25 @@ function App() {
     }
   }, [vocab, sortOrder])
 
+  useEffect(() => {
+    if (generatingUnits.size === 0 || !currentFileId) return
+
+    const interval = setInterval(async () => {
+      try {
+        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+        const newGenUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) newGenUnits.add(i) })
+        setGeneratingUnits(newGenUnits)
+        if (newGenUnits.size === 0) {
+          setPhase1Units(phase1UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        }
+      } catch (e) {}
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [generatingUnits, currentFileId])
+
   // 轮询处理状态
   useEffect(() => {
     if (!currentFileId || skipPolling) return
@@ -1128,6 +1147,14 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
+              onSkipReview={() => {
+                setReviewMode(false)
+                setReviewIndex(0)
+                setWrongItems([])
+                setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
+                setStep('unit-complete')
+              }}
             />
           )}
           
@@ -1156,6 +1183,14 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
+              onSkipReview={() => {
+                setReviewMode(false)
+                setReviewIndex(0)
+                setWrongItems([])
+                setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
+                setStep('unit-complete')
+              }}
             />
           )}
           
@@ -1175,6 +1210,14 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
+              onSkipReview={() => {
+                setReviewMode(false)
+                setReviewIndex(0)
+                setWrongItems([])
+                setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
+                setStep('unit-complete')
+              }}
             />
           )}
           
@@ -1302,6 +1345,14 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
+              onSkipReview={() => {
+                setReviewMode(false)
+                setReviewIndex(0)
+                setWrongItems([])
+                setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
+                setStep('unit-complete')
+              }}
             />
           )}
           
@@ -1340,6 +1391,14 @@ function App() {
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
+              onSkipReview={() => {
+                setReviewMode(false)
+                setReviewIndex(0)
+                setWrongItems([])
+                setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
+                setStep('unit-complete')
+              }}
             />
           )}
           

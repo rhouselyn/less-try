@@ -111,7 +111,7 @@ function ProgressBadge({ progress }) {
 
   const done = totalCompleted >= totalUnits
   return (
-    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-emerald-500' : 'text-red-400'}`}>
+    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-emerald-500' : 'text-red-600'}`}>
       {totalCompleted}/{totalUnits}
     </span>
   )

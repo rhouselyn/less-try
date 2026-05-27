@@ -175,7 +175,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
             <div className="flex items-center gap-2.5">
               <Settings className="w-4 h-4 text-stone-500" />
-              <h2 className="text-sm font-semibold text-stone-800">{t.settings || '设置'}</h2>
+              <h2 className="text-xs font-semibold text-stone-800">{t.settings || '设置'}</h2>
             </div>
             <button
               onClick={onClose}
@@ -193,13 +193,13 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
             <div className="p-5 space-y-4">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">
+                  <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">
                     {t.apiConfig || 'API 配置'} {currentIndex + 1}/{configs.length}
                   </span>
                   {configs.length > 1 && (
                     <button
                       onClick={() => removeConfig(currentIndex)}
-                      className="flex items-center gap-1 text-[11px] text-stone-400 hover:text-red-500 transition-colors"
+                      className="flex items-center gap-1 text-[10px] text-stone-400 hover:text-red-500 transition-colors"
                     >
                       <Minus className="w-3 h-3" />
                       {t.remove || '删除'}
@@ -234,7 +234,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                           className="p-3 space-y-3"
                         >
                           <div>
-                            <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                               <Key className="w-3 h-3" />
                               API Key
                               {current?.has_key && <span className="text-[10px] text-green-500 normal-case tracking-normal">● {t.configured || '已配置'}</span>}
@@ -244,7 +244,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                               value={current?.api_key || ''}
                               onChange={e => updateConfig(currentIndex, 'api_key', e.target.value)}
                               placeholder={current?.masked_key || 'sk-...'}
-                              className="w-full px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                              className="w-full px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
                             />
                             {current?.has_key && !current?.api_key && (
                               <p className="text-[11px] text-stone-400 mt-1">{t.leaveEmptyKeepKey || '留空则保持当前 Key 不变'}</p>
@@ -252,7 +252,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                           </div>
 
                           <div>
-                            <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                               <Globe className="w-3 h-3" />
                               Base URL
                             </label>
@@ -261,12 +261,12 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                               value={current?.base_url || ''}
                               onChange={e => updateConfig(currentIndex, 'base_url', e.target.value)}
                               placeholder="https://api.siliconflow.cn/v1"
-                              className="w-full px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                              className="w-full px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
                             />
                           </div>
 
                           <div>
-                            <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                               <Cpu className="w-3 h-3" />
                               Model
                             </label>
@@ -275,7 +275,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                               value={current?.model || ''}
                               onChange={e => updateConfig(currentIndex, 'model', e.target.value)}
                               placeholder="Qwen/Qwen3.6-27B"
-                              className="w-full px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                              className="w-full px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
                             />
                           </div>
                         </motion.div>
@@ -321,14 +321,14 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
               </div>
 
               <div className="pt-1">
-                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Gauge className="w-3 h-3" />
                   {t.llmRate || 'LLM 速率'}
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-stone-400">{t.llmRequestsPerMinute || '每分钟 LLM 请求次数'}</span>
-                    <span className="text-xs font-semibold text-amber-600">{rpm} RPM</span>
+                    <span className="text-[10px] text-stone-400">{t.llmRequestsPerMinute || '每分钟 LLM 请求次数'}</span>
+                    <span className="text-[11px] font-semibold text-amber-600">{rpm} RPM</span>
                   </div>
                   <div className="relative">
                     <input
@@ -351,7 +351,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
               </div>
 
               <div>
-                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Languages className="w-3 h-3" />
                   {t.nativeLang || '母语'}
                 </label>
@@ -364,7 +364,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                       key={opt.value}
                       type="button"
                       onClick={() => setLocalTargetLang(opt.value)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
+                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-medium transition-all duration-200 ${
                         localTargetLang === opt.value
                           ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
                           : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
@@ -382,7 +382,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
                 whileTap={{ scale: 0.99 }}
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full py-2.5 bg-stone-800 text-white text-sm font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 bg-stone-800 text-white text-xs font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
