@@ -25,7 +25,7 @@ import SettingsModal from './components/SettingsModal'
 function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
-  const [sourceLang, setSourceLang] = useState('en')
+  const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
@@ -74,13 +74,25 @@ function App() {
   const [completedPhase, setCompletedPhase] = useState(1)
   const [unitStarCounts, setUnitStarCounts] = useState({})
   const unitErrorCountRef = useRef(0)
+  const isFetchingNextRef = useRef(false)
   const [skipListening, setSkipListening] = useState(false)
+  const [generatingUnits, setGeneratingUnits] = useState(new Set())
+  const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
+
+  useEffect(() => {
+    api.getUserPreferences().then(prefs => {
+      if (prefs.source_lang) setSourceLang(prefs.source_lang)
+      if (prefs.target_lang) setTargetLang(prefs.target_lang)
+      if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
+      if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
+    }).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!currentFileId) return
@@ -105,12 +117,6 @@ function App() {
   
   // 获取当前语言的翻译
   const t = translations[targetLang] || translations.zh;
-
-  useEffect(() => {
-    api.getAppSettings().then(data => {
-      if (data.target_lang) setTargetLang(data.target_lang)
-    }).catch(() => {})
-  }, [])
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -288,6 +294,9 @@ function App() {
         const fileId = response.file_id
         setFileId(fileId)
         setCurrentFileId(fileId)
+        api.getUserPreferences().then(prefs => {
+          if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
+        }).catch(() => {})
       } else {
         throw new Error('无效的API响应')
       }
@@ -341,6 +350,9 @@ function App() {
       setCurrentPhase1Unit(phase1UnitsData.current_unit)
       setCurrentPhase2Unit(phase2UnitsData.current_unit)
       setUnitStarCounts(starsData.stars || {})
+      const genUnits = new Set()
+      phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+      setGeneratingUnits(genUnits)
       setStep('all-units')
     } catch (error) {
       console.error('获取单元错误:', error)
@@ -413,6 +425,9 @@ function App() {
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
+        const genUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+        setGeneratingUnits(genUnits)
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
@@ -459,6 +474,9 @@ function App() {
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
+        const genUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+        setGeneratingUnits(genUnits)
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
@@ -539,6 +557,9 @@ function App() {
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
+        const genUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+        setGeneratingUnits(genUnits)
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
@@ -555,6 +576,9 @@ function App() {
             api.getPhaseUnits(currentFileId, 2)
           ])
           setPhase1Units(phase1UnitsData.units)
+          const genUnits = new Set()
+          phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+          setGeneratingUnits(genUnits)
           setPhase2Units(phase2UnitsData.units)
           setCurrentPhase1Unit(phase1UnitsData.current_unit)
           setCurrentPhase2Unit(phase2UnitsData.current_unit)
@@ -760,6 +784,8 @@ function App() {
 
   const getNextWord = async (retryCount = 0) => {
     if (!currentFileId) return
+    if (isFetchingNextRef.current) return
+    isFetchingNextRef.current = true
     
     setLoading(true)
     try {
@@ -772,10 +798,13 @@ function App() {
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
+        const genUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+        setGeneratingUnits(genUnits)
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        const completedUnit = phase1UnitsData.current_unit
+        const completedUnit = nextWordResponse.completed_unit_id ?? phase1UnitsData.current_unit
         setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
@@ -795,6 +824,7 @@ function App() {
       
       if (nextWordResponse.listening_quiz) {
         if (skipListening) {
+          isFetchingNextRef.current = false
           return getNextWord(retryCount)
         }
         const endIdx = nextWordResponse.unit_end_index || unitEndIndex
@@ -813,7 +843,8 @@ function App() {
         setStep('sentence-quiz')
       } else if (response.type === 'listening_quiz') {
         if (skipListening) {
-          return getNextWord(0)
+          isFetchingNextRef.current = false
+          return getNextWord(retryCount)
         }
         setListeningQuizData(response)
         setUnitEndIndex(response.unit_end_index)
@@ -825,10 +856,13 @@ function App() {
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
+        const genUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+        setGeneratingUnits(genUnits)
         setPhase2Units(phase2UnitsData.units)
         setCurrentPhase1Unit(phase1UnitsData.current_unit)
         setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        const completedUnit = phase1UnitsData.current_unit
+        const completedUnit = nextWordResponse?.completed_unit_id ?? phase1UnitsData.current_unit
         setCompletedUnitId(completedUnit)
         setCompletedPhase(1)
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
@@ -846,14 +880,17 @@ function App() {
     } catch (error) {
       console.error('获取下一个单词错误:', error)
       if (error.response && error.response.status === 401 && retryCount < 2) {
+        isFetchingNextRef.current = false
         setTimeout(() => getNextWord(retryCount + 1), 1000)
         return
       }
       if (error.response && (error.response.status === 401 || error.response.status === 502 || error.response.status === 503 || error.response.status === 504)) {
+        isFetchingNextRef.current = false
         setTimeout(() => getNextWord(retryCount + 1), 2000)
         return
       }
     } finally {
+      isFetchingNextRef.current = false
       setLoading(false)
     }
   }
@@ -906,8 +943,6 @@ function App() {
     setSkipPolling(true)
     setLoading(true)
     try {
-      setSourceLang(srcLang)
-      setTargetLang(tgtLang)
       setCurrentFileId(fileId)
       setFileId(fileId)
       const vocabData = await api.getVocab(fileId)
@@ -925,6 +960,11 @@ function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleSkipListeningChange = (value) => {
+    setSkipListening(value)
+    api.saveUserPreferences({ skip_listening: value }).catch(() => {})
   }
 
   const handleOpenWordList = (lang) => {
@@ -1024,6 +1064,7 @@ function App() {
                       t={t}
                       inputMode={inputMode}
                       setInputMode={setInputMode}
+                      recentLanguages={recentLanguages}
                     />
                   </AnimatePresence>
                 </>
@@ -1092,7 +1133,7 @@ function App() {
           
           {step === 'sentence-quiz' && (
             <SentenceQuizStep
-              key={`sentence-quiz-${quizData?.original_sentence}-${quizData?.step_in_unit}`}
+              key={`sentence-quiz-${quizData?.flat_index ?? quizData?.original_sentence}`}
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => handleConfirmBack('all-units')}
@@ -1120,7 +1161,7 @@ function App() {
           
           {step === 'listening-quiz' && (
             <ListeningQuizStep
-              key={`listening-quiz-${listeningQuizData?.original_sentence}-${listeningQuizData?.step_in_unit}`}
+              key={`listening-quiz-${listeningQuizData?.flat_index ?? listeningQuizData?.original_sentence}`}
               quizData={listeningQuizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => handleConfirmBack('all-units')}
@@ -1130,6 +1171,7 @@ function App() {
               sourceLang={sourceLang}
               onAnswer={handleListeningQuizAnswer}
               skipListening={skipListening}
+              onSkipListeningChange={handleSkipListeningChange}
               reviewMode={reviewMode}
               reviewIndex={reviewIndex}
               wrongItemsCount={wrongItems.length}
@@ -1193,7 +1235,8 @@ function App() {
               t={t}
               unitStarCounts={unitStarCounts}
               skipListening={skipListening}
-              onSkipListeningChange={setSkipListening}
+              onSkipListeningChange={handleSkipListeningChange}
+              generatingUnits={generatingUnits}
             />
           )}
           
@@ -1234,6 +1277,9 @@ function App() {
                   api.getPhaseUnits(currentFileId, 2)
                 ])
                 setPhase1Units(phase1UnitsData.units)
+                const genUnits = new Set()
+                phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+                setGeneratingUnits(genUnits)
                 setPhase2Units(phase2UnitsData.units)
                 setCurrentPhase1Unit(phase1UnitsData.current_unit)
                 setCurrentPhase2Unit(phase2UnitsData.current_unit)
@@ -1271,6 +1317,9 @@ function App() {
                   api.getPhaseUnits(currentFileId, 2)
                 ])
                 setPhase1Units(phase1UnitsData.units)
+                const genUnits = new Set()
+                phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+                setGeneratingUnits(genUnits)
                 setPhase2Units(phase2UnitsData.units)
                 setCurrentPhase1Unit(phase1UnitsData.current_unit)
                 setCurrentPhase2Unit(phase2UnitsData.current_unit)
@@ -1309,7 +1358,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} t={t} />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title="确认退出"

@@ -56,9 +56,9 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
     const q = searchQuery.toLowerCase()
     return vocab.filter(w =>
       w.word.toLowerCase().includes(q) ||
+      (w.meaning && w.meaning.toLowerCase().includes(q)) ||
       (w.context_meaning && w.context_meaning.toLowerCase().includes(q)) ||
-      (w.enriched_meaning && w.enriched_meaning.toLowerCase().includes(q)) ||
-      (w.translation && w.translation.toLowerCase().includes(q))
+      (w.enriched_meaning && w.enriched_meaning.toLowerCase().includes(q))
     )
   }, [vocab, searchQuery])
 
@@ -114,11 +114,11 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
       >
         <div className="flex items-end justify-between mb-5">
           <div>
-            <h2 className="text-2xl font-bold text-stone-800 tracking-tight">单词表</h2>
+            <h2 className="text-2xl font-bold text-stone-800 tracking-tight">{t.vocabList || '单词表'}</h2>
             <p className="text-sm text-stone-400 mt-1">
-              共 <span className="text-amber-600 font-semibold">{vocab.length}</span> 个单词
+              {t.total || '共'} <span className="text-amber-600 font-semibold">{vocab.length}</span> {t.words || '个单词'}
               {searchQuery && filteredVocab.length !== vocab.length && (
-                <span> · 匹配 <span className="text-amber-600 font-semibold">{filteredVocab.length}</span> 个</span>
+                <span> · {t.matched || '匹配'} <span className="text-amber-600 font-semibold">{filteredVocab.length}</span></span>
               )}
             </p>
           </div>
@@ -131,7 +131,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="搜索单词或释义..."
+            placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
             className="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200/80 rounded-xl text-sm text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
           />
         </div>
@@ -145,7 +145,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
       ) : filteredVocab.length === 0 ? (
         <div className="text-center py-20">
           <p className="text-stone-400 text-sm">
-            {searchQuery ? '没有找到匹配的单词' : '暂无单词'}
+            {searchQuery ? (t.noMatchFound || '没有找到匹配的单词') : (t.noWordsYet || '暂无单词')}
           </p>
         </div>
       ) : (
@@ -179,7 +179,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                     {words.map((word, index) => {
                       const isExpanded = expandedWord === word.word
                       const enriched = getEnriched(word.word)
-                      const displayMeaning = word.enriched_meaning || word.context_meaning || word.translation
+                      const displayMeaning = word.enriched_meaning || word.meaning || word.context_meaning
                       return (
                         <motion.div
                           key={word.word}
@@ -230,7 +230,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                   {loadingWord === word.word ? (
                                     <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                       <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
-                                      <p className="text-[12px] text-stone-400">正在加载单词详情...</p>
+                                      <p className="text-[12px] text-stone-400">{t.loadingWordDetails || '正在加载单词详情...'}</p>
                                     </div>
                                   ) : (() => {
                                     const mergedWord = { ...word, ...enriched }
@@ -238,7 +238,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                     return hasDetail ? (
                                       <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} />
                                     ) : (
-                                      <div className="pt-3 text-center text-stone-400 text-[12px]">暂无详情</div>
+                                      <div className="pt-3 text-center text-stone-400 text-[12px]">{t.noDetails || '暂无详情'}</div>
                                     )
                                   })()}
                                 </div>

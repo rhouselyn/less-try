@@ -1,12 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones, SkipForward } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { speakText } from '../utils/speech'
 
-function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, reviewMode, reviewIndex, wrongItemsCount }) {
+function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, onSkipListeningChange, reviewMode, reviewIndex, wrongItemsCount }) {
   const [selectedWords, setSelectedWords] = useState([])
   const [isChecked, setIsChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
+  const [isSkipped, setIsSkipped] = useState(false)
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((quizData?.step_in_unit ?? 0) + 1)
   const listeningCountInUnit = quizData?.listening_count_in_unit ?? 0
@@ -15,7 +16,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
 
   const autoSpeak = useCallback(() => {
     if (quizData?.original_sentence) {
-      setTimeout(() => speakText(quizData.original_sentence, sourceLang), 300)
+      setTimeout(() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang), 300)
     }
   }, [quizData?.original_sentence, sourceLang])
 
@@ -41,7 +42,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const correctWords = quizData.correct_words || []
   const options = quizData.options || []
 
-  const stripPunct = (str) => typeof str === 'string' ? str.replace(/[，。、；：！？,.:;!?]/g, '') : str
+  const stripPunct = (str) => typeof str === 'string' ? str.replace(/[\u3000-\u303F\uFF00-\uFFEF\u2000-\u206F\u0080-\u00BF，。、；：！？·…—–―‐‒„""''«»‹›〈〉《》【】〔〕〖〗〘〙〚〛⟦⟧⟨⟩‖§¶@*#†‡•‰‱′″‴‸※‼⁇⁈⁉⁊⁋⁌⁍○●◎☉★☆☇☈⊕⊗⊙⊜⊞⊟⊠⊡⦾⦿,.:;!?]/g, '') : str
 
   const handleWordSelect = (word, index) => {
     if (isChecked) return
@@ -65,10 +66,19 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
     if (onAnswer) onAnswer(correct)
   }
 
+  const handleSkipListening = () => {
+    setIsSkipped(true)
+    setIsCorrect(true)
+    setIsChecked(true)
+    if (onAnswer) onAnswer(true)
+    if (onSkipListeningChange) onSkipListeningChange(true)
+  }
+
   const handleNextQuestion = () => {
     setSelectedWords([])
     setIsChecked(false)
     setIsCorrect(false)
+    setIsSkipped(false)
     onNextQuestion()
   }
 
@@ -91,7 +101,19 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </motion.button>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-stone-500 font-medium">第 {stepInUnit} / {totalItemsInUnit} 题</span>
+            <span className="text-sm text-stone-500 font-medium">{t.step || '第'} {stepInUnit} / {totalItemsInUnit} {t.question || '题'}</span>
+          )}
+          {!isChecked && !isSkipped && (
+            <motion.button
+              onClick={handleSkipListening}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title={t.skipListening || '跳过听力'}
+            >
+              <SkipForward className="w-3.5 h-3.5" />
+              {t.skip || '跳过'}
+            </motion.button>
           )}
           {onOpenVocabList && (
             <motion.button
@@ -101,7 +123,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               whileTap={{ scale: 0.95 }}
             >
               <BookOpen className="w-4 h-4" />
-              单词表
+              {t.vocabList || '单词表'}
             </motion.button>
           )}
         </div>
@@ -122,12 +144,12 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <motion.button
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => speakText(quizData.original_sentence, sourceLang)}
+              onClick={() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang)}
               className="p-3 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
             >
               <Volume2 className="w-8 h-8" />
             </motion.button>
-            <span className="text-sm text-stone-400">点击播放</span>
+            <span className="text-sm text-stone-400">{t.clickToPlay || '点击播放'}</span>
           </div>
         </div>
 
@@ -157,7 +179,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               ))}
             </AnimatePresence>
             {selectedWords.length === 0 && (
-              <span className="italic text-stone-400 text-sm">按顺序点击下方单词组成句子</span>
+              <span className="italic text-stone-400 text-sm">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
             )}
           </div>
         </div>
@@ -195,12 +217,12 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <div className="flex items-center gap-3 mb-2">
               {isCorrect ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <XCircle className="w-6 h-6 text-red-600" />}
               <span className={`font-semibold text-lg ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                {isCorrect ? t.correct : t.incorrect}
+                {isSkipped ? (t.skipped || '已跳过') : isCorrect ? t.correct : t.incorrect}
               </span>
             </div>
-            {!isCorrect && (
+            {(isSkipped || !isCorrect) && (
               <p className="text-stone-700 font-medium">
-                正确答案：{correctWords.map(w => stripPunct(w)).join(' ')}
+                {t.correctAnswer || '正确答案'}：{correctWords.map(w => stripPunct(w)).join(' ')}
               </p>
             )}
           </motion.div>

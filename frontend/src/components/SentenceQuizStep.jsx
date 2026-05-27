@@ -94,7 +94,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </motion.button>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-stone-500 font-medium">第 {stepInUnit} / {totalItemsInUnit} 题</span>
+            <span className="text-sm text-stone-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
           )}
           {onOpenVocabList && (
             <motion.button
@@ -104,7 +104,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               whileTap={{ scale: 0.95 }}
             >
               <BookOpen className="w-4 h-4" />
-              单词表
+              {t.vocabList || '单词表'}
             </motion.button>
           )}
         </div>
@@ -119,7 +119,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full text-sm font-medium mb-4"
           >
             <Languages className="w-4 h-4" />
-            翻译题
+            {t.translationQuiz || '翻译题'}
           </motion.div>
           <div className="flex items-center justify-center gap-2">
             <motion.p
@@ -216,7 +216,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             </div>
             {!isCorrect && (
               <p className="text-stone-700 font-medium">
-                正确答案：{quizData.correct_translation || (quizData.correct_tokens ? quizData.correct_tokens.join('') : '')}
+                {t.correctAnswer || '正确答案'}：{quizData.correct_translation || (quizData.correct_tokens ? quizData.correct_tokens.join('') : '')}
               </p>
             )}
           </motion.div>
@@ -249,7 +249,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 </>
               ) : (
                 <>
-                  继续学习
+                  {t.continueLearning || '继续学习'}
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}

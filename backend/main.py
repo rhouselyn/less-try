@@ -7,21 +7,15 @@ import json
 import random
 import asyncio
 import time
-from dotenv import load_dotenv
-from pathlib import Path
 import re
 
-from nvidia_api import NvidiaAPI, get_settings, update_settings
-from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG
+from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name
+from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
 from storage import Storage
-
-load_dotenv()
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
 import re
-
-PUNCTUATION_CHARS = set('.,!?:;，。！？：；、')
 
 class RateLimiter:
     def __init__(self, rpm):
@@ -36,47 +30,25 @@ class RateLimiter:
             elapsed = now - self.last_call
             if elapsed < self.interval:
                 wait_time = self.interval - elapsed
-                if elapsed < 0.5:
-                    wait_time += 0.5 - elapsed
                 await asyncio.sleep(wait_time)
             self.last_call = time.time()
 
-def is_punctuation_only(text):
+ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
+
+def is_speaker_label(text):
     if not text or not isinstance(text, str):
         return False
     stripped = text.strip()
-    if not stripped:
-        return True
-    return all(ch in PUNCTUATION_CHARS for ch in stripped)
-
-def is_source_lang_text(text, source_lang="en"):
-    if not text or not isinstance(text, str):
-        return False
-    text = text.strip()
-    if source_lang == "en":
-        if re.match(r'^[a-zA-Z\s\-\']+$', text) and len(text.split()) <= 3:
-            if not re.search(r'[\u4e00-\u9fff]', text):
-                return True
-    return False
-
-ZH_FUNCTION_WORDS = {'的', '了', '地', '得', '着', '过', '吗', '呢', '吧', '啊', '呀', '哦', '嗯', '是', '在', '有', '和', '与', '或', '但', '而', '却', '又', '也', '都', '就', '才', '还', '已', '所', '该', '其', '这', '那', '个', '一', '种', '些', '等', '被', '把', '让', '给', '从', '向', '到', '对', '为', '以', '于', '及', '之', '将', '会', '能', '可', '要', '应', '需', '没', '不', '很', '最', '更', '太', '极', '比'}
+    return bool(re.match(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]$', stripped))
 
 def vocab_sort_key(entry):
+    import unicodedata
     word = entry.get("word", "")
     ipa = entry.get("ipa", "")
     if word and len(word) > 0:
         first_char = word[0]
-        if '\u4e00' <= first_char <= '\u9fff':
-            if ipa and len(ipa.strip('/')) > 0:
-                return ipa.lstrip('/').strip()[0].lower()
-            return first_char
-        if '\u3040' <= first_char <= '\u309f' or '\u30a0' <= first_char <= '\u30ff':
-            if ipa and len(ipa.strip('/')) > 0:
-                return ipa.lstrip('/').strip()[0].lower()
-            return first_char
-        if '\uac00' <= first_char <= '\ud7af':
-            return first_char
-        import unicodedata
+        if ipa and len(ipa.strip('/')) > 0:
+            return ipa.lstrip('/').strip()[0].lower()
         normalized = unicodedata.normalize('NFD', first_char)
         if len(normalized) > 0:
             base = normalized[0]
@@ -165,22 +137,62 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         return result
     mc = result.get("multiple_choice")
     if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-        filtered_options = []
+        correct_answer = mc.get("correct_answer", "")
+        correct_answer_lower = correct_answer.lower().strip() if correct_answer else ""
+        
+        normalized_options = []
         for opt in mc["options"]:
-            if isinstance(opt, dict) and "text" in opt:
-                if opt.get("is_correct", False) or not is_source_lang_text(opt["text"], source_lang):
-                    filtered_options.append(opt)
+            if not isinstance(opt, dict) or "text" not in opt:
+                continue
+            text = opt["text"]
+            is_correct = opt.get("is_correct", False)
+            if isinstance(is_correct, str):
+                is_correct = is_correct.lower() in ("true", "yes", "1")
+            elif isinstance(is_correct, (int, float)):
+                is_correct = bool(is_correct)
+            if not is_correct and correct_answer_lower and text.lower().strip() == correct_answer_lower:
+                is_correct = True
+            normalized_options.append({"text": text, "is_correct": bool(is_correct)})
+        
+        if not any(o["is_correct"] for o in normalized_options) and correct_answer:
+            normalized_options.insert(0, {"text": correct_answer, "is_correct": True})
+        
+        filtered_options = []
+        placeholder_pattern = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+        for opt in normalized_options:
+            if opt["is_correct"]:
+                filtered_options.append(opt)
+            elif placeholder_pattern.match(opt["text"].strip()):
+                continue
+            else:
+                filtered_options.append(opt)
+        
         if len(filtered_options) < 4:
-            correct_answer = mc.get("correct_answer", "")
             existing_texts = {o["text"] for o in filtered_options}
-            fallbacks = ["其他含义", "不同释义", "无关意思", "另一种解释", "不同概念"]
-            for fb in fallbacks:
+            fallback_distractors = get_fallback_options(correct_answer, file_id, count=4 - len(filtered_options))
+            for fd in fallback_distractors:
+                if len(filtered_options) >= 4:
+                    break
+                if fd not in existing_texts:
+                    filtered_options.append({"text": fd, "is_correct": False})
+                    existing_texts.add(fd)
+        
+        if len(filtered_options) < 4:
+            existing_texts = {o["text"] for o in filtered_options}
+            generic_fallbacks = ["other meaning", "different sense", "unrelated", "alternative", "different concept"]
+            for fb in generic_fallbacks:
                 if len(filtered_options) >= 4:
                     break
                 if fb not in existing_texts:
                     filtered_options.append({"text": fb, "is_correct": False})
                     existing_texts.add(fb)
+        
         mc["options"] = filtered_options[:4]
+        if not mc.get("correct_answer") and filtered_options:
+            for o in filtered_options:
+                if o["is_correct"]:
+                    mc["correct_answer"] = o["text"]
+                    break
         result["multiple_choice"] = mc
         return result
     if isinstance(mc, str) and not mc.strip():
@@ -208,7 +220,7 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
                     "options": mc_options
                 }
     if "multiple_choice" not in result or not isinstance(result.get("multiple_choice"), dict) or "options" not in result.get("multiple_choice", {}):
-        correct_meaning = result.get("enriched_meaning", result.get("context_meaning", ""))
+        correct_meaning = result.get("enriched_meaning", result.get("meaning", ""))
         fallback_distractors = get_fallback_options(correct_meaning, file_id, count=3)
         fb_opts = [{"text": correct_meaning, "is_correct": True}]
         for fd in fallback_distractors:
@@ -228,7 +240,7 @@ def get_fallback_options(correct_meaning, file_id, count=3):
         all_vocab = vocab_data.get("vocab", vocab_data) if isinstance(vocab_data, dict) else vocab_data
         candidates = []
         for v in all_vocab:
-            meaning = v.get("context_meaning") or v.get("translation") or v.get("enriched_meaning") or ""
+            meaning = v.get("meaning") or v.get("enriched_meaning") or ""
             if meaning and meaning != correct_meaning:
                 candidates.append(meaning)
         rnd.shuffle(candidates)
@@ -241,58 +253,63 @@ def get_fallback_options(correct_meaning, file_id, count=3):
 
 def get_listening_correct_words(sentence, sentence_data):
     import re
-    clean_sentence = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', sentence)
+    clean_sentence = re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', sentence)
+    
+    def normalize_for_compare(text):
+        return re.sub(r'[\s\u3000]+', '', re.sub(r'[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]', '', text)).lower()
+
+    sentence_normalized = normalize_for_compare(clean_sentence)
     
     tr = sentence_data.get("translation_result", {})
-    dict_entries = tr.get("dictionary_entries", [])
+    translation_tokens = tr.get("translation", [])
+    
+    if translation_tokens and isinstance(translation_tokens, list):
+        raw_words = []
+        for token in translation_tokens:
+            if isinstance(token, dict) and "text" in token:
+                t = token["text"].strip()
+                if t and not is_punctuation_only(t) and not is_speaker_label(t):
+                    cleaned = strip_edge_punctuation(t)
+                    if cleaned and not is_speaker_label(cleaned):
+                        raw_words.append(cleaned)
+        
+        if raw_words:
+            tokens_normalized = normalize_for_compare(''.join(raw_words))
+            
+            if tokens_normalized == sentence_normalized:
+                return raw_words
+            
+            deduped_words = []
+            seen = set()
+            for w in raw_words:
+                key = w.lower()
+                if key not in seen:
+                    seen.add(key)
+                    deduped_words.append(w)
+            deduped_normalized = normalize_for_compare(''.join(deduped_words))
+            if deduped_normalized == sentence_normalized:
+                return deduped_words
+            
+            words_from_sentence = [w for w in clean_sentence.split() if w.strip()]
+            words_cleaned = []
+            for w in words_from_sentence:
+                w_clean = strip_edge_punctuation(w)
+                if w_clean and not is_punctuation_only(w_clean):
+                    words_cleaned.append(w_clean)
+            if words_cleaned and normalize_for_compare(''.join(words_cleaned)) == sentence_normalized:
+                return words_cleaned
+            
+            return raw_words if tokens_normalized else deduped_words
 
-    if dict_entries and isinstance(dict_entries, list):
-        all_tokens = []
-        for entry in dict_entries:
-            if not isinstance(entry, dict):
-                continue
-            tokens = entry.get("tokens", [])
-            if not isinstance(tokens, list):
-                continue
-            for token in tokens:
-                if isinstance(token, str) and token.strip():
-                    t = token.strip()
-                    if len(t) <= 2 and not any(c.isalpha() and ord(c) > 127 for c in t) and t.lower() in ('a', 'b', 'c', 'd', 'e'):
-                        continue
-                    all_tokens.append(t)
-
-        if all_tokens:
-            sentence_lower = clean_sentence.lower()
-            token_with_pos = []
-            used_positions = []
-
-            for token in all_tokens:
-                token_clean = token.strip('.,;:!?，。；：！？、')
-                if not token_clean:
-                    continue
-                search_from = 0
-                found = False
-                while search_from < len(sentence_lower):
-                    pos = sentence_lower.find(token_clean.lower(), search_from)
-                    if pos < 0:
-                        break
-                    if pos not in used_positions:
-                        token_with_pos.append((pos, token_clean))
-                        used_positions.append(pos)
-                        found = True
-                        break
-                    search_from = pos + 1
-
-            token_with_pos.sort(key=lambda x: x[0])
-            result = [t[1] for t in token_with_pos]
-            if result:
-                return result
-
+    source_lang = sentence_data.get("source_lang", "en")
+    if source_lang in NO_SPACE_LANGUAGES:
+        return [c for c in clean_sentence if c.strip() and not is_punctuation_only(c)]
+    
     words = [w for w in clean_sentence.split() if w.strip()]
     filtered = []
     for w in words:
-        w_clean = w.strip('.,;:!?，。；：！？、')
-        if w_clean and w_clean.lower() not in ('a', 'b', 'c', 'd', 'e'):
+        w_clean = strip_edge_punctuation(w)
+        if w_clean and not is_punctuation_only(w_clean):
             filtered.append(w_clean)
     return filtered
 
@@ -306,22 +323,19 @@ def get_listening_distractors_from_sentences(sentence, all_sentences, correct_lo
         if not other_s or other_s == sentence:
             continue
         other_tr = sd.get("translation_result", {})
-        other_de = other_tr.get("dictionary_entries", [])
-        if other_de and isinstance(other_de, list):
-            for entry in other_de:
-                if not isinstance(entry, dict):
-                    continue
-                for vt in entry.get("tokens", []):
-                    if isinstance(vt, str):
-                        vt_clean = vt.strip('.,;:!?，。；：！？、')
-                        if vt_clean and vt_clean.lower() not in correct_lower_set and vt_clean.lower() not in distractor_set:
-                            distractor_words.append(vt_clean)
-                            distractor_set.add(vt_clean.lower())
-        else:
+        other_translation = other_tr.get("translation", [])
+        if other_translation and isinstance(other_translation, list):
+            for token in other_translation:
+                if isinstance(token, dict) and "text" in token:
+                    vt = token["text"].strip()
+                    if vt and not is_punctuation_only(vt) and vt.lower() not in correct_lower_set and vt.lower() not in distractor_set:
+                        distractor_words.append(vt)
+                        distractor_set.add(vt.lower())
+        if not (other_translation and isinstance(other_translation, list)):
             clean_other = re.sub(r'^[A-Za-z]\s*[:：]\s*', '', other_s)
             for w in clean_other.split():
-                w_clean = w.strip('.,;:!?，。；：！？、')
-                if w_clean and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
+                w_clean = strip_edge_punctuation(w)
+                if w_clean and not is_punctuation_only(w_clean) and w_clean.lower() not in correct_lower_set and w_clean.lower() not in distractor_set:
                     distractor_words.append(w_clean)
                     distractor_set.add(w_clean.lower())
     return distractor_words, distractor_set
@@ -374,6 +388,7 @@ storage = Storage()
 # 存储处理状态
 processing_status = {}
 word_gen_state = {}
+word_gen_rate_limiter = None
 
 
 @app.get("/")
@@ -440,24 +455,25 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             t_extract_end = time.time()
             print(f"[TIMING] 句子 {idx+1} 单词提取: {t_extract_end - t_extract_start:.3f}s")
             
-            dict_entry_words = set()
-            if isinstance(sentence_translation_result, dict) and "dictionary_entries" in sentence_translation_result:
-                dict_entries = sentence_translation_result["dictionary_entries"]
-                if isinstance(dict_entries, str):
-                    try:
-                        dict_entries = json.loads(dict_entries)
-                        sentence_translation_result["dictionary_entries"] = dict_entries
-                    except:
-                        dict_entries = []
-                        sentence_translation_result["dictionary_entries"] = []
-                if isinstance(dict_entries, list):
-                    for entry in dict_entries:
-                        if isinstance(entry, dict) and "word" in entry:
-                            dict_entry_words.add(entry["word"].lower())
-                            for t in entry.get("tokens", []):
-                                dict_entry_words.add(t.lower())
+            translation_words = set()
+            if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
+                for token in sentence_translation_result["translation"]:
+                    if isinstance(token, dict) and "text" in token:
+                        translation_words.add(token["text"].lower())
             
-            missing_words = [w for w in sentence_words if w.lower() not in dict_entry_words]
+            if source_lang in NO_SPACE_LANGUAGES:
+                import re as _re
+                def _norm(text):
+                    return _re.sub(r'[\s\u3000]+', '', _re.sub(r'[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]', '', text)).lower()
+                sentence_norm = _norm(sentence)
+                tokens_norm = _norm(''.join(translation_words))
+                missing_words = [] if tokens_norm == sentence_norm else []
+            else:
+                missing_words = []
+                for w in sentence_words:
+                    w_clean = strip_edge_punctuation(w).lower()
+                    if w_clean and w_clean not in translation_words and not is_punctuation_only(w):
+                        missing_words.append(strip_edge_punctuation(w))
             
             if missing_words:
                 print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
@@ -469,28 +485,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 t_missing_end = time.time()
                 print(f"[TIMING] 句子 {idx+1} 遗漏单词补充LLM调用: {t_missing_end - t_missing_start:.3f}s")
                 if remaining_entries:
-                    if isinstance(sentence_translation_result, dict):
-                        if "dictionary_entries" not in sentence_translation_result:
-                            sentence_translation_result["dictionary_entries"] = []
-                        
-                        if not isinstance(sentence_translation_result["dictionary_entries"], list):
-                            try:
-                                parsed = json.loads(sentence_translation_result["dictionary_entries"])
-                                if isinstance(parsed, list):
-                                    sentence_translation_result["dictionary_entries"] = parsed
-                                else:
-                                    sentence_translation_result["dictionary_entries"] = []
-                            except:
-                                sentence_translation_result["dictionary_entries"] = []
-                        
-                        if isinstance(sentence_translation_result["dictionary_entries"], list):
-                            existing_words_lower = {e.get("word", "").lower() for e in sentence_translation_result["dictionary_entries"] if isinstance(e, dict)}
-                            for entry in remaining_entries:
-                                if isinstance(entry, dict) and "word" in entry:
-                                    if entry["word"].lower() not in existing_words_lower:
-                                        sentence_translation_result["dictionary_entries"].append(entry)
-                                        existing_words_lower.add(entry["word"].lower())
-                    
                     if isinstance(sentence_translation_result, dict) and "translation" in sentence_translation_result:
                         translation_text_lower = []
                         for token in sentence_translation_result["translation"]:
@@ -498,21 +492,17 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                 translation_text_lower.append(token["text"].lower())
                         
                         for entry in remaining_entries:
-                            if isinstance(entry, dict) and "word" in entry:
-                                word = entry["word"]
+                            if isinstance(entry, dict) and "text" in entry:
+                                word = entry["text"]
                                 if word.lower() not in translation_text_lower:
-                                    sentence_translation_result["translation"].append({
-                                        "text": word,
-                                        "translation": entry.get("translation", ""),
-                                        "phonetic": entry.get("ipa", ""),
-                                        "morphology": entry.get("morphology", "")
-                                    })
+                                    sentence_translation_result["translation"].append(entry)
                                     translation_text_lower.append(word.lower())
                     
                     print(f"[DEBUG] 补充了 {len(remaining_entries)} 个遗漏单词")
             
             sentence_data = {
                 "sentence": sentence,
+                "source_lang": source_lang,
                 "translation_result": sentence_translation_result
             }
             t_sentence_end = time.time()
@@ -541,19 +531,18 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             partial_vocab = []
             for si, sd in enumerate(all_completed_translations):
                 tr = sd.get("translation_result", {})
-                if isinstance(tr, dict) and "dictionary_entries" in tr:
-                    de = tr["dictionary_entries"]
-                    if isinstance(de, str):
-                        try:
-                            de = json.loads(de)
-                        except:
-                            continue
-                    if isinstance(de, list):
-                        for entry in de:
-                            if isinstance(entry, dict):
-                                entry_copy = dict(entry)
-                                entry_copy["sentence_index"] = si
-                                partial_vocab.append(entry_copy)
+                if isinstance(tr, dict) and "translation" in tr:
+                    for token in tr["translation"]:
+                        if isinstance(token, dict) and "text" in token:
+                            entry = {
+                                "word": token["text"],
+                                "ipa": token.get("phonetic", ""),
+                                "meaning": token.get("meaning", "") or token.get("context_meaning", ""),
+                                "tokens": [token["text"]],
+                                "morphology": token.get("morphology", ""),
+                                "sentence_index": si
+                            }
+                            partial_vocab.append(entry)
             
             seen = set()
             unique_partial = []
@@ -580,23 +569,33 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         all_vocab = []
         for i, sentence_data in enumerate(sentence_translations):
             translation_result = sentence_data.get("translation_result", {})
-            if isinstance(translation_result, dict) and "dictionary_entries" in translation_result:
-                dictionary_entries = translation_result["dictionary_entries"]
-                if isinstance(dictionary_entries, str):
-                    try:
-                        dictionary_entries = json.loads(dictionary_entries)
-                    except:
-                        continue
-                if isinstance(dictionary_entries, list):
-                    for dict_entry in dictionary_entries:
-                        if isinstance(dict_entry, dict):
-                            dict_entry["sentence_index"] = i
-                            all_vocab.append(dict_entry)
+            if isinstance(translation_result, dict) and "translation" in translation_result:
+                for token in translation_result["translation"]:
+                    if isinstance(token, dict) and "text" in token:
+                        word = token["text"]
+                        if not word or is_punctuation_only(word):
+                            continue
+                        entry = {
+                            "word": word,
+                            "ipa": token.get("phonetic", ""),
+                            "meaning": token.get("meaning", "") or token.get("context_meaning", ""),
+                            "tokens": [word],
+                            "morphology": token.get("morphology", ""),
+                            "sentence_index": i
+                        }
+                        all_vocab.append(entry)
         
         seen = set()
         unique_vocab = []
         for entry in all_vocab:
-            word = entry.get("word", "").lower()
+            word = entry.get("word", "")
+            cleaned = strip_edge_punctuation(word)
+            if cleaned != word:
+                entry["word"] = cleaned
+                tokens = entry.get("tokens", [])
+                if tokens:
+                    entry["tokens"] = [cleaned if t == word else t for t in tokens]
+            word = cleaned.lower()
             if word not in seen and word:
                 seen.add(word)
                 unique_vocab.append(entry)
@@ -639,7 +638,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         if file_id not in word_gen_state:
             word_gen_state[file_id] = {
                 "running": False,
-                "position": 0,
                 "vocab": all_vocab,
                 "priority_queue": [],
                 "task": None,
@@ -649,13 +647,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         state["vocab"] = all_vocab
         if "processing_words" not in state:
             state["processing_words"] = set()
-        for i, word_entry in enumerate(all_vocab):
-            word = word_entry.get("word", "")
-            if word and not storage.load_word_cache(file_id, word):
-                state["position"] = i
-                break
-        else:
-            state["position"] = len(all_vocab)
+        if "plan_position" not in state:
+            state["plan_position"] = 0
         if not state["running"]:
             state["running"] = True
             state["task"] = asyncio.create_task(background_word_gen(file_id))
@@ -679,88 +672,104 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
         return
     processing.add(word_to_gen)
     try:
-        if storage.load_word_cache(file_id, word_to_gen):
-            return
-        word_entry = None
-        for v in vocab:
-            if v.get("word", "").lower() == word_to_gen.lower():
-                word_entry = v
-                break
-        if not word_entry:
-            return
-        sentences = storage.load_pipeline_data(file_id)
-        context = ""
-        context_sentences = []
-        if sentences:
-            has_cjk = any('\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' or '\uac00' <= c <= '\ud7af' for c in word_to_gen[:10])
-            if has_cjk:
-                word_pattern = re.compile(re.escape(word_to_gen), re.IGNORECASE)
-            else:
-                word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
-            for sent_idx, sentence_data in enumerate(sentences):
-                if "sentence" in sentence_data:
-                    if word_pattern.search(sentence_data["sentence"]):
-                        context = sentence_data["sentence"]
-                        translation = ""
-                        if "translation_result" in sentence_data:
-                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                        context_sentences.append({
-                            "sentence": sentence_data["sentence"],
-                            "translation": translation,
-                            "sentence_index": sent_idx
-                        })
-            if not context and sentences:
-                context = sentences[0].get("sentence", "")
-        correct_meaning = word_entry.get("context_meaning", "")
-        if not correct_meaning:
-            if "translation" in word_entry:
-                correct_meaning = word_entry["translation"]
-            elif "meaning" in word_entry:
-                correct_meaning = word_entry["meaning"]
-        print(f"[DEBUG] Background word gen: {word_to_gen}")
-        options_result = await nvidia_api.generate_multiple_choice(
-            word_to_gen,
-            correct_meaning,
-            context,
-            target_lang
-        )
-        
-        placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
-        enriched = options_result.get("enriched_meaning", "")
-        if placeholder_pattern.search(enriched):
-            print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
-            options_result = await nvidia_api.generate_multiple_choice(
-                word_to_gen,
-                correct_meaning,
-                context,
-                target_lang
-            )
-            enriched = options_result.get("enriched_meaning", "")
-            if placeholder_pattern.search(enriched):
-                print(f"[WARN] Still placeholder text after retry for '{word_to_gen}', using fallback")
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                if storage.load_word_cache(file_id, word_to_gen):
+                    return
+                word_entry = None
+                for v in vocab:
+                    if v.get("word", "").lower() == word_to_gen.lower():
+                        word_entry = v
+                        break
+                if not word_entry:
+                    return
+                sentences = storage.load_pipeline_data(file_id)
+                context = ""
+                context_sentences = []
+                if sentences:
+                    has_cjk = any('\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' or '\uac00' <= c <= '\ud7af' for c in word_to_gen[:10])
+                    if has_cjk:
+                        word_pattern = re.compile(re.escape(word_to_gen), re.IGNORECASE)
+                    else:
+                        word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
+                    for sent_idx, sentence_data in enumerate(sentences):
+                        if "sentence" in sentence_data:
+                            if word_pattern.search(sentence_data["sentence"]):
+                                context = sentence_data["sentence"]
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                context_sentences.append({
+                                    "sentence": sentence_data["sentence"],
+                                    "translation": translation,
+                                    "sentence_index": sent_idx
+                                })
+                    if not context and sentences:
+                        context = sentences[0].get("sentence", "")
+                correct_meaning = word_entry.get("meaning", "")
+                if not correct_meaning:
+                    if "translation" in word_entry:
+                        correct_meaning = word_entry["translation"]
+                    elif "context_meaning" in word_entry:
+                        correct_meaning = word_entry["context_meaning"]
+                
+                global word_gen_rate_limiter
+                if word_gen_rate_limiter:
+                    await word_gen_rate_limiter.acquire()
+                
+                print(f"[DEBUG] Background word gen: {word_to_gen} (attempt {attempt + 1})")
+                options_result = await nvidia_api.generate_multiple_choice(
+                    word_to_gen,
+                    correct_meaning,
+                    context,
+                    target_lang
+                )
+                
+                placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
+                enriched = options_result.get("enriched_meaning", "")
                 if placeholder_pattern.search(enriched):
-                    options_result["enriched_meaning"] = correct_meaning
-        
-        options_result = fix_llm_options_result(options_result, source_lang, file_id)
-        cache_data = dict(options_result)
-        cache_data["word"] = options_result.get("word", word_to_gen)
-        cache_data["ipa"] = word_entry.get("ipa", "")
-        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = correct_meaning
-        cache_data["examples"] = options_result.get("examples", [])
-        cache_data["context"] = context
-        cache_data["context_sentences"] = context_sentences
-        cache_data["morphology"] = word_entry.get("morphology", "")
-        cache_data["variants_detail"] = options_result.get("variants_detail", [])
-        cache_data["memory_hint"] = options_result.get("memory_hint", "")
-        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
-        if "context_translations" in cache_data:
-            del cache_data["context_translations"]
-        storage.save_word_cache(file_id, word_to_gen, cache_data)
-        print(f"[DEBUG] Cached word gen: {word_to_gen}")
-    except Exception as e:
-        print(f"[ERROR] Word gen failed for {word_to_gen}: {e}")
+                    print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
+                    if word_gen_rate_limiter:
+                        await word_gen_rate_limiter.acquire()
+                    options_result = await nvidia_api.generate_multiple_choice(
+                        word_to_gen,
+                        correct_meaning,
+                        context,
+                        target_lang
+                    )
+                    enriched = options_result.get("enriched_meaning", "")
+                    if placeholder_pattern.search(enriched):
+                        print(f"[WARN] Still placeholder text after retry for '{word_to_gen}', using fallback")
+                        if placeholder_pattern.search(enriched):
+                            options_result["enriched_meaning"] = correct_meaning
+                
+                options_result = fix_llm_options_result(options_result, source_lang, file_id)
+                cache_data = dict(options_result)
+                cache_data["word"] = options_result.get("word", word_to_gen)
+                cache_data["ipa"] = word_entry.get("ipa", "")
+                cache_data["meaning"] = correct_meaning
+                cache_data["examples"] = options_result.get("examples", [])
+                cache_data["context"] = context
+                cache_data["context_sentences"] = context_sentences
+                cache_data["morphology"] = word_entry.get("morphology", "")
+                cache_data["variants_detail"] = options_result.get("variants_detail", [])
+                cache_data["memory_hint"] = options_result.get("memory_hint", "")
+                cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
+                cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+                if "context_translations" in cache_data:
+                    del cache_data["context_translations"]
+                storage.save_word_cache(file_id, word_to_gen, cache_data)
+                print(f"[DEBUG] Cached word gen: {word_to_gen}")
+                return
+            except Exception as e:
+                print(f"[ERROR] Word gen failed for {word_to_gen} (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    retry_delay = 5 * (attempt + 1)
+                    print(f"[DEBUG] Retrying {word_to_gen} in {retry_delay}s...")
+                    await asyncio.sleep(retry_delay)
+                else:
+                    print(f"[ERROR] Word gen permanently failed for {word_to_gen} after {max_retries} attempts")
     finally:
         processing.discard(word_to_gen)
 
@@ -774,14 +783,50 @@ async def background_word_gen(file_id: str):
     source_lang = language_settings.get("source_lang", "en")
     vocab = state["vocab"]
 
+    plan = storage.load_learning_plan(file_id)
+    plan_word_order = []
+    if plan:
+        seen_vocab_indices = set()
+        for unit_id in sorted(plan.keys()):
+            items = plan[unit_id].get("items", [])
+            for item in items:
+                vi = item.get("vocab_index")
+                if vi is not None and vi not in seen_vocab_indices:
+                    seen_vocab_indices.add(vi)
+                    plan_word_order.append(vi)
+        for i in range(len(vocab)):
+            if i not in seen_vocab_indices:
+                plan_word_order.append(i)
+
+    if not plan_word_order:
+        plan_word_order = list(range(len(vocab)))
+
+    if "plan_position" not in state:
+        state["plan_position"] = 0
+        for pi, vi in enumerate(plan_word_order):
+            if vi < len(vocab):
+                w = vocab[vi].get("word", "")
+                if w and not storage.load_word_cache(file_id, w):
+                    state["plan_position"] = pi
+                    break
+        else:
+            state["plan_position"] = len(plan_word_order)
+
+    global word_gen_rate_limiter
+    if not word_gen_rate_limiter:
+        app_settings = storage.load_user_preferences()
+        rpm = app_settings.get("rpm", 60)
+        word_gen_rate_limiter = RateLimiter(rpm)
+
     while state["running"]:
         word_to_gen = None
         if state["priority_queue"]:
             word_to_gen = state["priority_queue"].pop(0)
-        elif state["position"] < len(vocab):
-            word_entry = vocab[state["position"]]
-            word_to_gen = word_entry.get("word", "")
-            state["position"] += 1
+        elif state["plan_position"] < len(plan_word_order):
+            vocab_idx = plan_word_order[state["plan_position"]]
+            state["plan_position"] += 1
+            if vocab_idx < len(vocab):
+                word_to_gen = vocab[vocab_idx].get("word", "")
 
         if not word_to_gen:
             await asyncio.sleep(1)
@@ -795,7 +840,7 @@ async def background_word_gen(file_id: str):
             continue
 
         asyncio.create_task(process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang))
-        await asyncio.sleep(3.0)
+        await asyncio.sleep(0.1)
 
     state["task"] = None
 
@@ -824,7 +869,10 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
             continue
         
         sentence = sentence_data["sentence"]
-        word_count = len(sentence.split())
+        if source_lang in NO_SPACE_LANGUAGES:
+            word_count = len(sentence.replace(' ', ''))
+        else:
+            word_count = len(sentence.split())
         if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
             continue
         
@@ -858,7 +906,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
         for token in translation_tokens:
             if isinstance(token, dict) and "text" in token:
                 token_text = token["text"]
-                token_translation = token.get("translation", "")
+                token_translation = token.get("meaning", "")
                 token_morphology = token.get("morphology", "")
                 if len(token_text) <= 2 and not token_translation and not token_morphology:
                     continue
@@ -1005,6 +1053,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                     unit_quiz_items.append({
                         "type": "listening_quiz",
                         "sentence": sentence,
+                        "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', sentence),
                         "correct_words": sentence_words_display,
                         "distractor_words": distractor_words,
                         "_last_covering_shuffled_pos": last_pos
@@ -1075,7 +1124,7 @@ async def generate_title(text: str, source_lang: str) -> str:
     try:
         messages = [
             {"role": "system", "content": "You are a title generator. Generate a very short title (max 20 characters) that summarizes the given text. If the text already has a clear title in the first line, use that as the title. Output ONLY the title, nothing else."},
-            {"role": "user", "content": f"Generate a short title for this text (language: {source_lang}):\n\n{text[:500]}"}
+            {"role": "user", "content": f"Generate a short title for this text (language: {get_lang_name(source_lang)}):\n\n{text[:500]}"}
         ]
         result = await nvidia_api.call_minimax(messages, temperature=0.3)
         title = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
@@ -1097,12 +1146,23 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
         
+        if source_lang == "auto":
+            source_lang = await detect_language(text)
+        
         import datetime
         now = datetime.datetime.now()
         file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
         
-        app_settings = storage.load_app_settings()
+        app_settings = storage.load_user_preferences()
         rpm = app_settings.get("rpm", 60)
+        
+        recent_langs = app_settings.get("recent_languages", [])
+        if source_lang in recent_langs:
+            recent_langs.remove(source_lang)
+        recent_langs.insert(0, source_lang)
+        recent_langs = recent_langs[:10]
+        app_settings["recent_languages"] = recent_langs
+        storage.save_user_preferences(app_settings)
         
         t_title_start = time.time()
         title = await generate_title(text, source_lang)
@@ -1143,7 +1203,6 @@ async def start_word_gen(file_id: str):
         if file_id not in word_gen_state:
             word_gen_state[file_id] = {
                 "running": False,
-                "position": 0,
                 "vocab": vocab,
                 "priority_queue": [],
                 "task": None,
@@ -1155,13 +1214,8 @@ async def start_word_gen(file_id: str):
         if "processing_words" not in state:
             state["processing_words"] = set()
 
-        for i, word_entry in enumerate(vocab):
-            word = word_entry.get("word", "")
-            if word and not storage.load_word_cache(file_id, word):
-                state["position"] = i
-                break
-        else:
-            state["position"] = len(vocab)
+        if "plan_position" not in state:
+            state["plan_position"] = 0
 
         if state["running"]:
             return {"status": "already_running"}
@@ -1205,7 +1259,6 @@ async def priority_word_gen(file_id: str, request: dict):
         if file_id not in word_gen_state:
             word_gen_state[file_id] = {
                 "running": False,
-                "position": 0,
                 "vocab": vocab,
                 "priority_queue": [],
                 "task": None,
@@ -1216,9 +1269,18 @@ async def priority_word_gen(file_id: str, request: dict):
         state["vocab"] = vocab
         if "processing_words" not in state:
             state["processing_words"] = set()
+        if "plan_position" not in state:
+            state["plan_position"] = 0
 
-        if word not in state["priority_queue"]:
-            state["priority_queue"].append(word)
+        if storage.load_word_cache(file_id, word):
+            return {"status": "already_cached"}
+
+        processing = state.get("processing_words", set())
+        if word.lower() in {w.lower() for w in processing}:
+            return {"status": "already_processing"}
+
+        state["priority_queue"] = [w for w in state["priority_queue"] if w.lower() != word.lower()]
+        state["priority_queue"].insert(0, word)
 
         if not state["running"]:
             state["running"] = True
@@ -1315,6 +1377,7 @@ async def get_random_word(file_id: str):
                     rnd.shuffle(tokens)
                     return {
                         "type": "sentence_quiz",
+                        "flat_index": current_index,
                         "original_sentence": current_item["sentence"],
                         "correct_translation": current_item.get("correct_translation", ""),
                         "correct_tokens": current_item.get("correct_tokens", []),
@@ -1378,7 +1441,9 @@ async def get_random_word(file_id: str):
                     rnd.shuffle(options)
                     return {
                         "type": "listening_quiz",
+                        "flat_index": current_index,
                         "original_sentence": correct_sentence,
+                        "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', correct_sentence),
                         "correct_words": sentence_words_display,
                         "options": options,
                         "unit_end_index": unit_end_index,
@@ -1402,52 +1467,127 @@ async def get_random_word(file_id: str):
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取随机单词信息: {word}")
-            # 构建学习模式响应
+            mc = cached_word.get("multiple_choice", {})
+            mc_options = []
+            if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+            if not mc_options:
+                print(f"[DEBUG] 缓存中 MC 选项为空或无效，清除缓存重新生成: {word}")
+                storage.delete_word_cache(file_id, word)
+            else:
+                options = []
+                correct_index = 0
+                for i, opt in enumerate(mc_options):
+                    options.append(opt["text"])
+                    if opt.get("is_correct"):
+                        correct_index = i
+                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
+                    for i, opt in enumerate(mc_options):
+                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
+                            correct_index = i
+                            break
+                
+                asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
+                
+                context_sents = cached_word.get("context_sentences", [])
+                needs_rebuild = False
+                for cs in context_sents:
+                    if isinstance(cs, dict) and "sentence_index" not in cs:
+                        needs_rebuild = True
+                        break
+                    if isinstance(cs, str):
+                        needs_rebuild = True
+                        break
+                
+                if needs_rebuild or not context_sents:
+                    all_sentences = storage.load_pipeline_data(file_id)
+                    if all_sentences:
+                        import re as re_mod
+                        word_pattern = re_mod.compile(r'\b' + re_mod.escape(word) + r'\b', re_mod.IGNORECASE)
+                        rebuilt = []
+                        for sent_idx, sentence_data in enumerate(all_sentences):
+                            if "sentence" in sentence_data:
+                                if word_pattern.search(sentence_data["sentence"]):
+                                    translation = ""
+                                    if "translation_result" in sentence_data:
+                                        translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                    rebuilt.append({
+                                        "sentence": sentence_data["sentence"],
+                                        "translation": translation,
+                                        "sentence_index": sent_idx
+                                    })
+                        context_sents = rebuilt
+                        cached_word["context_sentences"] = rebuilt
+                        storage.save_word_cache(file_id, word, cached_word)
+                
+                return {
+                    "word": cached_word.get("word", word),
+                    "ipa": cached_word.get("ipa", ""),
+                    "correct_meaning": cached_word.get("meaning", ""),
+                    "options": options,
+                    "correct_index": correct_index,
+                    "context": cached_word.get("context", ""),
+                    "context_sentences": context_sents,
+                    "variants_detail": cached_word.get("variants_detail", []),
+                    "examples": cached_word.get("examples", []),
+                    "memory_hint": cached_word.get("memory_hint", ""),
+                    "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
+                    "context_meaning": cached_word.get("meaning", cached_word.get("context_meaning", "")),
+                    "unit_end_index": unit_end_index,
+                    "current_index": current_index,
+                    "unit_start_index": unit_start_index,
+                    "total_items_in_unit": total_items_in_unit,
+                        "listening_count_in_unit": listening_count_in_unit,
+                    "step_in_unit": step_in_unit
+                }
+        
+        # 无缓存：触发优先生成并等待缓存
+        print(f"[DEBUG] 单词无缓存，触发优先生成: {word}")
+        state = word_gen_state.get(file_id)
+        if state:
+            state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
+            state["priority_queue"].insert(0, word)
+            if not state.get("running"):
+                state["running"] = True
+                state["task"] = asyncio.create_task(background_word_gen(file_id))
+        else:
+            word_gen_state[file_id] = {
+                "running": True,
+                "vocab": vocab,
+                "priority_queue": [word],
+                "task": asyncio.create_task(background_word_gen(file_id)),
+                "processing_words": set()
+            }
+        
+        for _ in range(60):
+            await asyncio.sleep(1)
+            cached_word = storage.load_word_cache(file_id, word)
+            if cached_word:
+                mc = cached_word.get("multiple_choice", {})
+                mc_options = []
+                if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                    mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+                if mc_options:
+                    break
+        
+        if cached_word and isinstance(cached_word.get("multiple_choice"), dict):
+            mc = cached_word["multiple_choice"]
+            mc_options = [o for o in mc.get("options", []) if isinstance(o, dict) and "text" in o]
             options = []
             correct_index = 0
-            if "multiple_choice" in cached_word and "options" in cached_word["multiple_choice"]:
-                for i, opt in enumerate(cached_word["multiple_choice"]["options"]):
-                    options.append(opt["text"])
-                    if opt["is_correct"]:
+            for i, opt in enumerate(mc_options):
+                options.append(opt["text"])
+                if opt.get("is_correct"):
+                    correct_index = i
+            if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
+                for i, opt in enumerate(mc_options):
+                    if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
                         correct_index = i
-            else:
-                fallback_opts = get_fallback_options(cached_word.get("meaning", ""), file_id, 3)
-                options = [cached_word.get("meaning", "")] + fallback_opts
-                correct_index = 0
-            
-            # 启动后台任务预生成下一个单词
-            asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
+                        break
             
             context_sents = cached_word.get("context_sentences", [])
-            needs_rebuild = False
-            for cs in context_sents:
-                if isinstance(cs, dict) and "sentence_index" not in cs:
-                    needs_rebuild = True
-                    break
-                if isinstance(cs, str):
-                    needs_rebuild = True
-                    break
             
-            if needs_rebuild or not context_sents:
-                all_sentences = storage.load_pipeline_data(file_id)
-                if all_sentences:
-                    import re as re_mod
-                    word_pattern = re_mod.compile(r'\b' + re_mod.escape(word) + r'\b', re_mod.IGNORECASE)
-                    rebuilt = []
-                    for sent_idx, sentence_data in enumerate(all_sentences):
-                        if "sentence" in sentence_data:
-                            if word_pattern.search(sentence_data["sentence"]):
-                                translation = ""
-                                if "translation_result" in sentence_data:
-                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                                rebuilt.append({
-                                    "sentence": sentence_data["sentence"],
-                                    "translation": translation,
-                                    "sentence_index": sent_idx
-                                })
-                    context_sents = rebuilt
-                    cached_word["context_sentences"] = rebuilt
-                    storage.save_word_cache(file_id, word, cached_word)
+            asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
             
             return {
                 "word": cached_word.get("word", word),
@@ -1461,114 +1601,44 @@ async def get_random_word(file_id: str):
                 "examples": cached_word.get("examples", []),
                 "memory_hint": cached_word.get("memory_hint", ""),
                 "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
-                "context_meaning": cached_word.get("context_meaning", cached_word.get("meaning", "")),
+                "context_meaning": cached_word.get("meaning", cached_word.get("context_meaning", "")),
                 "unit_end_index": unit_end_index,
                 "current_index": current_index,
                 "unit_start_index": unit_start_index,
                 "total_items_in_unit": total_items_in_unit,
-                        "listening_count_in_unit": listening_count_in_unit,
+                "listening_count_in_unit": listening_count_in_unit,
                 "step_in_unit": step_in_unit
             }
         
-        # 构建上下文（包含翻译）
-        sentences = storage.load_pipeline_data(file_id)
-        context = ""
-        context_sentences = []
-        if sentences:
-            import re
-            word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
-            for sent_idx, sentence_data in enumerate(sentences):
-                if "sentence" in sentence_data:
-                    if word_pattern.search(sentence_data["sentence"]):
-                        context = sentence_data["sentence"]
-                        translation = ""
-                        if "translation_result" in sentence_data:
-                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                        context_sentences.append({
-                            "sentence": sentence_data["sentence"],
-                            "translation": translation,
-                            "sentence_index": sent_idx
-                        })
-            if not context and sentences:
-                context = sentences[0].get("sentence", "")
-        
-        # 生成选项
-        correct_meaning = random_word.get("context_meaning", "")
-        
+        # 超时仍未获得缓存，返回基本数据
+        print(f"[WARN] 等待单词缓存超时: {word}")
+        correct_meaning = random_word.get("meaning", "")
         if not correct_meaning:
-            # 尝试从其他字段获取释义
-            if "translation" in random_word:
+            if "context_meaning" in random_word:
+                correct_meaning = random_word["context_meaning"]
+            elif "translation" in random_word:
                 correct_meaning = random_word["translation"]
-            elif "meaning" in random_word:
-                correct_meaning = random_word["meaning"]
         
-        options_result = await nvidia_api.generate_multiple_choice(
-            word,
-            correct_meaning,
-            context,
-            target_lang
-        )
-        options_result = fix_llm_options_result(options_result, source_lang, file_id)
-        
-        # 提取选项和正确索引
-        options = []
-        correct_index = 0
-        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
-            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
-                options.append(opt["text"])
-                if opt["is_correct"]:
-                    correct_index = i
-        else:
-            fallback_opts = get_fallback_options(correct_meaning, file_id, 3)
-            options = options_result.get("options", [correct_meaning] + fallback_opts)
-            correct_index = options_result.get("correct_index", 0)
-        
-        # 构建响应数据
-        response_data = {
-            "word": options_result.get("word", word),
+        return {
+            "word": word,
             "ipa": random_word.get("ipa", ""),
-            "correct_meaning": options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning)),
-            "options": options,
-            "correct_index": correct_index,
-            "context": context,
-            "variants_detail": options_result.get("variants_detail", []),
-            "examples": options_result.get("examples", []),
-            "memory_hint": options_result.get("memory_hint", ""),
-            "enriched_meaning": options_result.get("enriched_meaning", correct_meaning),
-            "context_meaning": correct_meaning,
+            "correct_meaning": correct_meaning,
+            "options": [correct_meaning, "—", "—", "—"],
+            "correct_index": 0,
+            "context": "",
+            "context_sentences": [],
+            "variants_detail": [],
+            "examples": [],
+            "memory_hint": "",
+            "enriched_meaning": correct_meaning,
+            "meaning": correct_meaning,
             "unit_end_index": unit_end_index,
             "current_index": current_index,
             "unit_start_index": unit_start_index,
             "total_items_in_unit": total_items_in_unit,
-                        "listening_count_in_unit": listening_count_in_unit,
+            "listening_count_in_unit": listening_count_in_unit,
             "step_in_unit": step_in_unit
         }
-        
-        # 构建缓存数据
-        cache_data = dict(options_result)
-        cache_data["word"] = options_result.get("word", word)
-        cache_data["ipa"] = random_word.get("ipa", "")
-        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = correct_meaning
-        cache_data["examples"] = options_result.get("examples", [])
-        cache_data["context"] = context
-        cache_data["context_sentences"] = context_sentences
-        cache_data["morphology"] = random_word.get("morphology", "")
-        cache_data["variants_detail"] = options_result.get("variants_detail", [])
-        cache_data["memory_hint"] = options_result.get("memory_hint", "")
-        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
-        if "context_translations" in cache_data:
-            del cache_data["context_translations"]
-        
-        # 缓存结果
-        storage.save_word_cache(file_id, word, cache_data)
-        print(f"[DEBUG] 缓存随机单词信息: {word}")
-        
-        # 启动后台任务预生成下一个单词
-        asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
-        
-        return response_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting random word: {str(e)}")
 
@@ -1599,7 +1669,8 @@ async def next_word(file_id: str):
                     "success": True,
                     "type": "unit_complete",
                     "new_index": current_unit_end,
-                    "unit_end_index": current_unit_end
+                    "unit_end_index": current_unit_end,
+                    "completed_unit_id": current_unit_id
                 }
         
         new_index = current_index + 1
@@ -1625,6 +1696,7 @@ async def next_word(file_id: str):
                         "new_index": new_index,
                         "unit_end_index": unit_end_index,
                         "sentence_quiz": {
+                            "flat_index": new_index,
                             "original_sentence": next_item["sentence"],
                             "correct_translation": next_item.get("correct_translation", ""),
                             "correct_tokens": next_item.get("correct_tokens", []),
@@ -1689,7 +1761,9 @@ async def next_word(file_id: str):
                         "new_index": new_index,
                         "unit_end_index": unit_end_index,
                         "listening_quiz": {
+                            "flat_index": new_index,
                             "original_sentence": correct_sentence,
+                            "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', correct_sentence),
                             "correct_words": sentence_words_display,
                             "options": options,
                             "step_in_unit": step_in_unit,
@@ -1790,14 +1864,14 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
                 context = sentences[0].get("sentence", "")
         
         # 生成选项
-        correct_meaning = random_word.get("context_meaning", "")
+        correct_meaning = random_word.get("meaning", "")
         
         if not correct_meaning:
             # 尝试从其他字段获取释义
-            if "translation" in random_word:
+            if "context_meaning" in random_word:
+                correct_meaning = random_word["context_meaning"]
+            elif "translation" in random_word:
                 correct_meaning = random_word["translation"]
-            elif "meaning" in random_word:
-                correct_meaning = random_word["meaning"]
         
         print(f"[DEBUG] 后台预生成单词信息: {word}")
         
@@ -1814,8 +1888,7 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         cache_data = dict(options_result)
         cache_data["word"] = options_result.get("word", word)
         cache_data["ipa"] = random_word.get("ipa", "")
-        cache_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        cache_data["context_meaning"] = correct_meaning
+        cache_data["meaning"] = correct_meaning
         cache_data["examples"] = options_result.get("examples", [])
         cache_data["context"] = context
         cache_data["context_sentences"] = context_sentences
@@ -1839,21 +1912,39 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
 async def get_word_details(file_id: str, word: str):
     try:
         print(f"[DEBUG] 获取单词详情: {word}")
+        language_settings = storage.load_language_settings(file_id)
+        source_lang = language_settings.get("source_lang", "en")
+        target_lang = language_settings["target_lang"]
+        
         # 先检查缓存
         cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             print(f"[DEBUG] 从缓存中获取单词信息: {word}")
-            if "multiple_choice" in cached_word and "options" not in cached_word:
+            cached_word = fix_llm_options_result(cached_word, source_lang, file_id)
+            mc = cached_word.get("multiple_choice", {})
+            mc_options = []
+            placeholder_check = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+            if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o and not placeholder_check.match(o["text"].strip())]
+            if not mc_options:
+                print(f"[DEBUG] 缓存中 MC 选项为空或无效，清除缓存重新生成: {word}")
+                storage.delete_word_cache(file_id, word)
+                cached_word = None
+        if cached_word:
+            if "options" not in cached_word:
                 options = []
                 correct_index = 0
-                if "options" in cached_word["multiple_choice"]:
-                    for i, opt in enumerate(cached_word["multiple_choice"]["options"]):
-                        options.append(opt["text"])
-                        if opt["is_correct"]:
+                for i, opt in enumerate(mc_options):
+                    options.append(opt["text"])
+                    if opt.get("is_correct"):
+                        correct_index = i
+                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
+                    for i, opt in enumerate(mc_options):
+                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
                             correct_index = i
-                    cached_word["options"] = options
-                    cached_word["correct_index"] = correct_index
-                    print(f"[DEBUG] 从 multiple_choice 提取 options: {options}")
+                            break
+                cached_word["options"] = options
+                cached_word["correct_index"] = correct_index
             
             context_sents = cached_word.get("context_sentences", [])
             needs_rebuild = False
@@ -1887,121 +1978,64 @@ async def get_word_details(file_id: str, word: str):
             
             return cached_word
 
-        vocab = storage.load_vocab(file_id)
-        if not vocab:
-            raise HTTPException(status_code=404, detail="Vocab not found")
-
-        # 查找单词
-        word_data = None
-        for entry in vocab:
-            print(f"[DEBUG] 检查词汇表条目: {entry['word']}")
-            if entry["word"].lower() == word.lower():
-                word_data = entry
-                print(f"[DEBUG] 找到单词: {word}")
-                break
-
-        if not word_data:
-            print(f"[DEBUG] 未找到单词: {word}")
-            raise HTTPException(status_code=404, detail="Word not found")
-
-        # 构建上下文（包含翻译）
-        sentences = storage.load_pipeline_data(file_id)
-        context = ""
-        context_sentences = []
-        context_sentences_with_translations = []
-        if sentences:
-            import re
-            word_pattern = re.compile(r'\b' + re.escape(word_data["word"]) + r'\b', re.IGNORECASE)
-            
-            for sent_idx, sentence_data in enumerate(sentences):
-                if "sentence" in sentence_data:
-                    sentence = sentence_data["sentence"]
-                    if word_pattern.search(sentence):
-                        context_sentences.append(sentence)
-                        translation = ""
-                        if "translation_result" in sentence_data:
-                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                        context_sentences_with_translations.append({
-                            "sentence": sentence,
-                            "translation": translation,
-                            "sentence_index": sent_idx
-                        })
-            
-            if context_sentences:
-                context = context_sentences[0]
-            
-            if not context and sentences:
-                context = sentences[0].get("sentence", "")
-
-        # 加载语言设置
-        language_settings = storage.load_language_settings(file_id)
-        target_lang = language_settings["target_lang"]
-        source_lang = language_settings.get("source_lang", "en")
-
-        correct_meaning = word_data.get("context_meaning", "")
-
-        if not correct_meaning:
-            # 尝试从其他字段获取释义
-            if "translation" in word_data:
-                correct_meaning = word_data["translation"]
-            elif "meaning" in word_data:
-                correct_meaning = word_data["meaning"]
-
-        # 调用generate_multiple_choice获取丰富的单词信息
-        options_result = await nvidia_api.generate_multiple_choice(
-            word_data["word"],
-            correct_meaning,
-            context,
-            target_lang
-        )
-        options_result = fix_llm_options_result(options_result, source_lang, file_id)
-        
-        # 提取选项和正确索引
-        options = []
-        correct_index = 0
-        if "multiple_choice" in options_result and "options" in options_result["multiple_choice"]:
-            for i, opt in enumerate(options_result["multiple_choice"]["options"]):
-                options.append(opt["text"])
-                if opt["is_correct"]:
-                    correct_index = i
+        # 无缓存：触发优先生成并等待
+        print(f"[DEBUG] 单词详情无缓存，触发优先生成: {word}")
+        state = word_gen_state.get(file_id)
+        if state:
+            state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
+            state["priority_queue"].insert(0, word)
+            if not state.get("running"):
+                state["running"] = True
+                state["task"] = asyncio.create_task(background_word_gen(file_id))
         else:
-            fallback_opts = get_fallback_options(correct_meaning, file_id, 3)
-            options = options_result.get("options", [correct_meaning] + fallback_opts)
-            correct_index = options_result.get("correct_index", 0)
+            vocab = storage.load_vocab(file_id)
+            word_gen_state[file_id] = {
+                "running": True,
+                "vocab": vocab or [],
+                "priority_queue": [word],
+                "task": asyncio.create_task(background_word_gen(file_id)),
+                "processing_words": set()
+            }
         
-        # 构建响应数据（同时支持单词详情和学习模式）
-        print(f"[DEBUG] options_result keys: {list(options_result.keys())}")
-        print(f"[DEBUG] options_result['context_sentences']: {options_result.get('context_sentences')}")
-        print(f"[DEBUG] context_sentences_with_translations: {context_sentences_with_translations}")
-        # 先构建 response_data 完全 manually, to avoid issues
-        response_data = {}
-        response_data["word"] = options_result.get("word", word_data["word"])
-        response_data["ipa"] = word_data.get("ipa", "")
-        response_data["meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        response_data["correct_meaning"] = options_result.get("correct_answer", options_result.get("enriched_meaning", correct_meaning))
-        response_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
-        response_data["context_meaning"] = correct_meaning
-        response_data["examples"] = options_result.get("examples", [])
-        response_data["context_sentences"] = context_sentences_with_translations
-        response_data["context"] = context
-        response_data["morphology"] = word_data.get("morphology", "")
-        response_data["variants_detail"] = options_result.get("variants_detail", [])
-        response_data["memory_hint"] = options_result.get("memory_hint", "")
-        response_data["options"] = options
-        response_data["correct_index"] = correct_index
-        response_data["multiple_choice"] = options_result.get("multiple_choice", {})
-        # Add any other keys from options_result except context_sentences, context_translations
-        for key, value in options_result.items():
-            if key not in response_data and key not in ["context_translations"]:
-                response_data[key] = value
-        print(f"[DEBUG] response_data['context_sentences']: {response_data['context_sentences']}")
+        for _ in range(60):
+            await asyncio.sleep(1)
+            cached_word = storage.load_word_cache(file_id, word)
+            if cached_word:
+                mc = cached_word.get("multiple_choice", {})
+                mc_options = []
+                if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                    mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+                if mc_options:
+                    break
         
-        # 缓存结果
-        storage.save_word_cache(file_id, word, response_data)
-        print(f"[DEBUG] 缓存单词信息: {word}")
+        if cached_word:
+            cached_word = fix_llm_options_result(cached_word, source_lang, file_id)
+            mc = cached_word.get("multiple_choice", {})
+            mc_options = []
+            placeholder_check = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+            if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o and not placeholder_check.match(o["text"].strip())]
+            if mc_options:
+                options = []
+                correct_index = 0
+                for i, opt in enumerate(mc_options):
+                    options.append(opt["text"])
+                    if opt.get("is_correct"):
+                        correct_index = i
+                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
+                    for i, opt in enumerate(mc_options):
+                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
+                            correct_index = i
+                            break
+                cached_word["options"] = options
+                cached_word["correct_index"] = correct_index
+                return cached_word
         
-        return response_data
+        raise HTTPException(status_code=404, detail="Word detail generation timed out")
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"[ERROR] 获取单词详情失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error getting word details: {str(e)}")
 
 
@@ -2080,14 +2114,14 @@ async def get_unit_words(file_id: str, unit_id: int):
                     # 如果没找到，使用第一个句子作为上下文
                     context = sentences[0].get("sentence", "")
             
-            correct_meaning = word_data.get("context_meaning", "")
+            correct_meaning = word_data.get("meaning", "")
             
             if not correct_meaning:
                 # 尝试从其他字段获取释义
-                if "translation" in word_data:
+                if "context_meaning" in word_data:
+                    correct_meaning = word_data["context_meaning"]
+                elif "translation" in word_data:
                     correct_meaning = word_data["translation"]
-                elif "meaning" in word_data:
-                    correct_meaning = word_data["meaning"]
             
             # 调用generate_multiple_choice获取丰富的单词信息
             options_result = await nvidia_api.generate_multiple_choice(
@@ -2194,7 +2228,10 @@ async def check_coverage(file_id: str):
             if "sentence" in sentence_data:
                 sentence = sentence_data["sentence"]
                 
-                word_count = len(sentence.split())
+                if source_lang in NO_SPACE_LANGUAGES:
+                    word_count = len(sentence.replace(' ', ''))
+                else:
+                    word_count = len(sentence.split())
                 if word_count > MAX_SENTENCE_WORDS_FOR_QUIZ:
                     continue
                 
@@ -2529,12 +2566,22 @@ async def get_phase_units(file_id: str, phase_number: int):
                 end_index = accumulated + len(items)
                 word_count = sum(1 for item in items if item["type"] == "word")
                 completed = max_index >= end_index
+                word_items = [item for item in items if item["type"] == "word"]
+                all_words_cached = True
+                for item in word_items:
+                    vi = item.get("vocab_index")
+                    if vi is not None and vi < len(vocab):
+                        w = vocab[vi].get("word", "")
+                        if w and not storage.load_word_cache(file_id, w):
+                            all_words_cached = False
+                            break
                 phase1_units.append({
                     "word_count": word_count,
                     "exercises_count": len(items),
                     "completed": completed,
                     "start_index": start_index,
-                    "end_index": end_index
+                    "end_index": end_index,
+                    "generating": not all_words_cached
                 })
                 accumulated += len(items)
             
@@ -2555,7 +2602,8 @@ async def get_phase_units(file_id: str, phase_number: int):
                         "exercises_count": unit["exercises_count"],
                         "completed": unit["completed"],
                         "start_index": unit["start_index"],
-                        "end_index": unit["end_index"]
+                        "end_index": unit["end_index"],
+                        "generating": unit["generating"]
                     }
                     for i, unit in enumerate(phase1_units)
                 ],
@@ -2698,13 +2746,18 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             if "translation" in translation_result:
                 for token in translation_result["translation"]:
                     if isinstance(token, dict) and "text" in token:
-                        translation_tokens.append(token["text"])
+                        token_text = token["text"]
+                        if not is_punctuation_only(token_text) and not is_speaker_label(token_text):
+                            translation_tokens.append(token_text)
             
             exercise_index_in_unit = current_exercise_index - exercise_start
             total_exercises_in_unit = exercise_end - exercise_start
             
             if type_idx < 3:
-                word_count = len(current_sentence.split())
+                if source_lang in NO_SPACE_LANGUAGES:
+                    word_count = len(current_sentence.replace(' ', ''))
+                else:
+                    word_count = len(current_sentence.split())
                 if word_count < 3:
                     type_idx = 3
             
@@ -2734,27 +2787,16 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 tokenized_translation = translation_result.get("tokenized_translation", "")
                 
                 original_tokens = []
+                
                 if "translation" in translation_result:
                     for token in translation_result["translation"]:
                         if isinstance(token, dict) and "text" in token:
-                            original_tokens.append(token["text"])
+                            token_text = strip_edge_punctuation(token["text"].strip())
+                            if token_text and not is_punctuation_only(token_text) and not is_speaker_label(token_text):
+                                original_tokens.append(token_text)
                 
                 if not original_tokens:
-                    dict_entries = translation_result.get("dictionary_entries", [])
-                    if dict_entries and isinstance(dict_entries, list):
-                        seen = set()
-                        for entry in dict_entries:
-                            if isinstance(entry, dict) and "tokens" in entry:
-                                for t in entry.get("tokens", []):
-                                    if isinstance(t, str) and t.strip() and t.lower() not in seen:
-                                        original_tokens.append(t.strip())
-                                        seen.add(t.lower())
-                    
-                    if not original_tokens:
-                        original_tokens = text_processor.tokenize_sentence(current_sentence)
-                    
-                    if not original_tokens:
-                        original_tokens = text_processor.tokenize_sentence(current_sentence)
+                    original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)
                 
                 import random
                 distractors = []
@@ -2983,7 +3025,7 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
             cached = storage.load_word_cache(file_id, word)
 
             ipa = entry.get("ipa", "")
-            meaning = entry.get("context_meaning", "") or entry.get("translation", "")
+            meaning = entry.get("meaning", "") or entry.get("context_meaning", "")
             part_of_speech = entry.get("morphology", "")
             examples = []
             memory_hint = ""
@@ -2993,8 +3035,8 @@ async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional
                 if cached.get("ipa"):
                     ipa = cached["ipa"]
                 meaning = cached.get("enriched_meaning", "") or cached.get("meaning", "") or meaning
-                if cached.get("context_meaning") and not meaning:
-                    meaning = cached["context_meaning"]
+                if cached.get("meaning") and not meaning:
+                    meaning = cached["meaning"]
                 if cached.get("examples"):
                     examples = cached["examples"]
                 if cached.get("memory_hint"):
@@ -3092,71 +3134,124 @@ async def get_history():
 @app.get("/api/settings")
 async def get_llm_settings():
     try:
-        settings = get_settings()
-        masked_key = settings.get("api_key", "")
-        if masked_key and len(masked_key) > 8:
-            masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+        from nvidia_api import get_settings as get_llm_settings_raw
+        settings = get_llm_settings_raw()
+        configs = settings.get("configs", [])
+        active_index = settings.get("active_index", 0)
+        masked_configs = []
+        for cfg in configs:
+            masked_key = cfg.get("api_key", "")
+            if masked_key and len(masked_key) > 8:
+                masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+            masked_configs.append({
+                "api_key": masked_key,
+                "base_url": cfg.get("base_url", ""),
+                "model": cfg.get("model", ""),
+                "has_key": bool(cfg.get("api_key", ""))
+            })
         return {
-            "api_key": masked_key,
-            "base_url": settings.get("base_url", ""),
-            "model": settings.get("model", ""),
-            "has_key": bool(settings.get("api_key", ""))
+            "configs": masked_configs,
+            "active_index": active_index
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class SettingsUpdate(BaseModel):
+class ConfigItem(BaseModel):
     api_key: Optional[str] = None
     base_url: Optional[str] = None
     model: Optional[str] = None
+
+class SettingsUpdate(BaseModel):
+    configs: Optional[List[ConfigItem]] = None
+    active_index: Optional[int] = None
 
 
 @app.post("/api/settings")
 async def update_llm_settings(req: SettingsUpdate):
     try:
-        current = get_settings()
-        api_key = req.api_key if req.api_key and not req.api_key.startswith("****") else None
-        base_url = req.base_url if req.base_url else None
-        model = req.model if req.model else None
-        new_settings = update_settings(api_key=api_key, base_url=base_url, model=model)
-        masked_key = new_settings.get("api_key", "")
-        if masked_key and len(masked_key) > 8:
-            masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+        from nvidia_api import get_settings as get_llm_settings_raw, save_configs, set_active_index
+        if req.configs is not None:
+            new_configs = []
+            for cfg in req.configs:
+                api_key = cfg.api_key if cfg.api_key and not cfg.api_key.startswith("****") else None
+                base_url = cfg.base_url
+                model = cfg.model
+                new_configs.append({
+                    "api_key": api_key or "",
+                    "base_url": base_url or "",
+                    "model": model or ""
+                })
+            save_configs(new_configs)
+        if req.active_index is not None:
+            set_active_index(req.active_index)
+        settings = get_llm_settings_raw()
+        configs = settings.get("configs", [])
+        active_index = settings.get("active_index", 0)
+        masked_configs = []
+        for cfg in configs:
+            masked_key = cfg.get("api_key", "")
+            if masked_key and len(masked_key) > 8:
+                masked_key = masked_key[:4] + "*" * (len(masked_key) - 8) + masked_key[-4:]
+            masked_configs.append({
+                "api_key": masked_key,
+                "base_url": cfg.get("base_url", ""),
+                "model": cfg.get("model", ""),
+                "has_key": bool(cfg.get("api_key", ""))
+            })
         return {
-            "api_key": masked_key,
-            "base_url": new_settings.get("base_url", ""),
-            "model": new_settings.get("model", ""),
-            "has_key": bool(new_settings.get("api_key", ""))
+            "configs": masked_configs,
+            "active_index": active_index
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/api/app-settings")
-async def get_app_settings():
+@app.get("/api/user-preferences")
+async def get_user_preferences():
     try:
-        settings = storage.load_app_settings()
-        return settings
+        prefs = storage.load_user_preferences()
+        return prefs
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-class AppSettingsUpdate(BaseModel):
-    rpm: Optional[int] = None
+class UserPreferencesUpdate(BaseModel):
+    source_lang: Optional[str] = None
     target_lang: Optional[str] = None
+    rpm: Optional[int] = None
+    skip_listening: Optional[bool] = None
+    recent_languages: Optional[List[str]] = None
 
 
-@app.post("/api/app-settings")
-async def update_app_settings(req: AppSettingsUpdate):
+@app.post("/api/user-preferences")
+async def update_user_preferences(req: UserPreferencesUpdate):
     try:
-        current = storage.load_app_settings()
-        if req.rpm is not None:
-            current["rpm"] = req.rpm
+        current = storage.load_user_preferences()
+        if req.source_lang is not None:
+            current["source_lang"] = req.source_lang
         if req.target_lang is not None:
             current["target_lang"] = req.target_lang
-        storage.save_app_settings(current)
+        if req.rpm is not None:
+            current["rpm"] = req.rpm
+        if req.skip_listening is not None:
+            current["skip_listening"] = req.skip_listening
+        if req.recent_languages is not None:
+            current["recent_languages"] = req.recent_languages
+        storage.save_user_preferences(current)
         return current
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/detect-language")
+async def detect_language_endpoint(request: dict):
+    try:
+        text = request.get("text", "")
+        if not text:
+            raise HTTPException(status_code=400, detail="Text is required")
+        lang = await detect_language(text)
+        return {"detected_language": lang}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -3200,11 +3295,14 @@ async def translate_text(request: dict):
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")
 
+        source_lang_name = get_lang_name(source_lang)
+        target_lang_name = get_lang_name(target_lang)
+
         nvidia_api.reload()
         messages = [
             {
                 "role": "system",
-                "content": f"You are a professional translator. Translate the following text from {source_lang} to {target_lang}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent."
+                "content": f"You are a professional translator. Translate the following text from {source_lang_name} to {target_lang_name}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent."
             },
             {
                 "role": "user",
@@ -3237,11 +3335,13 @@ async def generate_text(request: dict):
         if not prompt:
             raise HTTPException(status_code=400, detail="Prompt is required")
 
+        source_lang_name = get_lang_name(source_lang)
+
         nvidia_api.reload()
         messages = [
             {
                 "role": "system",
-                "content": f"You are a text generator. Generate a text in {source_lang} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else."
+                "content": f"You are a text generator. Generate a text in {source_lang_name} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else."
             },
             {
                 "role": "user",

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
 import { api } from '../utils/api'
+import { LangIcon, LANGUAGES } from './InputStep'
 
 const LANG_LABELS = {
   en: 'English',
@@ -26,27 +27,11 @@ const LANG_LABELS = {
   uk: 'Українська'
 }
 
-const LANG_ICONS = {
-  en: '🇬🇧',
-  zh: '🇨🇳',
-  es: '🇪🇸',
-  de: '🇩🇪',
-  fr: '🇫🇷',
-  ja: '🇯🇵',
-  ko: '🇰🇷',
-  pt: '🇧🇷',
-  ru: '🇷🇺',
-  it: '🇮🇹',
-  ar: '🇸🇦',
-  hi: '🇮🇳',
-  th: '🇹🇭',
-  vi: '🇻🇳',
-  id: '🇮🇩',
-  tr: '🇹🇷',
-  nl: '🇳🇱',
-  sv: '🇸🇪',
-  pl: '🇵🇱',
-  uk: '🇺🇦'
+function getLangLabel(code) {
+  if (LANG_LABELS[code]) return LANG_LABELS[code]
+  const found = LANGUAGES.find(l => l.value === code)
+  if (found) return found.native || found.en
+  return code
 }
 
 const SIDEBAR_COLORS = [
@@ -195,7 +180,7 @@ function RecentItem({ record, onNavigate }) {
     >
       <ProgressBadge progress={record.progress} />
       <span className="text-[13px] text-stone-700 truncate flex-1">{record.title}</span>
-      <span className="text-xs flex-shrink-0">{LANG_ICONS[record.source_lang] || '📝'}</span>
+      <span className="text-[10px] font-semibold text-stone-400 flex-shrink-0 uppercase">{(record.source_lang || '?').substring(0, 2)}</span>
     </button>
   )
 }
@@ -207,6 +192,8 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
   const [renamingId, setRenamingId] = useState(null)
   const [renameValue, setRenameValue] = useState('')
   const [recentExpanded, setRecentExpanded] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, fileId: null, title: '' })
+  const scrollContainerRef = useRef(null)
 
   useEffect(() => {
     loadHistory()
@@ -239,12 +226,23 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
   const hasMoreRecent = sortedRecords.length > 3
 
   const handleDelete = async (fileId) => {
+    const record = records.find(r => r.file_id === fileId)
+    setDeleteConfirm({ open: true, fileId, title: record?.title || '' })
+  }
+
+  const handleDeleteConfirm = async () => {
+    const fileId = deleteConfirm.fileId
+    setDeleteConfirm({ open: false, fileId: null, title: '' })
     try {
       await api.deleteHistory(fileId)
       setRecords(prev => prev.filter(r => r.file_id !== fileId))
     } catch (err) {
       console.error('Failed to delete:', err)
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ open: false, fileId: null, title: '' })
   }
 
   const handleRenameStart = useCallback((fileId) => {
@@ -309,7 +307,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
+              <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
                 {records.length === 0 && (
                   <div className="px-4 py-12 text-center">
                     <div className="text-2xl mb-2">📚</div>
@@ -323,7 +321,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   <div className="mb-2">
                     <div className="px-4 py-1.5 mt-1">
                       <span className="text-[11px] font-medium text-stone-400 tracking-wide">
-                        最近
+                        {t.recent || '最近'}
                       </span>
                     </div>
                     <div className="space-y-0.5 px-1">
@@ -337,18 +335,25 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                     </div>
                     {hasMoreRecent && (
                       <button
-                        onClick={() => setRecentExpanded(prev => !prev)}
+                        onClick={() => {
+                          setRecentExpanded(prev => {
+                            if (prev && scrollContainerRef.current) {
+                              scrollContainerRef.current.scrollTop = 0
+                            }
+                            return !prev
+                          })
+                        }}
                         className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] text-stone-400 hover:text-stone-600 transition-colors"
                       >
                         {recentExpanded ? (
                           <>
                             <ChevronUp className="w-3 h-3" />
-                            收起
+                            {t.collapse || '收起'}
                           </>
                         ) : (
                           <>
                             <ChevronDown className="w-3 h-3" />
-                            显示更多
+                            {t.showMore || '显示更多'}
                           </>
                         )}
                       </button>
@@ -360,9 +365,9 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 {Object.entries(grouped).map(([lang, items], langIdx) => (
                   <div key={lang} className="mb-1">
                     <div className="flex items-center gap-1.5 px-4 py-1.5 mt-1">
-                      <span className="text-xs">{LANG_ICONS[lang] || '📝'}</span>
+                      <LangIcon langCode={lang} size="sm" />
                       <span className="text-[11px] font-medium text-stone-400 tracking-wide">
-                        {LANG_LABELS[lang] || lang}
+                        {getLangLabel(lang)}
                       </span>
                       <span className="text-[10px] text-stone-300">{items.length}</span>
                       <button
@@ -401,7 +406,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
 
               <div className="px-3 py-2 border-t border-stone-200/60 flex-shrink-0">
                 <div className="text-[10px] text-stone-300 text-center">
-                  {records.length} {records.length === 1 ? 'record' : 'records'}
+                  {records.length} {t.record || '条记录'}
                 </div>
               </div>
             </motion.div>
@@ -434,9 +439,9 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                     ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-md'
                     : 'hover:bg-stone-200/70 text-stone-400 hover:text-stone-600'
                 }`}
-                title={`${LANG_LABELS[lang] || lang} - ${t.wordList || '单词总表'}`}
+                title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
               >
-                <Library className="w-4 h-4" />
+                <LangIcon langCode={lang} size="sm" />
               </button>
             ))}
 
@@ -452,7 +457,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
                   title={record.title}
                 >
-                  <Pencil className="w-4 h-4" />
+                  <LangIcon langCode={record.source_lang} size="sm" />
                 </button>
               ))
             )}
@@ -470,6 +475,53 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
             onClose={handleMenuClose}
             t={t}
           />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {deleteConfirm.open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/30 backdrop-blur-[2px]"
+            onClick={handleDeleteCancel}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 8 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 8 }}
+              transition={{ duration: 0.15, ease: 'easeOut' }}
+              className="bg-white rounded-2xl shadow-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                </div>
+                <div>
+                  <h3 className="text-[15px] font-semibold text-stone-800">{t.confirmDelete || '确认删除'}</h3>
+                  <p className="text-[13px] text-stone-500 mt-0.5 line-clamp-2">{deleteConfirm.title}</p>
+                </div>
+              </div>
+              <p className="text-[13px] text-stone-500 mb-5 pl-[52px]">{t.deleteCannotUndo || '删除后不可恢复，确定要删除吗？'}</p>
+              <div className="flex gap-2.5 justify-end">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="px-4 py-2 text-[13px] rounded-lg border border-stone-200 text-stone-600 hover:bg-stone-50 transition-colors"
+                >
+                  {t.cancel || '取消'}
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 text-[13px] rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                >
+                  {t.confirmDeleteAction || '删除'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2 } from 'lucide-react';
 
 function AllUnitsStep({
   phase1Units,
@@ -15,7 +15,8 @@ function AllUnitsStep({
   t,
   unitStarCounts,
   skipListening,
-  onSkipListeningChange
+  onSkipListeningChange,
+  generatingUnits
 }) {
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
@@ -35,7 +36,8 @@ function AllUnitsStep({
 
   const renderUnitCard = (unit, index, isCurrent, onClick, keyPrefix, isUnlocked, phaseNumber) => {
     const isCompleted = unit.completed;
-    const isLocked = !isUnlocked && !isCompleted;
+    const isGenerating = phaseNumber === 1 && index === 0 && generatingUnits?.has(index);
+    const isLocked = !isUnlocked && !isCompleted && !isGenerating;
     const starKey = `${phaseNumber}-${index}`;
     const starCount = unitStarCounts?.[starKey];
 
@@ -45,18 +47,22 @@ function AllUnitsStep({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: index * 0.03 }}
-        onClick={isLocked ? undefined : onClick}
-        disabled={isLocked}
+        onClick={isLocked || isGenerating ? undefined : onClick}
+        disabled={isLocked || isGenerating}
         className={`relative flex flex-col items-center justify-center rounded-lg transition-all ${
           isCompleted
             ? 'bg-[#e8f5e0] text-[#3d7a2a] border border-[#c3e0b2]/60'
+            : isGenerating
+            ? 'bg-amber-50 text-amber-400 border border-amber-200/60 cursor-not-allowed'
             : isLocked
             ? 'bg-stone-100 text-stone-300 cursor-not-allowed'
             : 'bg-[#fef9ec] text-[#b8941e] hover:bg-[#fdf3d8] border border-[#f0e2b6]/60'
         }`}
         style={{ width: '2.5rem', height: '2.5rem' }}
       >
-        {isLocked ? (
+        {isGenerating ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : isLocked ? (
           <Lock className="w-3.5 h-3.5" />
         ) : (
           <span className="text-sm font-medium leading-none">{index + 1}</span>
@@ -102,14 +108,14 @@ function AllUnitsStep({
           animate={{ opacity: 1 }}
           className="text-2xl font-semibold text-stone-800 mb-2"
         >
-          学习单元
+          {t.learningUnits || '学习单元'}
         </motion.h2>
-        <p className="text-base text-stone-400">按顺序完成单元，解锁下一单元</p>
+        <p className="text-base text-stone-400">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
         
         <label className="absolute right-0 top-1 flex items-center gap-2 cursor-pointer select-none group">
           <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
             <Headphones className="w-3.5 h-3.5" />
-            跳过听力
+            {t.skipListening || '跳过听力'}
           </span>
           <div className="relative">
             <input

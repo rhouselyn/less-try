@@ -1,17 +1,22 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages } from 'lucide-react'
+import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, Plus, Minus } from 'lucide-react'
 import { api } from '../utils/api'
+import { LangIcon } from './InputStep'
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
-  const [apiKey, setApiKey] = useState('')
-  const [baseUrl, setBaseUrl] = useState('')
-  const [model, setModel] = useState('')
-  const [hasKey, setHasKey] = useState(false)
+const slideVariants = {
+  enter: (dir) => ({ x: dir > 0 ? 200 : -200, opacity: 0 }),
+  center: { x: 0, opacity: 1 },
+  exit: (dir) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
+}
+
+function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, t }) {
+  const [configs, setConfigs] = useState([])
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [direction, setDirection] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [maskedKey, setMaskedKey] = useState('')
   const [rpm, setRpm] = useState(60)
   const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
 
@@ -21,41 +26,110 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
       setSaved(false)
       Promise.all([
         fetch('/api/settings').then(res => res.json()),
-        api.getAppSettings().catch(() => ({}))
-      ]).then(([data, appData]) => {
-        setBaseUrl(data.base_url || '')
-        setModel(data.model || '')
-        setHasKey(data.has_key || false)
-        setMaskedKey(data.api_key || '')
-        setApiKey('')
-        if (appData.rpm) setRpm(appData.rpm)
-        if (appData.target_lang) setLocalTargetLang(appData.target_lang)
+        api.getUserPreferences().catch(() => ({}))
+      ]).then(([data, prefs]) => {
+        const loaded = (data.configs && data.configs.length > 0)
+          ? data.configs.map(c => ({
+              api_key: '',
+              base_url: c.base_url || '',
+              model: c.model || '',
+              has_key: c.has_key || false,
+              masked_key: c.api_key || '',
+            }))
+          : [{ api_key: '', base_url: '', model: '', has_key: false, masked_key: '' }]
+        setConfigs(loaded)
+        setCurrentIndex(data.active_index || 0)
+        if (prefs.rpm) setRpm(prefs.rpm)
+        if (prefs.target_lang) setLocalTargetLang(prefs.target_lang)
         setLoading(false)
-      }).catch(() => setLoading(false))
+      }).catch(() => {
+        setConfigs([{ api_key: '', base_url: '', model: '', has_key: false, masked_key: '' }])
+        setLoading(false)
+      })
     }
   }, [isOpen])
+
+  const updateConfig = useCallback((index, field, value) => {
+    setConfigs(prev => {
+      const next = [...prev]
+      next[index] = { ...next[index], [field]: value }
+      return next
+    })
+  }, [])
+
+  const goNext = useCallback(() => {
+    if (currentIndex < configs.length - 1) {
+      setDirection(1)
+      setCurrentIndex(i => i + 1)
+    }
+  }, [currentIndex, configs.length])
+
+  const goPrev = useCallback(() => {
+    if (currentIndex > 0) {
+      setDirection(-1)
+      setCurrentIndex(i => i - 1)
+    }
+  }, [currentIndex])
+
+  const addConfig = useCallback(() => {
+    const current = configs[configs.length - 1]
+    const newConfig = {
+      api_key: '',
+      base_url: current?.base_url || '',
+      model: current?.model || '',
+      has_key: false,
+      masked_key: '',
+    }
+    setDirection(1)
+    setConfigs(prev => [...prev, newConfig])
+    setCurrentIndex(configs.length)
+  }, [configs])
+
+  const removeConfig = useCallback((index) => {
+    if (configs.length <= 1) return
+    setConfigs(prev => {
+      const next = prev.filter((_, i) => i !== index)
+      return next
+    })
+    setCurrentIndex(prev => {
+      if (prev >= configs.length - 1) return Math.max(0, configs.length - 2)
+      if (prev > index) return prev - 1
+      return Math.min(prev, configs.length - 2)
+    })
+    setDirection(-1)
+  }, [configs.length])
 
   const handleSave = async () => {
     setSaving(true)
     setSaved(false)
     try {
-      const body = { base_url: baseUrl, model: model }
-      if (apiKey) {
-        body.api_key = apiKey
+      const payload = {
+        configs: configs.map(c => ({
+          api_key: c.api_key || (c.has_key ? `****${c.masked_key}` : ''),
+          base_url: c.base_url,
+          model: c.model,
+        })),
+        active_index: currentIndex,
       }
       const res = await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(payload)
       })
       const data = await res.json()
-      setBaseUrl(data.base_url || '')
-      setModel(data.model || '')
-      setHasKey(data.has_key || false)
-      setMaskedKey(data.api_key || '')
-      setApiKey('')
+      const loaded = (data.configs && data.configs.length > 0)
+        ? data.configs.map(c => ({
+            api_key: '',
+            base_url: c.base_url || '',
+            model: c.model || '',
+            has_key: c.has_key || false,
+            masked_key: c.api_key || '',
+          }))
+        : configs
+      setConfigs(loaded)
+      setCurrentIndex(data.active_index ?? currentIndex)
 
-      await api.saveAppSettings({ rpm, target_lang: localTargetLang })
+      await api.saveUserPreferences({ rpm, target_lang: localTargetLang })
 
       if (onTargetLangChange && localTargetLang !== targetLang) {
         onTargetLangChange(localTargetLang)
@@ -77,6 +151,10 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
 
   if (!isOpen) return null
 
+  const current = configs[currentIndex]
+  const isFirst = currentIndex === 0
+  const isLast = currentIndex === configs.length - 1
+
   return (
     <AnimatePresence>
       <motion.div
@@ -97,7 +175,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
           <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
             <div className="flex items-center gap-2.5">
               <Settings className="w-4 h-4 text-stone-500" />
-              <h2 className="text-sm font-semibold text-stone-800">设置</h2>
+              <h2 className="text-sm font-semibold text-stone-800">{t.settings || '设置'}</h2>
             </div>
             <button
               onClick={onClose}
@@ -114,59 +192,142 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
           ) : (
             <div className="p-5 space-y-4">
               <div>
-                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
-                  <Key className="w-3 h-3" />
-                  API Key
-                  {hasKey && <span className="text-[10px] text-green-500 normal-case tracking-normal">● 已配置</span>}
-                </label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={e => setApiKey(e.target.value)}
-                  placeholder={maskedKey || 'sk-...'}
-                  className="w-full px-3 py-2 text-sm bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
-                />
-                {hasKey && !apiKey && (
-                  <p className="text-[11px] text-stone-400 mt-1">留空则保持当前 Key 不变</p>
-                )}
-              </div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">
+                    {t.apiConfig || 'API 配置'} {currentIndex + 1}/{configs.length}
+                  </span>
+                  {configs.length > 1 && (
+                    <button
+                      onClick={() => removeConfig(currentIndex)}
+                      className="flex items-center gap-1 text-[11px] text-stone-400 hover:text-red-500 transition-colors"
+                    >
+                      <Minus className="w-3 h-3" />
+                      {t.remove || '删除'}
+                    </button>
+                  )}
+                </div>
 
-              <div>
-                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
-                  <Globe className="w-3 h-3" />
-                  Base URL
-                </label>
-                <input
-                  type="text"
-                  value={baseUrl}
-                  onChange={e => setBaseUrl(e.target.value)}
-                  placeholder="https://api.siliconflow.cn/v1"
-                  className="w-full px-3 py-2 text-sm bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
-                />
-              </div>
+                <div className="relative">
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={goPrev}
+                      disabled={isFirst}
+                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                        isFirst
+                          ? 'text-stone-200 cursor-not-allowed'
+                          : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100 active:scale-90'
+                      }`}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
 
-              <div>
-                <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
-                  <Cpu className="w-3 h-3" />
-                  Model
-                </label>
-                <input
-                  type="text"
-                  value={model}
-                  onChange={e => setModel(e.target.value)}
-                  placeholder="Qwen/Qwen3.6-27B"
-                  className="w-full px-3 py-2 text-sm bg-stone-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
-                />
+                    <div className="flex-1 min-w-0 overflow-hidden rounded-lg border border-stone-200/80 bg-stone-50/50">
+                      <AnimatePresence mode="wait" custom={direction}>
+                        <motion.div
+                          key={currentIndex}
+                          custom={direction}
+                          variants={slideVariants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
+                          transition={{ duration: 0.2, ease: 'easeInOut' }}
+                          className="p-3 space-y-3"
+                        >
+                          <div>
+                            <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                              <Key className="w-3 h-3" />
+                              API Key
+                              {current?.has_key && <span className="text-[10px] text-green-500 normal-case tracking-normal">● {t.configured || '已配置'}</span>}
+                            </label>
+                            <input
+                              type="password"
+                              value={current?.api_key || ''}
+                              onChange={e => updateConfig(currentIndex, 'api_key', e.target.value)}
+                              placeholder={current?.masked_key || 'sk-...'}
+                              className="w-full px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                            />
+                            {current?.has_key && !current?.api_key && (
+                              <p className="text-[11px] text-stone-400 mt-1">{t.leaveEmptyKeepKey || '留空则保持当前 Key 不变'}</p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                              <Globe className="w-3 h-3" />
+                              Base URL
+                            </label>
+                            <input
+                              type="text"
+                              value={current?.base_url || ''}
+                              onChange={e => updateConfig(currentIndex, 'base_url', e.target.value)}
+                              placeholder="https://api.siliconflow.cn/v1"
+                              className="w-full px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                            />
+                          </div>
+
+                          <div>
+                            <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                              <Cpu className="w-3 h-3" />
+                              Model
+                            </label>
+                            <input
+                              type="text"
+                              value={current?.model || ''}
+                              onChange={e => updateConfig(currentIndex, 'model', e.target.value)}
+                              placeholder="Qwen/Qwen3.6-27B"
+                              className="w-full px-3 py-2 text-sm bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                            />
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+                    </div>
+
+                    {isLast ? (
+                      <button
+                        onClick={addConfig}
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-amber-500 hover:text-amber-600 hover:bg-amber-50 transition-all active:scale-90"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={goNext}
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-all active:scale-90"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+
+                  {configs.length > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 mt-2.5">
+                      {configs.map((_, i) => (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            setDirection(i > currentIndex ? 1 : -1)
+                            setCurrentIndex(i)
+                          }}
+                          className={`rounded-full transition-all duration-200 ${
+                            i === currentIndex
+                              ? 'w-4 h-1.5 bg-amber-400'
+                              : 'w-1.5 h-1.5 bg-stone-300 hover:bg-stone-400'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="pt-1">
                 <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Gauge className="w-3 h-3" />
-                  LLM 速率
+                  {t.llmRate || 'LLM 速率'}
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-stone-400">每分钟 LLM 请求次数</span>
+                    <span className="text-[11px] text-stone-400">{t.llmRequestsPerMinute || '每分钟 LLM 请求次数'}</span>
                     <span className="text-xs font-semibold text-amber-600">{rpm} RPM</span>
                   </div>
                   <div className="relative">
@@ -192,12 +353,12 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
               <div>
                 <label className="flex items-center gap-1.5 text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Languages className="w-3 h-3" />
-                  母语
+                  {t.nativeLang || '母语'}
                 </label>
                 <div className="flex gap-2">
                   {[
-                    { value: 'zh', label: '中文', flag: '🇨🇳' },
-                    { value: 'en', label: 'English', flag: '🇬🇧' },
+                    { value: 'zh', label: '中文' },
+                    { value: 'en', label: 'English' },
                   ].map((opt) => (
                     <button
                       key={opt.value}
@@ -209,7 +370,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
                           : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
                       }`}
                     >
-                      <span className="text-base leading-none">{opt.flag}</span>
+                      <LangIcon langCode={opt.value} size="sm" />
                       {opt.label}
                     </button>
                   ))}
@@ -228,7 +389,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange }) {
                 ) : saved ? (
                   <Check className="w-4 h-4" />
                 ) : null}
-                {saving ? '保存中...' : saved ? '已保存' : '保存'}
+                {saving ? (t.saving || '保存中...') : saved ? (t.saved || '已保存') : (t.save || '保存')}
               </motion.button>
             </div>
           )}

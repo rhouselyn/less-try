@@ -3,6 +3,7 @@ import json
 import requests
 import asyncio
 from typing import List, Dict, Any
+from pathlib import Path
 
 
 def _repair_truncated_json(json_str):
@@ -12,7 +13,7 @@ def _repair_truncated_json(json_str):
         return json.loads(json_str)
     except (json.JSONDecodeError, TypeError):
         pass
-    
+
     try:
         if json_str.strip().startswith('['):
             depth = 0
@@ -25,11 +26,11 @@ def _repair_truncated_json(json_str):
                     if depth == 0:
                         last_valid_end = i
                         break
-            
+
             if last_valid_end > 0:
                 repaired = json_str[:last_valid_end + 1]
                 return json.loads(repaired)
-            
+
             brace_depth = 0
             for i in range(len(json_str) - 1, -1, -1):
                 if json_str[i] == '}':
@@ -41,55 +42,272 @@ def _repair_truncated_json(json_str):
                         return json.loads(repaired)
     except (json.JSONDecodeError, TypeError):
         pass
-    
+
     return []
 
 
-CONFIG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config")
-CONFIG_FILE = os.path.join(CONFIG_DIR, "llm_settings.json")
+LLM_SETTINGS_FILE = Path("/workspace/config/llm_settings.json")
+
+_DEFAULT_CONFIGS = [
+    {"api_key": "", "base_url": "https://api.siliconflow.cn/v1", "model": "Qwen/Qwen3.6-27B"},
+    {"api_key": "", "base_url": "https://api.siliconflow.cn/v1", "model": "Qwen/Qwen3.5-27B"},
+    {"api_key": "", "base_url": "https://api.siliconflow.cn/v1", "model": "deepseek-ai/DeepSeek-V3.2"},
+]
 
 def _load_settings():
-    if os.path.exists(CONFIG_FILE):
+    if LLM_SETTINGS_FILE.exists():
         try:
-            with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
+            with open(LLM_SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            if "configs" in data and isinstance(data["configs"], list):
+                return {
+                    "configs": data["configs"],
+                    "active_index": data.get("active_index", 0)
+                }
+            if "api_key" in data or "base_url" in data or "model" in data:
+                migrated_config = {
+                    "api_key": data.get("api_key", ""),
+                    "base_url": data.get("base_url", _DEFAULT_CONFIGS[0]["base_url"]),
+                    "model": data.get("model", _DEFAULT_CONFIGS[0]["model"])
+                }
+                settings = {
+                    "configs": [migrated_config],
+                    "active_index": 0
+                }
+                _save_settings(settings)
+                return settings
+        except (json.JSONDecodeError, IOError):
             pass
-    return {
-        "api_key": "sk-tszhvcglvfqiivwqqtqwkxmxsneyuymjjywtfxteofmfvkct",
-        "base_url": "https://api.siliconflow.cn/v1",
-        "model": "Qwen/Qwen3.6-27B"
-    }
+    return {"configs": [dict(c) for c in _DEFAULT_CONFIGS], "active_index": 0}
 
 def _save_settings(settings: dict):
-    os.makedirs(CONFIG_DIR, exist_ok=True)
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
-        json.dump(settings, f, indent=2, ensure_ascii=False)
+    LLM_SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    with open(LLM_SETTINGS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(settings, f, ensure_ascii=False, indent=2)
 
 def get_settings():
     return _load_settings()
 
-def update_settings(api_key: str = None, base_url: str = None, model: str = None):
-    current = _load_settings()
+def update_settings(api_key: str = None, base_url: str = None, model: str = None, config_index: int = 0):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    if not configs:
+        configs = [dict(c) for c in _DEFAULT_CONFIGS]
+        settings["configs"] = configs
+    idx = config_index
+    if idx < 0 or idx >= len(configs):
+        idx = 0
     if api_key is not None:
-        current["api_key"] = api_key
+        configs[idx]["api_key"] = api_key
     if base_url is not None:
-        current["base_url"] = base_url
+        configs[idx]["base_url"] = base_url
     if model is not None:
-        current["model"] = model
-    _save_settings(current)
-    return current
+        configs[idx]["model"] = model
+    _save_settings(settings)
+    return _load_settings()
+
+def get_configs():
+    settings = _load_settings()
+    return settings.get("configs", [])
+
+def add_config(config: dict):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    new_config = {
+        "api_key": config.get("api_key", ""),
+        "base_url": config.get("base_url", _DEFAULT_CONFIGS[0]["base_url"]),
+        "model": config.get("model", _DEFAULT_CONFIGS[0]["model"])
+    }
+    configs.append(new_config)
+    settings["configs"] = configs
+    _save_settings(settings)
+    return settings
+
+def remove_config(index: int):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    if 0 <= index < len(configs):
+        configs.pop(index)
+        active_index = settings.get("active_index", 0)
+        if active_index >= len(configs):
+            active_index = max(0, len(configs) - 1)
+        settings["configs"] = configs
+        settings["active_index"] = active_index
+        _save_settings(settings)
+    return settings
+
+def update_config(index: int, config: dict):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    if 0 <= index < len(configs):
+        if "api_key" in config:
+            configs[index]["api_key"] = config["api_key"]
+        if "base_url" in config:
+            configs[index]["base_url"] = config["base_url"]
+        if "model" in config:
+            configs[index]["model"] = config["model"]
+        settings["configs"] = configs
+        _save_settings(settings)
+    return settings
+
+def save_configs(new_configs: list):
+    settings = _load_settings()
+    old_configs = settings.get("configs", [])
+    for i, cfg in enumerate(new_configs):
+        api_key = cfg.get("api_key", "")
+        if not api_key and i < len(old_configs):
+            api_key = old_configs[i].get("api_key", "")
+        if i < len(old_configs):
+            old_configs[i]["api_key"] = api_key
+            old_configs[i]["base_url"] = cfg.get("base_url", old_configs[i].get("base_url", ""))
+            old_configs[i]["model"] = cfg.get("model", old_configs[i].get("model", ""))
+        else:
+            old_configs.append({
+                "api_key": api_key,
+                "base_url": cfg.get("base_url", _DEFAULT_CONFIGS[0]["base_url"]),
+                "model": cfg.get("model", _DEFAULT_CONFIGS[0]["model"])
+            })
+    settings["configs"] = old_configs[:len(new_configs)]
+    _save_settings(settings)
+    return _load_settings()
+
+def set_active_index(index: int):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    if 0 <= index < len(configs):
+        settings["active_index"] = index
+        _save_settings(settings)
+    return settings
+
+
+SUPPORTED_LANGUAGES = [
+    "en", "fr", "pt", "de", "ro", "sv", "da", "bg", "ru", "cs", "el", "uk",
+    "es", "nl", "sk", "hr", "pl", "lt", "nb", "nn", "fa", "sl", "gu", "lv",
+    "it", "oc", "ne", "mr", "be", "sr", "lb", "vec", "as", "cy", "szl",
+    "ast", "hne", "awa", "mai", "bho", "sd", "ga", "fo", "hi", "pa", "bn",
+    "or", "tg", "yi", "lmo", "lij", "scn", "fur", "sc", "gl", "ca", "is",
+    "sq", "li", "prs", "af", "mk", "si", "ur", "mag", "bs", "hy",
+    "zh", "zh-TW", "yue", "my",
+    "ar", "ars", "apc", "arz", "ary", "acm", "acq", "aeb",
+    "he", "mt",
+    "id", "ms", "tl", "ceb", "jv", "su", "min", "ban", "bjn", "pag", "ilo", "war",
+    "ta", "te", "kn", "ml",
+    "tr", "az", "uz", "kk", "ba", "tt",
+    "th", "lo",
+    "fi", "et", "hu",
+    "vi", "km",
+    "ja", "ko", "ka", "eu", "ht", "pap", "kea", "tpi", "sw",
+]
+
+LANG_NAMES = {
+    "en": "English", "fr": "French", "pt": "Portuguese", "de": "German",
+    "ro": "Romanian", "sv": "Swedish", "da": "Danish", "bg": "Bulgarian",
+    "ru": "Russian", "cs": "Czech", "el": "Greek", "uk": "Ukrainian",
+    "es": "Spanish", "nl": "Dutch", "sk": "Slovak", "hr": "Croatian",
+    "pl": "Polish", "lt": "Lithuanian", "nb": "Norwegian Bokmål", "nn": "Norwegian Nynorsk",
+    "fa": "Persian", "sl": "Slovenian", "gu": "Gujarati", "lv": "Latvian",
+    "it": "Italian", "oc": "Occitan", "ne": "Nepali", "mr": "Marathi",
+    "be": "Belarusian", "sr": "Serbian", "lb": "Luxembourgish", "vec": "Venetian",
+    "as": "Assamese", "cy": "Welsh", "szl": "Silesian", "ast": "Asturian",
+    "hne": "Chhattisgarhi", "awa": "Awadhi", "mai": "Maithili", "bho": "Bhojpuri",
+    "sd": "Sindhi", "ga": "Irish", "fo": "Faroese", "hi": "Hindi",
+    "pa": "Punjabi", "bn": "Bengali", "or": "Odia", "tg": "Tajik",
+    "yi": "Yiddish", "lmo": "Lombard", "lij": "Ligurian", "scn": "Sicilian",
+    "fur": "Friulian", "sc": "Sardinian", "gl": "Galician", "ca": "Catalan",
+    "is": "Icelandic", "sq": "Albanian", "li": "Limburgish", "prs": "Dari",
+    "af": "Afrikaans", "mk": "Macedonian", "si": "Sinhala", "ur": "Urdu",
+    "mag": "Magahi", "bs": "Bosnian", "hy": "Armenian",
+    "zh": "Chinese (Simplified)", "zh-TW": "Chinese (Traditional)", "yue": "Cantonese", "my": "Burmese",
+    "ar": "Arabic (Standard)", "ars": "Arabic (Najdi)", "apc": "Arabic (Levantine)",
+    "arz": "Arabic (Egyptian)", "ary": "Arabic (Moroccan)", "acm": "Arabic (Mesopotamian)",
+    "acq": "Arabic (Ta'izzi-Adeni)", "aeb": "Arabic (Tunisian)",
+    "he": "Hebrew", "mt": "Maltese",
+    "id": "Indonesian", "ms": "Malay", "tl": "Tagalog", "ceb": "Cebuano",
+    "jv": "Javanese", "su": "Sundanese", "min": "Minangkabau", "ban": "Balinese",
+    "bjn": "Banjar", "pag": "Pangasinan", "ilo": "Ilokano", "war": "Waray",
+    "ta": "Tamil", "te": "Telugu", "kn": "Kannada", "ml": "Malayalam",
+    "tr": "Turkish", "az": "Azerbaijani", "uz": "Uzbek", "kk": "Kazakh",
+    "ba": "Bashkir", "tt": "Tatar",
+    "th": "Thai", "lo": "Lao",
+    "fi": "Finnish", "et": "Estonian", "hu": "Hungarian",
+    "vi": "Vietnamese", "km": "Khmer",
+    "ja": "Japanese", "ko": "Korean", "ka": "Georgian", "eu": "Basque",
+    "ht": "Haitian Creole", "pap": "Papiamento", "kea": "Kabuverdianu",
+    "tpi": "Tok Pisin", "sw": "Swahili",
+}
+
+def get_lang_name(code):
+    return LANG_NAMES.get(code, code)
+
+
+async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+    settings = _load_settings()
+    configs = settings.get("configs", [])
+    active_index = settings.get("active_index", 0)
+    if not configs:
+        configs = [dict(c) for c in _DEFAULT_CONFIGS]
+        active_index = 0
+    num_configs = len(configs)
+    last_exception = None
+    for offset in range(num_configs):
+        idx = (active_index + offset) % num_configs
+        config = configs[idx]
+        try:
+            api = NvidiaAPI(config_index=idx)
+            result = await api.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
+            if idx != active_index:
+                print(f"[ROTATE] Switched from config {active_index} to config {idx} (model={config.get('model', '')})")
+                settings["active_index"] = idx
+                _save_settings(settings)
+            return result
+        except (requests.exceptions.HTTPError, requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            print(f"[ROTATE] Config {idx} (model={config.get('model', '')}) failed: {e}, trying config {(idx + 1) % num_configs}...")
+            last_exception = e
+            continue
+    raise last_exception
+
+
+async def detect_language(text: str) -> str:
+    lang_list_str = ", ".join(SUPPORTED_LANGUAGES)
+    messages = [
+        {
+            "role": "system",
+            "content": f"You are a language detection expert. Identify the language of the given text. You must respond with ONLY the language code from this exact list: [{lang_list_str}]. Do not output anything else. Pick the single most matching code."
+        },
+        {
+            "role": "user",
+            "content": text[:500]
+        }
+    ]
+    result = await call_minimax_with_rotation(messages, temperature=0.0, max_tokens=32)
+    content = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip().strip('"').strip("'")
+    if content in SUPPORTED_LANGUAGES:
+        return content
+    for lang in SUPPORTED_LANGUAGES:
+        if lang.lower() == content.lower():
+            return lang
+    return "en"
 
 
 class NvidiaAPI:
-    def __init__(self):
+    def __init__(self, config_index: int = None):
+        self._config_index = config_index
         self._reload()
 
     def _reload(self):
         settings = _load_settings()
-        self.api_key = settings.get("api_key", "")
-        self.base_url = settings.get("base_url", "https://api.siliconflow.cn/v1")
-        self.model = settings.get("model", "Qwen/Qwen3.6-27B")
+        configs = settings.get("configs", [])
+        if self._config_index is not None:
+            idx = self._config_index
+        else:
+            idx = settings.get("active_index", 0)
+        if not configs or idx < 0 or idx >= len(configs):
+            config = dict(_DEFAULT_CONFIGS[0])
+        else:
+            config = configs[idx]
+        self.api_key = config.get("api_key", "")
+        self.base_url = config.get("base_url", "https://api.siliconflow.cn/v1")
+        self.model = config.get("model", "Qwen/Qwen3.6-27B")
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
@@ -132,7 +350,7 @@ class NvidiaAPI:
             "max_tokens": max_tokens,
             "thinking": {"type": "disabled"}
         }
-        
+
         if tools:
             payload["tools"] = tools
             payload["tool_choice"] = "auto"
@@ -165,7 +383,9 @@ class NvidiaAPI:
             print(f"[TIMING] call_minimax retry (tools={has_tools}): {t1 - t0:.3f}s")
             return result
 
-
+    @classmethod
+    async def call_with_rotation(cls, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+        return await call_minimax_with_rotation(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
 
     async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str):
         tool_def = {
@@ -225,7 +445,7 @@ class NvidiaAPI:
                                     "items": {
                                         "type": "object",
                                         "properties": {
-                                            "text": {"type": "string"},
+                                            "text": {"type": "string", "description": "A concrete, meaningful translation or definition. MUST NOT be a placeholder like 'meaning 1', '释义1', '含义1', etc."},
                                             "is_correct": {"type": "boolean"}
                                         }
                                     },
@@ -240,8 +460,9 @@ class NvidiaAPI:
             }
         }
 
+        target_lang_name = get_lang_name(target_lang)
         prompt = f"""
-为单词 '{word}' 生成丰富的信息，使用 {target_lang} 输出。
+为单词 '{word}' 生成丰富的信息，使用 {target_lang_name} 输出。
 
 上下文释义：{correct_meaning}
 
@@ -251,7 +472,7 @@ class NvidiaAPI:
 
 1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
 2. variants_detail: 词形变化列表，带类型说明。【极其重要】对于派生词（如 previously, prestigious, studying, published），必须列出其词根/原形作为词形变化（如 previously -> {{"form": "previous", "type": "形容词原形"}}, prestigious -> {{"form": "prestige", "type": "名词原形"}}, studying -> {{"form": "study", "type": "动词原形"}}, published -> {{"form": "publish", "type": "动词原形"}}）。对于基础词，列出其常见的屈折变化（如名词的复数、动词的过去式/过去分词/现在分词、形容词的比较级/最高级等）。只包含确实存在的词形变化，如果没有则返回空数组
-3. examples: 两个符合上下文含义的例句，每个都有 {target_lang} 的翻译
+3. examples: 两个符合上下文含义的例句，每个都有 {target_lang_name} 的翻译
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
    - question: 可为空（默认为单词本身）
@@ -259,7 +480,7 @@ class NvidiaAPI:
    - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
 
 要求：
-- 所有输出必须使用 {target_lang}
+- 所有输出必须使用 {target_lang_name}
 - 例句要自然，符合上下文
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
@@ -274,9 +495,9 @@ class NvidiaAPI:
 """
 
         messages = [{"role": "user", "content": prompt}]
-        
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)
-        
+
+        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
+
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
@@ -288,8 +509,8 @@ class NvidiaAPI:
                 "enriched_meaning": correct_meaning,
                 "variants_detail": [],
                 "examples": [
-                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
-                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang}."}
+                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang_name}."},
+                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang_name}."}
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
@@ -297,9 +518,9 @@ class NvidiaAPI:
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
-                        {"text": f"Option 1 in {target_lang}", "is_correct": False},
-                        {"text": f"Option 2 in {target_lang}", "is_correct": False},
-                        {"text": f"Option 3 in {target_lang}", "is_correct": False}
+                        {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
+                        {"text": f"Option 2 in {target_lang_name}", "is_correct": False},
+                        {"text": f"Option 3 in {target_lang_name}", "is_correct": False}
                     ]
                 }
             }
@@ -312,8 +533,8 @@ class NvidiaAPI:
                 "enriched_meaning": correct_meaning,
                 "variants_detail": [],
                 "examples": [
-                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang}."},
-                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang}."}
+                    {"sentence": f"This is a sentence with {word}.", "translation": f"Example translation for {word} in {target_lang_name}."},
+                    {"sentence": f"I can use {word} in a sentence.", "translation": f"Example translation for {word} in {target_lang_name}."}
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
@@ -321,9 +542,9 @@ class NvidiaAPI:
                     "correct_answer": correct_meaning,
                     "options": [
                         {"text": correct_meaning, "is_correct": True},
-                        {"text": f"Option 1 in {target_lang}", "is_correct": False},
-                        {"text": f"Option 2 in {target_lang}", "is_correct": False},
-                        {"text": f"Option 3 in {target_lang}", "is_correct": False}
+                        {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
+                        {"text": f"Option 2 in {target_lang_name}", "is_correct": False},
+                        {"text": f"Option 3 in {target_lang_name}", "is_correct": False}
                     ]
                 }
             }
@@ -347,12 +568,12 @@ class NvidiaAPI:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "text": {"type": "string"},
-                                    "translation": {"type": "string"},
-                                    "phonetic": {"type": "string"},
-                                    "morphology": {"type": "string"}
+                                    "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). Punctuation does NOT belong to any token — it is completely discarded. Hyphens(-) and apostrophes(') must be preserved if they are internal parts of a word in that language. TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) must be one token. (4) After removing punctuation from all 'text' values, their concatenation in order MUST equal the original source text with punctuation removed — no characters may be omitted or added. Each character belongs to exactly ONE token; no overlap, no duplication. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
+                                    "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
+                                    "morphology": {"type": "string"},
+                                    "meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - concise, just a few independent words, not a full sentence explanation"}
                                 },
-                                "required": ["text", "translation", "phonetic", "morphology"]
+                                "required": ["text", "phonetic", "morphology", "meaning"]
                             }
                         },
                         "tokenized_translation": {
@@ -362,7 +583,7 @@ class NvidiaAPI:
                         "translation_phrases": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "将 tokenized_translation 拆分为独立片段，用于翻译排序练习。【拆分原则】1.优先拆成单个词；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容"
+                            "description": "将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先拆成单个词或短词组，按目标语言的自然词边界拆分；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容"
                         },
                         "grammar_explanation": {
                             "type": "string",
@@ -372,36 +593,11 @@ class NvidiaAPI:
                             "type": "array",
                             "items": {"type": "string"},
                             "description": "4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组"
-                        },
-                        "dictionary_entries": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "word": {"type": "string", "description": "The word or phrase. Fixed collocations must be kept as one entry (e.g. 'what's up', 'run out of')"},
-                                    "ipa": {"type": "string"},
-                                    "context_meaning": {"type": "string"},
-                                    "translation": {"type": "string"},
-                                    "tokens": {
-                                        "type": "array",
-                                        "items": {"type": "string"},
-                                        "description": "Component words of this entry. For fixed collocations, list each component word (e.g. 'what's up' -> ['what's', 'up']). For single words, the tokens list should contain only the word itself (e.g. 'brightly' -> ['brightly'], 'studying' -> ['studying'], 'mountains' -> ['mountains']). Do NOT split single words into morphemes."
-                                    },
-                                    "morphology": {
-                                        "type": "string",
-                                        "description": "词性缩写，如 n, v, adj 等"
-                                    }
-                                },
-                                "required": [
-                                    "word", "ipa", "context_meaning",
-                                    "translation", "tokens", "morphology"
-                                ]
-                            }
                         }
                     },
                     "required": [
                         "original", "translation", "tokenized_translation", "translation_phrases",
-                        "grammar_explanation", "redundant_tokens", "dictionary_entries"
+                        "grammar_explanation", "redundant_tokens"
                     ]
                 }
             }
@@ -417,62 +613,55 @@ class NvidiaAPI:
 2. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
 3. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
 4. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
-   - n (名词)
-   - v (动词)
-   - adj (形容词)
-   - adv (副词)
-   - pron (代词)
-   - prep (介词)
-   - conj (连词)
-   - interj (感叹词)
-   - det (限定词)
+   - n (名词), v (动词), adj (形容词), adv (副词), pron (代词), prep (介词), conj (连词), interj (感叹词), det (限定词)
 5. morphology 字段必须只包含缩写，不要有其他内容！
 6. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
+
+═══════════════════════════════════════════════════════════
+【最最最重要！！！translation 数组的分词原则！！！】
+═══════════════════════════════════════════════════════════
+
+translation 数组中每个条目的 text 字段代表原文中的一个"词"。
+
+【核心原则：遵循源语言的自然词边界】
+你是一个语言专家，你精通所有语言的正字法和语法规则。请根据 TEXT_LANG 自身的语言规则来判断什么是"一个词"，而不是套用其他语言的分词标准。
+
+【什么是一个"词"？】
+一个"词"是原文中连续出现的、在该语言的词典中可以查到的最小意义单位。
+判断标准：这个形式能否作为独立条目出现在该语言的词典中？
+
+【关键规则】
+1. 遵循该语言的正字法惯例：每种语言都有自己的词边界规则。连字符(-)、撇号(')等字符在某些语言中是词的内部组成部分，在另一些语言中可能是分隔符。请根据该语言自身的正字法来判断。
+2. 变位/屈折形式是单个词：不要将变位形式拆分为词干+词缀。词的形态信息放在 morphology 字段，不通过拆分来表达。
+3. 尊重该语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词。
+4. 【极其重要·非组合性原则】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个 token，不能拆分。这是所有语言的通用原则，不限于任何特定语言。
+5. 【极其重要·标点禁令】text 字段绝对禁止包含任何标点符号（句号、逗号、问号、感叹号、分号、冒号、省略号等）。标点不属于任何 token，它们不属于任何词。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留。所有标点符号必须被排除在 token 之外，只保留纯文字内容。
+6. 所有条目的 text 去除标点后按顺序拼接必须等于原文去除标点后的内容，不能遗漏或增加文字内容。标点符号被完全丢弃，不属于任何 token。每个文字字符必须且只能属于一个 token，不能重叠，也不能重复出现。
+7. 绝对禁止将一个完整的词拆分成字符、音节或语素。
+
+═══════════════════════════════════════════════════════════
 
 按照以下结构处理文本：
 - original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
-  - text: 原词/标记（不带标点）。【极其重要】对于没有空格分隔的语言（如日语、中文、韩语等），必须将每个独立的词/助词/语素作为单独的条目，不要将多个词合并为一个text！例如"すみません、メニューをください"必须拆为"すみません""メニュー""を""ください"四个条目，不能合并为"すみません"和"メニューをください"两个条目。助词（は、が、を、に、で等）必须作为独立条目。
-  - translation: 这个词翻译成 TARGET_LANG，必须是简洁的单词或短语，不能是完整句子或长从句
-  - phonetic: 音标(IPA)（如果是中文等没有音标的语言，可为空）
+  - text: 原文中的一个词（严格遵循源语言的自然词边界！）
+  - phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
   - morphology: 只能是词性缩写（如 n, v, adj）
+  - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
-- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。【拆分原则】1.优先拆成单个词；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
+- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
-- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG（目标语言）。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组。【关键规则】生成的冗余词与正确答案中的词组合后，不能形成与正确答案相同或近似的意思。例如：如果正确答案是"她读书"，冗余词"看"是不合适的，因为"她看书"和"她读书"意思几乎一样；应该选择如"写"、"买"、"卖"等组合后意思明显不同的词
-
-【极其重要！！！固定搭配处理规则！！！
-- 对于固定搭配（如 what's up, live in, how are you, look forward to 等），请将整个固定搭配作为一个整体处理，不要拆分！！！
-- 固定搭配的text字段应该包含整个短语，如 "what's up" 而不是分开的 "what's" 和 "up"
-- 对于缩写形式（如 what's, don't, he's 等）也要作为一个整体处理，不要拆分！！！
-
-同时，为文本中出现的词汇生成完整词典条目（dictionary_entries）：
-
-【极其重要！！！dictionary_entries的分组规则！！！】
-- 【优先拆分原则】当一个词组可以被拆分为多个独立单词时，必须拆分为独立条目，不要作为整体！例如 "頑張ってください" 必须拆成 "頑張って" 和 "ください" 两个条目，不能作为一个整体条目
-- 只有真正的不可拆分的固定搭配（如英语 "what's up"、法语 "au revoir"）才作为单个条目
-- 判断标准：如果拆分后每个部分都有独立的含义和用法，就必须拆分；只有当整体的意思完全不等于各部分之和时才保持整体
-- 缩写形式（如 what's, don't, he's）必须作为单个条目，不要拆分
-- 每个条目的 tokens 字段列出该条目包含的原文单词（如 word="what's up" 则 tokens=["what's", "up"]）
-- 【极其重要】文本中的每一个单词都必须被某个条目的 tokens 覆盖，一个都不能遗漏！
-
-为每个条目提供：
-1. word: The word or phrase itself (固定搭配用完整短语，如 "what's up")
-2. ipa: International Phonetic Alphabet pronunciation
-3. context_meaning: Meaning in TARGET_LANG based on the context - 只需要几个独立的词，不需要用一句话进行解释
-4. translation: Translation of the word to TARGET_LANG
-5. tokens: 列出词条包含的原文单词。固定搭配列出组成单词（如 "what's up" -> ["what's", "up"]）。单个词的 tokens 只包含自身（如 "brightly" -> ["brightly"], "studying" -> ["studying"], "mountains" -> ["mountains"]）。不要将单个词拆分为词根+词缀。
-6. morphology: Part of speech abbreviation (e.g., n, v, adj, adv, etc.)
+- redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
 
 【重要要求】
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
 - 生成冗余词时要注意：
   1. 必须使用TARGET_LANG（目标语言）生成冗余词
-  2. 【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组。例如：正确可以是"苹果"、"快乐"，错误的是"红色的苹果"、"非常快乐"
+  2. 【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
   3. 冗余词的意思不能太相近，要避免多个冗余词都表达类似的含义
   4. 确保使用错误的答案组成的意思不是合理的，也不能是与正确答案近似的意思
   5. 冗余词应该是容易混淆但明显不同的概念
-  6. 【极其重要】冗余词替换正确答案中的对应词后，组成的句子意思不能与原句意思相同或近似。例如正确答案是"读书"，冗余词不能是"看"（因为"看书"≈"读书"），而应该是"写"、"买"等意思明显不同的词
+  6. 【极其重要】冗余词替换正确答案中的对应词后，组成的句子意思不能与原句意思相同或近似
 
 翻译时请参考上下文，使用符合TARGET_LANG母语者日常表达的翻译，不要机械直译，要自然流畅但不需要文学化。
 
@@ -485,8 +674,8 @@ TEXT_CONTENT
 请严格按照 tool 定义的 JSON 结构返回所有字段，不要遗漏任何 required 字段。
 """
 
-        prompt = prompt.replace("TEXT_LANG", source_lang)
-        prompt = prompt.replace("TARGET_LANG", target_lang)
+        prompt = prompt.replace("TEXT_LANG", get_lang_name(source_lang))
+        prompt = prompt.replace("TARGET_LANG", get_lang_name(target_lang))
         prompt = prompt.replace("TEXT_CONTENT", text)
 
         if context_sentences:
@@ -505,21 +694,13 @@ TEXT_CONTENT
             prompt = prompt.replace("CONTEXT_SENTENCES", "")
 
         messages = [{"role": "user", "content": prompt}]
-        
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)        
+
+        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    if "dictionary_entries" in args:
-                        de = args["dictionary_entries"]
-                        if isinstance(de, str):
-                            repaired = _repair_truncated_json(de)
-                            args["dictionary_entries"] = repaired
-                            print(f"[DEBUG] process_text_with_dictionary: repaired dictionary_entries from string, got {len(repaired)} entries")
-                        elif isinstance(de, list) and de and not isinstance(de[0], dict):
-                            args["dictionary_entries"] = []
                     if "translation" in args and isinstance(args["translation"], str):
                         repaired_tr = _repair_truncated_json(args["translation"])
                         args["translation"] = repaired_tr if isinstance(repaired_tr, list) else []
@@ -533,78 +714,69 @@ TEXT_CONTENT
     async def process_remaining_words(self, words: list, source_lang: str, target_lang: str, context: str = ""):
         if not words:
             return []
-        
+
         tool_def = {
             "type": "function",
             "function": {
-                "name": "generate_remaining_dictionary_entries",
-                "description": "为遗漏的单词生成词典条目",
+                "name": "generate_remaining_words",
+                "description": "为遗漏的单词生成词信息",
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "dictionary_entries": {
+                        "words": {
                             "type": "array",
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "word": {"type": "string"},
-                                    "ipa": {"type": "string"},
-                                    "context_meaning": {"type": "string"},
-                                    "translation": {"type": "string"},
-                                    "tokens": {
-                                        "type": "array",
-                                        "items": {"type": "string"}
-                                    },
-                                    "morphology": {
-                                        "type": "string",
-                                        "description": "词性缩写，如 n, v, adj 等"
-                                    }
+                                    "text": {"type": "string"},
+                                    "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
+                                    "morphology": {"type": "string"},
+                                    "meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - concise, just a few independent words, not a full sentence explanation"}
                                 },
                                 "required": [
-                                    "word", "ipa", "context_meaning",
-                                    "translation", "tokens", "morphology"
+                                    "text", "phonetic",
+                                    "morphology", "meaning"
                                 ]
                             }
                         }
                     },
-                    "required": ["dictionary_entries"]
+                    "required": ["words"]
                 }
             }
         }
 
         words_str = ", ".join(words)
-        prompt = f"""以下单词在之前的处理中被遗漏了，请为它们生成完整的词典条目，使用 {target_lang} 输出。
+        target_lang_name = get_lang_name(target_lang)
+        prompt = f"""以下单词在之前的处理中被遗漏了，请为它们生成词信息，使用 {target_lang_name} 输出。
 
 遗漏的单词：{words_str}
 
 上下文句子：{context}
 
 请为每个单词提供：
-1. word: 单词本身
-2. ipa: 国际音标
-3. context_meaning: 基于上下文的 {target_lang} 释义
-4. translation: {target_lang} 翻译
-5. tokens: 分词结果
-6. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
+1. text: 单词本身
+2. phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
+3. morphology: 词性缩写（如 n, v, adj, adv, prep, conj, pron, det 等）
+4. meaning: 基于上下文的 {target_lang_name} 释义，简洁的几个独立词，不需要用完整句子解释
 
 【重要】必须为每一个遗漏的单词都生成条目，不要遗漏任何一个！
 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。"""
 
         messages = [{"role": "user", "content": prompt}]
-        
-        response = await self.call_minimax(messages, [tool_def], temperature=0.0, max_tokens=16384)
-        
+
+        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
+
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
                     tool_call = choice["message"]["tool_calls"][0]
                     args = json.loads(tool_call["function"]["arguments"])
-                    entries = args.get("dictionary_entries", [])
+                    entries = args.get("words", [])
                     if isinstance(entries, str):
                         entries = _repair_truncated_json(entries)
                     if not isinstance(entries, list):
                         entries = []
-                    valid_entries = [e for e in entries if isinstance(e, dict) and "word" in e]
+                    valid_entries = [e for e in entries if isinstance(e, dict) and "text" in e]
                     print(f"[DEBUG] process_remaining_words returned {len(valid_entries)} valid entries")
                     return valid_entries
             return []

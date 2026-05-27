@@ -69,7 +69,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         </motion.button>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-stone-500 font-medium">第 {stepInUnit} / {totalItemsInUnit} 题</span>
+            <span className="text-sm text-stone-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
           )}
           {onOpenVocabList && (
             <motion.button
@@ -79,7 +79,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               whileTap={{ scale: 0.95 }}
             >
               <BookOpen className="w-4 h-4" />
-              单词表
+              {t.vocabList || '单词表'}
             </motion.button>
           )}
         </div>
@@ -139,7 +139,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               whileTap={{ scale: 0.9 }}
               onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''), sourceLang)}
               className="ml-auto p-2 text-amber-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
-              title="播放提示"
+              title={t.playHint || '播放提示'}
             >
               <Lightbulb className="w-5 h-5" />
             </motion.button>
@@ -182,12 +182,12 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             </div>
             {!isCorrect && (
               <p className="text-stone-700 font-medium">
-                正确答案：{data.answer_words.join(' ')}
+                {t.correctAnswer || '正确答案'}：{data.answer_words.join(' ')}
               </p>
             )}
             {isCorrect && isLastExercise && (
               <p className="font-medium mt-3 text-lg text-green-700">
-                🎉 该单元学习已完成！
+                🎉 {t.unitStudyComplete || '该单元学习已完成！'}
               </p>
             )}
           </motion.div>
@@ -218,10 +218,10 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                   {t.loading}
                 </>
               ) : isLastExercise ? (
-                '完成'
+                t.done || '完成'
               ) : (
                 <>
-                  下一题
+                  {t.nextQuestion || '下一题'}
                   <ChevronRight className="w-5 h-5" />
                 </>
               )}

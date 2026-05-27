@@ -1,6 +1,61 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, Globe2, PenLine, Languages, Wand2 } from 'lucide-react'
+import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, Globe2, PenLine, Languages, Wand2, Zap } from 'lucide-react'
+
+const LANG_COLORS = {
+  'en': '#3b82f6', 'fr': '#6366f1', 'pt': '#22c55e', 'de': '#eab308', 'ro': '#2563eb',
+  'sv': '#0ea5e9', 'da': '#dc2626', 'bg': '#16a34a', 'ru': '#1d4ed8', 'cs': '#7c3aed',
+  'el': '#0891b2', 'uk': '#f59e0b', 'es': '#ef4444', 'nl': '#f97316', 'sk': '#0284c7',
+  'hr': '#dc2626', 'pl': '#dc2626', 'lt': '#65a30d', 'nb': '#dc2626', 'nn': '#dc2626',
+  'fa': '#16a34a', 'sl': '#0ea5e9', 'gu': '#f97316', 'lv': '#8b5cf6', 'it': '#16a34a',
+  'oc': '#ef4444', 'ne': '#2563eb', 'mr': '#f97316', 'be': '#dc2626', 'sr': '#7c3aed',
+  'lb': '#0ea5e9', 'vec': '#16a34a', 'as': '#f97316', 'cy': '#16a34a', 'szl': '#dc2626',
+  'ast': '#f97316', 'hne': '#f97316', 'awa': '#f97316', 'mai': '#f97316', 'bho': '#f97316',
+  'sd': '#16a34a', 'ga': '#16a34a', 'fo': '#1d4ed8', 'hi': '#f97316', 'pa': '#f97316',
+  'bn': '#16a34a', 'or': '#f97316', 'tg': '#ef4444', 'yi': '#1d4ed8', 'lmo': '#16a34a',
+  'lij': '#16a34a', 'scn': '#ef4444', 'fur': '#16a34a', 'sc': '#ef4444', 'gl': '#0ea5e9',
+  'ca': '#eab308', 'is': '#1d4ed8', 'sq': '#dc2626', 'li': '#f97316', 'prs': '#16a34a',
+  'af': '#16a34a', 'mk': '#dc2626', 'si': '#7c3aed', 'ur': '#16a34a', 'mag': '#f97316',
+  'bs': '#1d4ed8', 'hy': '#f97316',
+  'zh': '#dc2626', 'zh-TW': '#dc2626', 'yue': '#dc2626', 'my': '#eab308',
+  'ar': '#16a34a', 'ars': '#16a34a', 'apc': '#16a34a', 'arz': '#16a34a', 'ary': '#16a34a',
+  'acm': '#16a34a', 'acq': '#16a34a', 'aeb': '#16a34a',
+  'he': '#2563eb', 'mt': '#dc2626',
+  'id': '#ef4444', 'ms': '#eab308', 'tl': '#2563eb', 'ceb': '#2563eb', 'jv': '#dc2626',
+  'su': '#16a34a', 'min': '#16a34a', 'ban': '#eab308', 'bjn': '#16a34a', 'pag': '#2563eb',
+  'ilo': '#2563eb', 'war': '#2563eb',
+  'ta': '#f97316', 'te': '#16a34a', 'kn': '#dc2626', 'ml': '#dc2626',
+  'tr': '#dc2626', 'az': '#0ea5e9', 'uz': '#0ea5e9', 'kk': '#0ea5e9', 'ba': '#16a34a', 'tt': '#16a34a',
+  'th': '#7c3aed', 'lo': '#dc2626',
+  'fi': '#1d4ed8', 'et': '#1d4ed8', 'hu': '#16a34a',
+  'vi': '#dc2626', 'km': '#2563eb',
+  'ja': '#dc2626', 'ko': '#1d4ed8', 'ka': '#ef4444', 'eu': '#dc2626', 'ht': '#2563eb',
+  'pap': '#f97316', 'kea': '#0ea5e9', 'tpi': '#dc2626', 'sw': '#16a34a',
+  'auto': '#78716c',
+}
+
+function LangIcon({ langCode, size = 'md' }) {
+  const color = LANG_COLORS[langCode] || (() => {
+    let hash = 0
+    const code = langCode || ''
+    for (let i = 0; i < code.length; i++) {
+      hash = code.charCodeAt(i) + ((hash << 5) - hash)
+    }
+    const hue = ((hash % 360) + 360) % 360
+    return `hsl(${hue}, 55%, 45%)`
+  })()
+  const isAuto = langCode === 'auto'
+  const code = isAuto ? 'AUTO' : langCode === 'zh-TW' ? 'TW' : langCode.substring(0, 2).toUpperCase()
+  const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : size === 'lg' ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-[10px]'
+  return (
+    <span
+      className={`inline-flex items-center justify-center rounded-md font-bold text-white leading-none ${sizeClasses}`}
+      style={{ backgroundColor: color }}
+    >
+      {code}
+    </span>
+  )
+}
 
 const LANGUAGES = [
   { value: 'en', native: 'English', en: 'English', zh: '英语', family: 'indo-european', flag: '🇬🇧' },
@@ -150,12 +205,16 @@ const FAMILY_ORDER = [
   'other',
 ]
 
-function LanguageSelector({ value, onChange, targetLang }) {
+function LanguageSelector({ value, onChange, targetLang, inputMode, recentLanguages }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [collapsed, setCollapsed] = useState({})
   const containerRef = useRef(null)
   const searchRef = useRef(null)
+
+  const showAuto = inputMode === 'direct'
+  const isAuto = value === 'auto'
+  const recentLimit = showAuto ? 5 : 5
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -174,7 +233,7 @@ function LanguageSelector({ value, onChange, targetLang }) {
     if (open && searchRef.current) searchRef.current.focus()
   }, [open])
 
-  const selectedLang = LANGUAGES.find((l) => l.value === value)
+  const selectedLang = isAuto ? null : LANGUAGES.find((l) => l.value === value)
 
   const getLabel = (lang) => targetLang === 'zh' ? lang.zh : lang.en
 
@@ -182,6 +241,12 @@ function LanguageSelector({ value, onChange, targetLang }) {
     const primary = getLabel(lang)
     return lang.native !== primary ? lang.native : null
   }
+
+  const recentLangs = (recentLanguages || [])
+    .filter(code => code !== 'auto')
+    .map(code => LANGUAGES.find(l => l.value === code))
+    .filter(Boolean)
+    .slice(0, recentLimit)
 
   const filteredLanguages = LANGUAGES.filter((l) => {
     if (!search) return true
@@ -203,6 +268,8 @@ function LanguageSelector({ value, onChange, targetLang }) {
     setSearch('')
   }
 
+  const autoLabel = targetLang === 'zh' ? '自动检测' : 'Auto Detect'
+
   return (
     <div ref={containerRef} className="relative">
       <button
@@ -214,11 +281,22 @@ function LanguageSelector({ value, onChange, targetLang }) {
             : 'border-stone-200/80 bg-white hover:border-stone-300 hover:shadow-sm'
         }`}
       >
-        <span className="text-xl leading-none">{selectedLang?.flag}</span>
+        {isAuto ? (
+          <span className="leading-none"><LangIcon langCode="auto" size="md" /></span>
+        ) : (
+          <span className="leading-none"><LangIcon langCode={value} size="md" /></span>
+        )}
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-stone-800">{selectedLang ? getLabel(selectedLang) : value}</span>
-          {selectedLang && getSecondary(selectedLang) && (
+          <span className="text-sm font-medium text-stone-800">
+            {isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value}
+          </span>
+          {!isAuto && selectedLang && getSecondary(selectedLang) && (
             <span className="text-xs text-stone-400 ml-2">{getSecondary(selectedLang)}</span>
+          )}
+          {isAuto && (
+            <span className="text-xs text-stone-400 ml-2">
+              <Zap className="w-3 h-3 inline -mt-0.5" />
+            </span>
           )}
         </div>
         <ChevronDown className={`w-4 h-4 text-stone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
@@ -252,6 +330,40 @@ function LanguageSelector({ value, onChange, targetLang }) {
             </div>
 
             <div className="max-h-72 overflow-y-auto overscroll-contain">
+              {!search && (showAuto || recentLangs.length > 0) && (
+                <div className="border-b border-stone-100">
+                  {showAuto && (
+                    <button
+                      type="button"
+                      onClick={() => handleSelect('auto')}
+                      className={`w-full flex items-center gap-2.5 px-5 py-2 text-sm transition-colors ${
+                        isAuto ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-50'
+                      }`}
+                    >
+                      <LangIcon langCode="auto" size="sm" />
+                      <span className={isAuto ? 'font-medium' : ''}>{autoLabel}</span>
+                      <span className="text-xs text-stone-400">
+                        <Zap className="w-3 h-3 inline -mt-0.5" />
+                      </span>
+                    </button>
+                  )}
+                  {recentLangs.map((lang) => (
+                    <button
+                      key={`recent-${lang.value}`}
+                      type="button"
+                      onClick={() => handleSelect(lang.value)}
+                      className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
+                        value === lang.value ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-50'
+                      }`}
+                    >
+                      <LangIcon langCode={lang.value} size="sm" />
+                      <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
+                      {getSecondary(lang) && <span className="text-xs text-stone-400">{getSecondary(lang)}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {Object.keys(groupedLanguages).length === 0 && (
                 <div className="py-8 text-center text-sm text-stone-400">
                   {targetLang === 'zh' ? '未找到语言' : 'No languages found'}
@@ -290,7 +402,7 @@ function LanguageSelector({ value, onChange, targetLang }) {
                                 value === lang.value ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-50'
                               }`}
                             >
-                              <span className="text-base leading-none flex-shrink-0">{lang.flag}</span>
+                              <LangIcon langCode={lang.value} size="sm" />
                               <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
                               {getSecondary(lang) && <span className="text-xs text-stone-400">{getSecondary(lang)}</span>}
                             </button>
@@ -365,7 +477,27 @@ function ModeDescription({ mode, t }) {
   )
 }
 
-function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode }) {
+function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
+  const directModeLangRef = useRef('auto')
+
+  const handleSourceLangChange = (lang) => {
+    setSourceLang(lang)
+    if (inputMode === 'direct') {
+      directModeLangRef.current = lang
+    }
+  }
+
+  const handleModeChange = (newMode) => {
+    const prevMode = inputMode
+    setInputMode(newMode)
+    if (newMode === 'direct' && prevMode !== 'direct') {
+      setSourceLang(directModeLangRef.current)
+    }
+    if (newMode !== 'direct' && sourceLang === 'auto') {
+      const firstRecent = (recentLanguages || []).find(l => l !== 'auto')
+      setSourceLang(firstRecent || 'en')
+    }
+  }
   const getPlaceholder = () => {
     if (inputMode === 'translate') return t.modeTranslatePlaceholder
     if (inputMode === 'generate') return t.modeGeneratePlaceholder
@@ -373,7 +505,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   }
 
   const getLabel = () => {
-    if (inputMode === 'translate') return t.nativeLang
+    if (inputMode === 'translate') return t.inputText
     if (inputMode === 'generate') return t.inputText
     return t.inputText
   }
@@ -450,7 +582,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
               {t.modeLabel}
             </label>
-            <ModeSelector mode={inputMode} setMode={setInputMode} t={t} />
+            <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
             <div className="mt-2 min-h-[28px]">
               <AnimatePresence mode="wait">
                 <ModeDescription mode={inputMode} t={t} />
@@ -468,7 +600,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
               <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
                 {t.learnLang}
               </label>
-              <LanguageSelector value={sourceLang} onChange={setSourceLang} targetLang={targetLang} />
+              <LanguageSelector value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
             </div>
           </motion.div>
 
@@ -530,4 +662,5 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   )
 }
 
+export { LangIcon, LANGUAGES, LANG_COLORS }
 export default InputStep

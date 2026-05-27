@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, EyeOff } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2 } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
@@ -40,8 +40,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     return vocab.filter(w =>
       w.word.toLowerCase().includes(q) ||
       (w.enriched_meaning && w.enriched_meaning.toLowerCase().includes(q)) ||
-      (w.context_meaning && w.context_meaning.toLowerCase().includes(q)) ||
-      (w.translation && w.translation.toLowerCase().includes(q))
+      (w.meaning && w.meaning.toLowerCase().includes(q)) ||
+      (w.context_meaning && w.context_meaning.toLowerCase().includes(q))
     )
   }, [vocab, vocabSearch])
 
@@ -84,7 +84,16 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
       const waitForDetail = async (retries = 30) => {
         const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-        const data = await response.json()
+        let data
+        try {
+          data = await response.json()
+        } catch {
+          if (retries > 0) {
+            await new Promise(r => setTimeout(r, 2000))
+            return waitForDetail(retries - 1)
+          }
+          return null
+        }
         if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
           return data
         }
@@ -124,12 +133,15 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const handleTokenClick = useCallback(async (sourceWord) => {
     const sourceLower = sourceWord.toLowerCase()
     const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
+    const sourceStripped = stripEdgePunct(sourceLower)
     const matchedWord = vocab.find(w => {
       const wordLower = w.word.toLowerCase()
       if (wordLower === sourceLower) return true
       if (wordLower === sourceNoHyphen) return true
       if (wordLower.replace(/-/g, ' ') === sourceLower) return true
       if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      if (sourceStripped && sourceStripped !== sourceLower && wordLower === sourceStripped) return true
+      if (sourceStripped && sourceStripped !== sourceLower && w.tokens && w.tokens.some(t => t.toLowerCase() === sourceStripped)) return true
       return false
     })
 
@@ -142,6 +154,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
     setExpandedWord(wordKey)
     scrollToWord(wordKey, 100)
+    speakText(wordKey, sourceLang)
     const detail = await fetchWordDetail(wordKey)
     if (detail) {
       scrollToWord(wordKey, 300)
@@ -177,15 +190,22 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     speakText(text, sourceLang)
   }, [sourceLang])
 
+  const stripEdgePunct = (text) => {
+    return text.replace(/^[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]+|[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF]+$/g, '')
+  }
+
   const findVocabWordBySourceText = useCallback((sourceText) => {
     const sourceLower = sourceText.toLowerCase()
     const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
+    const sourceStripped = stripEdgePunct(sourceLower)
     return vocab.some(w => {
       const wordLower = w.word.toLowerCase()
       if (wordLower === sourceLower) return true
       if (wordLower === sourceNoHyphen) return true
       if (wordLower.replace(/-/g, ' ') === sourceLower) return true
       if (w.tokens && w.tokens.some(t => t.toLowerCase() === sourceLower)) return true
+      if (sourceStripped && sourceStripped !== sourceLower && wordLower === sourceStripped) return true
+      if (sourceStripped && sourceStripped !== sourceLower && w.tokens && w.tokens.some(t => t.toLowerCase() === sourceStripped)) return true
       return false
     })
   }, [vocab])
@@ -196,7 +216,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const tokens = (tr && tr.translation && Array.isArray(tr.translation)) ? tr.translation : null
 
     const tokenTexts = tokens
-      ? tokens.filter(t => typeof t === 'object' && t.text).map(t => t.text)
+      ? tokens.filter(t => typeof t === 'object' && t.text).flatMap(t => {
+          const raw = t.text
+          const stripped = stripEdgePunct(raw)
+          return stripped && stripped !== raw ? [raw, stripped] : [raw]
+        })
       : []
 
     const vocabTexts = vocab.map(w => w.word).filter(Boolean)
@@ -252,7 +276,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       {processingInfo && (
         <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-stone-600">{t.processing}: 句子 {safeProcessingInfo.current} / {safeProcessingInfo.total}</span>
+            <span className="text-sm text-stone-600">{t.processing}: {t.sentence || '句子'} {safeProcessingInfo.current} / {safeProcessingInfo.total}</span>
             <span className="text-sm text-stone-600">{progress}%</span>
           </div>
           <div className="w-full bg-stone-100 rounded-full h-2.5">
@@ -267,7 +291,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       {!processingInfo && loading && !preprocessStatus && (
         <div className="bg-white border border-stone-200 rounded-2xl p-4 shadow-sm">
           <div className="flex justify-between mb-2">
-            <span className="text-sm text-stone-600">{t.processing}: 句子 0 / ...</span>
+            <span className="text-sm text-stone-600">{t.processing}: {t.sentence || '句子'} 0 / ...</span>
             <span className="text-sm text-stone-600">0%</span>
           </div>
           <div className="w-full bg-stone-100 rounded-full h-2.5">
@@ -303,7 +327,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           ) : (
             <>
               <Shuffle className="w-5 h-5" />
-              开始学习
+              {t.startLearning || '开始学习'}
             </>
           )}
         </motion.button>
@@ -459,7 +483,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   </span>
                                 )}
                                 <span className={`text-[12px] text-stone-500 truncate ${hideMeanings ? 'invisible' : ''}`}>
-                                  {word.context_meaning || word.translation}
+                                  {word.meaning || word.context_meaning}
                                 </span>
                               </div>
                               <Volume2
