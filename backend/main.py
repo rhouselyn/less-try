@@ -3493,16 +3493,34 @@ import os
 TTS_CACHE = {}
 
 TTS_LANG_MAP = {
-    'en': 'en', 'zh': 'cmn', 'ja': 'ja', 'ko': 'ko',
+    'en': 'en-us', 'zh': 'cmn', 'ja': 'ja', 'ko': 'ko',
     'fr': 'fr', 'de': 'de', 'es': 'es', 'it': 'it',
     'pt': 'pt', 'ru': 'ru',
 }
 
-@app.get("/api/tts")
-async def tts_endpoint(text: str = "", lang: str = "en"):
-    if not text:
+TTS_VOICE_MAP = {
+    'en': 'en-us+f3',
+    'zh': 'cmn',
+    'ja': 'ja',
+    'ko': 'ko',
+    'fr': 'fr+f3',
+    'de': 'de+f3',
+    'es': 'es+f3',
+    'it': 'it+f3',
+    'pt': 'pt+f3',
+    'ru': 'ru+f3',
+}
+
+class TTSRequest(BaseModel):
+    text: str
+    lang: str = "en"
+
+@app.post("/api/tts")
+async def tts_endpoint(req: TTSRequest):
+    if not req.text:
         raise HTTPException(status_code=400, detail="Text is required")
-    tts_lang = TTS_LANG_MAP.get(lang, lang)
+    text = req.text
+    tts_lang = TTS_VOICE_MAP.get(req.lang, TTS_LANG_MAP.get(req.lang, req.lang))
     cache_key = hashlib.md5(f"{tts_lang}:{text}".encode()).hexdigest()
     if cache_key in TTS_CACHE:
         cached_mime, cached_data = TTS_CACHE[cache_key]
@@ -3518,12 +3536,12 @@ async def tts_endpoint(text: str = "", lang: str = "en"):
             mp3_path = mp3_file.name
         try:
             subprocess.run(
-                ['espeak-ng', '-v', tts_lang, '-w', wav_path, text],
-                capture_output=True, timeout=10
+                ['espeak-ng', '-v', tts_lang, '-s', '150', '-p', '50', '-w', wav_path, text],
+                capture_output=True, timeout=15
             )
             subprocess.run(
                 ['ffmpeg', '-y', '-i', wav_path, '-ar', '44100', '-ac', '1', '-codec:a', 'libmp3lame', '-b:a', '128k', mp3_path],
-                capture_output=True, timeout=10
+                capture_output=True, timeout=15
             )
             with open(mp3_path, 'rb') as f:
                 mp3_data = f.read()

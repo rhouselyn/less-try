@@ -64,8 +64,10 @@ async function playWithAudioContext(arrayBuffer) {
   }
 }
 
-function playWithAudioElement(url) {
+function playWithAudioElement(arrayBuffer) {
   return new Promise((resolve) => {
+    const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
+    const url = URL.createObjectURL(blob)
     const audio = new Audio()
     audio.preload = 'auto'
     audio.volume = 1
@@ -75,6 +77,7 @@ function playWithAudioElement(url) {
     const done = (result) => {
       if (resolved) return
       resolved = true
+      URL.revokeObjectURL(url)
       resolve(result)
     }
 
@@ -105,18 +108,21 @@ async function speakText(text, sourceLang = 'en') {
   stopCurrentAudio()
 
   const lang = sourceLang || 'en'
-  const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}`
 
   try {
-    const res = await fetch(url)
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, lang }),
+    })
     if (!res.ok) throw new Error('TTS failed')
     const arrayBuffer = await res.arrayBuffer()
 
     const ok = await playWithAudioContext(arrayBuffer)
     if (ok) return
-  } catch (e) {}
 
-  await playWithAudioElement(url)
+    await playWithAudioElement(arrayBuffer)
+  } catch (e) {}
 }
 
 export { LANG_MAP, speakText }
