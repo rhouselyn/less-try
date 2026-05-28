@@ -39,7 +39,7 @@ function AllUnitsStep({
 
   const renderUnitCard = (unit, index, isCurrent, onClick, keyPrefix, isUnlocked, phaseNumber) => {
     const isCompleted = unit.completed;
-    const isGenerating = phaseNumber === 1 && index === 0 && generatingUnits?.has(index);
+    const isGenerating = phaseNumber === 1 && generatingUnits?.has(index);
     const isLocked = !isUnlocked && !isCompleted && !isGenerating;
     const starKey = `${phaseNumber}-${index}`;
     const starCount = unitStarCounts?.[starKey];

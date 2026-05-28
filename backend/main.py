@@ -2906,7 +2906,7 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 return {"success": True, "unit_complete": True, "new_unit": new_unit}
             
             storage.save_phase2_progress(file_id, new_exercise_index)
-            return {"success": True, "new_exercise_index": new_exercise_index}
+            return await get_phase_unit_exercise(file_id, phase_number, unit_id)
         else:
             progress = storage.load_phase_progress(file_id, phase_number)
             current_exercise_index = progress["current_exercise"]

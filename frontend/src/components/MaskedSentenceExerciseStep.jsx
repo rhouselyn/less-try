@@ -151,14 +151,17 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               return (
                 <motion.button
                   key={`opt-${idx}`}
-                  animate={{ opacity: isSelected ? 0 : 1, scale: isSelected ? 0.8 : 1 }}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: isSelected ? 0 : 1, scale: isSelected ? 0 : 1 }}
                   transition={{ duration: 0.15 }}
                   onClick={() => handleWordSelect(word, idx)}
                   disabled={isSelected || answerChecked}
                   className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
-                    isSelected || answerChecked
-                      ? 'pointer-events-none'
-                      : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
+                    isSelected
+                      ? 'pointer-events-none absolute invisible'
+                      : answerChecked
+                        ? 'pointer-events-none bg-stone-800 text-white opacity-50'
+                        : 'bg-stone-800 text-white hover:bg-stone-700'
                   }`}
                 >
                   {word}

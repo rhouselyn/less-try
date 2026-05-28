@@ -633,37 +633,17 @@ function App() {
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
         updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount)
         setStep('unit-complete')
-      } else {
-        const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
-        if (exerciseData.unit_complete) {
-          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-            api.getPhaseUnits(currentFileId, 1),
-            api.getPhaseUnits(currentFileId, 2)
-          ])
-          setPhase1Units(phase1UnitsData.units)
-          const genUnits = new Set()
-          phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
-          setGeneratingUnits(genUnits)
-          setPhase2Units(phase2UnitsData.units)
-          setCurrentPhase1Unit(phase1UnitsData.current_unit)
-          setCurrentPhase2Unit(phase2UnitsData.current_unit)
-          setCompletedUnitId(currentPhaseUnit)
-          setCompletedPhase(currentPhase)
-          const starCount2 = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
-          updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount2)
-          setStep('unit-complete')
-        } else {
-          setExerciseType(exerciseData.exercise_type)
-          setCurrentExerciseData({
-            ...exerciseData.data,
-            mask_version: exerciseData.mask_version,
-            total_masks: exerciseData.total_masks,
-            exercise_type_index: exerciseData.exercise_type_index,
-            exercise_index_in_unit: exerciseData.exercise_index_in_unit,
-            total_exercises_in_unit: exerciseData.total_exercises_in_unit,
-            sentence_preview: exerciseData.sentence_preview
-          })
-        }
+      } else if (nextRes.exercise_type) {
+        setExerciseType(nextRes.exercise_type)
+        setCurrentExerciseData({
+          ...nextRes.data,
+          mask_version: nextRes.mask_version,
+          total_masks: nextRes.total_masks,
+          exercise_type_index: nextRes.exercise_type_index,
+          exercise_index_in_unit: nextRes.exercise_index_in_unit,
+          total_exercises_in_unit: nextRes.total_exercises_in_unit,
+          sentence_preview: nextRes.sentence_preview
+        })
       }
     } catch (error) {
       console.error('下一个练习错误:', error)
@@ -1027,6 +1007,23 @@ function App() {
       const sentencesData = await api.getSentences(fileId)
       const sentenceList = sentencesData.sentences || []
       setSentenceTranslations(Array.isArray(sentenceList) ? sentenceList : [])
+      try {
+        const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
+          api.getPhaseUnits(fileId, 1),
+          api.getPhaseUnits(fileId, 2),
+          api.getUnitStars(fileId)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setUnitStarCounts(starsData.stars || {})
+        const genUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+        setGeneratingUnits(genUnits)
+      } catch (e) {
+        console.error('Failed to load phase units:', e)
+      }
       setProgress(100)
       setProcessingInfo(null)
       setStep('dictionary')
