@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Search, BookOpen, Volume2, Loader2, RefreshCw } from 'lucide-react'
+import { ArrowLeft, Search, BookOpen, Volume2, Loader2, RefreshCw, Brain } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
@@ -278,18 +278,20 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                     const hasDetail = mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.variants_detail || mergedWord.examples || mergedWord.memory_hint || mergedWord.context_sentences
                                     return hasDetail ? (
                                       <div>
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-[10px] font-semibold text-stone-300 uppercase tracking-widest">详情</span>
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Brain className="w-3 h-3 text-stone-400 shrink-0" />
+                                          <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
+                                            {mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.context_meaning}
+                                          </p>
                                           <button
                                             onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
-                                            className="flex items-center gap-1 px-2 py-1 text-[10px] text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
+                                            className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
                                             title="重新生成"
                                           >
-                                            <RefreshCw className="w-3 h-3" />
-                                            <span>重新生成</span>
+                                            <RefreshCw className="w-3.5 h-3.5" />
                                           </button>
                                         </div>
-                                        <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} />
+                                        <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} hideDefinition />
                                       </div>
                                     ) : (
                                       <div className="pt-3 text-center text-stone-400 text-[12px]">{t.noDetails || '暂无详情'}</div>

@@ -100,7 +100,10 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50">
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50 relative">
+            {selectedWords.length === 0 && !answerChecked && (
+              <span className="text-stone-300 text-sm absolute top-4 left-4 pointer-events-none">点击下方选项填入...</span>
+            )}
             <AnimatePresence>
               {selectedWords.map((item, pos) => (
                 <motion.div
@@ -128,9 +131,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                 </motion.div>
               ))}
             </AnimatePresence>
-            {selectedWords.length === 0 && !answerChecked && (
-              <span className="text-stone-300 text-sm">点击下方选项填入...</span>
-            )}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}

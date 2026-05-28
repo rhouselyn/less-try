@@ -1316,12 +1316,13 @@ async def priority_word_gen(file_id: str, request: dict):
 
         if force:
             storage.delete_word_cache(file_id, word)
+            state["processing_words"] = {w for w in state.get("processing_words", set()) if w.lower() != word.lower()}
 
         if not force and storage.load_word_cache(file_id, word):
             return {"status": "already_cached"}
 
         processing = state.get("processing_words", set())
-        if word.lower() in {w.lower() for w in processing}:
+        if not force and word.lower() in {w.lower() for w in processing}:
             return {"status": "already_processing"}
 
         state["priority_queue"] = [w for w in state["priority_queue"] if w.lower() != word.lower()]

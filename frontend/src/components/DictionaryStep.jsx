@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft, Pencil, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft, Pencil, ChevronLeft, ChevronRight, RefreshCw, Brain } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
@@ -968,18 +968,20 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                         </div>
                                       ) : detail ? (
                                         <div className="pt-3">
-                                          <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] font-semibold text-stone-300 uppercase tracking-widest">详情</span>
+                                          <div className="flex items-center gap-2 mb-2">
+                                            <Brain className="w-3 h-3 text-stone-400 shrink-0" />
+                                            <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
+                                              {detail.enriched_meaning || detail.meaning || detail.context_meaning}
+                                            </p>
                                             <button
                                               onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
-                                              className="flex items-center gap-1 px-2 py-1 text-[10px] text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
+                                              className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
                                               title="重新生成"
                                             >
-                                              <RefreshCw className="w-3 h-3" />
-                                              <span>重新生成</span>
+                                              <RefreshCw className="w-3.5 h-3.5" />
                                             </button>
                                           </div>
-                                          <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} hideContextSentences={showGlobalVocab} />
+                                          <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} hideContextSentences={showGlobalVocab} hideDefinition />
                                         </div>
                                       ) : (
                                         <div className="pt-3 text-center text-stone-400 text-[12px]">
@@ -1079,18 +1081,20 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       </div>
                                     ) : detail ? (
                                       <div className="pt-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-[10px] font-semibold text-stone-300 uppercase tracking-widest">详情</span>
+                                        <div className="flex items-center gap-2 mb-2">
+                                          <Brain className="w-3 h-3 text-stone-400 shrink-0" />
+                                          <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
+                                            {detail.enriched_meaning || detail.meaning || detail.context_meaning}
+                                          </p>
                                           <button
                                             onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
-                                            className="flex items-center gap-1 px-2 py-1 text-[10px] text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
+                                            className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
                                             title="重新生成"
                                           >
-                                            <RefreshCw className="w-3 h-3" />
-                                            <span>重新生成</span>
+                                            <RefreshCw className="w-3.5 h-3.5" />
                                           </button>
                                         </div>
-                                        <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} />
+                                        <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} hideDefinition />
                                       </div>
                                     ) : (
                                       <div className="pt-3 text-center text-stone-400 text-[12px]">

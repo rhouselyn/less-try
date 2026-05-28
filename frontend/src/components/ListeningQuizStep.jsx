@@ -152,7 +152,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50 relative">
+            {selectedWords.length === 0 && (
+              <span className="italic text-stone-400 text-sm absolute top-4 left-4 pointer-events-none">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
+            )}
             <AnimatePresence>
               {selectedWords.map((item, pos) => (
                 <motion.div
@@ -177,9 +180,6 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                 </motion.div>
               ))}
             </AnimatePresence>
-            {selectedWords.length === 0 && (
-              <span className="italic text-stone-400 text-sm">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
-            )}
           </div>
         </div>
 

@@ -22,31 +22,21 @@ function WordDetailCard({ word, sourceLang, detailLoading, t, onRegenerate }) {
           </div>
         )}
 
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-semibold text-stone-300 uppercase tracking-widest">详情</span>
+        <div className="flex items-center gap-2">
+          <Brain className="w-3 h-3 text-stone-400 shrink-0" />
+          <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
+            {word.enriched_meaning || word.meaning}
+          </p>
           {onRegenerate && (
             <button
               onClick={(e) => { e.stopPropagation(); onRegenerate() }}
-              className="flex items-center gap-1 px-2 py-1 text-[10px] text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
+              className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
               title="重新生成"
             >
-              <RefreshCw className="w-3 h-3" />
-              <span>重新生成</span>
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-
-        {(word.enriched_meaning || word.meaning) && (
-          <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-              <Brain className="w-3 h-3" />
-              {t.definition || '释义'}
-            </h3>
-            <p className="text-[13px] text-stone-700 leading-relaxed">
-              {word.enriched_meaning || word.meaning}
-            </p>
-          </div>
-        )}
 
         {word.variants_detail && word.variants_detail.length > 0 && (
           <div>

@@ -104,7 +104,10 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50">
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50 relative">
+            {selectedTokens.length === 0 && (
+              <span className="italic text-stone-400 text-sm absolute top-4 left-4 pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
+            )}
             <AnimatePresence>
               {selectedTokens.map((item, idx) => {
                 const isTokenCorrect = idx < data.original_tokens.length &&
@@ -112,9 +115,11 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 return (
                   <motion.div
                     key={`sel-${item.index}-${idx}`}
+                    layout
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
+                    transition={{ layout: { duration: 0.15 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                     onClick={() => handleSelectedClick(idx)}
                     className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                       answerChecked
@@ -131,9 +136,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 )
               })}
             </AnimatePresence>
-            {selectedTokens.length === 0 && (
-              <span className="italic text-stone-400 text-sm">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
-            )}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}

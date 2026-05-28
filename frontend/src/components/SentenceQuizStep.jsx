@@ -143,7 +143,10 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50">
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50 relative">
+            {selectedTokens.length === 0 && (
+              <span className="italic text-stone-400 absolute top-4 left-4 pointer-events-none">{t.selectTokensHint}</span>
+            )}
             <AnimatePresence>
               {selectedTokens.map((token, pos) => {
                 const isTokenCorrect = pos < quizData.correct_tokens.length &&
@@ -172,15 +175,6 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 )
               })}
             </AnimatePresence>
-            {selectedTokens.length === 0 && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="italic text-stone-400"
-              >
-                {t.selectTokensHint}
-              </motion.p>
-            )}
           </div>
         </div>
 
