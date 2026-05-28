@@ -3493,130 +3493,51 @@ import edge_tts
 
 TTS_CACHE = {}
 
-EDGE_VOICE_MAP = {
-    'en': 'en-US-JennyNeural',
-    'zh': 'zh-CN-XiaoxiaoNeural',
-    'zh-TW': 'zh-TW-HsiaoChenNeural',
-    'yue': 'zh-HK-HiuGaaiNeural',
-    'ja': 'ja-JP-NanamiNeural',
-    'ko': 'ko-KR-SunHiNeural',
-    'fr': 'fr-FR-DeniseNeural',
-    'de': 'de-DE-KatjaNeural',
-    'es': 'es-ES-ElviraNeural',
-    'it': 'it-IT-ElsaNeural',
-    'pt': 'pt-BR-FranciscaNeural',
-    'ru': 'ru-RU-SvetlanaNeural',
-    'ar': 'ar-SA-ZariyahNeural',
-    'ars': 'ar-SA-ZariyahNeural',
-    'apc': 'ar-JO-SanaNeural',
-    'arz': 'ar-EG-SalmaNeural',
-    'ary': 'ar-MA-MounaNeural',
-    'acm': 'ar-IQ-RanaNeural',
-    'acq': 'ar-YE-MaryamNeural',
-    'aeb': 'ar-TN-ReemNeural',
-    'he': 'he-IL-HilaNeural',
-    'hi': 'hi-IN-SwaraNeural',
-    'bn': 'bn-IN-TanishaaNeural',
-    'ta': 'ta-IN-PallaviNeural',
-    'te': 'te-IN-ShrutiNeural',
-    'kn': 'kn-IN-SapnaNeural',
-    'ml': 'ml-IN-SobhanaNeural',
-    'gu': 'gu-IN-DhwaniNeural',
-    'mr': 'mr-IN-AarohiNeural',
-    'pa': 'pa-IN-DiwaliNeural',
-    'or': 'or-IN-DiptiNeural',
-    'ur': 'ur-IN-GulNeural',
-    'sd': 'ur-PK-UzmaNeural',
-    'ne': 'ne-NP-HemkalaNeural',
-    'si': 'si-LK-ThiliniNeural',
-    'th': 'th-TH-PremwadeeNeural',
-    'lo': 'lo-LA-KeomanyNeural',
-    'vi': 'vi-VN-HoaiMyNeural',
-    'km': 'km-KH-SreymomNeural',
-    'id': 'id-ID-GadisNeural',
-    'ms': 'ms-MY-YasminNeural',
-    'tl': 'fil-PH-BlessicaNeural',
-    'ceb': 'fil-PH-BlessicaNeural',
-    'jv': 'jv-ID-SitiNeural',
-    'su': 'su-ID-TutiNeural',
-    'tr': 'tr-TR-EmelNeural',
-    'az': 'az-AZ-BanuNeural',
-    'uz': 'uz-UZ-MadinaNeural',
-    'kk': 'kk-KZ-AigulNeural',
-    'fa': 'fa-IR-DilaraNeural',
-    'my': 'my-MM-NilarNeural',
-    'ka': 'ka-GE-EkaNeural',
-    'hy': 'hy-AM-AnahitNeural',
-    'af': 'af-ZA-AdriNeural',
-    'sq': 'sq-AL-AnilaNeural',
-    'bg': 'bg-BG-KalinaNeural',
-    'bs': 'bs-BA-VesnaNeural',
-    'ca': 'ca-ES-JoanaNeural',
-    'cs': 'cs-CZ-VlastaNeural',
-    'cy': 'cy-GB-NiaNeural',
-    'da': 'da-DK-ChristelNeural',
-    'el': 'el-GR-AthinaNeural',
-    'et': 'et-EE-AnuNeural',
-    'eu': 'eu-ES-AinhoaNeural',
-    'fi': 'fi-FI-NooraNeural',
-    'ga': 'ga-IE-OrlaNeural',
-    'gl': 'gl-ES-SabelaNeural',
-    'hr': 'hr-HR-GabrijelaNeural',
-    'hu': 'hu-HU-NoemiNeural',
-    'is': 'is-IS-GudrunNeural',
-    'lt': 'lt-LT-OnaNeural',
-    'lv': 'lv-LV-EveritaNeural',
-    'mk': 'mk-MK-MarijaNeural',
-    'mt': 'mt-MT-GraceNeural',
-    'nb': 'nb-NO-PernilleNeural',
-    'nl': 'nl-NL-ColetteNeural',
-    'pl': 'pl-PL-ZofiaNeural',
-    'ro': 'ro-RO-AlinaNeural',
-    'sk': 'sk-SK-ViktoriaNeural',
-    'sl': 'sl-SI-PetraNeural',
-    'sr': 'sr-RS-SophieNeural',
-    'sv': 'sv-SE-SofieNeural',
-    'uk': 'uk-UA-PolinaNeural',
+EDGE_DEFAULT_VOICES = {
+    'en': 'en-US-JennyNeural', 'zh': 'zh-CN-XiaoxiaoNeural',
+    'zh-TW': 'zh-TW-HsiaoChenNeural', 'yue': 'zh-HK-HiuGaaiNeural',
+    'ja': 'ja-JP-NanamiNeural', 'ko': 'ko-KR-SunHiNeural',
+    'fr': 'fr-FR-DeniseNeural', 'de': 'de-DE-KatjaNeural',
+    'es': 'es-ES-ElviraNeural', 'it': 'it-IT-ElsaNeural',
+    'pt': 'pt-BR-FranciscaNeural', 'ru': 'ru-RU-SvetlanaNeural',
+    'ar': 'ar-SA-ZariyahNeural', 'he': 'he-IL-HilaNeural',
+    'hi': 'hi-IN-SwaraNeural', 'bn': 'bn-IN-TanishaaNeural',
+    'ta': 'ta-IN-PallaviNeural', 'te': 'te-IN-ShrutiNeural',
+    'kn': 'kn-IN-SapnaNeural', 'ml': 'ml-IN-SobhanaNeural',
+    'gu': 'gu-IN-DhwaniNeural', 'mr': 'mr-IN-AarohiNeural',
+    'pa': 'pa-IN-DiwaliNeural', 'or': 'or-IN-DiptiNeural',
+    'ur': 'ur-IN-GulNeural', 'ne': 'ne-NP-HemkalaNeural',
+    'si': 'si-LK-ThiliniNeural', 'th': 'th-TH-PremwadeeNeural',
+    'lo': 'lo-LA-KeomanyNeural', 'vi': 'vi-VN-HoaiMyNeural',
+    'km': 'km-KH-SreymomNeural', 'id': 'id-ID-GadisNeural',
+    'ms': 'ms-MY-YasminNeural', 'tl': 'fil-PH-BlessicaNeural',
+    'tr': 'tr-TR-EmelNeural', 'az': 'az-AZ-BanuNeural',
+    'uz': 'uz-UZ-MadinaNeural', 'kk': 'kk-KZ-AigulNeural',
+    'fa': 'fa-IR-DilaraNeural', 'my': 'my-MM-NilarNeural',
+    'ka': 'ka-GE-EkaNeural', 'hy': 'hy-AM-AnahitNeural',
+    'af': 'af-ZA-AdriNeural', 'sq': 'sq-AL-AnilaNeural',
+    'bg': 'bg-BG-KalinaNeural', 'bs': 'bs-BA-VesnaNeural',
+    'ca': 'ca-ES-JoanaNeural', 'cs': 'cs-CZ-VlastaNeural',
+    'cy': 'cy-GB-NiaNeural', 'da': 'da-DK-ChristelNeural',
+    'el': 'el-GR-AthinaNeural', 'et': 'et-EE-AnuNeural',
+    'eu': 'eu-ES-AinhoaNeural', 'fi': 'fi-FI-NooraNeural',
+    'ga': 'ga-IE-OrlaNeural', 'gl': 'gl-ES-SabelaNeural',
+    'hr': 'hr-HR-GabrijelaNeural', 'hu': 'hu-HU-NoemiNeural',
+    'is': 'is-IS-GudrunNeural', 'lt': 'lt-LT-OnaNeural',
+    'lv': 'lv-LV-EveritaNeural', 'mk': 'mk-MK-MarijaNeural',
+    'mt': 'mt-MT-GraceNeural', 'nb': 'nb-NO-PernilleNeural',
+    'nl': 'nl-NL-ColetteNeural', 'pl': 'pl-PL-ZofiaNeural',
+    'ro': 'ro-RO-AlinaNeural', 'sk': 'sk-SK-ViktoriaNeural',
+    'sl': 'sl-SI-PetraNeural', 'sr': 'sr-RS-SophieNeural',
+    'sv': 'sv-SE-SofieNeural', 'uk': 'uk-UA-PolinaNeural',
     'sw': 'sw-KE-ZuriNeural',
-    'ht': 'fr-HT-Speaker1Neural',
-}
-
-ESPEAK_VOICE_MAP = {
-    'en': 'en-us', 'zh': 'cmn', 'zh-TW': 'cmn', 'yue': 'yue',
-    'ja': 'ja', 'ko': 'ko', 'fr': 'fr', 'de': 'de',
-    'es': 'es', 'it': 'it', 'pt': 'pt', 'ru': 'ru',
-    'ar': 'ar', 'he': 'he', 'hi': 'hi', 'bn': 'bn',
-    'ta': 'ta', 'te': 'te', 'kn': 'kn', 'ml': 'ml',
-    'gu': 'gu', 'mr': 'mr', 'pa': 'pa', 'or': 'or',
-    'ur': 'ur', 'ne': 'ne', 'si': 'si', 'th': 'th',
-    'lo': 'lo', 'vi': 'vi', 'km': 'km', 'id': 'id',
-    'ms': 'ms', 'tl': 'tl', 'tr': 'tr', 'az': 'az',
-    'uz': 'uz', 'kk': 'kk', 'fa': 'fa', 'my': 'my',
-    'ka': 'ka', 'hy': 'hy', 'af': 'af', 'sq': 'sq',
-    'bg': 'bg', 'bs': 'bs', 'ca': 'ca', 'cs': 'cs',
-    'cy': 'cy', 'da': 'da', 'el': 'el', 'et': 'et',
-    'eu': 'eu', 'fi': 'fi', 'ga': 'ga', 'gl': 'gl',
-    'hr': 'hr', 'hu': 'hu', 'is': 'is', 'lt': 'lt',
-    'lv': 'lv', 'mk': 'mk', 'mt': 'mt', 'nb': 'nb',
-    'nl': 'nl', 'pl': 'pl', 'ro': 'ro', 'sk': 'sk',
-    'sl': 'sl', 'sr': 'sr', 'sv': 'sv', 'uk': 'uk',
-    'sw': 'sw', 'as': 'as', 'ast': 'es', 'awa': 'hi',
-    'ban': 'id', 'bjn': 'id', 'ba': 'ru', 'be': 'be',
-    'bho': 'hi', 'hne': 'hi', 'prs': 'fa', 'fur': 'it',
-    'ilo': 'tl', 'kea': 'pt', 'lij': 'it', 'li': 'nl',
-    'lmo': 'it', 'lb': 'de', 'mag': 'hi', 'mai': 'hi',
-    'min': 'id', 'nn': 'nb', 'oc': 'fr', 'pag': 'tl',
-    'pap': 'nl', 'sc': 'it', 'scn': 'it', 'szl': 'pl',
-    'tg': 'tg', 'tt': 'ru', 'tpi': 'en', 'vec': 'it',
-    'war': 'tl', 'yi': 'yi', 'sd': 'sd', 'fo': 'fo',
-    'ceb': 'tl', 'ht': 'fr',
 }
 
 PROXY_URL = os.environ.get('https_proxy', os.environ.get('HTTPS_PROXY', ''))
 
 class TTSRequest(BaseModel):
     text: str
-    lang: str = "en"
+    lang: str = ""
 
 async def generate_edge_tts(text, voice):
     communicate = edge_tts.Communicate(text, voice, proxy=PROXY_URL if PROXY_URL else None)
@@ -3632,14 +3553,13 @@ async def generate_edge_tts(text, voice):
         except: pass
 
 def generate_espeak_tts(text, lang):
-    espeak_voice = ESPEAK_VOICE_MAP.get(lang, lang)
     with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as wav_file:
         wav_path = wav_file.name
     with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as mp3_file:
         mp3_path = mp3_file.name
     try:
         subprocess.run(
-            ['espeak-ng', '-v', espeak_voice, '-s', '150', '-p', '50', '-w', wav_path, text],
+            ['espeak-ng', '-v', lang, '-s', '150', '-p', '50', '-w', wav_path, text],
             capture_output=True, timeout=15
         )
         subprocess.run(
@@ -3660,8 +3580,8 @@ async def tts_endpoint(req: TTSRequest):
         raise HTTPException(status_code=400, detail="Text is required")
     text = req.text
     lang = req.lang
-    edge_voice = EDGE_VOICE_MAP.get(lang)
-    cache_key = hashlib.md5(f"edge:{edge_voice}:{text}".encode()).hexdigest()
+    edge_voice = EDGE_DEFAULT_VOICES.get(lang) if lang else None
+    cache_key = hashlib.md5(f"tts:{lang}:{text}".encode()).hexdigest()
     if cache_key in TTS_CACHE:
         cached_mime, cached_data = TTS_CACHE[cache_key]
         return Response(content=cached_data, media_type=cached_mime, headers={
@@ -3682,7 +3602,8 @@ async def tts_endpoint(req: TTSRequest):
                     })
             except Exception:
                 pass
-        mp3_data = generate_espeak_tts(text, lang)
+        espeak_lang = lang if lang else 'en'
+        mp3_data = generate_espeak_tts(text, espeak_lang)
         TTS_CACHE[cache_key] = ('audio/mpeg', mp3_data)
         return Response(content=mp3_data, media_type="audio/mpeg", headers={
             "Content-Length": str(len(mp3_data)),
