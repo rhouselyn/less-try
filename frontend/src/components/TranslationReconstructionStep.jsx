@@ -103,47 +103,55 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50 relative">
-            {selectedTokens.length === 0 && (
-              <span className="italic text-stone-400 text-sm absolute top-4 left-4 pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
-            )}
-            <AnimatePresence mode="popLayout">
-              {selectedTokens.map((item, idx) => {
-                const isTokenCorrect = idx < data.original_tokens.length &&
-                  stripPunctuation(item.token.toLowerCase()) === stripPunctuation(data.original_tokens[idx].toLowerCase())
-                return (
-                  <motion.div
-                    key={`sel-${item.index}`}
-                    layout
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0 }}
-                    transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
-                    onClick={() => handleSelectedClick(idx)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
-                      answerChecked
-                        ? isCorrect
-                          ? 'bg-green-100 text-green-800 border border-green-300'
-                          : isTokenCorrect
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl flex flex-wrap gap-2 bg-stone-50/50 relative">
+            <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
+              {data.original_tokens.map((_, i) => (
+                <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{data.original_tokens[i]}</span>
+              ))}
+              <span className="ml-auto p-2"><Lightbulb className="w-5 h-5" /></span>
+            </div>
+            <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-start content-start">
+              {selectedTokens.length === 0 && (
+                <span className="italic text-stone-400 text-sm pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
+              )}
+              <AnimatePresence mode="popLayout">
+                {selectedTokens.map((item, idx) => {
+                  const isTokenCorrect = idx < data.original_tokens.length &&
+                    stripPunctuation(item.token.toLowerCase()) === stripPunctuation(data.original_tokens[idx].toLowerCase())
+                  return (
+                    <motion.div
+                      key={`sel-${item.index}`}
+                      layout
+                      initial={{ opacity: 0, scale: 0 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0 }}
+                      transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                      onClick={() => handleSelectedClick(idx)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                        answerChecked
+                          ? isCorrect
                             ? 'bg-green-100 text-green-800 border border-green-300'
-                            : 'bg-red-100 text-red-800 border border-red-300'
-                        : 'bg-stone-800 text-white hover:bg-stone-700'
-                    }`}
-                  >
-                    {item.token}
-                  </motion.div>
-                )
-              })}
-            </AnimatePresence>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
-              className="ml-auto p-2 text-amber-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
-              title={t.playHint || '播放提示'}
-            >
-              <Lightbulb className="w-5 h-5" />
-            </motion.button>
+                            : isTokenCorrect
+                              ? 'bg-green-100 text-green-800 border border-green-300'
+                              : 'bg-red-100 text-red-800 border border-red-300'
+                          : 'bg-stone-800 text-white hover:bg-stone-700'
+                      }`}
+                    >
+                      {item.token}
+                    </motion.div>
+                  )
+                })}
+              </AnimatePresence>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
+                className="ml-auto p-2 text-amber-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+                title={t.playHint || '播放提示'}
+              >
+                <Lightbulb className="w-5 h-5" />
+              </motion.button>
+            </div>
           </div>
         </div>
 

@@ -99,46 +99,54 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50 relative">
-            {selectedWords.length === 0 && !answerChecked && (
-              <span className="text-stone-300 text-sm absolute top-4 left-4 pointer-events-none">点击下方选项填入...</span>
-            )}
-            <AnimatePresence mode="popLayout">
-              {selectedWords.map((item, pos) => (
-                <motion.div
-                  key={`sel-${item.index}`}
-                  layout
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
-                  onClick={() => handleSelectedClick(pos)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
-                    answerChecked
-                      ? isCorrect
-                        ? 'bg-green-100 text-green-800 border border-green-300'
-                        : (() => {
-                            const correctWord = data.answer_words[pos]
-                            return correctWord && item.word.toLowerCase() === correctWord.toLowerCase()
-                              ? 'bg-green-100 text-green-800 border border-green-300'
-                              : 'bg-red-100 text-red-800 border border-red-300'
-                          })()
-                      : 'bg-stone-800 text-white hover:bg-stone-700'
-                  }`}
-                >
-                  {item.word}
-                </motion.div>
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl flex flex-wrap gap-2 bg-stone-50/50 relative">
+            <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
+              {data.answer_words.map((_, i) => (
+                <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{data.answer_words[i]}</span>
               ))}
-            </AnimatePresence>
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''), sourceLang)}
-              className="ml-auto p-2 text-amber-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
-              title={t.playHint || '播放提示'}
-            >
-              <Lightbulb className="w-5 h-5" />
-            </motion.button>
+              <span className="ml-auto p-2"><Lightbulb className="w-5 h-5" /></span>
+            </div>
+            <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-start content-start">
+              {selectedWords.length === 0 && !answerChecked && (
+                <span className="text-stone-300 text-sm pointer-events-none">点击下方选项填入...</span>
+              )}
+              <AnimatePresence mode="popLayout">
+                {selectedWords.map((item, pos) => (
+                  <motion.div
+                    key={`sel-${item.index}`}
+                    layout
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                    onClick={() => handleSelectedClick(pos)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                      answerChecked
+                        ? isCorrect
+                          ? 'bg-green-100 text-green-800 border border-green-300'
+                          : (() => {
+                              const correctWord = data.answer_words[pos]
+                              return correctWord && item.word.toLowerCase() === correctWord.toLowerCase()
+                                ? 'bg-green-100 text-green-800 border border-green-300'
+                                : 'bg-red-100 text-red-800 border border-red-300'
+                            })()
+                        : 'bg-stone-800 text-white hover:bg-stone-700'
+                    }`}
+                  >
+                    {item.word}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''), sourceLang)}
+                className="ml-auto p-2 text-amber-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+                title={t.playHint || '播放提示'}
+              >
+                <Lightbulb className="w-5 h-5" />
+              </motion.button>
+            </div>
           </div>
         </div>
 
