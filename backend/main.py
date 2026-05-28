@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
@@ -3506,7 +3506,11 @@ async def tts_endpoint(text: str = "", lang: str = "en"):
     cache_key = hashlib.md5(f"{tts_lang}:{text}".encode()).hexdigest()
     if cache_key in TTS_CACHE:
         cached_mime, cached_data = TTS_CACHE[cache_key]
-        return StreamingResponse(io.BytesIO(cached_data), media_type=cached_mime)
+        return Response(content=cached_data, media_type=cached_mime, headers={
+            "Content-Length": str(len(cached_data)),
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "public, max-age=86400",
+        })
     try:
         with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as wav_file:
             wav_path = wav_file.name
@@ -3524,7 +3528,11 @@ async def tts_endpoint(text: str = "", lang: str = "en"):
             with open(mp3_path, 'rb') as f:
                 mp3_data = f.read()
             TTS_CACHE[cache_key] = ('audio/mpeg', mp3_data)
-            return StreamingResponse(io.BytesIO(mp3_data), media_type="audio/mpeg")
+            return Response(content=mp3_data, media_type="audio/mpeg", headers={
+                "Content-Length": str(len(mp3_data)),
+                "Accept-Ranges": "bytes",
+                "Cache-Control": "public, max-age=86400",
+            })
         finally:
             try: os.unlink(wav_path)
             except: pass
