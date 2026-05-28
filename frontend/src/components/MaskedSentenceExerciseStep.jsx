@@ -10,7 +10,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
 
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((exerciseIndexInUnit ?? 0) + 1)
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (totalExercisesInUnit ?? 0)
-  const isLastExercise = reviewMode ? (stepInUnit >= totalItemsInUnit) : (stepInUnit >= (totalExercisesInUnit ?? 10))
+  const isLastExercise = reviewMode ? (wrongItemsCount === 0) : (stepInUnit >= (totalExercisesInUnit ?? 10))
   const maxWords = data.answer_words.length
 
   const handleWordSelect = (word, index) => {
@@ -186,7 +186,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             )}
             {isCorrect && isLastExercise && (
               <p className="font-medium mt-3 text-lg text-green-700">
-                🎉 {t.unitStudyComplete || '该单元学习已完成！'}
+                🎉 {reviewMode ? (t.reviewComplete || '错题已复习完！') : (t.unitStudyComplete || '该单元学习已完成！')}
               </p>
             )}
           </motion.div>

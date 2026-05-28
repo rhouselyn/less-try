@@ -14,6 +14,7 @@ const LANG_MAP = {
 let voicesLoaded = false
 let voicesReadyPromise = null
 let currentUtterance = null
+let isSpeaking = false
 
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   const loadVoices = () => {
@@ -45,6 +46,8 @@ function speakText(text, sourceLang = 'en') {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   if (!text) return
 
+  const wasSpeaking = isSpeaking || window.speechSynthesis.speaking || window.speechSynthesis.pending
+
   if (currentUtterance) {
     currentUtterance._cancelled = true
     currentUtterance.onend = null
@@ -52,7 +55,11 @@ function speakText(text, sourceLang = 'en') {
     currentUtterance = null
   }
 
-  window.speechSynthesis.cancel()
+  if (wasSpeaking) {
+    window.speechSynthesis.cancel()
+  }
+
+  isSpeaking = false
 
   const doSpeak = () => {
     try {
@@ -75,6 +82,7 @@ function speakText(text, sourceLang = 'en') {
       let resumeInterval = null
 
       utterance.onstart = () => {
+        isSpeaking = true
         resumeInterval = setInterval(() => {
           if (window.speechSynthesis.paused) {
             window.speechSynthesis.resume()
@@ -83,11 +91,13 @@ function speakText(text, sourceLang = 'en') {
       }
 
       utterance.onend = () => {
+        isSpeaking = false
         if (resumeInterval) clearInterval(resumeInterval)
         if (currentUtterance === utterance) currentUtterance = null
       }
 
       utterance.onerror = (e) => {
+        isSpeaking = false
         if (resumeInterval) clearInterval(resumeInterval)
         if (currentUtterance === utterance) currentUtterance = null
         if (!utterance._cancelled && e.error !== 'canceled' && e.error !== 'interrupted') {
@@ -102,10 +112,12 @@ function speakText(text, sourceLang = 'en') {
     }
   }
 
+  const delay = wasSpeaking ? 150 : 30
+
   if (voicesLoaded) {
-    setTimeout(doSpeak, 50)
+    setTimeout(doSpeak, delay)
   } else if (voicesReadyPromise) {
-    voicesReadyPromise.then(() => setTimeout(doSpeak, 50))
+    voicesReadyPromise.then(() => setTimeout(doSpeak, delay))
   } else {
     setTimeout(doSpeak, 500)
   }

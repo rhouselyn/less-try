@@ -18,7 +18,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
             <Brain className="w-3 h-3" />
             {t.definition}
           </h3>
-          <p className="text-[13px] text-stone-700 leading-relaxed">
+          <p className="text-[13px] text-stone-700 leading-relaxed pl-5">
             {word.enriched_meaning || word.meaning || word.context_meaning}
           </p>
         </div>

@@ -242,7 +242,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                             <Brain className="w-3 h-3" />
                                             {t.definition || '释义'}
                                           </h3>
-                                          <p className="text-[13px] text-stone-700 leading-relaxed">
+                                          <p className="text-[13px] text-stone-700 leading-relaxed pl-5">
                                             {mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.context_meaning}
                                           </p>
                                         </div>
