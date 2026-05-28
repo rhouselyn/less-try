@@ -26,6 +26,10 @@ const SPEECH_LANG_MAP = {
 
 let currentAudio = null
 let ttsAvailable = true
+let userInteracted = false
+
+document.addEventListener('click', () => { userInteracted = true }, { once: true })
+document.addEventListener('touchstart', () => { userInteracted = true }, { once: true })
 
 function speakFallback(text, sourceLang = 'en', slow = false) {
   if (!('speechSynthesis' in window)) return
@@ -34,6 +38,34 @@ function speakFallback(text, sourceLang = 'en', slow = false) {
   utterance.lang = SPEECH_LANG_MAP[sourceLang] || 'en-US'
   utterance.rate = slow ? 0.6 : 1.0
   window.speechSynthesis.speak(utterance)
+}
+
+function speakWithTTS(text, sourceLang, slow) {
+  const lang = LANG_MAP[sourceLang] || 'en'
+  const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${lang}${slow ? '&slow=true' : ''}`
+  const audio = new Audio(url)
+  currentAudio = audio
+
+  audio.onended = () => {
+    if (currentAudio === audio) currentAudio = null
+  }
+  audio.onerror = () => {
+    if (currentAudio === audio) currentAudio = null
+    ttsAvailable = false
+    speakFallback(text, sourceLang, slow)
+  }
+
+  audio.play().catch((e) => {
+    if (currentAudio === audio) currentAudio = null
+    if (e.name === 'NotAllowedError') {
+      if (userInteracted) {
+        speakFallback(text, sourceLang, slow)
+      }
+    } else {
+      ttsAvailable = false
+      speakFallback(text, sourceLang, slow)
+    }
+  })
 }
 
 function speakText(text, sourceLang = 'en', slow = false) {
@@ -50,25 +82,7 @@ function speakText(text, sourceLang = 'en', slow = false) {
     return
   }
 
-  const lang = LANG_MAP[sourceLang] || 'en'
-  const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${lang}${slow ? '&slow=true' : ''}`
-  const audio = new Audio(url)
-  currentAudio = audio
-
-  audio.onended = () => {
-    if (currentAudio === audio) currentAudio = null
-  }
-  audio.onerror = () => {
-    if (currentAudio === audio) currentAudio = null
-    ttsAvailable = false
-    speakFallback(text, sourceLang, slow)
-  }
-
-  audio.play().catch(() => {
-    if (currentAudio === audio) currentAudio = null
-    ttsAvailable = false
-    speakFallback(text, sourceLang, slow)
-  })
+  speakWithTTS(text, sourceLang, slow)
 }
 
 export { LANG_MAP, speakText }
