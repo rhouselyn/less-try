@@ -112,11 +112,9 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 return (
                   <motion.div
                     key={`sel-${item.index}-${idx}`}
-                    layout
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
-                    transition={{ layout: { duration: 0.15 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                     onClick={() => handleSelectedClick(idx)}
                     className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                       answerChecked
@@ -133,7 +131,9 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 )
               })}
             </AnimatePresence>
-            <span className={`italic text-stone-400 text-sm transition-opacity duration-150 ${selectedTokens.length === 0 ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'}`}>{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
+            {selectedTokens.length === 0 && (
+              <span className="italic text-stone-400 text-sm">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
+            )}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}

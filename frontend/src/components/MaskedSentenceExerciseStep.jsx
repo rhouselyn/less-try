@@ -128,7 +128,9 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                 </motion.div>
               ))}
             </AnimatePresence>
-            <span className={`text-stone-300 text-sm transition-opacity duration-150 ${selectedWords.length === 0 && !answerChecked ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'}`}>点击下方选项填入...</span>
+            {selectedWords.length === 0 && !answerChecked && (
+              <span className="text-stone-300 text-sm">点击下方选项填入...</span>
+            )}
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
