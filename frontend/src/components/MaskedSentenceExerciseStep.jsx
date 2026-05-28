@@ -17,7 +17,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
     if (answerChecked) return
     if (selectedWords.some(w => w.index === index)) return
     setSelectedWords(prev => [...prev, { word, index }])
-    speakText(word, sourceLang)
   }
 
   const handleSelectedClick = (pos) => {

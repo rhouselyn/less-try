@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones, SkipForward, Turtle } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { speakText } from '../utils/speech'
 
 function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, onSkipListeningChange, reviewMode, reviewIndex, wrongItemsCount }) {
@@ -14,15 +14,12 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const rawTotalItemsInUnit = quizData?.total_items_in_unit ?? 0
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit)
 
-  const autoSpeak = useCallback(() => {
+  useEffect(() => {
     if (quizData?.original_sentence) {
-      setTimeout(() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang), 300)
+      const timer = setTimeout(() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang), 300)
+      return () => clearTimeout(timer)
     }
   }, [quizData?.original_sentence, sourceLang])
-
-  useEffect(() => {
-    autoSpeak()
-  }, [autoSpeak])
 
   if (!quizData) {
     return (
