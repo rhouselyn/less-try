@@ -25,7 +25,8 @@ const SPEECH_LANG_MAP = {
 }
 
 let currentAudio = null
-let ttsAvailable = true
+let ttsFailed = false
+let pendingAudio = null
 
 function speakFallback(text, sourceLang = 'en', slow = false) {
   if (!('speechSynthesis' in window)) return
@@ -36,6 +37,20 @@ function speakFallback(text, sourceLang = 'en', slow = false) {
   window.speechSynthesis.speak(utterance)
 }
 
+function flushPending() {
+  if (!pendingAudio) return
+  const audio = pendingAudio
+  pendingAudio = null
+  audio.play().catch(() => {
+    if (currentAudio === audio) currentAudio = null
+  })
+}
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', flushPending)
+  document.addEventListener('touchend', flushPending)
+}
+
 function speakText(text, sourceLang = 'en', slow = false) {
   if (!text) return
 
@@ -44,8 +59,9 @@ function speakText(text, sourceLang = 'en', slow = false) {
     currentAudio.currentTime = 0
     currentAudio = null
   }
+  pendingAudio = null
 
-  if (!ttsAvailable) {
+  if (ttsFailed) {
     speakFallback(text, sourceLang, slow)
     return
   }
@@ -60,14 +76,12 @@ function speakText(text, sourceLang = 'en', slow = false) {
   }
   audio.onerror = () => {
     if (currentAudio === audio) currentAudio = null
-    ttsAvailable = false
+    ttsFailed = true
     speakFallback(text, sourceLang, slow)
   }
 
   audio.play().catch(() => {
-    if (currentAudio === audio) currentAudio = null
-    ttsAvailable = false
-    speakFallback(text, sourceLang, slow)
+    pendingAudio = audio
   })
 }
 
