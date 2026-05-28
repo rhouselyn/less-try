@@ -156,7 +156,6 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             >
               <Turtle className="w-7 h-7" />
             </motion.button>
-            <span className="text-sm text-stone-400">{t.clickToPlay || '点击播放'}</span>
           </div>
         </div>
 
