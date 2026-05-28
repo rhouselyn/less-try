@@ -2969,6 +2969,56 @@ async def set_phase_progress(file_id: str, phase_number: int, request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/api/word-detail/regenerate")
+async def regenerate_word_detail(request: dict):
+    try:
+        word = request.get("word", "")
+        source_lang = request.get("source_lang", "en")
+        target_lang = request.get("target_lang", "zh")
+        if not word:
+            raise HTTPException(status_code=400, detail="Word is required")
+
+        records = storage.load_history()
+        matching = [r for r in records if r.get("source_lang") == source_lang]
+
+        for record in matching:
+            file_id = record.get("file_id")
+            if file_id:
+                storage.delete_word_cache(file_id, word)
+
+        options_result = await nvidia_api.generate_multiple_choice(
+            word, "", "", target_lang
+        )
+        file_id = matching[0].get("file_id") if matching else None
+        if file_id:
+            options_result = fix_llm_options_result(options_result, source_lang, file_id)
+
+        result = {
+            "word": options_result.get("word", word),
+            "ipa": "",
+            "meaning": options_result.get("enriched_meaning", ""),
+            "enriched_meaning": options_result.get("enriched_meaning", ""),
+            "part_of_speech": options_result.get("morphology", ""),
+            "examples": options_result.get("examples", []),
+            "memory_hint": options_result.get("memory_hint", ""),
+            "variants_detail": options_result.get("variants_detail", []),
+        }
+
+        if file_id:
+            cache_data = dict(options_result)
+            cache_data["word"] = options_result.get("word", word)
+            cache_data["meaning"] = options_result.get("enriched_meaning", "")
+            cache_data["context"] = ""
+            cache_data["context_sentences"] = []
+            cache_data["morphology"] = options_result.get("morphology", "")
+            cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+            storage.save_word_cache(file_id, word, cache_data)
+
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/word-detail")
 async def get_word_detail(word: str, source_lang: str = "en", target_lang: str = "zh"):
     try:

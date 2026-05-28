@@ -416,7 +416,7 @@ class NvidiaAPI:
     async def call_with_rotation(cls, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         return await call_minimax_with_rotation(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
 
-    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str):
+    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str, temperature: float = 0.7):
         tool_def = {
             "type": "function",
             "function": {
@@ -514,7 +514,7 @@ class NvidiaAPI:
 
         messages = [{"role": "user", "content": prompt}]
 
-        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
+        response = await call_minimax_with_rotation(messages, [tool_def], temperature=temperature, max_tokens=16384)
 
         try:
             for choice in response["choices"]:

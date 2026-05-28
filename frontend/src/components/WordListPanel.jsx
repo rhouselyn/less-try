@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, ChevronDown, ChevronLeft, ChevronRight, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft } from 'lucide-react'
+import { Search, X, ChevronDown, ChevronLeft, ChevronRight, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft, RefreshCw, Brain } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
 
-function WordDetailCard({ word, sourceLang, detailLoading, t }) {
+function WordDetailCard({ word, sourceLang, detailLoading, t, onRegenerate }) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -19,6 +19,32 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
           <div className="flex items-center gap-2 py-2">
             <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
             <span className="text-xs text-stone-400">{t.generatingDetails || '生成详细内容...'}</span>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold text-stone-300 uppercase tracking-widest">详情</span>
+          {onRegenerate && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRegenerate() }}
+              className="flex items-center gap-1 px-2 py-1 text-[10px] text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
+              title="重新生成"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>重新生成</span>
+            </button>
+          )}
+        </div>
+
+        {(word.enriched_meaning || word.meaning) && (
+          <div>
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+              <Brain className="w-3 h-3" />
+              {t.definition || '释义'}
+            </h3>
+            <p className="text-[13px] text-stone-700 leading-relaxed">
+              {word.enriched_meaning || word.meaning}
+            </p>
           </div>
         )}
 
@@ -109,6 +135,30 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       console.error('Failed to load word list:', err)
     } finally {
       setLoading(false)
+    }
+  }, [sourceLang])
+
+  const handleRegenerateWord = useCallback(async (wordKey) => {
+    setWordDetails(prev => {
+      const next = { ...prev }
+      delete next[wordKey]
+      return next
+    })
+    setDetailLoading(prev => ({ ...prev, [wordKey]: true }))
+    try {
+      const data = await api.regenerateWordDetail(wordKey, sourceLang)
+      if (data) {
+        setWordDetails(prev => ({ ...prev, [wordKey]: data }))
+        setWords(prev => prev.map(w =>
+          w.word === wordKey
+            ? { ...w, ...data }
+            : w
+        ))
+      }
+    } catch (e) {
+      console.error('Failed to regenerate word:', e)
+    } finally {
+      setDetailLoading(prev => ({ ...prev, [wordKey]: false }))
     }
   }, [sourceLang])
 
@@ -291,12 +341,6 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                       {word.meaning && (
                         <p className={`text-xs text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.meaning}</p>
                       )}
-                      {word.memory_hint && (
-                        <p className="text-[11px] text-amber-600/70 mt-0.5 truncate flex items-center gap-1">
-                          <Lightbulb className="w-3 h-3 shrink-0" />
-                          {word.memory_hint}
-                        </p>
-                      )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
@@ -321,6 +365,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                         sourceLang={sourceLang}
                         detailLoading={detailLoading[word.word]}
                         t={t}
+                        onRegenerate={() => handleRegenerateWord(word.word)}
                       />
                     )}
                   </AnimatePresence>

@@ -105,9 +105,11 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               {selectedWords.map((item, pos) => (
                 <motion.div
                   key={`sel-${item.index}`}
+                  layout
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0 }}
+                  transition={{ layout: { duration: 0.15 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                   onClick={() => handleSelectedClick(pos)}
                   className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                     answerChecked

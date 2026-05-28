@@ -277,14 +277,18 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                     const mergedWord = { ...word, ...enriched }
                                     const hasDetail = mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.variants_detail || mergedWord.examples || mergedWord.memory_hint || mergedWord.context_sentences
                                     return hasDetail ? (
-                                      <div className="relative">
-                                        <button
-                                          onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
-                                          className="absolute -top-1 right-0 p-1.5 text-stone-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors z-10"
-                                          title="重新生成"
-                                        >
-                                          <RefreshCw className="w-3.5 h-3.5" />
-                                        </button>
+                                      <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                          <span className="text-[10px] font-semibold text-stone-300 uppercase tracking-widest">详情</span>
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
+                                            className="flex items-center gap-1 px-2 py-1 text-[10px] text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
+                                            title="重新生成"
+                                          >
+                                            <RefreshCw className="w-3 h-3" />
+                                            <span>重新生成</span>
+                                          </button>
+                                        </div>
                                         <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} />
                                       </div>
                                     ) : (
