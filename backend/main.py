@@ -1,5 +1,4 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import StreamingResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
@@ -3461,7 +3460,7 @@ async def generate_text(request: dict):
         messages = [
             {
                 "role": "system",
-                "content": f"You are a text generator. Generate a text in {source_lang_name} based on the user's description. CRITICAL RULES: 1. The generated text MUST be written entirely in {source_lang_name}. Do NOT write in any other language. 2. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 3. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 4. Do NOT include any meta-commentary, explanations, or notes about the text itself. 5. The text should be natural, coherent, and suitable for language learning. 6. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 7. Output ONLY the generated text in {source_lang_name}, nothing else."
+                "content": f"You are a text generator. Generate a text in {source_lang_name} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else."
             },
             {
                 "role": "user",
@@ -3480,136 +3479,6 @@ async def generate_text(request: dict):
         return {"generated_text": generated_text}
     except HTTPException:
         raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-import hashlib
-import io
-import subprocess
-import tempfile
-import os
-import edge_tts
-
-TTS_CACHE = {}
-
-EDGE_DEFAULT_VOICES = {
-    'en': 'en-US-JennyNeural', 'zh': 'zh-CN-XiaoxiaoNeural',
-    'zh-TW': 'zh-TW-HsiaoChenNeural', 'yue': 'zh-HK-HiuGaaiNeural',
-    'ja': 'ja-JP-NanamiNeural', 'ko': 'ko-KR-SunHiNeural',
-    'fr': 'fr-FR-DeniseNeural', 'de': 'de-DE-KatjaNeural',
-    'es': 'es-ES-ElviraNeural', 'it': 'it-IT-ElsaNeural',
-    'pt': 'pt-BR-FranciscaNeural', 'ru': 'ru-RU-SvetlanaNeural',
-    'ar': 'ar-SA-ZariyahNeural', 'he': 'he-IL-HilaNeural',
-    'hi': 'hi-IN-SwaraNeural', 'bn': 'bn-IN-TanishaaNeural',
-    'ta': 'ta-IN-PallaviNeural', 'te': 'te-IN-ShrutiNeural',
-    'kn': 'kn-IN-SapnaNeural', 'ml': 'ml-IN-SobhanaNeural',
-    'gu': 'gu-IN-DhwaniNeural', 'mr': 'mr-IN-AarohiNeural',
-    'pa': 'pa-IN-DiwaliNeural', 'or': 'or-IN-DiptiNeural',
-    'ur': 'ur-IN-GulNeural', 'ne': 'ne-NP-HemkalaNeural',
-    'si': 'si-LK-ThiliniNeural', 'th': 'th-TH-PremwadeeNeural',
-    'lo': 'lo-LA-KeomanyNeural', 'vi': 'vi-VN-HoaiMyNeural',
-    'km': 'km-KH-SreymomNeural', 'id': 'id-ID-GadisNeural',
-    'ms': 'ms-MY-YasminNeural', 'tl': 'fil-PH-BlessicaNeural',
-    'tr': 'tr-TR-EmelNeural', 'az': 'az-AZ-BanuNeural',
-    'uz': 'uz-UZ-MadinaNeural', 'kk': 'kk-KZ-AigulNeural',
-    'fa': 'fa-IR-DilaraNeural', 'my': 'my-MM-NilarNeural',
-    'ka': 'ka-GE-EkaNeural', 'hy': 'hy-AM-AnahitNeural',
-    'af': 'af-ZA-AdriNeural', 'sq': 'sq-AL-AnilaNeural',
-    'bg': 'bg-BG-KalinaNeural', 'bs': 'bs-BA-VesnaNeural',
-    'ca': 'ca-ES-JoanaNeural', 'cs': 'cs-CZ-VlastaNeural',
-    'cy': 'cy-GB-NiaNeural', 'da': 'da-DK-ChristelNeural',
-    'el': 'el-GR-AthinaNeural', 'et': 'et-EE-AnuNeural',
-    'eu': 'eu-ES-AinhoaNeural', 'fi': 'fi-FI-NooraNeural',
-    'ga': 'ga-IE-OrlaNeural', 'gl': 'gl-ES-SabelaNeural',
-    'hr': 'hr-HR-GabrijelaNeural', 'hu': 'hu-HU-NoemiNeural',
-    'is': 'is-IS-GudrunNeural', 'lt': 'lt-LT-OnaNeural',
-    'lv': 'lv-LV-EveritaNeural', 'mk': 'mk-MK-MarijaNeural',
-    'mt': 'mt-MT-GraceNeural', 'nb': 'nb-NO-PernilleNeural',
-    'nl': 'nl-NL-ColetteNeural', 'pl': 'pl-PL-ZofiaNeural',
-    'ro': 'ro-RO-AlinaNeural', 'sk': 'sk-SK-ViktoriaNeural',
-    'sl': 'sl-SI-PetraNeural', 'sr': 'sr-RS-SophieNeural',
-    'sv': 'sv-SE-SofieNeural', 'uk': 'uk-UA-PolinaNeural',
-    'sw': 'sw-KE-ZuriNeural',
-}
-
-PROXY_URL = os.environ.get('https_proxy', os.environ.get('HTTPS_PROXY', ''))
-
-class TTSRequest(BaseModel):
-    text: str
-    lang: str = ""
-
-async def generate_edge_tts(text, voice):
-    communicate = edge_tts.Communicate(text, voice, proxy=PROXY_URL if PROXY_URL else None)
-    with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as f:
-        mp3_path = f.name
-    try:
-        await communicate.save(mp3_path)
-        with open(mp3_path, 'rb') as f:
-            data = f.read()
-        return data
-    finally:
-        try: os.unlink(mp3_path)
-        except: pass
-
-def generate_espeak_tts(text, lang):
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as wav_file:
-        wav_path = wav_file.name
-    with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as mp3_file:
-        mp3_path = mp3_file.name
-    try:
-        subprocess.run(
-            ['espeak-ng', '-v', lang, '-s', '150', '-p', '50', '-w', wav_path, text],
-            capture_output=True, timeout=15
-        )
-        subprocess.run(
-            ['ffmpeg', '-y', '-i', wav_path, '-ar', '44100', '-ac', '1', '-codec:a', 'libmp3lame', '-b:a', '128k', mp3_path],
-            capture_output=True, timeout=15
-        )
-        with open(mp3_path, 'rb') as f:
-            return f.read()
-    finally:
-        try: os.unlink(wav_path)
-        except: pass
-        try: os.unlink(mp3_path)
-        except: pass
-
-@app.post("/api/tts")
-async def tts_endpoint(req: TTSRequest):
-    if not req.text:
-        raise HTTPException(status_code=400, detail="Text is required")
-    text = req.text
-    lang = req.lang
-    edge_voice = EDGE_DEFAULT_VOICES.get(lang) if lang else None
-    cache_key = hashlib.md5(f"tts:{lang}:{text}".encode()).hexdigest()
-    if cache_key in TTS_CACHE:
-        cached_mime, cached_data = TTS_CACHE[cache_key]
-        return Response(content=cached_data, media_type=cached_mime, headers={
-            "Content-Length": str(len(cached_data)),
-            "Accept-Ranges": "bytes",
-            "Cache-Control": "public, max-age=86400",
-        })
-    try:
-        if edge_voice:
-            try:
-                mp3_data = await generate_edge_tts(text, edge_voice)
-                if mp3_data and len(mp3_data) > 100:
-                    TTS_CACHE[cache_key] = ('audio/mpeg', mp3_data)
-                    return Response(content=mp3_data, media_type="audio/mpeg", headers={
-                        "Content-Length": str(len(mp3_data)),
-                        "Accept-Ranges": "bytes",
-                        "Cache-Control": "public, max-age=86400",
-                    })
-            except Exception:
-                pass
-        espeak_lang = lang if lang else 'en'
-        mp3_data = generate_espeak_tts(text, espeak_lang)
-        TTS_CACHE[cache_key] = ('audio/mpeg', mp3_data)
-        return Response(content=mp3_data, media_type="audio/mpeg", headers={
-            "Content-Length": str(len(mp3_data)),
-            "Accept-Ranges": "bytes",
-            "Cache-Control": "public, max-age=86400",
-        })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

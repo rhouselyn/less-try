@@ -11,118 +11,93 @@ const LANG_MAP = {
   'ru': 'ru-RU',
 }
 
-let audioContext = null
-let currentSource = null
-let currentAudioEl = null
+let voicesLoaded = false
+let voicesReadyPromise = null
 
-async function getAudioContext() {
-  if (!audioContext) {
-    const AC = window.AudioContext || window.webkitAudioContext
-    if (!AC) return null
-    audioContext = new AC()
-  }
-  if (audioContext.state === 'suspended') {
-    await audioContext.resume()
-  }
-  return audioContext
-}
-
-function stopCurrentAudio() {
-  if (currentSource) {
-    try { currentSource.stop() } catch (e) {}
-    currentSource = null
-  }
-  if (currentAudioEl) {
-    try {
-      currentAudioEl.pause()
-      currentAudioEl.currentTime = 0
-    } catch (e) {}
-    currentAudioEl.onended = null
-    currentAudioEl.onerror = null
-    currentAudioEl = null
-  }
-}
-
-async function playWithAudioContext(arrayBuffer) {
-  const ctx = await getAudioContext()
-  if (!ctx) return false
-  try {
-    const audioBuffer = await new Promise((resolve, reject) => {
-      ctx.decodeAudioData(arrayBuffer, resolve, reject)
-    })
-    const source = ctx.createBufferSource()
-    source.buffer = audioBuffer
-    source.connect(ctx.destination)
-    currentSource = source
-    source.onended = () => {
-      if (currentSource === source) currentSource = null
+if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+  const loadVoices = () => {
+    const voices = window.speechSynthesis.getVoices()
+    if (voices.length > 0) {
+      voicesLoaded = true
     }
-    source.start(0)
-    return true
-  } catch (e) {
-    return false
   }
-}
+  loadVoices()
 
-function playWithAudioElement(arrayBuffer) {
-  return new Promise((resolve) => {
-    const blob = new Blob([arrayBuffer], { type: 'audio/mpeg' })
-    const url = URL.createObjectURL(blob)
-    const audio = new Audio()
-    audio.preload = 'auto'
-    audio.volume = 1
-    currentAudioEl = audio
-
-    let resolved = false
-    const done = (result) => {
-      if (resolved) return
-      resolved = true
-      URL.revokeObjectURL(url)
-      resolve(result)
+  voicesReadyPromise = new Promise((resolve) => {
+    if (voicesLoaded) {
+      resolve()
+      return
     }
-
-    const timeout = setTimeout(() => done(false), 8000)
-
-    audio.oncanplaythrough = () => {
-      clearTimeout(timeout)
-      audio.play().then(() => done(true)).catch(() => done(false))
+    const handler = () => {
+      voicesLoaded = true
+      resolve()
     }
-
-    audio.onerror = () => {
-      clearTimeout(timeout)
-      done(false)
-    }
-
-    audio.onended = () => {
-      if (currentAudioEl === audio) currentAudioEl = null
-    }
-
-    audio.src = url
-    audio.load()
+    window.speechSynthesis.onvoiceschanged = handler
+    setTimeout(() => {
+      loadVoices()
+      resolve()
+    }, 2000)
   })
 }
 
-async function speakText(text, sourceLang = 'en') {
-  if (typeof window === 'undefined' || !text) return
+function createUtterance(text, sourceLang) {
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = LANG_MAP[sourceLang] || 'en-US'
+  utterance.rate = 0.9
+  utterance.volume = 1
 
-  stopCurrentAudio()
+  const voices = window.speechSynthesis.getVoices()
+  const targetLang = LANG_MAP[sourceLang] || 'en-US'
+  const langPrefix = targetLang.split('-')[0]
+  const exactMatch = voices.find(v => v.lang === targetLang)
+  const langMatch = voices.find(v => v.lang.startsWith(langPrefix))
+  if (exactMatch) {
+    utterance.voice = exactMatch
+  } else if (langMatch) {
+    utterance.voice = langMatch
+  }
 
-  const lang = sourceLang || 'en'
+  utterance.onerror = (e) => {
+    if (e.error !== 'canceled' && e.error !== 'interrupted') {
+      console.warn('Speech synthesis error:', e.error)
+    }
+  }
 
-  try {
-    const res = await fetch('/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, lang }),
-    })
-    if (!res.ok) throw new Error('TTS failed')
-    const arrayBuffer = await res.arrayBuffer()
+  return utterance
+}
 
-    const ok = await playWithAudioContext(arrayBuffer)
-    if (ok) return
+function speakText(text, sourceLang = 'en') {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+  if (!text) return
 
-    await playWithAudioElement(arrayBuffer)
-  } catch (e) {}
+  const isCurrentlySpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending
+
+  if (isCurrentlySpeaking) {
+    window.speechSynthesis.cancel()
+    setTimeout(() => {
+      try {
+        window.speechSynthesis.speak(createUtterance(text, sourceLang))
+      } catch (e) {
+        console.warn('Speech synthesis failed:', e)
+      }
+    }, 300)
+  } else {
+    if (!voicesLoaded && voicesReadyPromise) {
+      voicesReadyPromise.then(() => {
+        try {
+          window.speechSynthesis.speak(createUtterance(text, sourceLang))
+        } catch (e) {
+          console.warn('Speech synthesis failed:', e)
+        }
+      })
+    } else {
+      try {
+        window.speechSynthesis.speak(createUtterance(text, sourceLang))
+      } catch (e) {
+        console.warn('Speech synthesis failed:', e)
+      }
+    }
+  }
 }
 
 export { LANG_MAP, speakText }
