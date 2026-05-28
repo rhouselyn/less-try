@@ -156,15 +156,15 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             {selectedWords.length === 0 && (
               <span className="italic text-stone-400 text-sm absolute top-4 left-4 pointer-events-none">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
             )}
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {selectedWords.map((item, pos) => (
                 <motion.div
-                  key={`sel-${item.index}-${pos}`}
+                  key={`sel-${item.index}`}
                   layout
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0 }}
-                  transition={{ layout: { duration: 0.15 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                  transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                   className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                     isChecked
                       ? isCorrect

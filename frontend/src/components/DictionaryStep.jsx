@@ -464,11 +464,25 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     setLoadingWords(prev => ({ ...prev, [localKey]: true, [globalKey]: true }))
     try {
       await api.regenerateWord(currentFileId, wordKey)
-      const waitForDetail = async (retries = 30) => {
-        const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-        let data
+      const waitForDetail = async (retries = 60) => {
         try {
-          data = await response.json()
+          const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
+          if (!response.ok) {
+            if (retries > 0) {
+              await new Promise(r => setTimeout(r, 2000))
+              return waitForDetail(retries - 1)
+            }
+            return null
+          }
+          const data = await response.json()
+          if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
+            return data
+          }
+          if (retries > 0) {
+            await new Promise(r => setTimeout(r, 2000))
+            return waitForDetail(retries - 1)
+          }
+          return null
         } catch {
           if (retries > 0) {
             await new Promise(r => setTimeout(r, 2000))
@@ -476,14 +490,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           }
           return null
         }
-        if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
-          return data
-        }
-        if (retries > 0) {
-          await new Promise(r => setTimeout(r, 2000))
-          return waitForDetail(retries - 1)
-        }
-        return data
       }
       const data = await waitForDetail()
       if (data) {

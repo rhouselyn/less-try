@@ -108,18 +108,18 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             {selectedTokens.length === 0 && (
               <span className="italic text-stone-400 text-sm absolute top-4 left-4 pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
             )}
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {selectedTokens.map((item, idx) => {
                 const isTokenCorrect = idx < data.original_tokens.length &&
                   stripPunctuation(item.token.toLowerCase()) === stripPunctuation(data.original_tokens[idx].toLowerCase())
                 return (
                   <motion.div
-                    key={`sel-${item.index}-${idx}`}
+                    key={`sel-${item.index}`}
                     layout
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
-                    transition={{ layout: { duration: 0.15 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                    transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                     onClick={() => handleSelectedClick(idx)}
                     className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                       answerChecked

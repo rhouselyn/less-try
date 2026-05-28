@@ -147,7 +147,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             {selectedTokens.length === 0 && (
               <span className="italic text-stone-400 absolute top-4 left-4 pointer-events-none">{t.selectTokensHint}</span>
             )}
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {selectedTokens.map((token, pos) => {
                 const isTokenCorrect = pos < quizData.correct_tokens.length &&
                   stripPunctuation(token) === stripPunctuation(quizData.correct_tokens[pos])
@@ -158,7 +158,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                     initial={{ opacity: 0, scale: 0 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
-                    transition={{ layout: { duration: 0.15 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                    transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                     onClick={() => handleSelectedClick(pos)}
                     className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                       isChecked

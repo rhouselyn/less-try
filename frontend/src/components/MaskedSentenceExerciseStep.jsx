@@ -104,7 +104,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             {selectedWords.length === 0 && !answerChecked && (
               <span className="text-stone-300 text-sm absolute top-4 left-4 pointer-events-none">点击下方选项填入...</span>
             )}
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {selectedWords.map((item, pos) => (
                 <motion.div
                   key={`sel-${item.index}`}
@@ -112,7 +112,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0 }}
-                  transition={{ layout: { duration: 0.15 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                  transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                   onClick={() => handleSelectedClick(pos)}
                   className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                     answerChecked
