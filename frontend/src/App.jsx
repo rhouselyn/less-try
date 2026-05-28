@@ -342,6 +342,7 @@ function App() {
           const detectResult = await api.detectLanguage(finalText)
           if (detectResult.detected_language) {
             finalSourceLang = detectResult.detected_language
+            setSourceLang(detectResult.detected_language)
           }
         } catch (e) {
           console.error('Language detection failed:', e)
@@ -1010,6 +1011,16 @@ function App() {
       setCurrentFileId(fileId)
       setFileId(fileId)
       if (title) setFileTitle(title)
+      if (srcLang && srcLang !== 'auto') {
+        setSourceLang(srcLang)
+      } else {
+        try {
+          const langData = await api.getFileLanguages(fileId)
+          if (langData.source_lang) setSourceLang(langData.source_lang)
+          if (langData.target_lang) setTargetLang(langData.target_lang)
+        } catch (e) {}
+      }
+      if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)

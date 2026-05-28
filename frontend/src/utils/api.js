@@ -38,6 +38,11 @@ export const api = {
     return response.data;
   },
 
+  getFileLanguages: async (fileId) => {
+    const response = await axios.get(`${baseUrl}/api/file-languages/${fileId}`);
+    return response.data;
+  },
+
   // 获取句子
   getSentences: async (fileId) => {
     const response = await axios.get(`${baseUrl}/api/sentences/${fileId}`);
