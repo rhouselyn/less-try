@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones, SkipForward } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones, SkipForward, Turtle } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { speakText } from '../utils/speech'
 
@@ -138,7 +138,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <Headphones className="w-4 h-4" />
             {t.listeningQuizTitle || '听力题'}
           </motion.div>
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-3">
             <motion.button
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
@@ -146,6 +146,15 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               className="p-3 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
             >
               <Volume2 className="w-8 h-8" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang, true)}
+              className="p-3 text-stone-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+              title={t.slowPlay || '慢速播放'}
+            >
+              <Turtle className="w-7 h-7" />
             </motion.button>
             <span className="text-sm text-stone-400">{t.clickToPlay || '点击播放'}</span>
           </div>

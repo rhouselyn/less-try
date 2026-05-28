@@ -13,7 +13,7 @@ const LANG_MAP = {
 
 let currentAudio = null
 
-function speakText(text, sourceLang = 'en') {
+function speakText(text, sourceLang = 'en', slow = false) {
   if (!text) return
 
   if (currentAudio) {
@@ -23,7 +23,8 @@ function speakText(text, sourceLang = 'en') {
   }
 
   const lang = LANG_MAP[sourceLang] || 'en'
-  const audio = new Audio(`/api/tts?text=${encodeURIComponent(text)}&lang=${lang}`)
+  const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${lang}${slow ? '&slow=true' : ''}`
+  const audio = new Audio(url)
   currentAudio = audio
 
   audio.onended = () => {

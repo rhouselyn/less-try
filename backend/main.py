@@ -402,49 +402,33 @@ processing_status = {}
 word_gen_state = {}
 word_gen_rate_limiter = None
 
-import subprocess
-import tempfile
+import edge_tts
+import io
 
-ESPEAK_VOICE_MAP = {
-    'en': 'en',
-    'zh': 'zh',
-    'ja': 'ja',
-    'ko': 'ko',
-    'fr': 'fr',
-    'de': 'de',
-    'es': 'es',
-    'it': 'it',
-    'pt': 'pt',
-    'ru': 'ru',
+EDGE_VOICE_MAP = {
+    'en': 'en-US-AvaNeural',
+    'zh': 'zh-CN-XiaoxiaoNeural',
+    'ja': 'ja-JP-NanamiNeural',
+    'ko': 'ko-KR-SunHiNeural',
+    'fr': 'fr-FR-DeniseNeural',
+    'de': 'de-DE-KatjaNeural',
+    'es': 'es-ES-ElviraNeural',
+    'it': 'it-IT-ElsaNeural',
+    'pt': 'pt-BR-FranciscaNeural',
+    'ru': 'ru-RU-SvetlanaNeural',
 }
 
 tts_cache = {}
 tts_cache_lock = asyncio.Lock()
 MAX_TTS_CACHE = 200
 
-def _generate_tts(text, voice):
-    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as wav_file:
-        wav_path = wav_file.name
-    try:
-        subprocess.run(
-            ['espeak-ng', '-v', voice, '-w', wav_path, '-s', '150', '--punct', text],
-            capture_output=True, timeout=10
-        )
-        with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as mp3_file:
-            mp3_path = mp3.name
-        subprocess.run(
-            ['ffmpeg', '-y', '-i', wav_path, '-codec:a', 'libmp3lame', '-b:a', '48k', mp3_path],
-            capture_output=True, timeout=10
-        )
-        with open(mp3_path, 'rb') as f:
-            data = f.read()
-        return data
-    finally:
-        for p in [wav_path, mp3_path]:
-            try:
-                os.unlink(p)
-            except:
-                pass
+async def _generate_tts_edge(text, voice, rate='+0%'):
+    communicate = edge_tts.Communicate(text, voice, rate=rate)
+    buffer = io.BytesIO()
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            buffer.write(chunk["data"])
+    return buffer.getvalue()
 
 @app.on_event("startup")
 async def startup_event():
@@ -452,26 +436,28 @@ async def startup_event():
     settings = get_settings()
     rpm = settings.get("rpm", 20)
     word_gen_rate_limiter = RateLimiter(rpm)
-    loop = asyncio.get_event_loop()
-    loop.run_in_executor(None, _generate_tts, "ok", "en")
-    print("[TTS] Warmup complete")
+    try:
+        await _generate_tts_edge("ok", EDGE_VOICE_MAP.get('en'))
+        print("[TTS] Warmup complete")
+    except Exception as e:
+        print(f"[TTS] Warmup failed (non-fatal): {e}")
 
 @app.get("/api/tts")
-async def tts_endpoint(text: str, lang: str = "en"):
+async def tts_endpoint(text: str, lang: str = "en", slow: bool = False):
     if not text or not text.strip():
         raise HTTPException(status_code=400, detail="Text is required")
 
-    voice = ESPEAK_VOICE_MAP.get(lang, 'en')
+    voice = EDGE_VOICE_MAP.get(lang, EDGE_VOICE_MAP.get('en'))
+    rate = '-30%' if slow else '+0%'
 
-    cache_key = f"{lang}:{text}"
+    cache_key = f"{lang}:{'slow' if slow else 'normal'}:{text}"
     async with tts_cache_lock:
         if cache_key in tts_cache:
             from fastapi.responses import Response
             return Response(content=tts_cache[cache_key], media_type="audio/mpeg")
 
     try:
-        loop = asyncio.get_event_loop()
-        audio_data = await loop.run_in_executor(None, _generate_tts, text, voice)
+        audio_data = await _generate_tts_edge(text, voice, rate)
 
         async with tts_cache_lock:
             if len(tts_cache) >= MAX_TTS_CACHE:
@@ -483,6 +469,7 @@ async def tts_endpoint(text: str, lang: str = "en"):
         return Response(content=audio_data, media_type="audio/mpeg")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
+
 
 
 @app.get("/")
