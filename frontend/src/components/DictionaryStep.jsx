@@ -980,9 +980,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                         </div>
                                       ) : detail ? (
                                         <div className="pt-3">
-                                          <div className="flex items-center gap-2 mb-2">
-                                            <Brain className="w-3 h-3 text-stone-400 shrink-0" />
-                                            <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
+                                          <div className="mb-2">
+                                            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                              <Brain className="w-3 h-3" />
+                                              {t.definition || '释义'}
+                                            </h3>
+                                            <p className="text-[13px] text-stone-700 leading-relaxed">
                                               {detail.enriched_meaning || detail.meaning || detail.context_meaning}
                                             </p>
                                           </div>
@@ -1092,9 +1095,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       </div>
                                     ) : detail ? (
                                       <div className="pt-3">
-                                        <div className="flex items-center gap-2 mb-2">
-                                          <Brain className="w-3 h-3 text-stone-400 shrink-0" />
-                                          <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
+                                        <div className="mb-2">
+                                          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                            <Brain className="w-3 h-3" />
+                                            {t.definition || '释义'}
+                                          </h3>
+                                          <p className="text-[13px] text-stone-700 leading-relaxed">
                                             {detail.enriched_meaning || detail.meaning || detail.context_meaning}
                                           </p>
                                         </div>

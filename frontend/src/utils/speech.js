@@ -13,6 +13,7 @@ const LANG_MAP = {
 
 let voicesLoaded = false
 let voicesReadyPromise = null
+let currentUtterance = null
 
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
   const loadVoices = () => {
@@ -43,6 +44,13 @@ if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
 function speakText(text, sourceLang = 'en') {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
   if (!text) return
+
+  if (currentUtterance) {
+    currentUtterance._cancelled = true
+    currentUtterance.onend = null
+    currentUtterance.onerror = null
+    currentUtterance = null
+  }
 
   window.speechSynthesis.cancel()
 
@@ -76,27 +84,28 @@ function speakText(text, sourceLang = 'en') {
 
       utterance.onend = () => {
         if (resumeInterval) clearInterval(resumeInterval)
+        if (currentUtterance === utterance) currentUtterance = null
       }
 
       utterance.onerror = (e) => {
         if (resumeInterval) clearInterval(resumeInterval)
-        if (e.error !== 'canceled' && e.error !== 'interrupted') {
+        if (currentUtterance === utterance) currentUtterance = null
+        if (!utterance._cancelled && e.error !== 'canceled' && e.error !== 'interrupted') {
           console.warn('Speech synthesis error:', e.error)
         }
       }
 
+      currentUtterance = utterance
       window.speechSynthesis.speak(utterance)
     } catch (e) {
       console.warn('Speech synthesis failed:', e)
     }
   }
 
-  const delay = window.speechSynthesis.speaking || window.speechSynthesis.pending ? 100 : 30
-
   if (voicesLoaded) {
-    setTimeout(doSpeak, delay)
+    setTimeout(doSpeak, 50)
   } else if (voicesReadyPromise) {
-    voicesReadyPromise.then(() => setTimeout(doSpeak, delay))
+    voicesReadyPromise.then(() => setTimeout(doSpeak, 50))
   } else {
     setTimeout(doSpeak, 500)
   }
