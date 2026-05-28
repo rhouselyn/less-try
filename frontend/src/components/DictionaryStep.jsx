@@ -463,29 +463,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     })
     setLoadingWords(prev => ({ ...prev, [localKey]: true, [globalKey]: true }))
     try {
-      await api.regenerateWord(currentFileId, wordKey)
-      const waitForDetail = async (retries = 30) => {
-        const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-        let data
-        try {
-          data = await response.json()
-        } catch {
-          if (retries > 0) {
-            await new Promise(r => setTimeout(r, 2000))
-            return waitForDetail(retries - 1)
-          }
-          return null
-        }
-        if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
-          return data
-        }
-        if (retries > 0) {
-          await new Promise(r => setTimeout(r, 2000))
-          return waitForDetail(retries - 1)
-        }
-        return data
-      }
-      const data = await waitForDetail()
+      const data = await api.regenerateWordDetail(wordKey, actualSourceLang || sourceLang, targetLang)
       if (data) {
         setWordDetails(prev => ({ ...prev, [localKey]: data, [globalKey]: data }))
         setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
@@ -495,7 +473,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     } finally {
       setLoadingWords(prev => ({ ...prev, [localKey]: false, [globalKey]: false }))
     }
-  }, [currentFileId])
+  }, [currentFileId, actualSourceLang, sourceLang, targetLang])
 
   const handleTitleClick = useCallback(() => {
     setTitleInput(fileTitle)
@@ -968,18 +946,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                         </div>
                                       ) : detail ? (
                                         <div className="pt-3">
-                                          <div className="flex items-center justify-between mb-2">
-                                            <span className="text-[10px] font-semibold text-stone-300 uppercase tracking-widest">详情</span>
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
-                                              className="flex items-center gap-1 px-2 py-1 text-[10px] text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
-                                              title="重新生成"
-                                            >
-                                              <RefreshCw className="w-3 h-3" />
-                                              <span>重新生成</span>
-                                            </button>
-                                          </div>
-                                          <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} hideContextSentences={showGlobalVocab} />
+                                          <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} hideContextSentences={showGlobalVocab} onRegenerate={() => handleRegenerateWord(wordKey, true)} />
                                         </div>
                                       ) : (
                                         <div className="pt-3 text-center text-stone-400 text-[12px]">
@@ -1079,18 +1046,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       </div>
                                     ) : detail ? (
                                       <div className="pt-3">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <span className="text-[10px] font-semibold text-stone-300 uppercase tracking-widest">详情</span>
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
-                                            className="flex items-center gap-1 px-2 py-1 text-[10px] text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
-                                            title="重新生成"
-                                          >
-                                            <RefreshCw className="w-3 h-3" />
-                                            <span>重新生成</span>
-                                          </button>
-                                        </div>
-                                        <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} />
+                                        <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} onRegenerate={() => handleRegenerateWord(wordKey, false)} />
                                       </div>
                                     ) : (
                                       <div className="pt-3 text-center text-stone-400 text-[12px]">

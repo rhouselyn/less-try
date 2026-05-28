@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
-import { Brain, Lightbulb, BookText, GitBranch, Volume2, Quote } from 'lucide-react'
+import { Brain, Lightbulb, BookText, GitBranch, Volume2, Quote, RefreshCw } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
-function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences }) {
+function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences, onRegenerate }) {
 
   return (
     <motion.div
@@ -13,10 +13,21 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
     >
       <div className="space-y-3">
         <div>
-          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-            <Brain className="w-3 h-3" />
-            {t.definition}
-          </h3>
+          <div className="flex items-center justify-between">
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+              <Brain className="w-3 h-3" />
+              {t.definition}
+            </h3>
+            {onRegenerate && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onRegenerate() }}
+                className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors"
+                title="重新生成"
+              >
+                <RefreshCw className="w-3 h-3" />
+              </button>
+            )}
+          </div>
           <p className="text-[13px] text-stone-700 leading-relaxed">
             {word.enriched_meaning || word.meaning || word.context_meaning}
           </p>

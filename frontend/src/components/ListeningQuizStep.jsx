@@ -177,9 +177,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                 </motion.div>
               ))}
             </AnimatePresence>
-            {selectedWords.length === 0 && (
-              <span className="italic text-stone-400 text-sm">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
-            )}
+            <span className={`italic text-stone-400 text-sm transition-opacity duration-150 ${selectedWords.length === 0 ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'}`}>{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
           </div>
         </div>
 

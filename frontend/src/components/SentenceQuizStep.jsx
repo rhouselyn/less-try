@@ -172,15 +172,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                 )
               })}
             </AnimatePresence>
-            {selectedTokens.length === 0 && (
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="italic text-stone-400"
-              >
-                {t.selectTokensHint}
-              </motion.p>
-            )}
+            <p className={`italic text-stone-400 transition-opacity duration-150 ${selectedTokens.length === 0 ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'}`}>
+              {t.selectTokensHint}
+            </p>
           </div>
         </div>
 
