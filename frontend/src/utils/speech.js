@@ -80,7 +80,7 @@ function speakText(text, sourceLang = 'en') {
 
       utterance.onerror = (e) => {
         if (resumeInterval) clearInterval(resumeInterval)
-        if (e.error !== 'canceled') {
+        if (e.error !== 'canceled' && e.error !== 'interrupted') {
           console.warn('Speech synthesis error:', e.error)
         }
       }
@@ -91,7 +91,7 @@ function speakText(text, sourceLang = 'en') {
     }
   }
 
-  const delay = window.speechSynthesis.speaking || window.speechSynthesis.pending ? 200 : 50
+  const delay = window.speechSynthesis.speaking || window.speechSynthesis.pending ? 100 : 30
 
   if (voicesLoaded) {
     setTimeout(doSpeak, delay)

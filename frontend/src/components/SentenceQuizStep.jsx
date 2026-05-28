@@ -48,7 +48,6 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
     if (pos > -1) {
       setSelectedIndices([...selectedIndices.slice(0, pos), ...selectedIndices.slice(pos + 1)])
     } else {
-      if (selectedIndices.length >= maxWords) return
       setSelectedIndices([...selectedIndices, tokenIndex])
       speakText(displayToken(quizData.tokens[tokenIndex]), sourceLang)
     }

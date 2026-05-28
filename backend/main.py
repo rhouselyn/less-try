@@ -2837,22 +2837,27 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 original_lower_set = set(t.lower() for t in original_tokens)
                 max_distractors = 3
                 
+                all_candidate_distractors = []
+                candidate_set = set()
                 for sent_data in eligible_sentences:
                     if sent_data is current_sentence_data:
                         continue
                     if "translation_result" in sent_data and "translation" in sent_data["translation_result"]:
                         for token in sent_data["translation_result"]["translation"]:
                             if isinstance(token, dict) and "text" in token:
-                                token_text = token["text"]
-                                if token_text.lower() not in original_lower_set and token_text not in distractors and len(distractors) < max_distractors:
-                                    distractors.append(token_text)
+                                token_text = token["text"].strip()
+                                if token_text and token_text.lower() not in original_lower_set and token_text.lower() not in candidate_set:
+                                    all_candidate_distractors.append(token_text)
+                                    candidate_set.add(token_text.lower())
                 
-                if len(distractors) < max_distractors:
-                    vocab_words = [v["word"] for v in vocab]
-                    random.shuffle(vocab_words)
-                    for vw in vocab_words:
-                        if vw.lower() not in original_lower_set and vw not in distractors and len(distractors) < max_distractors:
-                            distractors.append(vw)
+                vocab_words = [v["word"] for v in vocab]
+                for vw in vocab_words:
+                    if vw.lower() not in original_lower_set and vw.lower() not in candidate_set:
+                        all_candidate_distractors.append(vw)
+                        candidate_set.add(vw.lower())
+                
+                random.shuffle(all_candidate_distractors)
+                distractors = all_candidate_distractors[:max_distractors]
                 
                 if len(distractors) < max_distractors:
                     backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])

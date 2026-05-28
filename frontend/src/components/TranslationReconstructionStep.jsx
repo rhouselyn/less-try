@@ -16,7 +16,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   const handleTokenSelect = (token, index) => {
     if (answerChecked) return
     if (selectedTokens.some(t => t.index === index)) return
-    if (selectedTokens.length >= maxWords) return
     setSelectedTokens(prev => [...prev, { token, index }])
     speakText(token, sourceLang)
   }
