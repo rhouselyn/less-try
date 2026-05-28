@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { Brain, Lightbulb, BookText, GitBranch, Volume2, Quote } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
-function WordDetail({ word, t, onSentenceClick, sourceLang }) {
+function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences, hideDefinition }) {
 
   return (
     <motion.div
@@ -12,6 +12,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang }) {
       className="px-4 py-3.5"
     >
       <div className="space-y-3">
+        {!hideDefinition && (
         <div>
           <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
             <Brain className="w-3 h-3" />
@@ -21,6 +22,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang }) {
             {word.enriched_meaning || word.meaning || word.context_meaning}
           </p>
         </div>
+        )}
 
         {word.variants_detail && word.variants_detail.length > 0 && (
           <div>
@@ -80,7 +82,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang }) {
           </div>
         )}
 
-        {word.context_sentences && word.context_sentences.length > 0 && (
+        {!hideContextSentences && word.context_sentences && word.context_sentences.length > 0 && (
           <div>
             <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
               <Quote className="w-3 h-3" />

@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, ChevronDown, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft } from 'lucide-react'
+import { Search, X, ChevronDown, ChevronLeft, ChevronRight, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft, RefreshCw, Brain } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
 
-function WordDetailCard({ word, sourceLang, detailLoading, t }) {
+function WordDetailCard({ word, sourceLang, detailLoading, t, onRegenerate }) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -21,6 +21,22 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
             <span className="text-xs text-stone-400">{t.generatingDetails || '生成详细内容...'}</span>
           </div>
         )}
+
+        <div className="flex items-center gap-2">
+          <Brain className="w-3 h-3 text-stone-400 shrink-0" />
+          <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
+            {word.enriched_meaning || word.meaning}
+          </p>
+          {onRegenerate && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onRegenerate() }}
+              className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
+              title="重新生成"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
 
         {word.variants_detail && word.variants_detail.length > 0 && (
           <div>
@@ -86,7 +102,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
   )
 }
 
-function WordListPanel({ sourceLang, targetLang, t, onBack }) {
+function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const [words, setWords] = useState([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -94,19 +110,66 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
   const [wordDetails, setWordDetails] = useState({})
   const [detailLoading, setDetailLoading] = useState({})
   const [isOpen, setIsOpen] = useState(false)
-  const [hideMeanings, setHideMeanings] = useState(false)
+  const [displayMode, setDisplayMode] = useState(0)
+  const [page, setPage] = useState(1)
+
+  const listRef = useRef(null)
+  const wordRefs = useRef({})
 
   const loadWords = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await api.getWordList(sourceLang, targetLang)
+      const data = await api.getWordList(sourceLang)
       setWords(data.words || [])
     } catch (err) {
       console.error('Failed to load word list:', err)
     } finally {
       setLoading(false)
     }
-  }, [sourceLang, targetLang])
+  }, [sourceLang])
+
+  const handleRegenerateWord = useCallback(async (wordKey) => {
+    setWordDetails(prev => {
+      const next = { ...prev }
+      delete next[wordKey]
+      return next
+    })
+    setDetailLoading(prev => ({ ...prev, [wordKey]: true }))
+    try {
+      const data = await api.regenerateWordDetail(wordKey, sourceLang)
+      if (data) {
+        setWordDetails(prev => ({ ...prev, [wordKey]: data }))
+        setWords(prev => prev.map(w =>
+          w.word === wordKey
+            ? { ...w, ...data }
+            : w
+        ))
+      }
+    } catch (e) {
+      console.error('Failed to regenerate word:', e)
+    } finally {
+      setDetailLoading(prev => ({ ...prev, [wordKey]: false }))
+    }
+  }, [sourceLang])
+
+  const scrollToWord = useCallback((wordKey, delay = 200) => {
+    const doScroll = () => {
+      let el = wordRefs.current[wordKey]
+      if (el && listRef.current) {
+        const container = listRef.current
+        const containerRect = container.getBoundingClientRect()
+        const elRect = el.getBoundingClientRect()
+        const stickyOffset = 32
+        const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'instant' })
+      }
+    }
+    if (delay <= 0) {
+      requestAnimationFrame(doScroll)
+    } else {
+      setTimeout(() => requestAnimationFrame(doScroll), delay)
+    }
+  }, [])
 
   useEffect(() => {
     if (onBack) {
@@ -127,13 +190,21 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
       )
     : words
 
+  const totalPages = Math.ceil(filteredWords.length / pageSize)
+
+  const pagedWords = filteredWords.slice((page - 1) * pageSize, page * pageSize)
+
   const groupedWords = useMemo(() => {
-    return groupVocab(filteredWords)
-  }, [filteredWords])
+    return groupVocab(pagedWords)
+  }, [pagedWords])
 
   const letterIndex = useMemo(() => {
     return groupedWords.map(([letter]) => letter)
   }, [groupedWords])
+
+  useEffect(() => {
+    setPage(1)
+  }, [searchQuery])
 
   const handleWordClick = async (wordText) => {
     if (expandedWord === wordText) {
@@ -141,11 +212,20 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
       return
     }
     setExpandedWord(wordText)
+    scrollToWord(wordText, 200)
+
+    const existing = words.find(w => w.word === wordText)
+    const hasDetail = existing && (existing.examples?.length > 0 || existing.memory_hint || existing.variants_detail?.length > 0)
+
+    if (hasDetail) {
+      setWordDetails(prev => ({ ...prev, [wordText]: existing }))
+      return
+    }
 
     if (!wordDetails[wordText] && !detailLoading[wordText]) {
       setDetailLoading(prev => ({ ...prev, [wordText]: true }))
       try {
-        const detail = await api.getWordDetail(wordText, sourceLang, targetLang)
+        const detail = await api.getWordDetail(wordText, sourceLang)
         setWordDetails(prev => ({ ...prev, [wordText]: detail }))
         setWords(prev => prev.map(w =>
           w.word === wordText
@@ -163,6 +243,23 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`letter-${letter}`)
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+
+  const renderPagination = () => {
+    if (totalPages <= 1) return null
+    return (
+      <div className="flex items-center justify-center gap-1 py-2 border-t border-stone-200/60 bg-stone-50/40">
+        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
+          className={`p-1 rounded transition-colors ${page <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`}>
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+        <span className="text-[11px] text-stone-400 px-2">{page} / {totalPages}</span>
+        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+          className={`p-1 rounded transition-colors ${page >= totalPages ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`}>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    )
   }
 
   const renderWordList = () => {
@@ -201,7 +298,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
             ))}
           </div>
         )}
-        <div className="flex-1 min-w-0 overflow-y-auto">
+        <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>
           {groupedWords.map(([letter, groupWords]) => (
             <div key={letter} id={`letter-${letter}`}>
               <div className="sticky top-0 z-10 px-5 py-1.5 bg-stone-50/90 backdrop-blur-sm border-b border-stone-100">
@@ -209,7 +306,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                 <span className="text-[10px] text-stone-300 ml-1.5">{groupWords.length}</span>
               </div>
               {groupWords.map((word) => (
-                <div key={word.word} className="border-b border-stone-50 last:border-b-0">
+                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="border-b border-stone-50 last:border-b-0">
                   <div
                     role="button"
                     tabIndex={0}
@@ -219,9 +316,9 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-stone-800">{word.word}</span>
+                        <span className={`text-sm font-semibold text-stone-800 ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.word}</span>
                         {word.ipa && (
-                          <span className="text-xs text-stone-400 ipa-font">
+                          <span className={`text-xs text-stone-400 ipa-font ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>
                             {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
                           </span>
                         )}
@@ -232,7 +329,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                         )}
                       </div>
                       {word.meaning && (
-                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${(hideMeanings && expandedWord !== word.word) ? 'invisible' : ''}`}>{word.meaning}</p>
+                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.meaning}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -258,6 +355,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
                         sourceLang={sourceLang}
                         detailLoading={detailLoading[word.word]}
                         t={t}
+                        onRegenerate={() => handleRegenerateWord(word.word)}
                       />
                     )}
                   </AnimatePresence>
@@ -265,6 +363,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
               ))}
             </div>
           ))}
+          {renderPagination()}
         </div>
       </div>
     )
@@ -275,7 +374,7 @@ function WordListPanel({ sourceLang, targetLang, t, onBack }) {
       <div className="h-full flex flex-col bg-white rounded-xl border border-stone-200/60 shadow-sm overflow-hidden min-h-0">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-amber-50/50 to-white">
           <div className="flex items-center gap-2.5">
-            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${hideMeanings ? 'text-stone-300 hover:text-amber-400' : 'text-amber-500 hover:text-amber-600'}`} onClick={() => setHideMeanings(v => !v)} />
+            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-amber-500' : 'text-amber-500 hover:text-amber-600'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? '显示全部' : displayMode === 1 ? '隐藏释义' : '隐藏单词'} />
             <span className="text-base font-semibold text-stone-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
               <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>

@@ -53,15 +53,17 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
       className="max-w-3xl mx-auto"
     >
       <div className="flex items-center justify-between mb-8">
-        <motion.button
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.back}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t.back}
+          </motion.button>
+        </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
             <span className="text-sm text-stone-500 font-medium">

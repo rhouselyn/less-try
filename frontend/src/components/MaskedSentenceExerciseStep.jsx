@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, PenLine } from 'lucide-react'
 import { speakText } from '../utils/speech'
@@ -11,42 +11,32 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((exerciseIndexInUnit ?? 0) + 1)
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (totalExercisesInUnit ?? 0)
   const isLastExercise = reviewMode ? (stepInUnit >= totalItemsInUnit) : (stepInUnit >= (totalExercisesInUnit ?? 10))
+  const maxWords = data.answer_words.length
 
   const handleWordSelect = (word, index) => {
     if (answerChecked) return
-    const newSelected = [...selectedWords]
-    const emptyIndex = newSelected.findIndex(w => w === null || w === undefined)
-    if (emptyIndex !== -1) {
-      newSelected[emptyIndex] = { word, index }
-    } else {
-      newSelected.push({ word, index })
-    }
-    setSelectedWords(newSelected)
+    if (selectedWords.length >= maxWords) return
+    if (selectedWords.some(w => w.index === index)) return
+    setSelectedWords(prev => [...prev, { word, index }])
+    speakText(word, sourceLang)
   }
 
-  const handleRemoveWord = (index) => {
+  const handleSelectedClick = (pos) => {
     if (answerChecked) return
-    const newSelected = [...selectedWords]
-    newSelected[index] = null
-    setSelectedWords(newSelected)
+    setSelectedWords(prev => prev.filter((_, i) => i !== pos))
   }
 
   const checkAnswer = () => {
-    const userAnswerWords = selectedWords.filter(w => w).map(w => w.word.toLowerCase())
+    const userAnswerWords = selectedWords.map(w => w.word.toLowerCase())
     const correctAnswerWords = data.answer_words.map(w => w.toLowerCase())
-
     const correct = userAnswerWords.length === correctAnswerWords.length &&
       userAnswerWords.every((word, index) => word === correctAnswerWords[index])
-
     setIsCorrect(correct)
     setAnswerChecked(true)
     if (onAnswer) onAnswer(correct)
   }
 
   const handleNext = () => {
-    setSelectedWords([])
-    setAnswerChecked(false)
-    setIsCorrect(false)
     onNext()
   }
 
@@ -58,15 +48,17 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
       className="max-w-3xl mx-auto"
     >
       <div className="flex items-center justify-between mb-8">
-        <motion.button
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
-          whileHover={{ scale: 1.05, x: -2 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.back}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+            whileHover={{ scale: 1.05, x: -2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t.back}
+          </motion.button>
+        </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
             <span className="text-sm text-stone-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
@@ -108,32 +100,37 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
-            {data.answer_words.map((answerWord, idx) => {
-              const filled = selectedWords[idx]
-              const isSlotCorrect = filled && filled.word.toLowerCase() === answerWord.toLowerCase()
-              return (
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-start content-start bg-stone-50/50 relative">
+            {selectedWords.length === 0 && !answerChecked && (
+              <span className="text-stone-300 text-sm absolute top-4 left-4 pointer-events-none">点击下方选项填入...</span>
+            )}
+            <AnimatePresence mode="popLayout">
+              {selectedWords.map((item, pos) => (
                 <motion.div
-                  key={`slot-${idx}`}
-                  initial={{ opacity: 0, scale: 0.8 }}
+                  key={`sel-${item.index}`}
+                  layout
+                  initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium min-w-[80px] text-center transition-all ${
-                    filled
-                      ? answerChecked
-                        ? isCorrect
-                          ? 'bg-green-100 text-green-800 border border-green-300'
-                          : isSlotCorrect
-                            ? 'bg-green-100 text-green-800 border border-green-300'
-                            : 'bg-red-100 text-red-800 border border-red-300'
-                        : 'bg-stone-800 text-white cursor-pointer'
-                      : 'border-2 border-dashed border-stone-300 text-stone-400'
+                  exit={{ opacity: 0, scale: 0 }}
+                  transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                  onClick={() => handleSelectedClick(pos)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                    answerChecked
+                      ? isCorrect
+                        ? 'bg-green-100 text-green-800 border border-green-300'
+                        : (() => {
+                            const correctWord = data.answer_words[pos]
+                            return correctWord && item.word.toLowerCase() === correctWord.toLowerCase()
+                              ? 'bg-green-100 text-green-800 border border-green-300'
+                              : 'bg-red-100 text-red-800 border border-red-300'
+                          })()
+                      : 'bg-stone-800 text-white hover:bg-stone-700'
                   }`}
-                  onClick={() => filled && !answerChecked && handleRemoveWord(idx)}
                 >
-                  {filled ? filled.word : '____'}
+                  {item.word}
                 </motion.div>
-              )
-            })}
+              ))}
+            </AnimatePresence>
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -149,18 +146,21 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         <div className="mb-8">
           <div className="flex flex-wrap gap-2">
             {data.options.map((word, idx) => {
-              const isSelected = selectedWords.some(w => w && w.index === idx)
+              const isSelected = selectedWords.some(w => w.index === idx)
               return (
                 <motion.button
                   key={`opt-${idx}`}
-                  whileHover={!answerChecked && !isSelected ? { scale: 1.05 } : {}}
-                  whileTap={!answerChecked && !isSelected ? { scale: 0.95 } : {}}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: isSelected ? 0 : 1, scale: isSelected ? 0 : 1 }}
+                  transition={{ duration: 0.15 }}
                   onClick={() => handleWordSelect(word, idx)}
                   disabled={isSelected || answerChecked}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    isSelected || answerChecked
-                      ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
-                      : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
+                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                    isSelected
+                      ? 'pointer-events-none invisible'
+                      : answerChecked
+                        ? 'pointer-events-none bg-stone-800 text-white opacity-50'
+                        : 'bg-stone-800 text-white hover:bg-stone-700'
                   }`}
                 >
                   {word}
@@ -199,7 +199,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={checkAnswer}
-              disabled={selectedWords.filter(w => w).length === 0}
+              disabled={selectedWords.length === 0}
               className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}

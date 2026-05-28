@@ -19,6 +19,13 @@ export const api = {
     return response.data;
   },
 
+  detectLanguage: async (text) => {
+    const response = await axios.post(`${baseUrl}/api/detect-language`, {
+      text: text.trim(),
+    });
+    return response.data;
+  },
+
   // 获取处理状态
   getStatus: async (fileId) => {
     const response = await axios.get(`${baseUrl}/api/status/${fileId}`);
@@ -28,6 +35,11 @@ export const api = {
   // 获取词汇表
   getVocab: async (fileId) => {
     const response = await axios.get(`${baseUrl}/api/vocab/${fileId}`);
+    return response.data;
+  },
+
+  getFileLanguages: async (fileId) => {
+    const response = await axios.get(`${baseUrl}/api/file-languages/${fileId}`);
     return response.data;
   },
 
@@ -161,7 +173,9 @@ export const api = {
   },
 
   getWordDetail: async (word, sourceLang, targetLang) => {
-    const response = await axios.get(`${baseUrl}/api/word-detail`, { params: { word, source_lang: sourceLang, target_lang: targetLang } });
+    const params = { word, source_lang: sourceLang };
+    if (targetLang) params.target_lang = targetLang;
+    const response = await axios.get(`${baseUrl}/api/word-detail`, { params });
     return response.data;
   },
 
@@ -185,6 +199,15 @@ export const api = {
 
   priorityWordGen: async (fileId, word) => {
     await axios.post(`${baseUrl}/api/learn/${fileId}/priority-word-gen`, { word })
+  },
+
+  regenerateWord: async (fileId, word) => {
+    await axios.post(`${baseUrl}/api/learn/${fileId}/priority-word-gen`, { word, force: true })
+  },
+
+  regenerateWordDetail: async (word, sourceLang, targetLang) => {
+    const response = await axios.post(`${baseUrl}/api/word-detail/regenerate`, { word, source_lang: sourceLang, target_lang: targetLang || 'zh' })
+    return response.data
   },
 
   translateText: async (text, sourceLang, targetLang) => {

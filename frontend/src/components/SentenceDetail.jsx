@@ -1,31 +1,14 @@
 import { motion } from 'framer-motion'
-import { Brain } from 'lucide-react'
 
 function SentenceDetail({ sentenceTranslation, t }) {
   const translationResult = sentenceTranslation?.translation_result
   
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white border border-stone-200/80 rounded-2xl p-8 shadow-sm"
-    >
-      <div className="space-y-6">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
-          <h3 className="text-sm font-semibold text-stone-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-            <Brain className="w-4 h-4" />
-            {t.grammar}
-          </h3>
-          <p className="text-lg text-stone-700 leading-relaxed">
-            {translationResult?.grammar_explanation || t.loading}
-          </p>
-        </motion.div>
-      </div>
-    </motion.div>
+    <div className="border-l-2 border-amber-300 pl-3">
+      <p className="text-[13px] text-stone-500 leading-relaxed italic">
+        {translationResult?.grammar_explanation || t.loading}
+      </p>
+    </div>
   )
 }
 

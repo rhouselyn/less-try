@@ -75,10 +75,6 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   }
 
   const handleNextQuestion = () => {
-    setSelectedWords([])
-    setIsChecked(false)
-    setIsCorrect(false)
-    setIsSkipped(false)
     onNextQuestion()
   }
 
@@ -90,15 +86,17 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
       className="max-w-3xl mx-auto"
     >
       <div className="flex items-center justify-between mb-8">
-        <motion.button
-          onClick={onBack}
-          className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
-          whileHover={{ scale: 1.05, x: -2 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {t.back}
-        </motion.button>
+        <div className="flex items-center gap-2">
+          <motion.button
+            onClick={onBack}
+            className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+            whileHover={{ scale: 1.05, x: -2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {t.back}
+          </motion.button>
+        </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
             <span className="text-sm text-stone-500 font-medium">{t.step || '第'} {stepInUnit} / {totalItemsInUnit} {t.question || '题'}</span>
@@ -154,23 +152,27 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50">
-            <AnimatePresence>
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50 relative">
+            {selectedWords.length === 0 && (
+              <span className="italic text-stone-400 text-sm absolute top-4 left-4 pointer-events-none">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
+            )}
+            <AnimatePresence mode="popLayout">
               {selectedWords.map((item, pos) => (
                 <motion.div
-                  key={`sel-${item.index}-${pos}`}
+                  key={`sel-${item.index}`}
+                  layout
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0 }}
-                  whileHover={{ scale: 1.05 }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer ${
+                  transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                     isChecked
                       ? isCorrect
                         ? 'bg-green-100 text-green-800 border border-green-300'
                         : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
                           ? 'bg-green-100 text-green-800 border border-green-300'
                           : 'bg-red-100 text-red-800 border border-red-300'
-                      : 'bg-stone-800 text-white'
+                      : 'bg-stone-800 text-white hover:bg-stone-700'
                   }`}
                   onClick={() => handleRemoveWord(pos)}
                 >
@@ -178,9 +180,6 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                 </motion.div>
               ))}
             </AnimatePresence>
-            {selectedWords.length === 0 && (
-              <span className="italic text-stone-400 text-sm">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
-            )}
           </div>
         </div>
 
@@ -191,14 +190,17 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               return (
                 <motion.button
                   key={`opt-${index}`}
-                  whileHover={!isChecked && !isSelected ? { scale: 1.05 } : {}}
-                  whileTap={!isChecked && !isSelected ? { scale: 0.95 } : {}}
+                  initial={{ opacity: 0, scale: 0 }}
+                  animate={{ opacity: isSelected ? 0 : 1, scale: isSelected ? 0 : 1 }}
+                  transition={{ duration: 0.15 }}
                   onClick={() => handleWordSelect(word, index)}
                   disabled={isSelected || isChecked}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    isSelected || isChecked
-                      ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
-                      : 'bg-white text-stone-800 border border-stone-200/80 hover:border-stone-300 hover:shadow-sm'
+                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                    isSelected
+                      ? 'pointer-events-none invisible'
+                      : isChecked
+                        ? 'pointer-events-none bg-stone-800 text-white opacity-50'
+                        : 'bg-stone-800 text-white hover:bg-stone-700'
                   }`}
                 >
                   {stripPunct(word)}

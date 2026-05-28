@@ -248,9 +248,19 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
         configs = [dict(c) for c in _DEFAULT_CONFIGS]
         active_index = 0
     num_configs = len(configs)
+
+    try:
+        from storage import Storage
+        storage = Storage()
+        prefs = storage.load_user_preferences()
+        retry_interval = prefs.get("retry_interval", 1.0)
+    except Exception:
+        retry_interval = 1.0
+
     last_exception = None
-    for offset in range(num_configs):
-        idx = (active_index + offset) % num_configs
+    attempt = 0
+    while True:
+        idx = (active_index + attempt) % num_configs
         config = configs[idx]
         try:
             api = NvidiaAPI(config_index=idx)
@@ -261,10 +271,23 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
                 _save_settings(settings)
             return result
         except (requests.exceptions.HTTPError, requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
-            print(f"[ROTATE] Config {idx} (model={config.get('model', '')}) failed: {e}, trying config {(idx + 1) % num_configs}...")
-            last_exception = e
-            continue
-    raise last_exception
+            is_rate_limit = False
+            if isinstance(e, requests.exceptions.HTTPError) and e.response is not None:
+                if e.response.status_code in (429, 503, 502):
+                    is_rate_limit = True
+            if is_rate_limit:
+                print(f"[RETRY] Config {idx} rate-limited ({e.response.status_code if e.response else 'N/A'}), waiting {retry_interval}s then trying config {(idx + 1) % num_configs}...")
+                await asyncio.sleep(retry_interval)
+                attempt += 1
+                last_exception = e
+                continue
+            else:
+                if num_configs > 1 and attempt < num_configs - 1:
+                    print(f"[ROTATE] Config {idx} failed: {e}, trying config {(idx + 1) % num_configs}...")
+                    attempt += 1
+                    last_exception = e
+                    continue
+                raise
 
 
 async def detect_language(text: str) -> str:
@@ -318,6 +341,13 @@ class NvidiaAPI:
 
     def _sync_post(self, url, headers, payload, timeout, max_retries=3):
         import time as _time
+        try:
+            from storage import Storage as _Storage
+            _storage = _Storage()
+            _prefs = _storage.load_user_preferences()
+            _retry_interval = _prefs.get("retry_interval", 1.0)
+        except Exception:
+            _retry_interval = 1.0
         for attempt in range(max_retries):
             try:
                 response = requests.post(url, headers=headers, json=payload, timeout=timeout)
@@ -334,9 +364,8 @@ class NvidiaAPI:
                 return result
             except requests.exceptions.HTTPError as e:
                 if e.response is not None and e.response.status_code in (503, 429, 502) and attempt < max_retries - 1:
-                    wait = 2 ** attempt * 2
-                    print(f"[RETRY] API returned {e.response.status_code}, retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
-                    _time.sleep(wait)
+                    print(f"[RETRY] API returned {e.response.status_code}, retrying in {_retry_interval}s (attempt {attempt + 1}/{max_retries})")
+                    _time.sleep(_retry_interval)
                     continue
                 raise
 
@@ -387,7 +416,7 @@ class NvidiaAPI:
     async def call_with_rotation(cls, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         return await call_minimax_with_rotation(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
 
-    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str):
+    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str, temperature: float = 0.7):
         tool_def = {
             "type": "function",
             "function": {
@@ -414,7 +443,7 @@ class NvidiaAPI:
                         },
                         "examples": {
                             "type": "array",
-                            "description": "两个与原文语义一致的例句",
+                            "description": "两个全新的例句（绝不能复用原文句子，必须是不同的句子。尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同）",
                             "items": {
                                 "type": "object",
                                 "properties": {
@@ -432,21 +461,12 @@ class NvidiaAPI:
                         "multiple_choice": {
                             "type": "object",
                             "properties": {
-                                "question": {
-                                    "type": "string",
-                                    "description": "题干（可为空，默认就是词）"
-                                },
-                                "correct_answer": {
-                                    "type": "string",
-                                    "description": "单词的常见、正常释义，不是上下文特定释义"
-                                },
                                 "options": {
                                     "type": "array",
                                     "items": {
                                         "type": "object",
                                         "properties": {
-                                            "text": {"type": "string", "description": "A concrete, meaningful translation or definition. MUST NOT be a placeholder like 'meaning 1', '释义1', '含义1', etc."},
-                                            "is_correct": {"type": "boolean"}
+                                            "text": {"type": "string", "description": "A concrete, meaningful translation or definition. MUST NOT be a placeholder like 'meaning 1', '释义1', '含义1', etc."}
                                         }
                                     },
                                     "minItems": 4,
@@ -472,16 +492,14 @@ class NvidiaAPI:
 
 1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
 2. variants_detail: 词形变化列表，带类型说明。【极其重要】对于派生词（如 previously, prestigious, studying, published），必须列出其词根/原形作为词形变化（如 previously -> {{"form": "previous", "type": "形容词原形"}}, prestigious -> {{"form": "prestige", "type": "名词原形"}}, studying -> {{"form": "study", "type": "动词原形"}}, published -> {{"form": "publish", "type": "动词原形"}}）。对于基础词，列出其常见的屈折变化（如名词的复数、动词的过去式/过去分词/现在分词、形容词的比较级/最高级等）。只包含确实存在的词形变化，如果没有则返回空数组
-3. examples: 两个符合上下文含义的例句，每个都有 {target_lang_name} 的翻译
+3. examples: 两个全新的例句，每个都有 {target_lang_name} 的翻译。尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
-   - question: 可为空（默认为单词本身）
-   - correct_answer: 单词的常见、正常释义，不是上下文特定释义
-   - options: 4个选项（1个正确，3个错误），每个都有 text 和 is_correct 标记
+   - options: 4个选项，【极其重要】第一个选项必须是正确答案，其余3个是错误答案
 
 要求：
 - 所有输出必须使用 {target_lang_name}
-- 例句要自然，符合上下文
+- 例句要自然，尽量使用简单常见的词汇，不需要与原文中的意思相同
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
 - 【重要】正确答案必须是单词的常见、正常释义，不是上下文特定释义
@@ -496,7 +514,7 @@ class NvidiaAPI:
 
         messages = [{"role": "user", "content": prompt}]
 
-        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
+        response = await call_minimax_with_rotation(messages, [tool_def], temperature=temperature, max_tokens=16384)
 
         try:
             for choice in response["choices"]:
@@ -514,13 +532,11 @@ class NvidiaAPI:
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
-                    "question": "",
-                    "correct_answer": correct_meaning,
                     "options": [
-                        {"text": correct_meaning, "is_correct": True},
-                        {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
-                        {"text": f"Option 2 in {target_lang_name}", "is_correct": False},
-                        {"text": f"Option 3 in {target_lang_name}", "is_correct": False}
+                        {"text": correct_meaning},
+                        {"text": f"Option 1 in {target_lang_name}"},
+                        {"text": f"Option 2 in {target_lang_name}"},
+                        {"text": f"Option 3 in {target_lang_name}"}
                     ]
                 }
             }
@@ -538,13 +554,11 @@ class NvidiaAPI:
                 ],
                 "memory_hint": "",
                 "multiple_choice": {
-                    "question": "",
-                    "correct_answer": correct_meaning,
                     "options": [
-                        {"text": correct_meaning, "is_correct": True},
-                        {"text": f"Option 1 in {target_lang_name}", "is_correct": False},
-                        {"text": f"Option 2 in {target_lang_name}", "is_correct": False},
-                        {"text": f"Option 3 in {target_lang_name}", "is_correct": False}
+                        {"text": correct_meaning},
+                        {"text": f"Option 1 in {target_lang_name}"},
+                        {"text": f"Option 2 in {target_lang_name}"},
+                        {"text": f"Option 3 in {target_lang_name}"}
                     ]
                 }
             }
@@ -606,16 +620,12 @@ class NvidiaAPI:
         prompt = """处理以下 TEXT_LANG 文本，并翻译成 TARGET_LANG。
 
 【非常非常重要的说明！！！】
-1. 首先检查输入文本的语言：
-   - 如果输入文本的语言与 TARGET_LANG 一致，则不需要翻译，保持原样
-   - 如果输入文本的语言与 TEXT_LANG 一致，则 original 字段保持输入文本原样
-   - 如果输入文本的语言既不是 TEXT_LANG 也不是 TARGET_LANG，则先翻译成 TEXT_LANG，然后 original 字段填入翻译后的 TEXT_LANG 文本
-2. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
-3. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
-4. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
+1. 所有翻译和解释都必须使用 TARGET_LANG（目标语言）。
+2. 不要单独给每个词语法解释 - 只给整个句子一个完整的语法解释。
+3. 词性标注（morphology）只能使用以下缩写，不要加其他文字：
    - n (名词), v (动词), adj (形容词), adv (副词), pron (代词), prep (介词), conj (连词), interj (感叹词), det (限定词)
-5. morphology 字段必须只包含缩写，不要有其他内容！
-6. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
+4. morphology 字段必须只包含缩写，不要有其他内容！
+5. 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
 
 ═══════════════════════════════════════════════════════════
 【最最最重要！！！translation 数组的分词原则！！！】
@@ -642,13 +652,13 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 ═══════════════════════════════════════════════════════════
 
 按照以下结构处理文本：
-- original: 原文文本（如果输入文本的语言与 TARGET_LANG 一致，则保持原样；如果与 TEXT_LANG 一致，也保持原样；否则先翻译成 TEXT_LANG）- 完全保留原始空格！！！
+- original: 原文文本 - 完全保留原始空格！！！
 - translation: 对象数组，每个对象包含：
   - text: 原文中的一个词（严格遵循源语言的自然词边界！）
   - phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
   - morphology: 只能是词性缩写（如 n, v, adj）
   - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释
-- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式
+- tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式。【极其重要】必须翻译完整，不能遗漏任何内容，原文的每个语义成分都必须体现在翻译中。原文中的说话者标识（如 A:、B:、Speaker 1: 等）必须在译文中完整保留，不得省略
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组

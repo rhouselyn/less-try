@@ -111,7 +111,7 @@ function ProgressBadge({ progress }) {
 
   const done = totalCompleted >= totalUnits
   return (
-    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-emerald-500' : 'text-red-400'}`}>
+    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-emerald-500' : 'text-red-600'}`}>
       {totalCompleted}/{totalUnits}
     </span>
   )
@@ -150,7 +150,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
   return (
     <div
       className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-stone-100/70 transition-colors mx-2"
-      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
+      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
     >
       <ProgressBadge progress={record.progress} />
       <div className="flex-1 min-w-0">
@@ -175,7 +175,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
 function RecentItem({ record, onNavigate }) {
   return (
     <button
-      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang)}
+      onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
       className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-stone-100/70 transition-colors text-left"
     >
       <ProgressBadge progress={record.progress} />
@@ -434,14 +434,14 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               <button
                 key={lang}
                 onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg transition-all ${
+                className={`w-9 h-9 flex items-center justify-center rounded-lg text-[13px] font-bold transition-all ${
                   activeWordListLang === lang
                     ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-md'
-                    : 'hover:bg-stone-200/70 text-stone-400 hover:text-stone-600'
+                    : 'bg-stone-100 text-stone-500 hover:bg-stone-200/70 hover:text-stone-700'
                 }`}
                 title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
               >
-                <LangIcon langCode={lang} size="sm" />
+                {lang.substring(0, 2).toUpperCase()}
               </button>
             ))}
 
@@ -453,11 +453,11 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               grouped[lang].slice(0, 3).map((record) => (
                 <button
                   key={record.file_id}
-                  onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-stone-400 hover:text-stone-600 transition-colors"
+                  onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang, record.title)}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-stone-200/70 text-[10px] font-medium text-stone-400 hover:text-stone-600 transition-colors"
                   title={record.title}
                 >
-                  <LangIcon langCode={record.source_lang} size="sm" />
+                  {(record.source_lang || '?').substring(0, 2).toUpperCase()}
                 </button>
               ))
             )}

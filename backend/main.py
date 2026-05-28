@@ -137,39 +137,51 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         return result
     mc = result.get("multiple_choice")
     if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-        correct_answer = mc.get("correct_answer", "")
-        correct_answer_lower = correct_answer.lower().strip() if correct_answer else ""
+        raw_options = mc["options"]
+        correct_text = result.get("enriched_meaning", result.get("meaning", ""))
         
         normalized_options = []
-        for opt in mc["options"]:
-            if not isinstance(opt, dict) or "text" not in opt:
-                continue
-            text = opt["text"]
-            is_correct = opt.get("is_correct", False)
-            if isinstance(is_correct, str):
-                is_correct = is_correct.lower() in ("true", "yes", "1")
-            elif isinstance(is_correct, (int, float)):
-                is_correct = bool(is_correct)
-            if not is_correct and correct_answer_lower and text.lower().strip() == correct_answer_lower:
-                is_correct = True
-            normalized_options.append({"text": text, "is_correct": bool(is_correct)})
+        for opt in raw_options:
+            if isinstance(opt, dict) and "text" in opt:
+                text = opt["text"]
+                is_correct = opt.get("is_correct", None)
+                if is_correct is not None:
+                    if isinstance(is_correct, str):
+                        is_correct = is_correct.lower() in ("true", "yes", "1")
+                    elif isinstance(is_correct, (int, float)):
+                        is_correct = bool(is_correct)
+                    else:
+                        is_correct = bool(is_correct)
+                    normalized_options.append({"text": text, "is_correct": is_correct})
+                else:
+                    normalized_options.append({"text": text, "is_correct": False})
+            elif isinstance(opt, str):
+                normalized_options.append({"text": opt, "is_correct": False})
         
-        if not any(o["is_correct"] for o in normalized_options) and correct_answer:
-            normalized_options.insert(0, {"text": correct_answer, "is_correct": True})
+        if not any(o["is_correct"] for o in normalized_options):
+            if normalized_options:
+                normalized_options[0]["is_correct"] = True
+            elif correct_text:
+                normalized_options.insert(0, {"text": correct_text, "is_correct": True})
         
         filtered_options = []
         placeholder_pattern = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+        correct_opt = None
         for opt in normalized_options:
             if opt["is_correct"]:
-                filtered_options.append(opt)
+                correct_opt = opt
             elif placeholder_pattern.match(opt["text"].strip()):
                 continue
             else:
                 filtered_options.append(opt)
         
+        if correct_opt:
+            filtered_options.insert(0, correct_opt)
+        
         if len(filtered_options) < 4:
             existing_texts = {o["text"] for o in filtered_options}
-            fallback_distractors = get_fallback_options(correct_answer, file_id, count=4 - len(filtered_options))
+            correct_text_val = correct_opt["text"] if correct_opt else correct_text
+            fallback_distractors = get_fallback_options(correct_text_val, file_id, count=4 - len(filtered_options))
             for fd in fallback_distractors:
                 if len(filtered_options) >= 4:
                     break
@@ -187,12 +199,18 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
                     filtered_options.append({"text": fb, "is_correct": False})
                     existing_texts.add(fb)
         
-        mc["options"] = filtered_options[:4]
-        if not mc.get("correct_answer") and filtered_options:
-            for o in filtered_options:
-                if o["is_correct"]:
-                    mc["correct_answer"] = o["text"]
-                    break
+        final_options = filtered_options[:4]
+        correct_idx = next((i for i, o in enumerate(final_options) if o["is_correct"]), 0)
+        correct_text_val = final_options[correct_idx]["text"]
+        for o in final_options:
+            o["is_correct"] = o["text"] == correct_text_val
+        
+        import random as _random
+        _random.seed(hash(correct_text_val) + hash(file_id or ""))
+        _random.shuffle(final_options)
+        
+        mc["options"] = final_options
+        mc.pop("correct_answer", None)
         result["multiple_choice"] = mc
         return result
     if isinstance(mc, str) and not mc.strip():
@@ -205,18 +223,14 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
             except (json.JSONDecodeError, TypeError):
                 raw_opts = []
         if isinstance(raw_opts, list):
-            correct_answer = result.get("correct_answer", "")
             mc_options = []
             for opt in raw_opts:
                 if isinstance(opt, dict) and "text" in opt:
                     mc_options.append(opt)
                 elif isinstance(opt, str):
-                    is_correct = (opt == correct_answer)
-                    mc_options.append({"text": opt, "is_correct": is_correct})
+                    mc_options.append({"text": opt, "is_correct": False})
             if mc_options:
                 result["multiple_choice"] = {
-                    "question": result.get("question", ""),
-                    "correct_answer": correct_answer,
                     "options": mc_options
                 }
     if "multiple_choice" not in result or not isinstance(result.get("multiple_choice"), dict) or "options" not in result.get("multiple_choice", {}):
@@ -226,8 +240,6 @@ def fix_llm_options_result(result: dict, source_lang="en", file_id=None) -> dict
         for fd in fallback_distractors:
             fb_opts.append({"text": fd, "is_correct": False})
         result["multiple_choice"] = {
-            "question": "",
-            "correct_answer": correct_meaning,
             "options": fb_opts[:4]
         }
     return result
@@ -400,7 +412,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
     try:
         t_total_start = time.time()
         print(f"[DEBUG] 开始处理文件 {file_id}, RPM={rpm}")
-        processing_status[file_id] = {"status": "processing", "progress": 0}
+        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0}
         
         storage.save_language_settings(file_id, source_lang, target_lang, rpm)
         
@@ -409,6 +421,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         total_sentences = len(sentences)
         t_split_end = time.time()
         print(f"[TIMING] 句子分割: {t_split_end - t_split_start:.3f}s, 共 {total_sentences} 个句子")
+        
+        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": total_sentences}
         
         rate_limiter = RateLimiter(rpm)
         results_dict = {}
@@ -765,7 +779,8 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
             except Exception as e:
                 print(f"[ERROR] Word gen failed for {word_to_gen} (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
-                    retry_delay = 5 * (attempt + 1)
+                    app_prefs = storage.load_user_preferences()
+                    retry_delay = app_prefs.get("retry_interval", 1.0)
                     print(f"[DEBUG] Retrying {word_to_gen} in {retry_delay}s...")
                     await asyncio.sleep(retry_delay)
                 else:
@@ -787,8 +802,8 @@ async def background_word_gen(file_id: str):
     plan_word_order = []
     if plan:
         seen_vocab_indices = set()
-        for unit_id in sorted(plan.keys()):
-            items = plan[unit_id].get("items", [])
+        for unit in plan:
+            items = unit.get("items", [])
             for item in items:
                 vi = item.get("vocab_index")
                 if vi is not None and vi not in seen_vocab_indices:
@@ -833,6 +848,32 @@ async def background_word_gen(file_id: str):
             continue
 
         if storage.load_word_cache(file_id, word_to_gen):
+            continue
+
+        existing_cache = storage.find_global_word_cache(word_to_gen, source_lang)
+        if existing_cache:
+            import copy
+            cached = copy.deepcopy(existing_cache)
+            context_sents = []
+            all_sentences = storage.load_pipeline_data(file_id)
+            if all_sentences:
+                import re as re_mod
+                word_pattern = re_mod.compile(r'\b' + re_mod.escape(word_to_gen) + r'\b', re_mod.IGNORECASE)
+                for sent_idx, sentence_data in enumerate(all_sentences):
+                    if "sentence" in sentence_data:
+                        if word_pattern.search(sentence_data["sentence"]):
+                            translation = ""
+                            if "translation_result" in sentence_data:
+                                translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                            context_sents.append({
+                                "sentence": sentence_data["sentence"],
+                                "translation": translation,
+                                "sentence_index": sent_idx
+                            })
+            if context_sents:
+                cached["context_sentences"] = context_sents
+                cached["context"] = context_sents[0]["sentence"]
+            storage.save_word_cache(file_id, word_to_gen, cached)
             continue
 
         processing = state.get("processing_words", set())
@@ -975,7 +1016,7 @@ def generate_and_save_learning_plan(file_id: str, vocab: List[Dict], sentences: 
                 correct_tokens = get_translation_phrases(tr, max_phrases=6)
                 correct_tokens = [ct for ct in correct_tokens if not is_punctuation_only(ct)]
                 
-                if len(correct_tokens) >= 2:
+                if len(correct_tokens) >= 2 and len(correct_tokens) <= 8:
                     redundant_tokens = tr.get("redundant_tokens", [])
                     cleaned_redundant = []
                     correct_has_source_lang = any(is_source_lang_text(ct, source_lang) for ct in correct_tokens)
@@ -1249,6 +1290,7 @@ async def stop_word_gen(file_id: str):
 async def priority_word_gen(file_id: str, request: dict):
     try:
         word = request.get("word", "")
+        force = request.get("force", False)
         if not word:
             raise HTTPException(status_code=400, detail="Word is required")
 
@@ -1272,11 +1314,15 @@ async def priority_word_gen(file_id: str, request: dict):
         if "plan_position" not in state:
             state["plan_position"] = 0
 
-        if storage.load_word_cache(file_id, word):
+        if force:
+            storage.delete_word_cache(file_id, word)
+            state["processing_words"] = {w for w in state.get("processing_words", set()) if w.lower() != word.lower()}
+
+        if not force and storage.load_word_cache(file_id, word):
             return {"status": "already_cached"}
 
         processing = state.get("processing_words", set())
-        if word.lower() in {w.lower() for w in processing}:
+        if not force and word.lower() in {w.lower() for w in processing}:
             return {"status": "already_processing"}
 
         state["priority_queue"] = [w for w in state["priority_queue"] if w.lower() != word.lower()]
@@ -1481,11 +1527,6 @@ async def get_random_word(file_id: str):
                     options.append(opt["text"])
                     if opt.get("is_correct"):
                         correct_index = i
-                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
-                    for i, opt in enumerate(mc_options):
-                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
-                            correct_index = i
-                            break
                 
                 asyncio.create_task(pre_generate_next_word(file_id, vocab, current_index + 1))
                 
@@ -1579,11 +1620,6 @@ async def get_random_word(file_id: str):
                 options.append(opt["text"])
                 if opt.get("is_correct"):
                     correct_index = i
-            if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
-                for i, opt in enumerate(mc_options):
-                    if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
-                        correct_index = i
-                        break
             
             context_sents = cached_word.get("context_sentences", [])
             
@@ -1938,11 +1974,6 @@ async def get_word_details(file_id: str, word: str):
                     options.append(opt["text"])
                     if opt.get("is_correct"):
                         correct_index = i
-                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
-                    for i, opt in enumerate(mc_options):
-                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
-                            correct_index = i
-                            break
                 cached_word["options"] = options
                 cached_word["correct_index"] = correct_index
             
@@ -2022,11 +2053,6 @@ async def get_word_details(file_id: str, word: str):
                     options.append(opt["text"])
                     if opt.get("is_correct"):
                         correct_index = i
-                if not any(o.get("is_correct") for o in mc_options) and mc.get("correct_answer"):
-                    for i, opt in enumerate(mc_options):
-                        if opt.get("text", "").lower() == mc.get("correct_answer", "").lower():
-                            correct_index = i
-                            break
                 cached_word["options"] = options
                 cached_word["correct_index"] = correct_index
                 return cached_word
@@ -2440,7 +2466,7 @@ async def generate_sentence_quiz(file_id: str):
         correct_tokens = get_translation_phrases(translation_result, max_phrases=6)
         print(f"[DEBUG] 正确翻译片段(LLM拆分): {correct_tokens}")
         
-        if len(correct_tokens) < 2:
+        if len(correct_tokens) < 2 or len(correct_tokens) > 8:
             raise HTTPException(status_code=404, detail="Not enough translated tokens for quiz")
         
         cleaned_redundant_tokens = []
@@ -2631,7 +2657,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                     exercises_per_sent.append(1)
             expected_length = sum(exercises_per_sent)
             
-            if exercise_order is None or len(exercise_order) != expected_length:
+            if exercise_order is None:
                 seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
                 exercise_order = text_processor.generate_interleaved_exercise_order(
                     len(eligible_sentences), masks_per_sentence=3, seed=seed,
@@ -2708,7 +2734,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     exercises_per_sent.append(1)
             expected_length = sum(exercises_per_sent)
             
-            if exercise_order is None or len(exercise_order) != expected_length:
+            if exercise_order is None:
                 seed = hash(str([s.get("sentence", "") for s in eligible_sentences]))
                 exercise_order = text_processor.generate_interleaved_exercise_order(
                     len(eligible_sentences), masks_per_sentence=3, seed=seed,
@@ -2732,8 +2758,7 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
             if current_exercise_index >= exercise_end:
                 storage.save_phase2_progress(file_id, exercise_start)
                 current_exercise_index = exercise_start
-            
-            if current_exercise_index < exercise_start:
+            elif current_exercise_index < exercise_start:
                 storage.save_phase2_progress(file_id, exercise_start)
                 current_exercise_index = exercise_start
             
@@ -2770,7 +2795,8 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                     sentences,
                     mask_seed=mask_seed,
                     source_lang=source_lang,
-                    mask_version=type_idx
+                    mask_version=type_idx,
+                    max_distractors=3
                 )
                 
                 return {
@@ -2798,10 +2824,18 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 if not original_tokens:
                     original_tokens = text_processor.tokenize_sentence(current_sentence, language=source_lang)
                 
+                if len(original_tokens) > 8:
+                    new_exercise_index = current_exercise_index + 1
+                    storage.save_phase2_progress(file_id, new_exercise_index)
+                    if new_exercise_index >= len(exercise_order):
+                        return {"unit_complete": True}
+                    return await get_phase_unit_exercise(file_id, phase_number, unit_id)
+                
                 import random
+                random.seed(hash(current_sentence) + type_idx)
                 distractors = []
                 original_lower_set = set(t.lower() for t in original_tokens)
-                max_distractors = 2
+                max_distractors = 3
                 
                 for sent_data in eligible_sentences:
                     if sent_data is current_sentence_data:
@@ -2878,7 +2912,7 @@ async def next_phase_exercise(file_id: str, phase_number: int, unit_id: int):
                 return {"success": True, "unit_complete": True, "new_unit": new_unit}
             
             storage.save_phase2_progress(file_id, new_exercise_index)
-            return {"success": True, "new_exercise_index": new_exercise_index}
+            return await get_phase_unit_exercise(file_id, phase_number, unit_id)
         else:
             progress = storage.load_phase_progress(file_id, phase_number)
             current_exercise_index = progress["current_exercise"]
@@ -2932,6 +2966,56 @@ async def set_phase_progress(file_id: str, phase_number: int, request: dict):
             exercise_type_index = request.get("exercise_type_index", 0)
             storage.save_phase_progress(file_id, phase_number, unit_id, exercise_index, exercise_type_index)
             return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/word-detail/regenerate")
+async def regenerate_word_detail(request: dict):
+    try:
+        word = request.get("word", "")
+        source_lang = request.get("source_lang", "en")
+        target_lang = request.get("target_lang", "zh")
+        if not word:
+            raise HTTPException(status_code=400, detail="Word is required")
+
+        records = storage.load_history()
+        matching = [r for r in records if r.get("source_lang") == source_lang]
+
+        for record in matching:
+            file_id = record.get("file_id")
+            if file_id:
+                storage.delete_word_cache(file_id, word)
+
+        options_result = await nvidia_api.generate_multiple_choice(
+            word, "", "", target_lang
+        )
+        file_id = matching[0].get("file_id") if matching else None
+        if file_id:
+            options_result = fix_llm_options_result(options_result, source_lang, file_id)
+
+        result = {
+            "word": options_result.get("word", word),
+            "ipa": "",
+            "meaning": options_result.get("enriched_meaning", ""),
+            "enriched_meaning": options_result.get("enriched_meaning", ""),
+            "part_of_speech": options_result.get("morphology", ""),
+            "examples": options_result.get("examples", []),
+            "memory_hint": options_result.get("memory_hint", ""),
+            "variants_detail": options_result.get("variants_detail", []),
+        }
+
+        if file_id:
+            cache_data = dict(options_result)
+            cache_data["word"] = options_result.get("word", word)
+            cache_data["meaning"] = options_result.get("enriched_meaning", "")
+            cache_data["context"] = ""
+            cache_data["context_sentences"] = []
+            cache_data["morphology"] = options_result.get("morphology", "")
+            cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+            storage.save_word_cache(file_id, word, cache_data)
+
+        return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2992,12 +3076,36 @@ async def get_word_detail(word: str, source_lang: str = "en", target_lang: str =
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/file/{file_id}/info")
+async def get_file_info(file_id: str):
+    try:
+        settings = storage.load_language_settings(file_id)
+        return {
+            "source_lang": settings.get("source_lang", "en"),
+            "target_lang": settings.get("target_lang", "zh")
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/word-list")
 async def get_word_list(source_lang: Optional[str] = None, target_lang: Optional[str] = None):
     try:
         records = storage.load_history()
         if source_lang:
-            records = [r for r in records if r.get("source_lang") == source_lang]
+            filtered = []
+            for r in records:
+                rlang = r.get("source_lang", "")
+                if rlang == source_lang:
+                    filtered.append(r)
+                    continue
+                if rlang == "auto" or not rlang:
+                    file_id = r.get("file_id")
+                    if file_id:
+                        settings = storage.load_language_settings(file_id)
+                        if settings and settings.get("source_lang") == source_lang:
+                            filtered.append(r)
+                            continue
+            records = filtered
         if target_lang:
             records = [r for r in records if r.get("target_lang") == target_lang]
 
@@ -3220,8 +3328,10 @@ class UserPreferencesUpdate(BaseModel):
     source_lang: Optional[str] = None
     target_lang: Optional[str] = None
     rpm: Optional[int] = None
+    retry_interval: Optional[float] = None
     skip_listening: Optional[bool] = None
     recent_languages: Optional[List[str]] = None
+    page_size: Optional[int] = None
 
 
 @app.post("/api/user-preferences")
@@ -3234,10 +3344,14 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["target_lang"] = req.target_lang
         if req.rpm is not None:
             current["rpm"] = req.rpm
+        if req.retry_interval is not None:
+            current["retry_interval"] = req.retry_interval
         if req.skip_listening is not None:
             current["skip_listening"] = req.skip_listening
         if req.recent_languages is not None:
             current["recent_languages"] = req.recent_languages
+        if req.page_size is not None:
+            current["page_size"] = req.page_size
         storage.save_user_preferences(current)
         return current
     except Exception as e:

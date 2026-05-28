@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft, Settings, Home } from 'lucide-react'
+import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import ConfirmDialog from './components/ConfirmDialog'
@@ -22,11 +22,31 @@ import HistorySidebar from './components/HistorySidebar'
 import WordListPanel from './components/WordListPanel'
 import SettingsModal from './components/SettingsModal'
 
+function FrogLogo({ size = 40 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
+      <circle cx="34" cy="38" r="16" fill="#4ade80" />
+      <circle cx="66" cy="38" r="16" fill="#4ade80" />
+      <circle cx="34" cy="38" r="13" fill="#fff" />
+      <circle cx="66" cy="38" r="13" fill="#fff" />
+      <circle cx="36" cy="37" r="6" fill="#166534" />
+      <circle cx="68" cy="37" r="6" fill="#166534" />
+      <circle cx="38" cy="35" r="2" fill="#fff" />
+      <circle cx="70" cy="35" r="2" fill="#fff" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
+      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
+  const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
   const [vocab, setVocab] = useState([])
@@ -82,6 +102,8 @@ function App() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
+  const [fileTitle, setFileTitle] = useState('')
+  const learningContainerRef = useRef(null)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -91,6 +113,7 @@ function App() {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
+      if (prefs.page_size) setPageSize(prefs.page_size)
     }).catch(() => {})
   }, [])
 
@@ -102,6 +125,12 @@ function App() {
       api.stopWordGen(currentFileId).catch(() => {})
     }
   }, [step, currentFileId])
+
+  useEffect(() => {
+    if (learningContainerRef.current) {
+      learningContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+  }, [step, currentExerciseData, learningData, quizData, listeningQuizData])
   
   const updateUnitStars = (key, starCount) => {
     setUnitStarCounts(prev => {
@@ -123,6 +152,25 @@ function App() {
       sortVocab()
     }
   }, [vocab, sortOrder])
+
+  useEffect(() => {
+    if (generatingUnits.size === 0 || !currentFileId) return
+
+    const interval = setInterval(async () => {
+      try {
+        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+        const newGenUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) newGenUnits.add(i) })
+        setGeneratingUnits(newGenUnits)
+        if (newGenUnits.size === 0) {
+          setPhase1Units(phase1UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        }
+      } catch (e) {}
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [generatingUnits, currentFileId])
 
   // 轮询处理状态
   useEffect(() => {
@@ -269,6 +317,8 @@ function App() {
       setPreprocessStatus('translating')
     } else if (inputMode === 'generate') {
       setPreprocessStatus('generating')
+    } else if (sourceLang === 'auto') {
+      setPreprocessStatus('detecting')
     } else {
       setPreprocessStatus(null)
     }
@@ -277,6 +327,7 @@ function App() {
     
     try {
       let finalText = text.trim()
+      let finalSourceLang = sourceLang
       
       if (inputMode === 'translate') {
         const translateResponse = await api.translateText(text.trim(), targetLang, sourceLang)
@@ -286,14 +337,28 @@ function App() {
         finalText = generateResponse.generated_text
       }
       
-      setPreprocessStatus(null)
+      if (finalSourceLang === 'auto') {
+        try {
+          const detectResult = await api.detectLanguage(finalText)
+          if (detectResult.detected_language) {
+            finalSourceLang = detectResult.detected_language
+            setSourceLang(detectResult.detected_language)
+          }
+        } catch (e) {
+          console.error('Language detection failed:', e)
+        }
+        setPreprocessStatus(null)
+      } else {
+        setPreprocessStatus(null)
+      }
       
-      const response = await api.processText(finalText, sourceLang, targetLang)
+      const response = await api.processText(finalText, finalSourceLang, targetLang)
       
       if (response && response.file_id) {
         const fileId = response.file_id
         setFileId(fileId)
         setCurrentFileId(fileId)
+        if (response.title) setFileTitle(response.title)
         api.getUserPreferences().then(prefs => {
           if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
         }).catch(() => {})
@@ -568,37 +633,17 @@ function App() {
         const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
         updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount)
         setStep('unit-complete')
-      } else {
-        const exerciseData = await api.getPhaseUnitExercise(currentFileId, currentPhase, currentPhaseUnit)
-        if (exerciseData.unit_complete) {
-          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-            api.getPhaseUnits(currentFileId, 1),
-            api.getPhaseUnits(currentFileId, 2)
-          ])
-          setPhase1Units(phase1UnitsData.units)
-          const genUnits = new Set()
-          phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
-          setGeneratingUnits(genUnits)
-          setPhase2Units(phase2UnitsData.units)
-          setCurrentPhase1Unit(phase1UnitsData.current_unit)
-          setCurrentPhase2Unit(phase2UnitsData.current_unit)
-          setCompletedUnitId(currentPhaseUnit)
-          setCompletedPhase(currentPhase)
-          const starCount2 = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
-          updateUnitStars(`${currentPhase}-${currentPhaseUnit}`, starCount2)
-          setStep('unit-complete')
-        } else {
-          setExerciseType(exerciseData.exercise_type)
-          setCurrentExerciseData({
-            ...exerciseData.data,
-            mask_version: exerciseData.mask_version,
-            total_masks: exerciseData.total_masks,
-            exercise_type_index: exerciseData.exercise_type_index,
-            exercise_index_in_unit: exerciseData.exercise_index_in_unit,
-            total_exercises_in_unit: exerciseData.total_exercises_in_unit,
-            sentence_preview: exerciseData.sentence_preview
-          })
-        }
+      } else if (nextRes.exercise_type) {
+        setExerciseType(nextRes.exercise_type)
+        setCurrentExerciseData({
+          ...nextRes.data,
+          mask_version: nextRes.mask_version,
+          total_masks: nextRes.total_masks,
+          exercise_type_index: nextRes.exercise_type_index,
+          exercise_index_in_unit: nextRes.exercise_index_in_unit,
+          total_exercises_in_unit: nextRes.total_exercises_in_unit,
+          sentence_preview: nextRes.sentence_preview
+        })
       }
     } catch (error) {
       console.error('下一个练习错误:', error)
@@ -939,18 +984,46 @@ function App() {
     })
   }
 
-  const handleNavigateToRecord = async (fileId, srcLang, tgtLang) => {
+  const handleNavigateToRecord = async (fileId, srcLang, tgtLang, title) => {
     setSkipPolling(true)
     setLoading(true)
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
+      if (title) setFileTitle(title)
+      if (srcLang && srcLang !== 'auto') {
+        setSourceLang(srcLang)
+      } else {
+        try {
+          const langData = await api.getFileLanguages(fileId)
+          if (langData.source_lang) setSourceLang(langData.source_lang)
+          if (langData.target_lang) setTargetLang(langData.target_lang)
+        } catch (e) {}
+      }
+      if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)
       const sentencesData = await api.getSentences(fileId)
       const sentenceList = sentencesData.sentences || []
       setSentenceTranslations(Array.isArray(sentenceList) ? sentenceList : [])
+      try {
+        const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
+          api.getPhaseUnits(fileId, 1),
+          api.getPhaseUnits(fileId, 2),
+          api.getUnitStars(fileId)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        setUnitStarCounts(starsData.stars || {})
+        const genUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+        setGeneratingUnits(genUnits)
+      } catch (e) {
+        console.error('Failed to load phase units:', e)
+      }
       setProgress(100)
       setProcessingInfo(null)
       setStep('dictionary')
@@ -996,49 +1069,35 @@ function App() {
 
   return (
     <div className="min-h-screen bg-stone-50">
-      <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-stone-800 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-5 h-5 text-amber-100" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
-                <p className="text-sm text-stone-400">{t.subtitle || 'Lesslingo'}</p>
+      {step === 'input' && (
+        <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200/60">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
+                  <FrogLogo size={22} />
+                </div>
+                <div>
+                  <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
+                  <p className="text-sm text-stone-400">{t.subtitle}</p>
+                </div>
               </div>
             </div>
-            <AnimatePresence>
-              {step !== 'input' && (
-                <motion.button
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  onClick={() => {
-                    setStep('input');
-                  }}
-                  className="p-2 text-stone-500 hover:text-amber-600 transition-colors rounded-lg hover:bg-amber-50"
-                  title="主页面"
-                >
-                  <Home className="w-5 h-5" />
-                </motion.button>
-              )}
-            </AnimatePresence>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       <main>
         {step === 'input' ? (
-          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" style={{ height: 'calc(100vh - 80px)' }}>
+          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ height: 'calc(100vh - 72px)' }}>
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
             <div className="flex-1 min-w-0 relative h-full">
               {wordListLang ? (
                 <WordListPanel
                   sourceLang={wordListLang}
-                  targetLang={targetLang}
                   t={t}
                   onBack={() => setWordListLang(null)}
+                  pageSize={pageSize}
                 />
               ) : (
                 <>
@@ -1072,7 +1131,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
+          <div ref={learningContainerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: '100vh', overflowY: 'auto' }}>
             <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
@@ -1093,7 +1152,12 @@ function App() {
               t={t}
               currentFileId={currentFileId}
               sourceLang={sourceLang}
+              targetLang={targetLang}
               preprocessStatus={preprocessStatus}
+              onBack={() => setStep('input')}
+              fileTitle={fileTitle}
+              onTitleChange={(newTitle) => setFileTitle(newTitle)}
+              pageSize={pageSize}
             />
           )}
           
@@ -1130,7 +1194,7 @@ function App() {
               wrongItemsCount={wrongItems.length}
             />
           )}
-          
+
           {step === 'sentence-quiz' && (
             <SentenceQuizStep
               key={`sentence-quiz-${quizData?.flat_index ?? quizData?.original_sentence}`}
@@ -1158,7 +1222,7 @@ function App() {
               wrongItemsCount={wrongItems.length}
             />
           )}
-          
+
           {step === 'listening-quiz' && (
             <ListeningQuizStep
               key={`listening-quiz-${listeningQuizData?.flat_index ?? listeningQuizData?.original_sentence}`}
@@ -1177,7 +1241,7 @@ function App() {
               wrongItemsCount={wrongItems.length}
             />
           )}
-          
+
           {step === 'unit-complete' && (
             <UnitCompleteStep
               key="unit-complete"
@@ -1218,6 +1282,14 @@ function App() {
               hasWrongItems={wrongItems.length > 0}
               wrongItemsCount={wrongItems.length}
               t={t}
+              onSkipReview={() => {
+                setReviewMode(false)
+                setReviewIndex(0)
+                setWrongItems([])
+                setUnitErrorCount(0)
+                unitErrorCountRef.current = 0
+                setStep('all-units')
+              }}
             />
           )}
           
@@ -1231,12 +1303,15 @@ function App() {
               onPhase1UnitClick={handlePhase1UnitClick}
               onPhase2UnitClick={handlePhase2UnitClick}
               onBack={() => setStep('dictionary')}
+              onHome={() => setStep('input')}
               loading={loading}
               t={t}
               unitStarCounts={unitStarCounts}
               skipListening={skipListening}
               onSkipListeningChange={handleSkipListeningChange}
               generatingUnits={generatingUnits}
+              fileTitle={fileTitle}
+              currentFileId={currentFileId}
             />
           )}
           
@@ -1304,7 +1379,7 @@ function App() {
               wrongItemsCount={wrongItems.length}
             />
           )}
-          
+
           {step === 'phase-exercise' && exerciseType === 'translation_reconstruction' && (
             <TranslationReconstructionStep
               key={`reconstruction-exercise-${currentExerciseData?.exercise_index_in_unit}`}
@@ -1342,7 +1417,7 @@ function App() {
               wrongItemsCount={wrongItems.length}
             />
           )}
-          
+
           {step === 'vocab-list' && (
             <VocabListStep
               key="vocab-list"
@@ -1358,13 +1433,13 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
-        title="确认退出"
-        message="你确定要退出当前练习吗？退出后进度将不会保存。"
-        confirmText="退出"
-        cancelText="继续练习"
+        title={t.confirmExit || '确认退出'}
+        message={t.exitMessage || '你确定要退出当前练习吗？退出后进度将不会保存。'}
+        confirmText={t.exitAction || '退出'}
+        cancelText={t.continueLearning || '继续练习'}
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog({ isOpen: false, onConfirm: null })}
       />

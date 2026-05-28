@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2 } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, MapPin, Home } from 'lucide-react';
 
 function AllUnitsStep({
   phase1Units,
@@ -11,12 +11,15 @@ function AllUnitsStep({
   onPhase1UnitClick,
   onPhase2UnitClick,
   onBack,
+  onHome,
   loading,
   t,
   unitStarCounts,
   skipListening,
   onSkipListeningChange,
-  generatingUnits
+  generatingUnits,
+  fileTitle,
+  currentFileId
 }) {
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
@@ -36,7 +39,7 @@ function AllUnitsStep({
 
   const renderUnitCard = (unit, index, isCurrent, onClick, keyPrefix, isUnlocked, phaseNumber) => {
     const isCompleted = unit.completed;
-    const isGenerating = phaseNumber === 1 && index === 0 && generatingUnits?.has(index);
+    const isGenerating = phaseNumber === 1 && generatingUnits?.has(index);
     const isLocked = !isUnlocked && !isCompleted && !isGenerating;
     const starKey = `${phaseNumber}-${index}`;
     const starCount = unitStarCounts?.[starKey];
@@ -64,8 +67,10 @@ function AllUnitsStep({
           <Loader2 className="w-3.5 h-3.5 animate-spin" />
         ) : isLocked ? (
           <Lock className="w-3.5 h-3.5" />
+        ) : isCompleted ? (
+          <span className="text-xs font-bold text-green-700">{index + 1}</span>
         ) : (
-          <span className="text-sm font-medium leading-none">{index + 1}</span>
+          <MapPin className="w-3.5 h-3.5 text-amber-500" />
         )}
         {isCompleted && typeof starCount === 'number' && (
           <div className="flex items-center justify-center gap-px mt-0.5">
@@ -92,15 +97,31 @@ function AllUnitsStep({
       exit={{ opacity: 0, y: -20 }}
       className="max-w-5xl mx-auto"
     >
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-stone-400 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100 mb-8"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t.back}
-      </motion.button>
+      <div className="flex items-center gap-3 mb-6">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 px-3 py-1.5 text-stone-400 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">{t.back}</span>
+        </button>
+
+        {fileTitle && (
+          <span className="text-[15px] font-medium text-stone-600 truncate max-w-[350px]">
+            {fileTitle}
+          </span>
+        )}
+
+        <div className="flex-1 min-w-0" />
+
+        <button
+          onClick={onHome}
+          className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors"
+          title={t.backToHome || '返回主页'}
+        >
+          <Home className="w-4 h-4" />
+        </button>
+      </div>
 
       <div className="text-center mb-8 relative">
         <motion.h2
