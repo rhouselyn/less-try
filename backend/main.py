@@ -3489,39 +3489,79 @@ import io
 import subprocess
 import tempfile
 import os
+import edge_tts
 
 TTS_CACHE = {}
 
-TTS_LANG_MAP = {
+EDGE_VOICE_MAP = {
+    'en': 'en-US-JennyNeural',
+    'zh': 'zh-CN-XiaoxiaoNeural',
+    'ja': 'ja-JP-NanamiNeural',
+    'ko': 'ko-KR-SunHiNeural',
+    'fr': 'fr-FR-DeniseNeural',
+    'de': 'de-DE-KatjaNeural',
+    'es': 'es-ES-ElviraNeural',
+    'it': 'it-IT-ElsaNeural',
+    'pt': 'pt-BR-FranciscaNeural',
+    'ru': 'ru-RU-SvetlanaNeural',
+}
+
+ESPEAK_VOICE_MAP = {
     'en': 'en-us', 'zh': 'cmn', 'ja': 'ja', 'ko': 'ko',
     'fr': 'fr', 'de': 'de', 'es': 'es', 'it': 'it',
     'pt': 'pt', 'ru': 'ru',
 }
 
-TTS_VOICE_MAP = {
-    'en': 'en-us+f3',
-    'zh': 'cmn',
-    'ja': 'ja',
-    'ko': 'ko',
-    'fr': 'fr+f3',
-    'de': 'de+f3',
-    'es': 'es+f3',
-    'it': 'it+f3',
-    'pt': 'pt+f3',
-    'ru': 'ru+f3',
-}
+PROXY_URL = os.environ.get('https_proxy', os.environ.get('HTTPS_PROXY', ''))
 
 class TTSRequest(BaseModel):
     text: str
     lang: str = "en"
+
+async def generate_edge_tts(text, voice):
+    communicate = edge_tts.Communicate(text, voice, proxy=PROXY_URL if PROXY_URL else None)
+    with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as f:
+        mp3_path = f.name
+    try:
+        await communicate.save(mp3_path)
+        with open(mp3_path, 'rb') as f:
+            data = f.read()
+        return data
+    finally:
+        try: os.unlink(mp3_path)
+        except: pass
+
+def generate_espeak_tts(text, lang):
+    espeak_voice = ESPEAK_VOICE_MAP.get(lang, lang)
+    with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as wav_file:
+        wav_path = wav_file.name
+    with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as mp3_file:
+        mp3_path = mp3_file.name
+    try:
+        subprocess.run(
+            ['espeak-ng', '-v', espeak_voice, '-s', '150', '-p', '50', '-w', wav_path, text],
+            capture_output=True, timeout=15
+        )
+        subprocess.run(
+            ['ffmpeg', '-y', '-i', wav_path, '-ar', '44100', '-ac', '1', '-codec:a', 'libmp3lame', '-b:a', '128k', mp3_path],
+            capture_output=True, timeout=15
+        )
+        with open(mp3_path, 'rb') as f:
+            return f.read()
+    finally:
+        try: os.unlink(wav_path)
+        except: pass
+        try: os.unlink(mp3_path)
+        except: pass
 
 @app.post("/api/tts")
 async def tts_endpoint(req: TTSRequest):
     if not req.text:
         raise HTTPException(status_code=400, detail="Text is required")
     text = req.text
-    tts_lang = TTS_VOICE_MAP.get(req.lang, TTS_LANG_MAP.get(req.lang, req.lang))
-    cache_key = hashlib.md5(f"{tts_lang}:{text}".encode()).hexdigest()
+    lang = req.lang
+    edge_voice = EDGE_VOICE_MAP.get(lang)
+    cache_key = hashlib.md5(f"edge:{edge_voice}:{text}".encode()).hexdigest()
     if cache_key in TTS_CACHE:
         cached_mime, cached_data = TTS_CACHE[cache_key]
         return Response(content=cached_data, media_type=cached_mime, headers={
@@ -3530,32 +3570,25 @@ async def tts_endpoint(req: TTSRequest):
             "Cache-Control": "public, max-age=86400",
         })
     try:
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as wav_file:
-            wav_path = wav_file.name
-        with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as mp3_file:
-            mp3_path = mp3_file.name
-        try:
-            subprocess.run(
-                ['espeak-ng', '-v', tts_lang, '-s', '150', '-p', '50', '-w', wav_path, text],
-                capture_output=True, timeout=15
-            )
-            subprocess.run(
-                ['ffmpeg', '-y', '-i', wav_path, '-ar', '44100', '-ac', '1', '-codec:a', 'libmp3lame', '-b:a', '128k', mp3_path],
-                capture_output=True, timeout=15
-            )
-            with open(mp3_path, 'rb') as f:
-                mp3_data = f.read()
-            TTS_CACHE[cache_key] = ('audio/mpeg', mp3_data)
-            return Response(content=mp3_data, media_type="audio/mpeg", headers={
-                "Content-Length": str(len(mp3_data)),
-                "Accept-Ranges": "bytes",
-                "Cache-Control": "public, max-age=86400",
-            })
-        finally:
-            try: os.unlink(wav_path)
-            except: pass
-            try: os.unlink(mp3_path)
-            except: pass
+        if edge_voice:
+            try:
+                mp3_data = await generate_edge_tts(text, edge_voice)
+                if mp3_data and len(mp3_data) > 100:
+                    TTS_CACHE[cache_key] = ('audio/mpeg', mp3_data)
+                    return Response(content=mp3_data, media_type="audio/mpeg", headers={
+                        "Content-Length": str(len(mp3_data)),
+                        "Accept-Ranges": "bytes",
+                        "Cache-Control": "public, max-age=86400",
+                    })
+            except Exception:
+                pass
+        mp3_data = generate_espeak_tts(text, lang)
+        TTS_CACHE[cache_key] = ('audio/mpeg', mp3_data)
+        return Response(content=mp3_data, media_type="audio/mpeg", headers={
+            "Content-Length": str(len(mp3_data)),
+            "Accept-Ranges": "bytes",
+            "Cache-Control": "public, max-age=86400",
+        })
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
