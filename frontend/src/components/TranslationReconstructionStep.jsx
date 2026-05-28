@@ -17,6 +17,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
     if (answerChecked) return
     if (selectedTokens.some(t => t.index === index)) return
     setSelectedTokens(prev => [...prev, { token, index }])
+    speakText(token, sourceLang)
   }
 
   const handleSelectedClick = (idx) => {
