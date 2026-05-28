@@ -3522,7 +3522,7 @@ async def tts_endpoint(text: str = "", lang: str = "en"):
                 capture_output=True, timeout=10
             )
             subprocess.run(
-                ['ffmpeg', '-y', '-i', wav_path, '-codec:a', 'libmp3lame', '-b:a', '64k', mp3_path],
+                ['ffmpeg', '-y', '-i', wav_path, '-ar', '44100', '-ac', '1', '-codec:a', 'libmp3lame', '-b:a', '128k', mp3_path],
                 capture_output=True, timeout=10
             )
             with open(mp3_path, 'rb') as f:

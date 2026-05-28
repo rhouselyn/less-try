@@ -11,15 +11,24 @@ const LANG_MAP = {
   'ru': 'ru-RU',
 }
 
-let currentAudio = null
+let audioContext = null
+let currentSource = null
+let currentGain = null
+
+function getAudioContext() {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)()
+  }
+  if (audioContext.state === 'suspended') {
+    audioContext.resume()
+  }
+  return audioContext
+}
 
 function stopCurrentAudio() {
-  if (currentAudio) {
-    currentAudio.pause()
-    currentAudio.currentTime = 0
-    currentAudio.onended = null
-    currentAudio.onerror = null
-    currentAudio = null
+  if (currentSource) {
+    try { currentSource.stop() } catch (e) {}
+    currentSource = null
   }
 }
 
@@ -31,21 +40,31 @@ function speakText(text, sourceLang = 'en') {
   const lang = sourceLang || 'en'
   const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}`
 
-  const audio = new Audio(url)
-  audio.volume = 1
-  currentAudio = audio
-
-  audio.onended = () => {
-    if (currentAudio === audio) currentAudio = null
-  }
-
-  audio.onerror = () => {
-    if (currentAudio === audio) currentAudio = null
-  }
-
-  audio.play().catch(() => {
-    if (currentAudio === audio) currentAudio = null
-  })
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error('TTS request failed')
+      return res.arrayBuffer()
+    })
+    .then(arrayBuffer => {
+      const ctx = getAudioContext()
+      return ctx.decodeAudioData(arrayBuffer)
+    })
+    .then(audioBuffer => {
+      const ctx = getAudioContext()
+      const source = ctx.createBufferSource()
+      source.buffer = audioBuffer
+      source.connect(ctx.destination)
+      currentSource = source
+      source.onended = () => {
+        if (currentSource === source) currentSource = null
+      }
+      source.start(0)
+    })
+    .catch(() => {
+      const audio = new Audio(url)
+      audio.volume = 1
+      audio.play().catch(() => {})
+    })
 }
 
 export { LANG_MAP, speakText }
