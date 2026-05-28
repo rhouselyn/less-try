@@ -69,9 +69,6 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
   }
 
   const handleNextQuestion = () => {
-    setSelectedIndices([])
-    setIsChecked(false)
-    setIsCorrect(false)
     onNextQuestion()
   }
 
@@ -199,7 +196,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                   disabled={isSelected || isChecked}
                   className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
                     isSelected
-                      ? 'pointer-events-none absolute invisible'
+                      ? 'pointer-events-none invisible'
                       : isChecked
                         ? 'pointer-events-none bg-stone-800 text-white opacity-50'
                         : 'bg-stone-800 text-white hover:bg-stone-700'

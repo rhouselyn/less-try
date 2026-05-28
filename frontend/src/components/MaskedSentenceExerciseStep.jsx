@@ -37,9 +37,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
   }
 
   const handleNext = () => {
-    setSelectedWords([])
-    setAnswerChecked(false)
-    setIsCorrect(false)
     onNext()
   }
 
@@ -158,7 +155,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                   disabled={isSelected || answerChecked}
                   className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
                     isSelected
-                      ? 'pointer-events-none absolute invisible'
+                      ? 'pointer-events-none invisible'
                       : answerChecked
                         ? 'pointer-events-none bg-stone-800 text-white opacity-50'
                         : 'bg-stone-800 text-white hover:bg-stone-700'
