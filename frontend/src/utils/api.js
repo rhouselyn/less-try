@@ -201,6 +201,10 @@ export const api = {
     await axios.post(`${baseUrl}/api/learn/${fileId}/priority-word-gen`, { word })
   },
 
+  regenerateWord: async (fileId, word) => {
+    await axios.post(`${baseUrl}/api/learn/${fileId}/priority-word-gen`, { word, force: true })
+  },
+
   translateText: async (text, sourceLang, targetLang) => {
     const response = await axios.post(`${baseUrl}/api/translate-text`, {
       text: text.trim(),

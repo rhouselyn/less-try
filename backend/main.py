@@ -779,7 +779,8 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
             except Exception as e:
                 print(f"[ERROR] Word gen failed for {word_to_gen} (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
-                    retry_delay = 5 * (attempt + 1)
+                    app_prefs = storage.load_user_preferences()
+                    retry_delay = app_prefs.get("retry_interval", 1.0)
                     print(f"[DEBUG] Retrying {word_to_gen} in {retry_delay}s...")
                     await asyncio.sleep(retry_delay)
                 else:
@@ -1289,6 +1290,7 @@ async def stop_word_gen(file_id: str):
 async def priority_word_gen(file_id: str, request: dict):
     try:
         word = request.get("word", "")
+        force = request.get("force", False)
         if not word:
             raise HTTPException(status_code=400, detail="Word is required")
 
@@ -1312,7 +1314,10 @@ async def priority_word_gen(file_id: str, request: dict):
         if "plan_position" not in state:
             state["plan_position"] = 0
 
-        if storage.load_word_cache(file_id, word):
+        if force:
+            storage.delete_word_cache(file_id, word)
+
+        if not force and storage.load_word_cache(file_id, word):
             return {"status": "already_cached"}
 
         processing = state.get("processing_words", set())
@@ -3272,6 +3277,7 @@ class UserPreferencesUpdate(BaseModel):
     source_lang: Optional[str] = None
     target_lang: Optional[str] = None
     rpm: Optional[int] = None
+    retry_interval: Optional[float] = None
     skip_listening: Optional[bool] = None
     recent_languages: Optional[List[str]] = None
     page_size: Optional[int] = None
@@ -3287,6 +3293,8 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["target_lang"] = req.target_lang
         if req.rpm is not None:
             current["rpm"] = req.rpm
+        if req.retry_interval is not None:
+            current["retry_interval"] = req.retry_interval
         if req.skip_listening is not None:
             current["skip_listening"] = req.skip_listening
         if req.recent_languages is not None:

@@ -18,6 +18,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
   const [rpm, setRpm] = useState(60)
+  const [retryInterval, setRetryInterval] = useState(1)
   const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
   const [localPageSize, setLocalPageSize] = useState(50)
 
@@ -41,6 +42,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
         setConfigs(loaded)
         setCurrentIndex(data.active_index || 0)
         if (prefs.rpm) setRpm(prefs.rpm)
+        if (prefs.retry_interval !== undefined) setRetryInterval(prefs.retry_interval)
         if (prefs.target_lang) setLocalTargetLang(prefs.target_lang)
         if (prefs.page_size) setLocalPageSize(prefs.page_size)
         setLoading(false)
@@ -131,7 +133,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setConfigs(loaded)
       setCurrentIndex(data.active_index ?? currentIndex)
 
-      await api.saveUserPreferences({ rpm, target_lang: localTargetLang, page_size: localPageSize })
+      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize })
 
       if (onTargetLangChange && localTargetLang !== targetLang) {
         onTargetLangChange(localTargetLang)
@@ -152,8 +154,6 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setSaving(false)
     }
   }
-
-  const rpmPercent = ((rpm - 5) / (60 - 5)) * 100
 
   if (!isOpen) return null
 
@@ -329,28 +329,29 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
               <div className="pt-1">
                 <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
                   <Gauge className="w-3 h-3" />
-                  {t.llmRate || 'LLM 速率'}
+                  {t.retryInterval || '重试间隔'}
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-stone-400">{t.llmRequestsPerMinute || '每分钟 LLM 请求次数'}</span>
-                    <span className="text-[11px] font-semibold text-amber-600">{rpm} RPM</span>
+                    <span className="text-[10px] text-stone-400">{t.retryIntervalDesc || '限速后重试等待时间'}</span>
+                    <span className="text-[11px] font-semibold text-amber-600">{retryInterval.toFixed(1)}s</span>
                   </div>
                   <div className="relative">
                     <input
                       type="range"
-                      min={5}
-                      max={60}
-                      value={rpm}
-                      onChange={e => setRpm(Number(e.target.value))}
+                      min={0.1}
+                      max={20}
+                      step={0.1}
+                      value={retryInterval}
+                      onChange={e => setRetryInterval(Number(e.target.value))}
                       className="w-full h-2 rounded-full appearance-none cursor-pointer bg-stone-100"
                       style={{
-                        background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${rpmPercent}%, #f5f5f4 ${rpmPercent}%, #f5f5f4 100%)`
+                        background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${((retryInterval - 0.1) / (20 - 0.1)) * 100}%, #f5f5f4 ${((retryInterval - 0.1) / (20 - 0.1)) * 100}%, #f5f5f4 100%)`
                       }}
                     />
                     <div className="flex justify-between mt-1">
-                      <span className="text-[10px] text-stone-300">5</span>
-                      <span className="text-[10px] text-stone-300">60</span>
+                      <span className="text-[10px] text-stone-300">0.1s</span>
+                      <span className="text-[10px] text-stone-300">20s</span>
                     </div>
                   </div>
                 </div>

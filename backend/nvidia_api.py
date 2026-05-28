@@ -248,9 +248,19 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
         configs = [dict(c) for c in _DEFAULT_CONFIGS]
         active_index = 0
     num_configs = len(configs)
+
+    try:
+        from storage import Storage
+        storage = Storage()
+        prefs = storage.load_user_preferences()
+        retry_interval = prefs.get("retry_interval", 1.0)
+    except Exception:
+        retry_interval = 1.0
+
     last_exception = None
-    for offset in range(num_configs):
-        idx = (active_index + offset) % num_configs
+    attempt = 0
+    while True:
+        idx = (active_index + attempt) % num_configs
         config = configs[idx]
         try:
             api = NvidiaAPI(config_index=idx)
@@ -261,10 +271,23 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
                 _save_settings(settings)
             return result
         except (requests.exceptions.HTTPError, requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
-            print(f"[ROTATE] Config {idx} (model={config.get('model', '')}) failed: {e}, trying config {(idx + 1) % num_configs}...")
-            last_exception = e
-            continue
-    raise last_exception
+            is_rate_limit = False
+            if isinstance(e, requests.exceptions.HTTPError) and e.response is not None:
+                if e.response.status_code in (429, 503, 502):
+                    is_rate_limit = True
+            if is_rate_limit:
+                print(f"[RETRY] Config {idx} rate-limited ({e.response.status_code if e.response else 'N/A'}), waiting {retry_interval}s then trying config {(idx + 1) % num_configs}...")
+                await asyncio.sleep(retry_interval)
+                attempt += 1
+                last_exception = e
+                continue
+            else:
+                if num_configs > 1 and attempt < num_configs - 1:
+                    print(f"[ROTATE] Config {idx} failed: {e}, trying config {(idx + 1) % num_configs}...")
+                    attempt += 1
+                    last_exception = e
+                    continue
+                raise
 
 
 async def detect_language(text: str) -> str:
@@ -318,6 +341,13 @@ class NvidiaAPI:
 
     def _sync_post(self, url, headers, payload, timeout, max_retries=3):
         import time as _time
+        try:
+            from storage import Storage as _Storage
+            _storage = _Storage()
+            _prefs = _storage.load_user_preferences()
+            _retry_interval = _prefs.get("retry_interval", 1.0)
+        except Exception:
+            _retry_interval = 1.0
         for attempt in range(max_retries):
             try:
                 response = requests.post(url, headers=headers, json=payload, timeout=timeout)
@@ -334,9 +364,8 @@ class NvidiaAPI:
                 return result
             except requests.exceptions.HTTPError as e:
                 if e.response is not None and e.response.status_code in (503, 429, 502) and attempt < max_retries - 1:
-                    wait = 2 ** attempt * 2
-                    print(f"[RETRY] API returned {e.response.status_code}, retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
-                    _time.sleep(wait)
+                    print(f"[RETRY] API returned {e.response.status_code}, retrying in {_retry_interval}s (attempt {attempt + 1}/{max_retries})")
+                    _time.sleep(_retry_interval)
                     continue
                 raise
 

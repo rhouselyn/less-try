@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft, Pencil, ChevronLeft, ChevronRight, RefreshCw } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
@@ -344,6 +344,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const currentPageSize = pageSizeRef.current
 
     if (showGlobalVocab) {
+      if (vocabListRef.current) {
+        globalVocabScrollPos.current = vocabListRef.current.scrollTop
+      }
       pendingScrollWord.current = wordKey
       if (vocabSearch) setVocabSearch('')
       const wordIdx = currentFilteredVocab.findIndex(w => w.word.toLowerCase() === wordKey.toLowerCase())
@@ -443,6 +446,54 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (e) e.stopPropagation()
     speakText(text, sourceLang)
   }, [sourceLang])
+
+  const handleRegenerateWord = useCallback(async (wordKey, isGlobal = false) => {
+    const key = isGlobal ? `global-${wordKey}` : wordKey
+    setWordDetails(prev => {
+      const next = { ...prev }
+      delete next[key]
+      return next
+    })
+    setWordDetailCache(prev => {
+      const next = { ...prev }
+      delete next[wordKey]
+      return next
+    })
+    setLoadingWords(prev => ({ ...prev, [key]: true }))
+    try {
+      await api.regenerateWord(currentFileId, wordKey)
+      const waitForDetail = async (retries = 30) => {
+        const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
+        let data
+        try {
+          data = await response.json()
+        } catch {
+          if (retries > 0) {
+            await new Promise(r => setTimeout(r, 2000))
+            return waitForDetail(retries - 1)
+          }
+          return null
+        }
+        if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
+          return data
+        }
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, 2000))
+          return waitForDetail(retries - 1)
+        }
+        return data
+      }
+      const data = await waitForDetail()
+      if (data) {
+        setWordDetails(prev => ({ ...prev, [key]: data }))
+        setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
+      }
+    } catch (e) {
+      console.error('Failed to regenerate word:', e)
+    } finally {
+      setLoadingWords(prev => ({ ...prev, [key]: false }))
+    }
+  }, [currentFileId])
 
   const handleTitleClick = useCallback(() => {
     setTitleInput(fileTitle)
@@ -914,7 +965,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                           <p className="text-[12px] text-stone-400">正在生成单词详解...</p>
                                         </div>
                                       ) : detail ? (
-                                        <div className="pt-3">
+                                        <div className="pt-3 relative">
+                                          <button
+                                            onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
+                                            className="absolute -top-1 right-0 p-1.5 text-stone-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+                                            title="重新生成"
+                                          >
+                                            <RefreshCw className="w-3.5 h-3.5" />
+                                          </button>
                                           <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} hideContextSentences={showGlobalVocab} />
                                         </div>
                                       ) : (
@@ -1014,7 +1072,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                         <p className="text-[12px] text-stone-400">正在生成单词详解...</p>
                                       </div>
                                     ) : detail ? (
-                                      <div className="pt-3">
+                                      <div className="pt-3 relative">
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
+                                          className="absolute -top-1 right-0 p-1.5 text-stone-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+                                          title="重新生成"
+                                        >
+                                          <RefreshCw className="w-3.5 h-3.5" />
+                                        </button>
                                         <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} />
                                       </div>
                                     ) : (

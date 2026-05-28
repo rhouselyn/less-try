@@ -41,9 +41,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   }
 
   const handleNext = () => {
-    setSelectedTokens([])
-    setAnswerChecked(false)
-    setIsCorrect(false)
     onNext()
   }
 
@@ -163,7 +160,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                   disabled={isSelected || answerChecked}
                   className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
                     isSelected
-                      ? 'pointer-events-none absolute invisible'
+                      ? 'pointer-events-none invisible'
                       : answerChecked
                         ? 'pointer-events-none bg-stone-800 text-white opacity-50'
                         : 'bg-stone-800 text-white hover:bg-stone-700'
