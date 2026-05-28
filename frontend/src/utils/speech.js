@@ -64,8 +64,9 @@ function speakText(text, sourceLang = 'en', slow = false) {
     speakFallback(text, sourceLang, slow)
   }
 
-  audio.play().catch(() => {
+  audio.play().catch((e) => {
     if (currentAudio === audio) currentAudio = null
+    if (e.name === 'NotAllowedError') return
     ttsAvailable = false
     speakFallback(text, sourceLang, slow)
   })
