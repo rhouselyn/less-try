@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
@@ -3479,6 +3480,56 @@ async def generate_text(request: dict):
         return {"generated_text": generated_text}
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+import hashlib
+import io
+import subprocess
+import tempfile
+import os
+
+TTS_CACHE = {}
+
+TTS_LANG_MAP = {
+    'en': 'en', 'zh': 'cmn', 'ja': 'ja', 'ko': 'ko',
+    'fr': 'fr', 'de': 'de', 'es': 'es', 'it': 'it',
+    'pt': 'pt', 'ru': 'ru',
+}
+
+@app.get("/api/tts")
+async def tts_endpoint(text: str = "", lang: str = "en"):
+    if not text:
+        raise HTTPException(status_code=400, detail="Text is required")
+    tts_lang = TTS_LANG_MAP.get(lang, lang)
+    cache_key = hashlib.md5(f"{tts_lang}:{text}".encode()).hexdigest()
+    if cache_key in TTS_CACHE:
+        cached_mime, cached_data = TTS_CACHE[cache_key]
+        return StreamingResponse(io.BytesIO(cached_data), media_type=cached_mime)
+    try:
+        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as wav_file:
+            wav_path = wav_file.name
+        with tempfile.NamedTemporaryFile(suffix='.mp3', delete=False) as mp3_file:
+            mp3_path = mp3_file.name
+        try:
+            subprocess.run(
+                ['espeak-ng', '-v', tts_lang, '-w', wav_path, text],
+                capture_output=True, timeout=10
+            )
+            subprocess.run(
+                ['ffmpeg', '-y', '-i', wav_path, '-codec:a', 'libmp3lame', '-b:a', '64k', mp3_path],
+                capture_output=True, timeout=10
+            )
+            with open(mp3_path, 'rb') as f:
+                mp3_data = f.read()
+            TTS_CACHE[cache_key] = ('audio/mpeg', mp3_data)
+            return StreamingResponse(io.BytesIO(mp3_data), media_type="audio/mpeg")
+        finally:
+            try: os.unlink(wav_path)
+            except: pass
+            try: os.unlink(mp3_path)
+            except: pass
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
