@@ -5,7 +5,7 @@ import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
 
-function WordDetailCard({ word, sourceLang, detailLoading, t, onRegenerate }) {
+function WordDetailCard({ word, sourceLang, detailLoading, t }) {
   return (
     <motion.div
       initial={{ opacity: 0, height: 0 }}
@@ -27,15 +27,6 @@ function WordDetailCard({ word, sourceLang, detailLoading, t, onRegenerate }) {
           <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
             {word.enriched_meaning || word.meaning}
           </p>
-          {onRegenerate && (
-            <button
-              onClick={(e) => { e.stopPropagation(); onRegenerate() }}
-              className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
-              title="重新生成"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-            </button>
-          )}
         </div>
 
         {word.variants_detail && word.variants_detail.length > 0 && (
@@ -339,6 +330,15 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
+                      {expandedWord === word.word && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
+                          className="p-1.5 text-stone-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+                          title="重新生成"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       <motion.div
                         animate={{ rotate: expandedWord === word.word ? 180 : 0 }}
                         transition={{ duration: 0.2 }}
@@ -355,7 +355,6 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                         sourceLang={sourceLang}
                         detailLoading={detailLoading[word.word]}
                         t={t}
-                        onRegenerate={() => handleRegenerateWord(word.word)}
                       />
                     )}
                   </AnimatePresence>

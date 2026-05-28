@@ -956,6 +956,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
                                   onClick={(e) => speakWord(word.word, e)}
                                 />
+                                {isExpanded && (
+                                  <RefreshCw
+                                    className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
+                                  />
+                                )}
                               </button>
                               <AnimatePresence>
                                 {isExpanded && (
@@ -979,13 +985,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                             <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
                                               {detail.enriched_meaning || detail.meaning || detail.context_meaning}
                                             </p>
-                                            <button
-                                              onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
-                                              className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
-                                              title="重新生成"
-                                            >
-                                              <RefreshCw className="w-3.5 h-3.5" />
-                                            </button>
                                           </div>
                                           <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={actualSourceLang} hideContextSentences={showGlobalVocab} hideDefinition />
                                         </div>
@@ -1068,6 +1067,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                 className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
                                 onClick={(e) => speakWord(word.word, e)}
                               />
+                              {isExpanded && (
+                                <RefreshCw
+                                  className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
+                                />
+                              )}
                             </button>
 
                             <AnimatePresence>
@@ -1092,13 +1097,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                           <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
                                             {detail.enriched_meaning || detail.meaning || detail.context_meaning}
                                           </p>
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
-                                            className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
-                                            title="重新生成"
-                                          >
-                                            <RefreshCw className="w-3.5 h-3.5" />
-                                          </button>
                                         </div>
                                         <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} hideDefinition />
                                       </div>
