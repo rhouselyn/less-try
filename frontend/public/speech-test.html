@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head><title>Speech Test</title></head>
+<body>
+<h1>Speech Synthesis Test</h1>
+<button id="testBtn">Click to Test Speech</button>
+<div id="result"></div>
+<script>
+const result = document.getElementById('result');
+const synth = window.speechSynthesis;
+
+function log(msg) {
+  result.innerHTML += msg + '<br>';
+  console.log(msg);
+}
+
+log('speechSynthesis available: ' + !!synth);
+
+document.getElementById('testBtn').addEventListener('click', () => {
+  log('--- Test started ---');
+  log('speaking: ' + synth.speaking);
+  log('pending: ' + synth.pending);
+
+  synth.cancel();
+
+  const voices = synth.getVoices();
+  log('voices count: ' + voices.length);
+  if (voices.length > 0) {
+    log('first voice: ' + voices[0].lang + ' - ' + voices[0].name);
+  }
+
+  const utterance = new SpeechSynthesisUtterance('hello world');
+  utterance.lang = 'en-US';
+  utterance.rate = 0.9;
+  utterance.volume = 1;
+
+  if (voices.length > 0) {
+    const enVoice = voices.find(v => v.lang === 'en-US') || voices.find(v => v.lang.startsWith('en'));
+    if (enVoice) {
+      utterance.voice = enVoice;
+      log('using voice: ' + enVoice.lang + ' - ' + enVoice.name);
+    }
+  }
+
+  utterance.onstart = () => log('onstart fired');
+  utterance.onend = () => log('onend fired');
+  utterance.onerror = (e) => log('onerror: ' + e.error);
+
+  log('calling speak()...');
+  synth.speak(utterance);
+
+  setTimeout(() => {
+    log('after 1s - speaking: ' + synth.speaking + ', pending: ' + synth.pending);
+  }, 1000);
+});
+
+// Also test with delay like our speech.js
+document.addEventListener('click', () => {
+  log('--- Delayed test ---');
+  synth.cancel();
+  setTimeout(() => {
+    const u = new SpeechSynthesisUtterance('delayed test');
+    u.lang = 'en-US';
+    u.onstart = () => log('delayed onstart');
+    u.onend = () => log('delayed onend');
+    u.onerror = (e) => log('delayed onerror: ' + e.error);
+    synth.speak(u);
+  }, 100);
+}, { once: true });
+</script>
+</body>
+</html>

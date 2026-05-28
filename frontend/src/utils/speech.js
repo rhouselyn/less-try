@@ -11,93 +11,96 @@ const LANG_MAP = {
   'ru': 'ru-RU',
 }
 
+let currentUtterance = null
+let speakTimer = null
+let voices = []
 let voicesLoaded = false
-let voicesReadyPromise = null
+let keepAliveTimer = null
 
 if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-  const loadVoices = () => {
-    const voices = window.speechSynthesis.getVoices()
-    if (voices.length > 0) {
-      voicesLoaded = true
-    }
-  }
-  loadVoices()
+  voices = window.speechSynthesis.getVoices()
+  if (voices.length > 0) voicesLoaded = true
 
-  voicesReadyPromise = new Promise((resolve) => {
-    if (voicesLoaded) {
-      resolve()
-      return
+  window.speechSynthesis.onvoiceschanged = () => {
+    voices = window.speechSynthesis.getVoices()
+    if (voices.length > 0) voicesLoaded = true
+  }
+
+  keepAliveTimer = setInterval(() => {
+    if (window.speechSynthesis.speaking) {
+      window.speechSynthesis.resume()
     }
-    const handler = () => {
-      voicesLoaded = true
-      resolve()
-    }
-    window.speechSynthesis.onvoiceschanged = handler
-    setTimeout(() => {
-      loadVoices()
-      resolve()
-    }, 2000)
-  })
+  }, 10000)
 }
 
-function createUtterance(text, sourceLang) {
+function playWithAudioElement(text, sourceLang) {
+  try {
+    const lang = (LANG_MAP[sourceLang] || 'en-US').split('-')[0]
+    const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=${lang}&client=tw-ob`)
+    audio.volume = 1
+    audio.play().catch(() => {})
+  } catch (e) {}
+}
+
+function speakText(text, sourceLang = 'en') {
+  if (typeof window === 'undefined' || !text) return
+
+  if (speakTimer) {
+    clearTimeout(speakTimer)
+    speakTimer = null
+  }
+
+  if (!('speechSynthesis' in window)) {
+    playWithAudioElement(text, sourceLang)
+    return
+  }
+
+  if (currentUtterance) {
+    currentUtterance._cancelled = true
+    currentUtterance.onend = null
+    currentUtterance.onerror = null
+    currentUtterance = null
+  }
+
+  window.speechSynthesis.cancel()
+
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = LANG_MAP[sourceLang] || 'en-US'
   utterance.rate = 0.9
   utterance.volume = 1
 
-  const voices = window.speechSynthesis.getVoices()
-  const targetLang = LANG_MAP[sourceLang] || 'en-US'
-  const langPrefix = targetLang.split('-')[0]
-  const exactMatch = voices.find(v => v.lang === targetLang)
-  const langMatch = voices.find(v => v.lang.startsWith(langPrefix))
-  if (exactMatch) {
-    utterance.voice = exactMatch
-  } else if (langMatch) {
-    utterance.voice = langMatch
+  if (voicesLoaded && voices.length > 0) {
+    const targetLang = LANG_MAP[sourceLang] || 'en-US'
+    const langPrefix = targetLang.split('-')[0]
+    const voice = voices.find(v => v.lang === targetLang) || voices.find(v => v.lang.startsWith(langPrefix))
+    if (voice) utterance.voice = voice
+  }
+
+  currentUtterance = utterance
+
+  utterance.onend = () => {
+    if (currentUtterance === utterance) currentUtterance = null
   }
 
   utterance.onerror = (e) => {
+    if (currentUtterance === utterance) currentUtterance = null
+    if (utterance._cancelled) return
     if (e.error !== 'canceled' && e.error !== 'interrupted') {
       console.warn('Speech synthesis error:', e.error)
     }
-  }
-
-  return utterance
-}
-
-function speakText(text, sourceLang = 'en') {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
-  if (!text) return
-
-  const isCurrentlySpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending
-
-  if (isCurrentlySpeaking) {
-    window.speechSynthesis.cancel()
-    setTimeout(() => {
-      try {
-        window.speechSynthesis.speak(createUtterance(text, sourceLang))
-      } catch (e) {
-        console.warn('Speech synthesis failed:', e)
-      }
-    }, 300)
-  } else {
-    if (!voicesLoaded && voicesReadyPromise) {
-      voicesReadyPromise.then(() => {
-        try {
-          window.speechSynthesis.speak(createUtterance(text, sourceLang))
-        } catch (e) {
-          console.warn('Speech synthesis failed:', e)
-        }
-      })
-    } else {
-      try {
-        window.speechSynthesis.speak(createUtterance(text, sourceLang))
-      } catch (e) {
-        console.warn('Speech synthesis failed:', e)
-      }
+    if (e.error === 'not-allowed' || e.error === 'audio-busy' || e.error === 'network') {
+      playWithAudioElement(text, sourceLang)
     }
   }
+
+  speakTimer = setTimeout(() => {
+    speakTimer = null
+    try {
+      window.speechSynthesis.speak(utterance)
+    } catch (e) {
+      playWithAudioElement(text, sourceLang)
+    }
+  }, 100)
 }
 
 export { LANG_MAP, speakText }
