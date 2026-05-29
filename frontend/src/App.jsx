@@ -74,7 +74,8 @@ function App() {
   const [unitErrorCount, setUnitErrorCount] = useState(0)
   const [wrongItems, setWrongItems] = useState([])
   const [reviewMode, setReviewMode] = useState(false)
-  const [reviewIndex, setReviewIndex] = useState(0) // 'word' or 'sentence'
+  const [reviewIndex, setReviewIndex] = useState(0)
+  const [reviewRound, setReviewRound] = useState(0)
   
   // New states for phases
   const [phases, setPhases] = useState([])
@@ -463,7 +464,8 @@ function App() {
     setWrongItems([])
     setReviewMode(false)
     setReviewIndex(0)
-    
+    setReviewRound(0)
+
     setLoading(true)
     try {
       const unit = phase1Units[unitId]
@@ -526,7 +528,8 @@ function App() {
     setWrongItems([])
     setReviewMode(false)
     setReviewIndex(0)
-    
+    setReviewRound(0)
+
     setLoading(true)
     try {
       setCurrentPhase(2)
@@ -802,11 +805,13 @@ function App() {
     if (wrongItems.length === 0) {
       setReviewMode(false)
       setReviewIndex(0)
+      setReviewRound(0)
       setStep('unit-complete')
       return
     }
     const nextIdx = Math.min(reviewIndex, wrongItems.length - 1)
     setReviewIndex(nextIdx)
+    setReviewRound(prev => prev + 1)
     const nextItem = wrongItems[nextIdx]
     if (nextItem?.type === 'word') {
       setLearningData(nextItem.data)
@@ -1177,7 +1182,7 @@ function App() {
           
           {step === 'learning' && (
             <LearningStep
-              key="learning"
+              key={`learning-${reviewMode ? reviewRound : 0}`}
               learningData={learningData}
               showWordCard={showWordCard}
               selectedOption={selectedOption}
@@ -1198,7 +1203,7 @@ function App() {
 
           {step === 'sentence-quiz' && (
             <SentenceQuizStep
-              key={`sentence-quiz-${quizData?.flat_index ?? quizData?.original_sentence}`}
+              key={`sentence-quiz-${quizData?.flat_index ?? quizData?.original_sentence}-${reviewMode ? reviewRound : 0}`}
               quizData={quizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => handleConfirmBack('all-units')}
@@ -1226,7 +1231,7 @@ function App() {
 
           {step === 'listening-quiz' && (
             <ListeningQuizStep
-              key={`listening-quiz-${listeningQuizData?.flat_index ?? listeningQuizData?.original_sentence}`}
+              key={`listening-quiz-${listeningQuizData?.flat_index ?? listeningQuizData?.original_sentence}-${reviewMode ? reviewRound : 0}`}
               quizData={listeningQuizData}
               onNextQuestion={handleNextSentenceQuiz}
               onBack={() => handleConfirmBack('all-units')}
@@ -1255,11 +1260,13 @@ function App() {
                 setWrongItems([])
                 setReviewMode(false)
                 setReviewIndex(0)
+                setReviewRound(0)
                 setStep('all-units')
               }}
               onReview={() => {
                 setReviewMode(true)
                 setReviewIndex(0)
+                setReviewRound(0)
                 const firstWrong = wrongItems[0]
                 if (firstWrong?.type === 'word') {
                   setLearningData(firstWrong.data)
@@ -1286,6 +1293,7 @@ function App() {
               onSkipReview={() => {
                 setReviewMode(false)
                 setReviewIndex(0)
+                setReviewRound(0)
                 setWrongItems([])
                 setUnitErrorCount(0)
                 unitErrorCountRef.current = 0
@@ -1343,7 +1351,7 @@ function App() {
           
           {step === 'phase-exercise' && exerciseType === 'masked_sentence' && (
             <MaskedSentenceExerciseStep
-              key={`masked-exercise-${currentExerciseData?.exercise_index_in_unit}-${currentExerciseData?.mask_version}`}
+              key={`masked-exercise-${currentExerciseData?.exercise_index_in_unit}-${currentExerciseData?.mask_version}-${reviewMode ? reviewRound : 0}`}
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
               onBack={() => handleConfirmBack('all-units')}
@@ -1383,7 +1391,7 @@ function App() {
 
           {step === 'phase-exercise' && exerciseType === 'translation_reconstruction' && (
             <TranslationReconstructionStep
-              key={`reconstruction-exercise-${currentExerciseData?.exercise_index_in_unit}`}
+              key={`reconstruction-exercise-${currentExerciseData?.exercise_index_in_unit}-${reviewMode ? reviewRound : 0}`}
               data={currentExerciseData}
               onNext={handleNextPhaseExercise}
               onBack={() => handleConfirmBack('all-units')}
