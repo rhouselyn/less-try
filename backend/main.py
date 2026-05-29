@@ -1426,6 +1426,26 @@ async def get_word_gen_progress(file_id: str):
         state = word_gen_state.get(file_id)
         running = state.get("running", False) if state else False
 
+        if not running and completed < total:
+            state = word_gen_state.get(file_id)
+            if not state:
+                word_gen_state[file_id] = {
+                    "running": False,
+                    "vocab": vocab,
+                    "priority_queue": [],
+                    "task": None,
+                    "processing_words": set()
+                }
+            state = word_gen_state[file_id]
+            state["vocab"] = vocab
+            if "processing_words" not in state:
+                state["processing_words"] = set()
+            if "plan_position" not in state:
+                state["plan_position"] = 0
+            state["running"] = True
+            state["task"] = asyncio.create_task(background_word_gen(file_id))
+            running = True
+
         return {"total": total, "completed": completed, "running": running}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

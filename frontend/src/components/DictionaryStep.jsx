@@ -711,7 +711,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
         <div className="flex-1 min-w-0" />
 
-        {currentFileId && (preprocessStatus || (processingInfo && safeProcessingInfo.total > 0 && progress < 100) || (wordGenProgress && wordGenProgress.running && wordGenProgress.completed < wordGenProgress.total)) && (
+        {currentFileId && (preprocessStatus || (processingInfo && safeProcessingInfo.total > 0 && progress < 100) || (wordGenProgress && wordGenProgress.completed < wordGenProgress.total)) && (
           <div className="flex items-center gap-2.5 shrink-0">
             {preprocessStatus ? (
               <div className="flex items-center gap-1.5">
@@ -741,7 +741,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                   {t.processingSentences || '处理句子中...'}
                 </span>
               </div>
-            ) : wordGenProgress && wordGenProgress.running && wordGenProgress.completed < wordGenProgress.total ? (
+            ) : wordGenProgress && wordGenProgress.completed < wordGenProgress.total ? (
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-amber-500 tabular-nums whitespace-nowrap">
                   {wordGenProgress.completed}/{wordGenProgress.total}
