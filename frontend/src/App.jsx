@@ -1026,6 +1026,7 @@ function App() {
       }
       setProgress(100)
       setProcessingInfo(null)
+      api.startWordGen(fileId).catch(() => {})
       setStep('dictionary')
     } catch (error) {
       console.error('Failed to load record:', error)

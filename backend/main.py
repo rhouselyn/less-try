@@ -885,16 +885,17 @@ async def background_word_gen(file_id: str):
     if not plan_word_order:
         plan_word_order = list(range(len(vocab)))
 
-    if "plan_position" not in state:
-        state["plan_position"] = 0
-        for pi, vi in enumerate(plan_word_order):
-            if vi < len(vocab):
-                w = vocab[vi].get("word", "")
-                if w and not storage.load_word_cache(file_id, w):
-                    state["plan_position"] = pi
-                    break
-        else:
-            state["plan_position"] = len(plan_word_order)
+    first_uncached = None
+    for pi, vi in enumerate(plan_word_order):
+        if vi < len(vocab):
+            w = vocab[vi].get("word", "")
+            if w and not storage.load_word_cache(file_id, w):
+                first_uncached = pi
+                break
+    if first_uncached is not None:
+        state["plan_position"] = min(state.get("plan_position", 0), first_uncached)
+    elif "plan_position" not in state:
+        state["plan_position"] = len(plan_word_order)
 
     global word_gen_rate_limiter
     if not word_gen_rate_limiter:
