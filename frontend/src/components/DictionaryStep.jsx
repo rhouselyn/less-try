@@ -27,6 +27,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [vocabPage, setVocabPage] = useState(1)
   const [sentencePage, setSentencePage] = useState(1)
   const [globalVocabPage, setGlobalVocabPage] = useState(1)
+  const [wordGenProgress, setWordGenProgress] = useState(null)
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
@@ -81,6 +82,21 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     })
     return () => { cancelled = true }
   }, [showGlobalVocab, actualSourceLang, sourceLang])
+
+  useEffect(() => {
+    if (!currentFileId) return
+    let interval = null
+    let cancelled = false
+    const poll = async () => {
+      try {
+        const data = await api.getWordGenProgress(currentFileId)
+        if (!cancelled) setWordGenProgress(data)
+      } catch {}
+    }
+    poll()
+    interval = setInterval(poll, 3000)
+    return () => { cancelled = true; if (interval) clearInterval(interval) }
+  }, [currentFileId])
 
   const safeSentenceTranslations = Array.isArray(sentenceTranslations) ? sentenceTranslations : []
   const safeProcessingInfo = processingInfo || { current: 0, total: 1 }
@@ -337,7 +353,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setExpandedWord(null)
       return
     }
-    setExpandedWord(wordKey)
 
     const currentFilteredVocab = filteredVocabRef.current
     const currentPage = vocabPageRef.current
@@ -364,13 +379,16 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           setVocabPage(targetPage)
           pendingScrollWord.current = wordKey
         } else {
-          scrollToWord(wordKey, 200)
+          scrollToWord(wordKey, 0)
         }
       }
     }
 
-    speakText(wordKey, sourceLang)
-    fetchWordDetail(wordKey)
+    setTimeout(() => {
+      setExpandedWord(wordKey)
+      speakText(wordKey, sourceLang)
+      fetchWordDetail(wordKey)
+    }, 150)
   }, [vocab, expandedWord, scrollToWord, fetchWordDetail, showGlobalVocab])
 
   const handleVocabWordClick = useCallback(async (word) => {
@@ -693,7 +711,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
         <div className="flex-1 min-w-0" />
 
-        {currentFileId && (preprocessStatus || (processingInfo && safeProcessingInfo.total > 0 && progress < 100)) && (
+        {currentFileId && (preprocessStatus || (processingInfo && safeProcessingInfo.total > 0 && progress < 100) || (wordGenProgress && wordGenProgress.running && wordGenProgress.completed < wordGenProgress.total)) && (
           <div className="flex items-center gap-2.5 shrink-0">
             {preprocessStatus ? (
               <div className="flex items-center gap-1.5">
@@ -706,7 +724,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                    preprocessStatus === 'translating' ? (t.translating || '翻译中...') : (t.generating || '生成文本中...')}
                 </span>
               </div>
-            ) : (
+            ) : processingInfo && safeProcessingInfo.total > 0 && progress < 100 ? (
               <div className="flex items-center gap-2">
                 <span className="text-[10px] text-stone-400 tabular-nums whitespace-nowrap">
                   {safeProcessingInfo.current}/{safeProcessingInfo.total}
@@ -719,8 +737,28 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                     className="h-full bg-stone-400 rounded-full"
                   />
                 </div>
+                <span className="text-[10px] text-stone-400 whitespace-nowrap">
+                  {t.processingSentences || '处理句子中...'}
+                </span>
               </div>
-            )}
+            ) : wordGenProgress && wordGenProgress.running && wordGenProgress.completed < wordGenProgress.total ? (
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-amber-500 tabular-nums whitespace-nowrap">
+                  {wordGenProgress.completed}/{wordGenProgress.total}
+                </span>
+                <div className="h-1 bg-amber-100 rounded-full overflow-hidden w-24">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${wordGenProgress.total > 0 ? (wordGenProgress.completed / wordGenProgress.total * 100) : 0}%` }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    className="h-full bg-amber-400 rounded-full"
+                  />
+                </div>
+                <span className="text-[10px] text-amber-500 whitespace-nowrap">
+                  {t.generatingWordDetails || '生成单词详情中...'}
+                </span>
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -972,7 +1010,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden"
                                   >
-                                    <div className="px-4 pb-3.5 border-t border-stone-100/80">
+                                    <div className="pb-3.5 border-t border-stone-100/80">
                                       {isLoading ? (
                                         <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                           <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
@@ -1087,7 +1125,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   transition={{ duration: 0.2 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="px-4 pb-3.5 border-t border-stone-100/80">
+                                  <div className="pb-3.5 border-t border-stone-100/80">
                                     {isLoading ? (
                                       <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                         <Loader2 className="w-5 h-5 animate-spin text-amber-500" />

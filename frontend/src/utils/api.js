@@ -193,6 +193,11 @@ export const api = {
     await axios.post(`${baseUrl}/api/learn/${fileId}/start-word-gen`)
   },
 
+  getWordGenProgress: async (fileId) => {
+    const response = await axios.get(`${baseUrl}/api/learn/${fileId}/word-gen-progress`)
+    return response.data
+  },
+
   stopWordGen: async (fileId) => {
     await axios.post(`${baseUrl}/api/learn/${fileId}/stop-word-gen`)
   },

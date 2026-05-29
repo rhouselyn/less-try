@@ -226,7 +226,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                 transition={{ duration: 0.2 }}
                                 className="overflow-hidden"
                               >
-                                <div className="px-4 pb-3.5 border-t border-stone-100/80">
+                                <div className="pb-3.5 border-t border-stone-100/80">
                                   {loadingWord === word.word ? (
                                     <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                       <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
@@ -246,7 +246,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                             {mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.context_meaning}
                                           </p>
                                         </div>
-                                        <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} hideDefinition />
+                                        <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} hideDefinition disableContextSentenceClick />
                                       </div>
                                     ) : (
                                       <div className="pt-3 text-center text-stone-400 text-[12px]">{t.noDetails || '暂无详情'}</div>

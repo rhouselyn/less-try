@@ -1409,6 +1409,28 @@ async def priority_word_gen(file_id: str, request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/learn/{file_id}/word-gen-progress")
+async def get_word_gen_progress(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            return {"total": 0, "completed": 0, "running": False}
+
+        total = len(vocab)
+        completed = 0
+        for w in vocab:
+            word = w.get("word", "")
+            if word and storage.load_word_cache(file_id, word):
+                completed += 1
+
+        state = word_gen_state.get(file_id)
+        running = state.get("running", False) if state else False
+
+        return {"total": total, "completed": completed, "running": running}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/api/vocab/{file_id}")
 async def get_vocab(file_id: str):
     try:
@@ -3491,7 +3513,7 @@ async def translate_text(request: dict):
         messages = [
             {
                 "role": "system",
-                "content": f"You are a professional translator. Translate the following text from {source_lang_name} to {target_lang_name}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent."
+                "content": f"You are a professional translator. Translate the following text from {source_lang_name} to {target_lang_name}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent. CRITICAL: Output must be plain text only. Do NOT use any markdown formatting (no bold, italic, headers, lists, code blocks, etc.), no emojis, no special symbols. Output pure plain text only."
             },
             {
                 "role": "user",
@@ -3530,7 +3552,7 @@ async def generate_text(request: dict):
         messages = [
             {
                 "role": "system",
-                "content": f"You are a text generator. Generate a text in {source_lang_name} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else."
+                "content": f"You are a text generator. Generate a text in {source_lang_name} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else. 7. CRITICAL: Output must be plain text only. Do NOT use any markdown formatting (no bold, italic, headers, lists, code blocks, etc.), no emojis, no special symbols. Output pure plain text only."
             },
             {
                 "role": "user",

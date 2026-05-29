@@ -39,7 +39,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const correctWords = quizData.correct_words || []
   const options = quizData.options || []
 
-  const stripPunct = (str) => typeof str === 'string' ? str.replace(/[\u3000-\u303F\uFF00-\uFFEF\u2000-\u206F\u0080-\u00BF，。、；：！？·…—–―‐‒„""''«»‹›〈〉《》【】〔〕〖〗〘〙〚〛⟦⟧⟨⟩‖§¶@*#†‡•‰‱′″‴‸※‼⁇⁈⁉⁊⁋⁌⁍○●◎☉★☆☇☈⊕⊗⊙⊜⊞⊟⊠⊡⦾⦿,.:;!?]/g, '') : str
+  const stripPunct = (str) => {
+    if (typeof str !== 'string') return str
+    return str.replace(/^[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF\u0E00-\u0E7F\u0F00-\u0FFF\uA800-\uA82F\uA840-\uA87F]+|[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF\u0E00-\u0E7F\u0F00-\u0FFF\uA800-\uA82F\uA840-\uA87F]+$/g, '')
+  }
 
   const handleWordSelect = (word, index) => {
     if (isChecked) return
