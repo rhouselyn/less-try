@@ -24,8 +24,17 @@ const SPEECH_LANG_MAP = {
   'ru': 'ru-RU',
 }
 
-let currentAudio = null
+let audioCtx = null
+let currentSource = null
 let ttsAvailable = true
+
+function getAudioContext() {
+  if (!audioCtx) {
+    const AC = window.AudioContext || window.webkitAudioContext
+    if (AC) audioCtx = new AC()
+  }
+  return audioCtx
+}
 
 function speakFallback(text, sourceLang = 'en', slow = false) {
   if (!('speechSynthesis' in window)) return
@@ -36,13 +45,12 @@ function speakFallback(text, sourceLang = 'en', slow = false) {
   window.speechSynthesis.speak(utterance)
 }
 
-function speakText(text, sourceLang = 'en', slow = false) {
+async function speakText(text, sourceLang = 'en', slow = false) {
   if (!text) return
 
-  if (currentAudio) {
-    currentAudio.pause()
-    currentAudio.currentTime = 0
-    currentAudio = null
+  if (currentSource) {
+    try { currentSource.stop() } catch (e) {}
+    currentSource = null
   }
 
   if (!ttsAvailable) {
@@ -52,23 +60,39 @@ function speakText(text, sourceLang = 'en', slow = false) {
 
   const lang = LANG_MAP[sourceLang] || 'en'
   const url = `/api/tts?text=${encodeURIComponent(text)}&lang=${lang}${slow ? '&slow=true' : ''}`
-  const audio = new Audio(url)
-  currentAudio = audio
 
-  audio.onended = () => {
-    if (currentAudio === audio) currentAudio = null
-  }
-  audio.onerror = () => {
-    if (currentAudio === audio) currentAudio = null
+  try {
+    const ctx = getAudioContext()
+    if (!ctx) throw new Error('No AudioContext')
+
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
+    }
+
+    const response = await fetch(url)
+    if (!response.ok) throw new Error('TTS request failed')
+    const arrayBuffer = await response.arrayBuffer()
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer)
+    const source = ctx.createBufferSource()
+    source.buffer = audioBuffer
+    source.connect(ctx.destination)
+    source.start(0)
+    currentSource = source
+    source.onended = () => { if (currentSource === source) currentSource = null }
+  } catch (e) {
     ttsAvailable = false
     speakFallback(text, sourceLang, slow)
   }
+}
 
-  audio.play().catch(() => {
-    if (currentAudio === audio) currentAudio = null
-    ttsAvailable = false
-    speakFallback(text, sourceLang, slow)
-  })
+if (typeof document !== 'undefined') {
+  const unlock = () => {
+    const ctx = getAudioContext()
+    if (ctx && ctx.state === 'suspended') ctx.resume()
+  }
+  ;['click', 'touchstart', 'keydown'].forEach(evt =>
+    document.addEventListener(evt, unlock, { once: true })
+  )
 }
 
 export { LANG_MAP, speakText }
