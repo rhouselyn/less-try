@@ -492,13 +492,14 @@ class NvidiaAPI:
 
 1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
 2. variants_detail: 词形变化列表，带类型说明。【极其重要】对于派生词（如 previously, prestigious, studying, published），必须列出其词根/原形作为词形变化（如 previously -> {{"form": "previous", "type": "形容词原形"}}, prestigious -> {{"form": "prestige", "type": "名词原形"}}, studying -> {{"form": "study", "type": "动词原形"}}, published -> {{"form": "publish", "type": "动词原形"}}）。对于基础词，列出其常见的屈折变化（如名词的复数、动词的过去式/过去分词/现在分词、形容词的比较级/最高级等）。只包含确实存在的词形变化，如果没有则返回空数组
-3. examples: 两个全新的例句，每个都有 {target_lang_name} 的翻译。尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同
+3. examples: 两个全新的例句。【极其重要】例句本身必须使用学习语言（即单词所属的语言）编写，翻译必须使用 {target_lang_name}（用户的母语）。绝不能反过来用母语写例句再用学习语言翻译。尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
    - options: 4个选项，【极其重要】第一个选项必须是正确答案，其余3个是错误答案
 
 要求：
 - 所有输出必须使用 {target_lang_name}
+- 【极其重要】例句必须使用学习语言编写，翻译使用 {target_lang_name}。绝不能用母语写例句再用学习语言翻译
 - 例句要自然，尽量使用简单常见的词汇，不需要与原文中的意思相同
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
@@ -582,7 +583,7 @@ class NvidiaAPI:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). Punctuation does NOT belong to any token — it is completely discarded. Hyphens(-) and apostrophes(') must be preserved if they are internal parts of a word in that language. TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) must be one token. (4) After removing punctuation from all 'text' values, their concatenation in order MUST equal the original source text with punctuation removed — no characters may be omitted or added. Each character belongs to exactly ONE token; no overlap, no duplication. NEVER split a word into characters, syllables, morphemes, or stem+affix."},
+                                    "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). Punctuation does NOT belong to any token — it is completely discarded. Hyphens(-) and apostrophes(') must be preserved if they are internal parts of a word in that language. TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) MUST be one token — this includes fixed collocations, idioms, phrasal verbs, and any expression whose meaning cannot be derived from its individual parts. If splitting would destroy the meaning, keep it as one token. (4) After removing punctuation from all 'text' values, their concatenation in order MUST equal the original source text with punctuation removed — no characters may be omitted or added. Each character belongs to exactly ONE token; no overlap, no duplication. NEVER split a word into characters, syllables, morphemes, or stem+affix. NEVER add tokens that do not correspond to actual words in the source text."},
                                     "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
                                     "morphology": {"type": "string"},
                                     "meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - concise, just a few independent words, not a full sentence explanation"}
@@ -597,7 +598,7 @@ class NvidiaAPI:
                         "translation_phrases": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先拆成单个词或短词组，按目标语言的自然词边界拆分；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分（如'run out of'不能拆为'run'+'out of'，必须保持'run out of'整体；'what's up'不拆分；'look forward to'不拆分；'give up'不拆分）；3.虚词（的、了、地等）可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容"
+                            "description": "将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则·与源语言token拆分规则完全一致】1.遵循目标语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词；2.变位/屈折形式是单个片段：不要将变位形式拆分为词干+词缀；3.【极其重要·非组合性原则·固定搭配】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个片段，不能拆分。这包括但不限于：固定搭配、习语、短语动词、惯用表达等。判断标准：如果拆分后各部分无法独立表达整体含义，则必须保持为一个片段。这是所有语言的通用原则；4.【极其重要·标点禁令】每个片段绝对禁止包含任何标点符号（句号、逗号、问号、感叹号、分号、冒号、省略号等），标点不属于任何片段。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留；5.所有片段去除标点后按顺序拼接必须等于 tokenized_translation 去除标点后的内容，不能遗漏或增加文字内容；6.【极其重要·禁止增减原则】所有片段必须与 tokenized_translation 中的词语一一对应，绝对不能随意增加不存在的片段，也不能将一个词拆分成多个片段；7.虚词（的、了、地等）可以与相邻词合并；8.每个片段不能是单个无意义虚词"
                         },
                         "grammar_explanation": {
                             "type": "string",
@@ -644,10 +645,11 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 1. 遵循该语言的正字法惯例：每种语言都有自己的词边界规则。连字符(-)、撇号(')等字符在某些语言中是词的内部组成部分，在另一些语言中可能是分隔符。请根据该语言自身的正字法来判断。
 2. 变位/屈折形式是单个词：不要将变位形式拆分为词干+词缀。词的形态信息放在 morphology 字段，不通过拆分来表达。
 3. 尊重该语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词。
-4. 【极其重要·非组合性原则】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个 token，不能拆分。这是所有语言的通用原则，不限于任何特定语言。
+4. 【极其重要·非组合性原则·固定搭配】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个 token，不能拆分。这包括但不限于：固定搭配、习语、短语动词、惯用表达等。这是所有语言的通用原则，不限于任何特定语言。判断标准：如果拆分后各部分无法独立表达整体含义，则必须保持为一个 token。
 5. 【极其重要·标点禁令】text 字段绝对禁止包含任何标点符号（句号、逗号、问号、感叹号、分号、冒号、省略号等）。标点不属于任何 token，它们不属于任何词。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留。所有标点符号必须被排除在 token 之外，只保留纯文字内容。
 6. 所有条目的 text 去除标点后按顺序拼接必须等于原文去除标点后的内容，不能遗漏或增加文字内容。标点符号被完全丢弃，不属于任何 token。每个文字字符必须且只能属于一个 token，不能重叠，也不能重复出现。
-7. 绝对禁止将一个完整的词拆分成字符、音节或语素。
+7. 【极其重要·禁止增减原则】translation 数组中的 text 条目必须与原文中的词语一一对应，绝对不能随意增加原文中不存在的 token，也不能将原文中的一个词拆分成多个 token。每个 text 必须对应原文中一个真实存在的词语，不得凭空添加任何词语、解释性文字或冗余内容。
+8. 绝对禁止将一个完整的词拆分成字符、音节或语素。
 
 ═══════════════════════════════════════════════════════════
 
@@ -659,7 +661,7 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
   - morphology: 只能是词性缩写（如 n, v, adj）
   - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式。【极其重要】必须翻译完整，不能遗漏任何内容，原文的每个语义成分都必须体现在翻译中。原文中的说话者标识（如 A:、B:、Speaker 1: 等）必须在译文中完整保留，不得省略
-- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则】1.优先按目标语言的自然词边界拆成单个词或短词组；2.【极其重要】固定搭配、习语、短语动词必须作为整体不拆分；3.虚词可以与相邻词合并；4.每个片段不能是单个无意义虚词。【极其重要】所有片段按顺序拼接后必须等于 tokenized_translation 的内容（去除标点差异后），不能遗漏或增加内容
+- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则·与源语言token拆分规则完全一致】1.遵循目标语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词；2.变位/屈折形式是单个片段：不要将变位形式拆分为词干+词缀；3.【极其重要·非组合性原则·固定搭配】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个片段，不能拆分。这包括但不限于：固定搭配、习语、短语动词、惯用表达等。判断标准：如果拆分后各部分无法独立表达整体含义，则必须保持为一个片段。这是所有语言的通用原则；4.【极其重要·标点禁令】每个片段绝对禁止包含任何标点符号，标点不属于任何片段。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留；5.所有片段去除标点后按顺序拼接必须等于 tokenized_translation 去除标点后的内容，不能遗漏或增加文字内容；6.【极其重要·禁止增减原则】所有片段必须与 tokenized_translation 中的词语一一对应，绝对不能随意增加不存在的片段，也不能将一个词拆分成多个片段；7.虚词可以与相邻词合并；8.每个片段不能是单个无意义虚词
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
 

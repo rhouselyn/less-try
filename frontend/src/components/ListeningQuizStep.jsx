@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones, SkipForward } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Volume2, Headphones, SkipForward, Turtle } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { speakText } from '../utils/speech'
 
 function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpenVocabList, sourceLang, onAnswer, skipListening, onSkipListeningChange, reviewMode, reviewIndex, wrongItemsCount }) {
@@ -14,15 +14,12 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const rawTotalItemsInUnit = quizData?.total_items_in_unit ?? 0
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit)
 
-  const autoSpeak = useCallback(() => {
+  useEffect(() => {
     if (quizData?.original_sentence) {
-      setTimeout(() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang), 300)
+      const timer = setTimeout(() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang), 300)
+      return () => clearTimeout(timer)
     }
   }, [quizData?.original_sentence, sourceLang])
-
-  useEffect(() => {
-    autoSpeak()
-  }, [autoSpeak])
 
   if (!quizData) {
     return (
@@ -42,7 +39,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const correctWords = quizData.correct_words || []
   const options = quizData.options || []
 
-  const stripPunct = (str) => typeof str === 'string' ? str.replace(/[\u3000-\u303F\uFF00-\uFFEF\u2000-\u206F\u0080-\u00BF，。、；：！？·…—–―‐‒„""''«»‹›〈〉《》【】〔〕〖〗〘〙〚〛⟦⟧⟨⟩‖§¶@*#†‡•‰‱′″‴‸※‼⁇⁈⁉⁊⁋⁌⁍○●◎☉★☆☇☈⊕⊗⊙⊜⊞⊟⊠⊡⦾⦿,.:;!?]/g, '') : str
+  const stripPunct = (str) => {
+    if (typeof str !== 'string') return str
+    return str.replace(/^[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF\u0E00-\u0E7F\u0F00-\u0FFF\uA800-\uA82F\uA840-\uA87F]+|[^\w\u00C0-\u024F\u0400-\u052F\u0370-\u03FF\u0600-\u06FF\u0900-\u0D7F\u4E00-\u9FFF\u3040-\u30FF\uAC00-\uD7AF\u1000-\u109F\u10A0-\u10FF\u1100-\u11FF\u0E00-\u0E7F\u0F00-\u0FFF\uA800-\uA82F\uA840-\uA87F]+$/g, '')
+  }
 
   const handleWordSelect = (word, index) => {
     if (isChecked) return
@@ -138,7 +138,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <Headphones className="w-4 h-4" />
             {t.listeningQuizTitle || '听力题'}
           </motion.div>
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-3">
             <motion.button
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
@@ -147,39 +147,54 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             >
               <Volume2 className="w-8 h-8" />
             </motion.button>
-            <span className="text-sm text-stone-400">{t.clickToPlay || '点击播放'}</span>
+            <motion.button
+              whileHover={{ scale: 1.15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang, true)}
+              className="p-3 text-stone-400 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+              title={t.slowPlay || '慢速播放'}
+            >
+              <Turtle className="w-7 h-7" />
+            </motion.button>
           </div>
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl min-h-16 flex flex-wrap gap-2 items-center bg-stone-50/50 relative">
-            {selectedWords.length === 0 && (
-              <span className="italic text-stone-400 text-sm absolute top-4 left-4 pointer-events-none">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
-            )}
-            <AnimatePresence mode="popLayout">
-              {selectedWords.map((item, pos) => (
-                <motion.div
-                  key={`sel-${item.index}`}
-                  layout
-                  initial={{ opacity: 0, scale: 0 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0 }}
-                  transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
-                  className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
-                    isChecked
-                      ? isCorrect
-                        ? 'bg-green-100 text-green-800 border border-green-300'
-                        : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
-                          ? 'bg-green-100 text-green-800 border border-green-300'
-                          : 'bg-red-100 text-red-800 border border-red-300'
-                      : 'bg-stone-800 text-white hover:bg-stone-700'
-                  }`}
-                  onClick={() => handleRemoveWord(pos)}
-                >
-                  {stripPunct(item.word)}
-                </motion.div>
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl flex flex-wrap gap-2 bg-stone-50/50 relative">
+            <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
+              {correctWords.map((_, i) => (
+                <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{correctWords[i]}</span>
               ))}
-            </AnimatePresence>
+            </div>
+            <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-center">
+              {selectedWords.length === 0 && (
+                <span className="italic text-stone-400 text-sm pointer-events-none">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
+              )}
+              <AnimatePresence mode="popLayout">
+                {selectedWords.map((item, pos) => (
+                  <motion.div
+                    key={`sel-${item.index}`}
+                    layout
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                      isChecked
+                        ? isCorrect
+                          ? 'bg-green-100 text-green-800 border border-green-300'
+                          : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
+                            ? 'bg-green-100 text-green-800 border border-green-300'
+                            : 'bg-red-100 text-red-800 border border-red-300'
+                        : 'bg-stone-800 text-white hover:bg-stone-700'
+                    }`}
+                    onClick={() => handleRemoveWord(pos)}
+                  >
+                    {stripPunct(item.word)}
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
         </div>
 

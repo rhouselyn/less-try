@@ -402,6 +402,75 @@ processing_status = {}
 word_gen_state = {}
 word_gen_rate_limiter = None
 
+import edge_tts
+import io
+
+EDGE_VOICE_MAP = {
+    'en': 'en-US-AvaNeural',
+    'zh': 'zh-CN-XiaoxiaoNeural',
+    'ja': 'ja-JP-NanamiNeural',
+    'ko': 'ko-KR-SunHiNeural',
+    'fr': 'fr-FR-DeniseNeural',
+    'de': 'de-DE-KatjaNeural',
+    'es': 'es-ES-ElviraNeural',
+    'it': 'it-IT-ElsaNeural',
+    'pt': 'pt-BR-FranciscaNeural',
+    'ru': 'ru-RU-SvetlanaNeural',
+}
+
+tts_cache = {}
+tts_cache_lock = asyncio.Lock()
+MAX_TTS_CACHE = 200
+
+async def _generate_tts_edge(text, voice, rate='+0%'):
+    communicate = edge_tts.Communicate(text, voice, rate=rate)
+    buffer = io.BytesIO()
+    async for chunk in communicate.stream():
+        if chunk["type"] == "audio":
+            buffer.write(chunk["data"])
+    return buffer.getvalue()
+
+@app.on_event("startup")
+async def startup_event():
+    global word_gen_rate_limiter
+    settings = get_settings()
+    rpm = settings.get("rpm", 20)
+    word_gen_rate_limiter = RateLimiter(rpm)
+    try:
+        await _generate_tts_edge("ok", EDGE_VOICE_MAP.get('en'))
+        print("[TTS] Warmup complete")
+    except Exception as e:
+        print(f"[TTS] Warmup failed (non-fatal): {e}")
+
+@app.get("/api/tts")
+async def tts_endpoint(text: str, lang: str = "en", slow: bool = False):
+    if not text or not text.strip():
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    voice = EDGE_VOICE_MAP.get(lang, EDGE_VOICE_MAP.get('en'))
+    rate = '-30%' if slow else '+0%'
+
+    cache_key = f"{lang}:{'slow' if slow else 'normal'}:{text}"
+    async with tts_cache_lock:
+        if cache_key in tts_cache:
+            from fastapi.responses import Response
+            return Response(content=tts_cache[cache_key], media_type="audio/mpeg")
+
+    try:
+        audio_data = await _generate_tts_edge(text, voice, rate)
+
+        async with tts_cache_lock:
+            if len(tts_cache) >= MAX_TTS_CACHE:
+                oldest_key = next(iter(tts_cache))
+                del tts_cache[oldest_key]
+            tts_cache[cache_key] = audio_data
+
+        from fastapi.responses import Response
+        return Response(content=audio_data, media_type="audio/mpeg")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
+
+
 
 @app.get("/")
 async def root():
@@ -816,16 +885,17 @@ async def background_word_gen(file_id: str):
     if not plan_word_order:
         plan_word_order = list(range(len(vocab)))
 
-    if "plan_position" not in state:
-        state["plan_position"] = 0
-        for pi, vi in enumerate(plan_word_order):
-            if vi < len(vocab):
-                w = vocab[vi].get("word", "")
-                if w and not storage.load_word_cache(file_id, w):
-                    state["plan_position"] = pi
-                    break
-        else:
-            state["plan_position"] = len(plan_word_order)
+    first_uncached = None
+    for pi, vi in enumerate(plan_word_order):
+        if vi < len(vocab):
+            w = vocab[vi].get("word", "")
+            if w and not storage.load_word_cache(file_id, w):
+                first_uncached = pi
+                break
+    if first_uncached is not None:
+        state["plan_position"] = min(state.get("plan_position", 0), first_uncached)
+    elif "plan_position" not in state:
+        state["plan_position"] = len(plan_word_order)
 
     global word_gen_rate_limiter
     if not word_gen_rate_limiter:
@@ -1335,6 +1405,48 @@ async def priority_word_gen(file_id: str, request: dict):
         return {"status": "queued"}
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/learn/{file_id}/word-gen-progress")
+async def get_word_gen_progress(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            return {"total": 0, "completed": 0, "running": False}
+
+        total = len(vocab)
+        completed = 0
+        for w in vocab:
+            word = w.get("word", "")
+            if word and storage.load_word_cache(file_id, word):
+                completed += 1
+
+        state = word_gen_state.get(file_id)
+        running = state.get("running", False) if state else False
+
+        if not running and completed < total:
+            state = word_gen_state.get(file_id)
+            if not state:
+                word_gen_state[file_id] = {
+                    "running": False,
+                    "vocab": vocab,
+                    "priority_queue": [],
+                    "task": None,
+                    "processing_words": set()
+                }
+            state = word_gen_state[file_id]
+            state["vocab"] = vocab
+            if "processing_words" not in state:
+                state["processing_words"] = set()
+            if "plan_position" not in state:
+                state["plan_position"] = 0
+            state["running"] = True
+            state["task"] = asyncio.create_task(background_word_gen(file_id))
+            running = True
+
+        return {"total": total, "completed": completed, "running": running}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -2837,22 +2949,27 @@ async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int)
                 original_lower_set = set(t.lower() for t in original_tokens)
                 max_distractors = 3
                 
+                all_candidate_distractors = []
+                candidate_set = set()
                 for sent_data in eligible_sentences:
                     if sent_data is current_sentence_data:
                         continue
                     if "translation_result" in sent_data and "translation" in sent_data["translation_result"]:
                         for token in sent_data["translation_result"]["translation"]:
                             if isinstance(token, dict) and "text" in token:
-                                token_text = token["text"]
-                                if token_text.lower() not in original_lower_set and token_text not in distractors and len(distractors) < max_distractors:
-                                    distractors.append(token_text)
+                                token_text = token["text"].strip()
+                                if token_text and token_text.lower() not in original_lower_set and token_text.lower() not in candidate_set:
+                                    all_candidate_distractors.append(token_text)
+                                    candidate_set.add(token_text.lower())
                 
-                if len(distractors) < max_distractors:
-                    vocab_words = [v["word"] for v in vocab]
-                    random.shuffle(vocab_words)
-                    for vw in vocab_words:
-                        if vw.lower() not in original_lower_set and vw not in distractors and len(distractors) < max_distractors:
-                            distractors.append(vw)
+                vocab_words = [v["word"] for v in vocab]
+                for vw in vocab_words:
+                    if vw.lower() not in original_lower_set and vw.lower() not in candidate_set:
+                        all_candidate_distractors.append(vw)
+                        candidate_set.add(vw.lower())
+                
+                random.shuffle(all_candidate_distractors)
+                distractors = all_candidate_distractors[:max_distractors]
                 
                 if len(distractors) < max_distractors:
                     backup_vocab_list = BACKUP_VOCAB_BY_LANG.get(source_lang, BACKUP_VOCAB_BY_LANG["en"])
@@ -3416,7 +3533,7 @@ async def translate_text(request: dict):
         messages = [
             {
                 "role": "system",
-                "content": f"You are a professional translator. Translate the following text from {source_lang_name} to {target_lang_name}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent."
+                "content": f"You are a professional translator. Translate the following text from {source_lang_name} to {target_lang_name}. Output ONLY the translated text, nothing else. Do not add any explanations, notes, or commentary. The translation should be natural and fluent. CRITICAL: Output must be plain text only. Do NOT use any markdown formatting (no bold, italic, headers, lists, code blocks, etc.), no emojis, no special symbols. Output pure plain text only."
             },
             {
                 "role": "user",
@@ -3455,7 +3572,7 @@ async def generate_text(request: dict):
         messages = [
             {
                 "role": "system",
-                "content": f"You are a text generator. Generate a text in {source_lang_name} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else."
+                "content": f"You are a text generator. Generate a text in {source_lang_name} based on the user's description. CRITICAL RULES: 1. Generate text content that can include articles, stories, essays, descriptions, dialogues, conversations, or any other natural text form. 2. If the user requests dialogue or conversation content, generate natural exchanges between speakers with clear speaker labels (e.g. A:, B:, or names). 3. Do NOT include any meta-commentary, explanations, or notes about the text itself. 4. The text should be natural, coherent, and suitable for language learning. 5. The text should be at least 3-5 sentences long (or 3-5 exchanges for dialogue). 6. Output ONLY the generated text, nothing else. 7. CRITICAL: Output must be plain text only. Do NOT use any markdown formatting (no bold, italic, headers, lists, code blocks, etc.), no emojis, no special symbols. Output pure plain text only."
             },
             {
                 "role": "user",

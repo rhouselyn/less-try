@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Search, BookOpen, Volume2, Loader2, RefreshCw, Brain } from 'lucide-react'
+import { ArrowLeft, Search, BookOpen, Volume2, Loader2, Brain } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
@@ -50,47 +50,6 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
       }
     }
   }, [expandedWord, scrollToWord, currentFileId, enrichedWords])
-
-  const handleRegenerateWord = useCallback(async (wordKey) => {
-    setEnrichedWords(prev => {
-      const next = { ...prev }
-      delete next[wordKey]
-      return next
-    })
-    setLoadingWord(wordKey)
-    try {
-      await api.regenerateWord(currentFileId, wordKey)
-      const waitForDetail = async (retries = 30) => {
-        const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-        let data
-        try {
-          data = await response.json()
-        } catch {
-          if (retries > 0) {
-            await new Promise(r => setTimeout(r, 2000))
-            return waitForDetail(retries - 1)
-          }
-          return null
-        }
-        if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
-          return data
-        }
-        if (retries > 0) {
-          await new Promise(r => setTimeout(r, 2000))
-          return waitForDetail(retries - 1)
-        }
-        return data
-      }
-      const data = await waitForDetail()
-      if (data) {
-        setEnrichedWords(prev => ({ ...prev, [wordKey]: data }))
-      }
-    } catch (e) {
-      console.error('Failed to regenerate word:', e)
-    } finally {
-      setLoadingWord(null)
-    }
-  }, [currentFileId])
 
   const filteredVocab = useMemo(() => {
     if (!searchQuery.trim()) return vocab
@@ -267,7 +226,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                 transition={{ duration: 0.2 }}
                                 className="overflow-hidden"
                               >
-                                <div className="px-4 pb-3.5 border-t border-stone-100/80">
+                                <div className="pb-3.5 border-t border-stone-100/80">
                                   {loadingWord === word.word ? (
                                     <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                       <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
@@ -278,20 +237,16 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
                                     const hasDetail = mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.variants_detail || mergedWord.examples || mergedWord.memory_hint || mergedWord.context_sentences
                                     return hasDetail ? (
                                       <div>
-                                        <div className="flex items-center gap-2 mb-2">
-                                          <Brain className="w-3 h-3 text-stone-400 shrink-0" />
-                                          <p className="text-[13px] text-stone-700 leading-relaxed flex-1 min-w-0">
+                                        <div className="mb-2">
+                                          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                            <Brain className="w-3 h-3" />
+                                            {t.definition || '释义'}
+                                          </h3>
+                                          <p className="text-[13px] text-stone-700 leading-relaxed pl-5">
                                             {mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.context_meaning}
                                           </p>
-                                          <button
-                                            onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
-                                            className="p-1 text-stone-300 hover:text-amber-500 hover:bg-amber-50/60 rounded-md transition-colors shrink-0"
-                                            title="重新生成"
-                                          >
-                                            <RefreshCw className="w-3.5 h-3.5" />
-                                          </button>
                                         </div>
-                                        <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} hideDefinition />
+                                        <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} hideDefinition disableContextSentenceClick />
                                       </div>
                                     ) : (
                                       <div className="pt-3 text-center text-stone-400 text-[12px]">{t.noDetails || '暂无详情'}</div>
