@@ -41,19 +41,95 @@ const SPEECH_LANG_MAP = {
   'lt': 'lt-LT',
 }
 
+let voicesLoaded = false
+let voicesReadyPromise = null
+
+function ensureVoicesLoaded() {
+  if (voicesReadyPromise) return voicesReadyPromise
+  if (!('speechSynthesis' in window)) {
+    voicesReadyPromise = Promise.resolve()
+    return voicesReadyPromise
+  }
+  const voices = window.speechSynthesis.getVoices()
+  if (voices.length > 0) {
+    voicesLoaded = true
+    voicesReadyPromise = Promise.resolve()
+    return voicesReadyPromise
+  }
+  voicesReadyPromise = new Promise((resolve) => {
+    const onVoicesChanged = () => {
+      const v = window.speechSynthesis.getVoices()
+      if (v.length > 0) {
+        voicesLoaded = true
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged)
+        resolve()
+      }
+    }
+    window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged)
+    setTimeout(() => {
+      const v = window.speechSynthesis.getVoices()
+      if (v.length > 0) {
+        voicesLoaded = true
+      }
+      resolve()
+    }, 1000)
+  })
+  return voicesReadyPromise
+}
+
+ensureVoicesLoaded()
+
+function findBestVoice(lang) {
+  if (!voicesLoaded && window.speechSynthesis) {
+    window.speechSynthesis.getVoices()
+  }
+  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []
+  if (voices.length === 0) return null
+
+  const exactMatch = voices.find(v => v.lang === lang)
+  if (exactMatch) return exactMatch
+
+  const langPrefix = lang.split('-')[0].toLowerCase()
+  const prefixMatch = voices.find(v => v.lang.split('-')[0].toLowerCase() === langPrefix)
+  if (prefixMatch) return prefixMatch
+
+  return null
+}
+
 function speakText(text, sourceLang = 'en', slow = false) {
   if (!text || !('speechSynthesis' in window)) return
-  window.speechSynthesis.cancel()
-  const u = new SpeechSynthesisUtterance(text)
-  if (SPEECH_LANG_MAP[sourceLang]) {
-    u.lang = SPEECH_LANG_MAP[sourceLang]
-  } else if (sourceLang.includes('-')) {
-    u.lang = sourceLang
-  } else {
-    u.lang = sourceLang + '-' + sourceLang.toUpperCase()
+
+  const doSpeak = () => {
+    window.speechSynthesis.cancel()
+    const u = new SpeechSynthesisUtterance(text)
+    if (SPEECH_LANG_MAP[sourceLang]) {
+      u.lang = SPEECH_LANG_MAP[sourceLang]
+    } else if (sourceLang.includes('-')) {
+      u.lang = sourceLang
+    } else {
+      u.lang = sourceLang + '-' + sourceLang.toUpperCase()
+    }
+    u.rate = slow ? 0.6 : 1.0
+
+    const voice = findBestVoice(u.lang)
+    if (voice) {
+      u.voice = voice
+    }
+
+    u.onerror = (e) => {
+      if (e.error !== 'canceled') {
+        console.warn('Speech error:', e.error)
+      }
+    }
+
+    window.speechSynthesis.speak(u)
   }
-  u.rate = slow ? 0.6 : 1.0
-  window.speechSynthesis.speak(u)
+
+  if (voicesLoaded) {
+    doSpeak()
+  } else {
+    ensureVoicesLoaded().then(doSpeak)
+  }
 }
 
 export { SPEECH_LANG_MAP as LANG_MAP, speakText }
