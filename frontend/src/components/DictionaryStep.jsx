@@ -1010,7 +1010,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden"
                                   >
-                                    <div className="pb-3.5 border-t border-stone-100/80">
+                                    <div className="px-4 pb-3.5 border-t border-stone-100/80">
                                       {isLoading ? (
                                         <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                           <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
@@ -1125,7 +1125,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   transition={{ duration: 0.2 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="pb-3.5 border-t border-stone-100/80">
+                                  <div className="px-4 pb-3.5 border-t border-stone-100/80">
                                     {isLoading ? (
                                       <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                         <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
