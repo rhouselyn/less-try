@@ -367,6 +367,17 @@ function AllUnitsStep({
                 );
               })}
             </div>
+            <div className="relative h-[2px] mx-3">
+              <motion.div
+                className="absolute bottom-0 h-[2px] bg-stone-700 rounded-full"
+                layout
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                style={{
+                  width: `${100 / tabs.length - 10}%`,
+                  left: `${activeTab * (100 / tabs.length) + 5}%`,
+                }}
+              />
+            </div>
           </div>
 
           <div className="px-5 pb-5 pt-4">

@@ -997,7 +997,6 @@ function App() {
       setCurrentFileId(fileId)
       setFileId(fileId)
       if (title) setFileTitle(title)
-      if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)
@@ -1038,9 +1037,26 @@ function App() {
     api.saveUserPreferences({ skip_listening: value }).catch(() => {})
   }
 
-  const handleOnlyNewWordsChange = (value) => {
+  const handleOnlyNewWordsChange = async (value) => {
     setOnlyNewWords(value)
     api.saveUserPreferences({ only_new_words: value }).catch(() => {})
+    if (currentFileId) {
+      try {
+        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 2)
+        ])
+        setPhase1Units(phase1UnitsData.units)
+        setPhase2Units(phase2UnitsData.units)
+        setCurrentPhase1Unit(phase1UnitsData.current_unit)
+        setCurrentPhase2Unit(phase2UnitsData.current_unit)
+        const genUnits = new Set()
+        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+        setGeneratingUnits(genUnits)
+      } catch (e) {
+        console.error('Failed to refresh units after onlyNewWords change:', e)
+      }
+    }
   }
 
   const handleOpenWordList = (lang) => {
