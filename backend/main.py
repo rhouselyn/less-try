@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import os
@@ -9,8 +8,6 @@ import random
 import asyncio
 import time
 import re
-import io
-import tempfile
 
 from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
@@ -420,39 +417,7 @@ async def startup_event():
 
 @app.get("/api/tts")
 async def tts_endpoint(text: str, lang: str = "en", slow: bool = False):
-    try:
-        import subprocess
-        lang_map = {
-            'en': 'en', 'fr': 'fr', 'de': 'de', 'es': 'es', 'it': 'it',
-            'pt': 'pt', 'ru': 'ru', 'ja': 'ja', 'ko': 'ko',
-            'zh': 'cmn', 'zh-TW': 'cmn', 'yue': 'cmn',
-            'nl': 'nl', 'pl': 'pl', 'sv': 'sv', 'da': 'da',
-            'fi': 'fi', 'nb': 'nb', 'nn': 'nb', 'tr': 'tr',
-            'ar': 'ar', 'hi': 'hi', 'th': 'th', 'vi': 'vi',
-            'id': 'id', 'uk': 'uk', 'ro': 'ro', 'hu': 'hu',
-            'cs': 'cs', 'el': 'el', 'bg': 'bg', 'hr': 'hr',
-            'sk': 'sk', 'lt': 'lt', 'lv': 'lv', 'et': 'et',
-            'sl': 'sl', 'he': 'he', 'ms': 'ms',
-        }
-        espeak_voice = lang_map.get(lang, lang_map.get(lang.split('-')[0], lang.split('-')[0]))
-        speed = 100 if slow else 170
-        with tempfile.NamedTemporaryFile(suffix='.wav', delete=False) as tmp:
-            tmp_path = tmp.name
-        cmd = ['espeak-ng', '-v', espeak_voice, '-s', str(speed), '-w', tmp_path, text]
-        result = subprocess.run(cmd, capture_output=True, timeout=10)
-        if result.returncode != 0:
-            os.unlink(tmp_path)
-            raise HTTPException(status_code=500, detail=f"espeak-ng failed: {result.stderr.decode()}")
-        with open(tmp_path, 'rb') as f:
-            wav_data = f.read()
-        os.unlink(tmp_path)
-        return StreamingResponse(io.BytesIO(wav_data), media_type="audio/wav", headers={
-            "Cache-Control": "public, max-age=86400",
-        })
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
+    raise HTTPException(status_code=410, detail="TTS is now handled by Web Speech API on the frontend")
 
 
 

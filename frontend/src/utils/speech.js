@@ -120,47 +120,89 @@ const SPEECH_LANG_MAP = {
   'sw': 'sw-KE',
 }
 
-let speechSynthAvailable = null
-let currentAudio = null
+let voicesLoaded = false
+let voicesReadyPromise = null
+let speechUnlocked = false
 
-function checkSpeechSynthesis() {
-  if (speechSynthAvailable !== null) return speechSynthAvailable
-  try {
-    speechSynthAvailable = 'speechSynthesis' in window && typeof window.speechSynthesis.speak === 'function'
-  } catch {
-    speechSynthAvailable = false
+function ensureVoicesLoaded() {
+  if (voicesReadyPromise) return voicesReadyPromise
+  if (!('speechSynthesis' in window)) {
+    voicesReadyPromise = Promise.resolve()
+    return voicesReadyPromise
   }
-  return speechSynthAvailable
+  const voices = window.speechSynthesis.getVoices()
+  if (voices.length > 0) {
+    voicesLoaded = true
+    voicesReadyPromise = Promise.resolve()
+    return voicesReadyPromise
+  }
+  voicesReadyPromise = new Promise((resolve) => {
+    const onVoicesChanged = () => {
+      const v = window.speechSynthesis.getVoices()
+      if (v.length > 0) {
+        voicesLoaded = true
+        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged)
+        resolve()
+      }
+    }
+    window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged)
+    setTimeout(() => {
+      const v = window.speechSynthesis.getVoices()
+      if (v.length > 0) {
+        voicesLoaded = true
+      }
+      resolve()
+    }, 1000)
+  })
+  return voicesReadyPromise
+}
+
+ensureVoicesLoaded()
+
+function findBestVoice(lang) {
+  if (!voicesLoaded && window.speechSynthesis) {
+    window.speechSynthesis.getVoices()
+  }
+  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []
+  if (voices.length === 0) return null
+
+  const exactMatch = voices.find(v => v.lang === lang)
+  if (exactMatch) return exactMatch
+
+  const langPrefix = lang.split('-')[0].toLowerCase()
+  const prefixMatch = voices.find(v => v.lang.split('-')[0].toLowerCase() === langPrefix)
+  if (prefixMatch) return prefixMatch
+
+  return null
 }
 
 function warmupSpeech() {
-  checkSpeechSynthesis()
-}
+  if (!('speechSynthesis' in window)) return
 
-function playBackendTTS(text, sourceLang, slow) {
-  if (currentAudio) {
-    currentAudio.pause()
-    currentAudio = null
+  const unlock = () => {
+    if (speechUnlocked) return
+    ensureVoicesLoaded().then(() => {
+      window.speechSynthesis.cancel()
+      const u = new SpeechSynthesisUtterance('a')
+      u.volume = 0.01
+      u.rate = 10
+      u.onend = () => {
+        speechUnlocked = true
+      }
+      u.onerror = () => {}
+      window.speechSynthesis.speak(u)
+    })
   }
-  const params = new URLSearchParams({ text, lang: sourceLang, slow: slow ? 'true' : 'false' })
-  const url = `/api/tts?${params.toString()}`
-  const audio = new Audio(url)
-  currentAudio = audio
-  audio.play().catch(err => {
-    console.warn('Backend TTS play failed:', err)
-  })
-  audio.onended = () => {
-    if (currentAudio === audio) currentAudio = null
-  }
-  audio.onerror = () => {
-    if (currentAudio === audio) currentAudio = null
-  }
+
+  document.addEventListener('click', unlock, { once: true })
+  document.addEventListener('touchstart', unlock, { once: true })
+  document.addEventListener('keydown', unlock, { once: true })
 }
 
 function speakText(text, sourceLang = 'en', slow = false) {
-  if (!text) return
+  if (!text || !('speechSynthesis' in window)) return
 
-  if (checkSpeechSynthesis()) {
+  const doSpeak = () => {
     window.speechSynthesis.cancel()
     const u = new SpeechSynthesisUtterance(text)
     if (SPEECH_LANG_MAP[sourceLang]) {
@@ -172,34 +214,24 @@ function speakText(text, sourceLang = 'en', slow = false) {
     }
     u.rate = slow ? 0.6 : 1.0
 
-    const voices = window.speechSynthesis.getVoices()
-    if (voices.length > 0) {
-      const exactMatch = voices.find(v => v.lang === u.lang)
-      if (exactMatch) {
-        u.voice = exactMatch
-      } else {
-        const langPrefix = u.lang.split('-')[0].toLowerCase()
-        const prefixMatch = voices.find(v => v.lang.split('-')[0].toLowerCase() === langPrefix)
-        if (prefixMatch) u.voice = prefixMatch
-      }
+    const voice = findBestVoice(u.lang)
+    if (voice) {
+      u.voice = voice
     }
 
     u.onerror = (e) => {
       if (e.error !== 'canceled') {
-        console.warn('Speech error, falling back to backend TTS:', e.error)
-        playBackendTTS(text, sourceLang, slow)
+        console.warn('Speech error:', e.error)
       }
     }
 
     window.speechSynthesis.speak(u)
+  }
 
-    setTimeout(() => {
-      if (window.speechSynthesis.speaking === false && window.speechSynthesis.pending === false) {
-        playBackendTTS(text, sourceLang, slow)
-      }
-    }, 1000)
+  if (voicesLoaded) {
+    doSpeak()
   } else {
-    playBackendTTS(text, sourceLang, slow)
+    ensureVoicesLoaded().then(doSpeak)
   }
 }
 
