@@ -34,6 +34,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
       setExpandedWord(null)
       return
     }
+    speakText(word.word, sourceLang)
     scrollToWord(wordKey)
     setTimeout(() => setExpandedWord(wordKey), 50)
 

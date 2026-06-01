@@ -398,6 +398,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setExpandedWord(null)
       return
     }
+    speakText(word.word, actualSourceLang)
     scrollToWord(wordKey, 0)
     setTimeout(() => {
       setExpandedWord(wordKey)
@@ -431,6 +432,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setExpandedWord(null)
       return
     }
+    speakText(word.word, actualSourceLang)
     scrollToGlobalWord(word.word, 0)
     setTimeout(async () => {
       setExpandedWord(globalKey)

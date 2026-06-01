@@ -210,6 +210,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       setExpandedWord(null)
       return
     }
+    speakText(wordText, sourceLang)
     scrollToWord(wordText, 0)
     setTimeout(async () => {
       setExpandedWord(wordText)
@@ -334,7 +335,9 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
-                      {expandedWord === word.word && (
+                      {expandedWord === word.word && detailLoading[word.word] ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                      ) : expandedWord === word.word ? (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
                           className="p-1.5 text-stone-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
@@ -342,19 +345,13 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
-                      )}
+                      ) : null}
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
                         className="p-1.5 text-stone-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
-                      <motion.div
-                        animate={{ rotate: expandedWord === word.word ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <ChevronDown className="w-3.5 h-3.5 text-stone-300" />
-                      </motion.div>
                     </div>
                   </div>
 
