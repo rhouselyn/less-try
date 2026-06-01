@@ -431,7 +431,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       return
     }
     scrollToGlobalWord(word.word, 0)
-    setTimeout(() => {
+    setTimeout(async () => {
       setExpandedWord(globalKey)
 
       const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)
@@ -1023,8 +1023,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       ) : detail ? (
                                         <div className="pt-3">
                                           <div className="mb-2">
-                                            <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                                              <Brain className="w-3 h-3" />
+                                            <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                              <Brain className="w-3 h-3 text-amber-500" />
                                               {t.definition || '释义'}
                                             </h3>
                                             <p className="text-[13px] text-stone-700 leading-relaxed">
@@ -1138,8 +1138,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     ) : detail ? (
                                       <div className="pt-3">
                                         <div className="mb-2">
-                                          <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                                            <Brain className="w-3 h-3" />
+                                          <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                            <Brain className="w-3 h-3 text-amber-500" />
                                             {t.definition || '释义'}
                                           </h3>
                                           <p className="text-[13px] text-stone-700 leading-relaxed">

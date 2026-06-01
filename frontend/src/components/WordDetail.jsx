@@ -12,8 +12,8 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
     >
       {!hideDefinition && (
         <div className="mb-2">
-          <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-            <Brain className="w-3 h-3" />
+          <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+            <Brain className="w-3 h-3 text-amber-500" />
             {t.definition}
           </h3>
           <p className="text-[13px] text-stone-700 leading-relaxed">
@@ -24,8 +24,8 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
 
       {word.variants_detail && word.variants_detail.length > 0 && (
         <div className="mb-2">
-          <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-            <GitBranch className="w-3 h-3" />
+          <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+            <GitBranch className="w-3 h-3 text-amber-500" />
             {t.variants}
           </h3>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
@@ -43,8 +43,8 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
 
       {word.examples && word.examples.length > 0 && (
         <div className="mb-2">
-          <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-            <BookText className="w-3 h-3" />
+          <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+            <BookText className="w-3 h-3 text-amber-500" />
             {t.examples}
           </h3>
           <div className="space-y-1">
@@ -72,8 +72,8 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
 
       {word.memory_hint && (
         <div className="mb-2">
-          <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-            <Lightbulb className="w-3 h-3" />
+          <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+            <Lightbulb className="w-3 h-3 text-amber-500" />
             {t.memoryHint}
           </h3>
           <p className="text-[13px] text-stone-600 leading-relaxed bg-amber-50/70 px-3 py-2 rounded-lg border border-amber-100">
@@ -84,8 +84,8 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
 
       {!hideContextSentences && word.context_sentences && word.context_sentences.length > 0 && (
         <div className="mb-2">
-          <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-            <Quote className="w-3 h-3" />
+          <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+            <Quote className="w-3 h-3 text-amber-500" />
             {t.originalSent || '原文例句'}
           </h3>
           <div className="space-y-1">

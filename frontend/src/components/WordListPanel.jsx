@@ -23,8 +23,8 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
         )}
 
         <div className="mb-2">
-          <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-            <Brain className="w-3 h-3" />
+          <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+            <Brain className="w-3 h-3 text-amber-500" />
             {t.definition || '释义'}
           </h3>
           <p className="text-[13px] text-stone-700 leading-relaxed">
@@ -34,8 +34,8 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
         {word.variants_detail && word.variants_detail.length > 0 && (
           <div className="mb-2">
-            <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-              <GitBranch className="w-3 h-3" />
+            <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+              <GitBranch className="w-3 h-3 text-amber-500" />
               {t.variants || '词形变化'}
             </h3>
             <div className="flex flex-wrap gap-x-3 gap-y-1">
@@ -53,8 +53,8 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
         {word.examples && word.examples.length > 0 && (
           <div className="mb-2">
-            <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-              <BookText className="w-3 h-3" />
+            <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+              <BookText className="w-3 h-3 text-amber-500" />
               {t.examples || '例句'}
             </h3>
             <div className="space-y-1">
@@ -82,8 +82,8 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
         {word.memory_hint && (
           <div className="mb-2">
-            <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-              <Lightbulb className="w-3 h-3" />
+            <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+              <Lightbulb className="w-3 h-3 text-amber-500" />
               {t.memoryHint || '记忆辅助'}
             </h3>
             <p className="text-[13px] text-stone-600 leading-relaxed bg-amber-50/70 px-3 py-2 rounded-lg border border-amber-100">
@@ -206,7 +206,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       return
     }
     scrollToWord(wordText, 0)
-    setTimeout(() => {
+    setTimeout(async () => {
       setExpandedWord(wordText)
 
       const existing = words.find(w => w.word === wordText)
