@@ -106,6 +106,7 @@ function App() {
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
   const learningContainerRef = useRef(null)
+  const savedInputLangsRef = useRef(null)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -989,12 +990,22 @@ function App() {
   }
 
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang, title) => {
+    savedInputLangsRef.current = { sourceLang, targetLang }
     setSkipPolling(true)
     setLoading(true)
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
       if (title) setFileTitle(title)
+      if (srcLang && srcLang !== 'auto') {
+        setSourceLang(srcLang)
+      } else {
+        try {
+          const langData = await api.getFileLanguages(fileId)
+          if (langData.source_lang) setSourceLang(langData.source_lang)
+          if (langData.target_lang) setTargetLang(langData.target_lang)
+        } catch (e) {}
+      }
       if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
@@ -1150,7 +1161,14 @@ function App() {
               sourceLang={sourceLang}
               targetLang={targetLang}
               preprocessStatus={preprocessStatus}
-              onBack={() => setStep('input')}
+              onBack={() => {
+                if (savedInputLangsRef.current) {
+                  setSourceLang(savedInputLangsRef.current.sourceLang)
+                  setTargetLang(savedInputLangsRef.current.targetLang)
+                  savedInputLangsRef.current = null
+                }
+                setStep('input')
+              }}
               fileTitle={fileTitle}
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
@@ -1302,7 +1320,14 @@ function App() {
               onPhase1UnitClick={handlePhase1UnitClick}
               onPhase2UnitClick={handlePhase2UnitClick}
               onBack={() => setStep('dictionary')}
-              onHome={() => setStep('input')}
+              onHome={() => {
+                if (savedInputLangsRef.current) {
+                  setSourceLang(savedInputLangsRef.current.sourceLang)
+                  setTargetLang(savedInputLangsRef.current.targetLang)
+                  savedInputLangsRef.current = null
+                }
+                setStep('input')
+              }}
               loading={loading}
               t={t}
               unitStarCounts={unitStarCounts}
