@@ -54,37 +54,37 @@ function AllUnitsStep({
         key={`${keyPrefix}-unit-${index}`}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.04, duration: 0.3 }}
+        transition={{ delay: index * 0.03, duration: 0.25 }}
         whileHover={!isLocked && !isGenerating ? { y: -2, transition: { duration: 0.15 } } : {}}
         whileTap={!isLocked && !isGenerating ? { scale: 0.97 } : {}}
         onClick={isLocked || isGenerating ? undefined : onClick}
         disabled={isLocked || isGenerating}
         className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-white shadow-sm border border-emerald-200/60 hover:shadow-md hover:border-emerald-300/80'
+            ? 'bg-emerald-50/80 border border-emerald-200/50 hover:bg-emerald-50'
             : isGenerating
-            ? 'bg-amber-50/60 border border-amber-200/40 cursor-not-allowed'
+            ? 'bg-amber-50/50 border border-amber-200/30 cursor-not-allowed'
             : isLocked
-            ? 'bg-stone-50 border border-stone-200/40 cursor-not-allowed'
+            ? 'bg-stone-50/50 border border-stone-200/30 cursor-not-allowed'
             : isCurrent
-            ? 'bg-white shadow-md border-2 border-amber-300/80 hover:shadow-lg'
-            : 'bg-white shadow-sm border border-stone-200/60 hover:shadow-md hover:border-amber-200/60'
+            ? 'bg-amber-50/60 border border-amber-300/70 shadow-sm'
+            : 'bg-white border border-stone-200/50 hover:border-amber-200/50 shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
         }`}
-        style={{ width: '4.5rem', height: '4.5rem' }}
+        style={{ width: '3.75rem', height: '3.75rem' }}
       >
         {isGenerating ? (
-          <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
+          <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
         ) : isLocked ? (
-          <Lock className="w-4 h-4 text-stone-300" />
+          <Lock className="w-3.5 h-3.5 text-stone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-sm font-semibold text-emerald-600">{index + 1}</span>
+            <span className="text-[13px] font-semibold text-emerald-600">{index + 1}</span>
             {typeof starCount === 'number' && (
-              <div className="flex items-center justify-center gap-0.5 mt-0.5">
+              <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
                   <Star
                     key={i}
-                    className={`w-2.5 h-2.5 ${
+                    className={`w-2 h-2 ${
                       i < starCount
                         ? 'text-amber-400 fill-amber-400'
                         : 'text-stone-200 fill-stone-200'
@@ -96,8 +96,8 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-sm font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{index + 1}</span>
-            <div className={`w-1 h-1 rounded-full mt-1 ${isCurrent ? 'bg-amber-400' : 'bg-stone-300'}`} />
+            <span className={`text-[13px] font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{index + 1}</span>
+            {isCurrent && <div className="w-1 h-1 rounded-full mt-0.5 bg-amber-400" />}
           </>
         )}
       </motion.button>
@@ -109,34 +109,30 @@ function AllUnitsStep({
 
     return (
       <motion.div
-        initial={{ opacity: 0, y: 16 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: phaseNumber === 1 ? 0.1 : 0.2 }}
-        className="bg-white rounded-2xl border border-stone-200/60 shadow-sm overflow-hidden"
+        transition={{ duration: 0.35, delay: phaseNumber === 1 ? 0.05 : 0.12 }}
+        className="bg-white rounded-2xl border border-stone-200/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
       >
-        <div className="px-6 pt-5 pb-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                phaseNumber === 1 ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-500'
-              }`}>
-                <Icon className="w-4.5 h-4.5" />
-              </div>
-              <div>
-                <h3 className="text-[15px] font-semibold text-stone-800 leading-tight">{title}</h3>
-                <p className="text-[11px] text-stone-400 mt-0.5">{subtitle}</p>
-              </div>
+        <div className="px-5 pt-4 pb-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+              phaseNumber === 1 ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-500'
+            }`}>
+              <Icon className="w-4 h-4" />
             </div>
-            <div className="text-right">
-              <span className="text-xs font-medium text-stone-500">{completed}<span className="text-stone-300">/{total}</span></span>
+            <div className="flex-1 min-w-0">
+              <h3 className="text-sm font-semibold text-stone-800 leading-tight">{title}</h3>
+              <p className="text-[11px] text-stone-400 mt-0.5">{subtitle}</p>
             </div>
+            <span className="text-[11px] font-medium text-stone-400 tabular-nums">{completed}<span className="text-stone-300">/{total}</span></span>
           </div>
 
-          <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden mb-4">
+          <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden mb-4">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+              transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
               className={`h-full rounded-full ${
                 phaseNumber === 1 ? 'bg-emerald-400' : 'bg-blue-400'
               }`}
@@ -144,9 +140,9 @@ function AllUnitsStep({
           </div>
 
           {phaseNumber === 2 && (units.length === 0 || (units.length === 1 && units[0]?.no_eligible_sentences)) ? (
-            <p className="text-sm text-stone-400 py-4 text-center">{t.noPracticeContent || '暂无可练习内容'}</p>
+            <p className="text-xs text-stone-400 py-3 text-center">{t.noPracticeContent || '暂无可练习内容'}</p>
           ) : (
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-2">
               {units.map((unit, index) =>
                 renderUnitCard(
                   unit,
@@ -171,45 +167,62 @@ function AllUnitsStep({
       exit={{ opacity: 0, y: -20 }}
       className="max-w-2xl mx-auto"
     >
-      <div className="flex items-center gap-3 mb-8">
+      <div className="flex items-center gap-2 mb-6">
         <button
           onClick={onBack}
-          className="p-2 text-stone-400 hover:text-stone-700 transition-colors rounded-xl hover:bg-stone-100"
+          className="p-1.5 text-stone-400 hover:text-stone-700 transition-colors rounded-lg hover:bg-stone-100"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
 
         {fileTitle && (
-          <span className="text-sm font-medium text-stone-500 truncate max-w-[280px]">
+          <span className="text-sm font-medium text-stone-500 truncate max-w-[240px]">
             {fileTitle}
           </span>
         )}
 
         <div className="flex-1 min-w-0" />
 
+        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
+          <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
+            <Headphones className="w-3 h-3" />
+            {t.skipListening || '跳过听力'}
+          </span>
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={skipListening || false}
+              onChange={(e) => onSkipListeningChange?.(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-7 h-4 bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors" />
+            <div className="absolute left-[1.5px] top-[1.5px] bg-white w-[13px] h-[13px] rounded-full transition-transform peer-checked:translate-x-3 shadow-sm" />
+          </div>
+        </label>
+
         <button
           onClick={onHome}
-          className="p-2 text-stone-400 hover:text-stone-700 rounded-xl hover:bg-stone-100 transition-colors"
+          className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors"
           title={t.backToHome || '返回主页'}
         >
           <Home className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold text-stone-800 mb-1">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-stone-800">
           {t.learningUnits || '学习单元'}
         </h2>
-        <p className="text-sm text-stone-400">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
+        <p className="text-xs text-stone-400 mt-0.5">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
-          <p className="text-sm text-stone-400">{t.loading}</p>
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
+          <p className="text-xs text-stone-400">{t.loading}</p>
         </div>
       ) : (
-        <div className="space-y-5">
+        <div className="space-y-4">
           {renderPhaseSection(
             t.phase1,
             t.phase1Desc || '单词认知与记忆',
@@ -239,25 +252,6 @@ function AllUnitsStep({
           )}
         </div>
       )}
-
-      <div className="mt-6 flex justify-center">
-        <label className="flex items-center gap-2.5 cursor-pointer select-none group">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={skipListening || false}
-              onChange={(e) => onSkipListeningChange?.(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors" />
-            <div className="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
-          </div>
-          <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1.5">
-            <Headphones className="w-3.5 h-3.5" />
-            {t.skipListening || '跳过听力'}
-          </span>
-        </label>
-      </div>
     </motion.div>
   );
 }
