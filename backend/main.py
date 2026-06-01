@@ -370,33 +370,26 @@ def filter_eligible_sentences(sentences):
 def apply_only_new_words_filter(plan, vocab, file_id):
     prefs = storage.load_user_preferences()
     if not prefs.get("only_new_words", False):
-        return plan
+        return plan, False
     cached_words = set()
     for v in vocab:
         word = v.get("word", "")
         if word and storage.load_word_cache(file_id, word):
             cached_words.add(word.lower())
     if not cached_words:
-        return plan
-    filtered_items = []
-    for unit in plan:
-        for item in unit.get("items", []):
-            if item.get("type") == "word":
-                vi = item.get("vocab_index")
-                if vi is not None and vi < len(vocab):
-                    word = vocab[vi].get("word", "")
-                    if word.lower() in cached_words:
-                        continue
-            filtered_items.append(item)
-    max_items_per_unit = 10
-    rechunked_plan = []
-    for i in range(0, len(filtered_items), max_items_per_unit):
-        chunk = filtered_items[i:i + max_items_per_unit]
-        rechunked_plan.append({
-            "unit_id": len(rechunked_plan),
-            "items": chunk
-        })
-    return rechunked_plan
+        return plan, False
+    return plan, cached_words
+
+def should_skip_item(item, vocab, cached_words):
+    if not cached_words:
+        return False
+    if item.get("type") == "word":
+        vi = item.get("vocab_index")
+        if vi is not None and vi < len(vocab):
+            word = vocab[vi].get("word", "")
+            if word.lower() in cached_words:
+                return True
+    return False
 
 def find_item_in_plan(plan, flat_index):
     accumulated = 0
@@ -1497,8 +1490,6 @@ async def get_random_word(file_id: str):
             generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
             plan = storage.load_learning_plan(file_id)
         
-        plan = apply_only_new_words_filter(plan, vocab, file_id)
-        
         unit_id, step_in_unit = find_item_in_plan(plan, current_index)
         
         if unit_id is not None:
@@ -1507,6 +1498,33 @@ async def get_random_word(file_id: str):
             unit_start_index, unit_end_index = get_unit_flat_range(plan, unit_id)
             total_items_in_unit = len(items)
             listening_count_in_unit = sum(1 for it in items if it.get("type") == "listening_quiz")
+            
+            prefs = storage.load_user_preferences()
+            only_new_words = prefs.get("only_new_words", False)
+            skip_cached = set()
+            if only_new_words:
+                _, skip_cached = apply_only_new_words_filter(plan, vocab, file_id)
+            
+            if only_new_words and skip_cached and step_in_unit < len(items):
+                current_item = items[step_in_unit]
+                if should_skip_item(current_item, vocab, skip_cached):
+                    skip_index = current_index + 1
+                    while skip_index < unit_end_index:
+                        next_uid, next_step = find_item_in_plan(plan, skip_index)
+                        if next_uid is None or next_uid != unit_id:
+                            break
+                        next_item = plan[next_uid]["items"][next_step]
+                        if not should_skip_item(next_item, vocab, skip_cached):
+                            current_index = skip_index
+                            step_in_unit = next_step
+                            storage.save_learning_progress(file_id, current_index)
+                            break
+                        skip_index += 1
+                    else:
+                        if skip_index >= unit_end_index:
+                            current_index = unit_end_index
+                            storage.save_learning_progress(file_id, current_index)
+                            return {"type": "unit_complete", "unit_id": unit_id}
             
             if step_in_unit < len(items):
                 current_item = items[step_in_unit]
@@ -1788,8 +1806,6 @@ async def next_word(file_id: str):
             storage.save_learning_progress(file_id, new_index)
             return {"success": True, "new_index": new_index}
         
-        plan = apply_only_new_words_filter(plan, vocab, file_id)
-        
         current_unit_id, current_step = find_item_in_plan(plan, current_index)
         
         if current_unit_id is not None:
@@ -1806,6 +1822,24 @@ async def next_word(file_id: str):
                 }
         
         new_index = current_index + 1
+        
+        prefs = storage.load_user_preferences()
+        only_new_words = prefs.get("only_new_words", False)
+        skip_cached = set()
+        if only_new_words:
+            _, skip_cached = apply_only_new_words_filter(plan, vocab, file_id)
+        
+        if current_unit_id is not None and skip_cached:
+            _, current_unit_end = get_unit_flat_range(plan, current_unit_id)
+            while new_index < current_unit_end:
+                next_uid, next_step = find_item_in_plan(plan, new_index)
+                if next_uid is None:
+                    break
+                next_item = plan[next_uid]["items"][next_step]
+                if not should_skip_item(next_item, vocab, skip_cached):
+                    break
+                new_index += 1
+        
         storage.save_learning_progress(file_id, new_index)
         
         asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
@@ -1951,8 +1985,6 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         plan = storage.load_learning_plan(file_id)
         if not plan:
             return
-        
-        plan = apply_only_new_words_filter(plan, vocab, file_id)
         
         unit_id, step_in_unit = find_item_in_plan(plan, next_index)
         if unit_id is None:
@@ -2682,7 +2714,7 @@ async def get_phase_units(file_id: str, phase_number: int):
                 generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
                 plan = storage.load_learning_plan(file_id)
             
-            plan = apply_only_new_words_filter(plan, vocab, file_id)
+            plan, cached_words = apply_only_new_words_filter(plan, vocab, file_id)
             
             phase1_units = []
             accumulated = 0
@@ -2692,17 +2724,34 @@ async def get_phase_units(file_id: str, phase_number: int):
                 end_index = accumulated + len(items)
                 word_count = sum(1 for item in items if item["type"] == "word")
                 completed = max_index >= end_index
-                word_items = [item for item in items if item["type"] == "word"]
-                all_words_cached = True
-                for item in word_items:
-                    vi = item.get("vocab_index")
-                    if vi is not None and vi < len(vocab):
-                        w = vocab[vi].get("word", "")
-                        if w and not storage.load_word_cache(file_id, w):
-                            all_words_cached = False
-                            break
+                
+                if cached_words:
+                    new_word_count = 0
+                    all_words_cached = True
+                    for item in items:
+                        if item["type"] == "word":
+                            vi = item.get("vocab_index")
+                            if vi is not None and vi < len(vocab):
+                                w = vocab[vi].get("word", "")
+                                if w and w.lower() not in cached_words:
+                                    new_word_count += 1
+                                    all_words_cached = False
+                            else:
+                                new_word_count += 1
+                                all_words_cached = False
+                    if all_words_cached and not completed:
+                        accumulated += len(items)
+                        continue
+                    display_word_count = new_word_count
+                else:
+                    all_words_cached = all(
+                        storage.load_word_cache(file_id, vocab[item.get("vocab_index")].get("word", ""))
+                        for item in items if item["type"] == "word" and item.get("vocab_index") is not None and item.get("vocab_index") < len(vocab)
+                    ) if word_count > 0 else False
+                    display_word_count = word_count
+                
                 phase1_units.append({
-                    "word_count": word_count,
+                    "word_count": display_word_count,
                     "exercises_count": len(items),
                     "completed": completed,
                     "start_index": start_index,

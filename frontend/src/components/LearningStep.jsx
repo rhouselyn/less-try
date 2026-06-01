@@ -126,36 +126,61 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             </div>
 
             <div className="space-y-4">
-              {learningData.options.map((option, index) => (
+              {learningData.options.map((option, index) => {
+                const isSelected = selectedOption === index
+                const isCorrectOption = index === learningData.correct_index
+                const answered = selectedOption !== null
+                let optClass = 'bg-white border border-stone-200/80 text-stone-800'
+                if (answered) {
+                  if (isSelected && isCorrectOption) {
+                    optClass = 'bg-green-50 border-2 border-green-400 text-green-800'
+                  } else if (isSelected && !isCorrectOption) {
+                    optClass = 'bg-red-50 border-2 border-red-300 text-red-800'
+                  } else if (!isSelected && isCorrectOption) {
+                    optClass = 'bg-green-50 border-2 border-green-400 text-green-800'
+                  } else {
+                    optClass = 'bg-white border border-stone-200/80 text-stone-400'
+                  }
+                }
+                return (
                 <motion.button
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={!answered ? { scale: 1.02 } : {}}
+                  whileTap={!answered ? { scale: 0.98 } : {}}
                   onClick={() => onOptionSelect(index)}
-                  disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-4 px-6 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-green-50 border border-green-200 text-green-800' : 'bg-red-50 border border-red-200 text-red-800') : 'bg-white border border-stone-200/80 text-stone-800 hover:bg-amber-50/50'}`}
+                  disabled={answered && isCorrect}
+                  className={`w-full py-4 px-6 text-left rounded-lg transition-all ${optClass}`}
                 >
                   <div className="flex items-center gap-3">
-                    {selectedOption === index && (
+                    {answered && isSelected && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
                         className="w-5 h-5 rounded-full flex items-center justify-center"
                       >
-                        {isCorrect ? (
+                        {isCorrectOption ? (
                           <CheckCircle2 className="w-4 h-4 text-green-600" />
                         ) : (
                           <XCircle className="w-4 h-4 text-red-600" />
                         )}
                       </motion.div>
                     )}
+                    {answered && !isSelected && isCorrectOption && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        className="w-5 h-5 rounded-full flex items-center justify-center"
+                      >
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                      </motion.div>
+                    )}
                     <span className="text-lg">{option}</span>
                   </div>
                 </motion.button>
-              ))}
+              )})}
             </div>
           </motion.div>
         ) : (
