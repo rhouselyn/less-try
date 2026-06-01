@@ -2765,6 +2765,90 @@ async def get_phase_units(file_id: str, phase_number: int):
         print(f"[ERROR] get_phase_units: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+@app.get("/api/{file_id}/phase/1/new-words-units")
+async def get_new_words_units(file_id: str):
+    try:
+        vocab = storage.load_vocab(file_id)
+        if not vocab:
+            return {"units": [], "current_unit": 0, "new_word_count": 0, "total_word_count": len(vocab)}
+
+        records = storage.load_history()
+        global_words = set()
+        for record in records:
+            rid = record.get("file_id")
+            if not rid or rid == file_id:
+                continue
+            rvocab = storage.load_vocab(rid)
+            if not rvocab:
+                continue
+            for entry in rvocab:
+                w = entry.get("word", "").lower().strip()
+                if w:
+                    global_words.add(w)
+
+        new_vocab_indices = []
+        for i, entry in enumerate(vocab):
+            w = entry.get("word", "").lower().strip()
+            if w and w not in global_words:
+                new_vocab_indices.append(i)
+
+        if not new_vocab_indices:
+            return {"units": [], "current_unit": 0, "new_word_count": 0, "total_word_count": len(vocab)}
+
+        plan = storage.load_learning_plan(file_id)
+        if not plan:
+            generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
+            plan = storage.load_learning_plan(file_id)
+
+        vocab_index_to_flat = {}
+        flat = 0
+        for unit_plan in plan:
+            items = unit_plan.get("items", [])
+            for item in items:
+                vi = item.get("vocab_index")
+                if vi is not None and vi not in vocab_index_to_flat:
+                    vocab_index_to_flat[vi] = flat
+                flat += 1
+
+        max_items_per_unit = 10
+        units = []
+        for i in range(0, len(new_vocab_indices), max_items_per_unit):
+            chunk = new_vocab_indices[i:i + max_items_per_unit]
+            start_flat = None
+            for vi in chunk:
+                if vi in vocab_index_to_flat:
+                    sf = vocab_index_to_flat[vi]
+                    if start_flat is None or sf < start_flat:
+                        start_flat = sf
+            units.append({
+                "unit_id": len(units),
+                "word_count": len(chunk),
+                "vocab_indices": chunk,
+                "start_index": start_flat if start_flat is not None else 0,
+                "completed": False,
+                "generating": False
+            })
+
+        current_index = storage.load_learning_progress(file_id)
+        current_unit = 0
+        for i, unit in enumerate(units):
+            if current_index <= unit.get("start_index", 0):
+                current_unit = i
+                break
+        else:
+            current_unit = len(units) - 1 if units else 0
+
+        return {
+            "units": units,
+            "current_unit": current_unit,
+            "new_word_count": len(new_vocab_indices),
+            "total_word_count": len(vocab)
+        }
+    except Exception as e:
+        print(f"[ERROR] get_new_words_units: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/api/{file_id}/phase/{phase_number}/unit/{unit_id}")
 async def get_phase_unit_exercise(file_id: str, phase_number: int, unit_id: int):
     try:
@@ -3396,6 +3480,7 @@ class UserPreferencesUpdate(BaseModel):
     rpm: Optional[int] = None
     retry_interval: Optional[float] = None
     skip_listening: Optional[bool] = None
+    only_new_words: Optional[bool] = None
     recent_languages: Optional[List[str]] = None
     page_size: Optional[int] = None
 
@@ -3414,6 +3499,8 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["retry_interval"] = req.retry_interval
         if req.skip_listening is not None:
             current["skip_listening"] = req.skip_listening
+        if req.only_new_words is not None:
+            current["only_new_words"] = req.only_new_words
         if req.recent_languages is not None:
             current["recent_languages"] = req.recent_languages
         if req.page_size is not None:

@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
+
+const UNITS_PER_PAGE = 30;
 
 function AllUnitsStep({
   phase1Units,
@@ -16,11 +18,45 @@ function AllUnitsStep({
   unitStarCounts,
   skipListening,
   onSkipListeningChange,
+  onlyNewWords,
+  onOnlyNewWordsChange,
   generatingUnits,
   fileTitle,
   currentFileId
 }) {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(() => {
+    try { return parseInt(sessionStorage.getItem('allUnits_activeTab') || '0', 10); } catch { return 0; }
+  });
+  const [currentPage, setCurrentPage] = useState(0);
+  const containerRef = useRef(null);
+  const scrollPosRef = useRef(0);
+
+  useEffect(() => {
+    try { sessionStorage.setItem('allUnits_activeTab', String(activeTab)); } catch {}
+  }, [activeTab]);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem('allUnits_scrollPos');
+    if (saved) {
+      const pos = parseInt(saved, 10);
+      if (!isNaN(pos) && pos > 0) {
+        requestAnimationFrame(() => {
+          window.scrollTo({ top: pos, behavior: 'instant' });
+        });
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      scrollPosRef.current = window.scrollY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      try { sessionStorage.setItem('allUnits_scrollPos', String(scrollPosRef.current)); } catch {}
+    };
+  }, []);
 
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
@@ -48,20 +84,41 @@ function AllUnitsStep({
     { key: 'phase2', label: t.phase2, icon: PenTool, completed: phase2Completed, total: phase2Total }
   ];
 
-  const renderUnitCard = (unit, index, onClick, keyPrefix, isUnlocked, phaseNumber) => {
+  const currentUnits = activeTab === 0 ? phase1Units : phase2Units;
+  const totalPages = Math.max(1, Math.ceil(currentUnits.length / UNITS_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages - 1);
+  const pageStart = safeCurrentPage * UNITS_PER_PAGE;
+  const pageEnd = Math.min(pageStart + UNITS_PER_PAGE, currentUnits.length);
+  const pageUnits = currentUnits.slice(pageStart, pageEnd);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (currentUnits.length > 0) {
+      const currentUnitIndex = activeTab === 0 ? currentPhase1Unit : currentPhase2Unit;
+      if (currentUnitIndex >= 0) {
+        const targetPage = Math.floor(currentUnitIndex / UNITS_PER_PAGE);
+        setCurrentPage(targetPage);
+      }
+    }
+  }, []);
+
+  const renderUnitCard = (unit, globalIndex, onClick, keyPrefix, isUnlocked, phaseNumber) => {
     const isCompleted = unit.completed;
-    const isGenerating = phaseNumber === 1 && generatingUnits?.has(index);
+    const isGenerating = phaseNumber === 1 && generatingUnits?.has(globalIndex);
     const isLocked = !isUnlocked && !isCompleted && !isGenerating;
-    const isCurrent = (phaseNumber === 1 && index === currentPhase1Unit) || (phaseNumber === 2 && index === currentPhase2Unit);
-    const starKey = `${phaseNumber}-${index}`;
+    const isCurrent = (phaseNumber === 1 && globalIndex === currentPhase1Unit) || (phaseNumber === 2 && globalIndex === currentPhase2Unit);
+    const starKey = `${phaseNumber}-${globalIndex}`;
     const starCount = unitStarCounts?.[starKey];
 
     return (
       <motion.button
-        key={`${keyPrefix}-unit-${index}`}
+        key={`${keyPrefix}-unit-${globalIndex}`}
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.03, duration: 0.25 }}
+        transition={{ delay: (globalIndex - pageStart) * 0.02, duration: 0.2 }}
         whileHover={!isLocked && !isGenerating ? { y: -2, transition: { duration: 0.15 } } : {}}
         whileTap={!isLocked && !isGenerating ? { scale: 0.97 } : {}}
         onClick={isLocked || isGenerating ? undefined : onClick}
@@ -85,7 +142,7 @@ function AllUnitsStep({
           <Lock className="w-3.5 h-3.5 text-stone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-[13px] font-semibold text-emerald-600">{index + 1}</span>
+            <span className="text-[13px] font-semibold text-emerald-600">{globalIndex + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
@@ -103,8 +160,8 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-[13px] font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{index + 1}</span>
-            {isCurrent && <div className="w-1 h-1 rounded-full mt-0.5 bg-amber-400" />}
+            <span className={`text-[13px] font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{globalIndex + 1}</span>
+            {isCurrent && <div className="w-3 h-[2px] mt-1 rounded-full bg-amber-400" />}
           </>
         )}
       </motion.button>
@@ -113,7 +170,6 @@ function AllUnitsStep({
 
   const renderPhaseContent = (phaseNumber) => {
     const units = phaseNumber === 1 ? phase1Units : phase2Units;
-    const currentUnit = phaseNumber === 1 ? currentPhase1Unit : currentPhase2Unit;
     const onClick = phaseNumber === 1 ? onPhase1UnitClick : onPhase2UnitClick;
     const keyPrefix = phaseNumber === 1 ? 'phase1' : 'phase2';
     const isUnlockedFn = phaseNumber === 1 ? isPhase1Unlocked : isPhase2Unlocked;
@@ -129,12 +185,25 @@ function AllUnitsStep({
       );
     }
 
+    if (units.length === 0) {
+      return (
+        <div className="py-12 text-center">
+          <p className="text-xs text-stone-400">{t.noPracticeContent || '暂无内容'}</p>
+        </div>
+      );
+    }
+
     return (
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-stone-400 tabular-nums">{completed}<span className="text-stone-300">/{total}</span></span>
           </div>
+          {totalPages > 1 && (
+            <span className="text-[11px] text-stone-300 tabular-nums">
+              {safeCurrentPage + 1}/{totalPages}
+            </span>
+          )}
         </div>
 
         <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden mb-5">
@@ -149,23 +218,78 @@ function AllUnitsStep({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {units.map((unit, index) =>
-            renderUnitCard(
+          {pageUnits.map((unit, pageIdx) => {
+            const globalIndex = pageStart + pageIdx;
+            return renderUnitCard(
               unit,
-              index,
-              () => onClick(index),
+              globalIndex,
+              () => onClick(globalIndex),
               keyPrefix,
-              isUnlockedFn(index),
+              isUnlockedFn(globalIndex),
               phaseNumber
-            )
-          )}
+            );
+          })}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2 mt-5">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+              disabled={safeCurrentPage === 0}
+              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentPage(i)}
+                  className={`w-6 h-6 rounded-md text-[11px] font-medium transition-all duration-200 ${
+                    i === safeCurrentPage
+                      ? 'bg-stone-800 text-white shadow-sm'
+                      : 'text-stone-400 hover:bg-stone-100'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={safeCurrentPage >= totalPages - 1}
+              className="p-1.5 rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
       </div>
     );
   };
 
+  const ToggleSwitch = ({ checked, onChange, label, icon: Icon }) => (
+    <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+      <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
+        <Icon className="w-3 h-3" />
+        {label}
+      </span>
+      <div className="relative">
+        <input
+          type="checkbox"
+          checked={checked || false}
+          onChange={(e) => onChange(e.target.checked)}
+          className="sr-only peer"
+        />
+        <div className="w-7 h-4 bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors" />
+        <div className="absolute left-[1.5px] top-[1.5px] bg-white w-[13px] h-[13px] rounded-full transition-transform peer-checked:translate-x-3 shadow-sm" />
+      </div>
+    </label>
+  );
+
   return (
     <motion.div
+      ref={containerRef}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -180,29 +304,28 @@ function AllUnitsStep({
         </button>
 
         {fileTitle && (
-          <span className="text-sm font-medium text-stone-500 truncate max-w-[240px]">
+          <span className="text-sm font-medium text-stone-500 truncate max-w-[180px]">
             {fileTitle}
           </span>
         )}
 
         <div className="flex-1 min-w-0" />
 
-        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
-          <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
-            <Headphones className="w-3 h-3" />
-            {t.skipListening || '跳过听力'}
-          </span>
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={skipListening || false}
-              onChange={(e) => onSkipListeningChange?.(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-7 h-4 bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors" />
-            <div className="absolute left-[1.5px] top-[1.5px] bg-white w-[13px] h-[13px] rounded-full transition-transform peer-checked:translate-x-3 shadow-sm" />
-          </div>
-        </label>
+        <ToggleSwitch
+          checked={onlyNewWords}
+          onChange={onOnlyNewWordsChange}
+          label={t.onlyNewWords || '只学新词'}
+          icon={Filter}
+        />
+
+        <div className="w-px h-4 bg-stone-200" />
+
+        <ToggleSwitch
+          checked={skipListening}
+          onChange={onSkipListeningChange}
+          label={t.skipListening || '跳过听力'}
+          icon={Headphones}
+        />
 
         <button
           onClick={onHome}
