@@ -196,6 +196,10 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     return groupedWords.map(([letter]) => letter)
   }, [groupedWords])
 
+  const allLetterIndex = useMemo(() => {
+    return groupVocab(filteredWords).map(([letter]) => letter)
+  }, [filteredWords])
+
   useEffect(() => {
     setPage(1)
   }, [searchQuery])
@@ -238,7 +242,16 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`letter-${letter}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    } else {
+      const letterLower = letter.toLowerCase()
+      const wordIdx = filteredWords.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
+      if (wordIdx >= 0) {
+        const targetPage = Math.floor(wordIdx / pageSize) + 1
+        if (targetPage !== page) setPage(targetPage)
+      }
+    }
   }
 
   const renderPagination = () => {
@@ -281,17 +294,24 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
     return (
       <div className="flex h-full">
-        {letterIndex.length > 1 && !searchQuery && (
+        {allLetterIndex.length > 1 && !searchQuery && (
           <div className="flex flex-col items-center py-2 px-1 border-r border-stone-100 bg-stone-50/50 shrink-0">
-            {letterIndex.map(letter => (
-              <button
-                key={letter}
-                onClick={() => scrollToLetter(letter)}
-                className="text-[9px] font-medium text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded px-1 py-px transition-colors leading-tight"
-              >
-                {letter}
-              </button>
-            ))}
+            {allLetterIndex.map(letter => {
+              const onCurrentPage = letterIndex.includes(letter)
+              return (
+                <button
+                  key={letter}
+                  onClick={() => scrollToLetter(letter)}
+                  className={`text-[9px] font-medium rounded px-1 py-px transition-colors leading-tight ${
+                    onCurrentPage
+                      ? 'text-stone-600 hover:text-amber-600 hover:bg-amber-50'
+                      : 'text-stone-300 hover:text-amber-500 hover:bg-amber-50/50'
+                  }`}
+                >
+                  {letter}
+                </button>
+              )
+            })}
           </div>
         )}
         <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>
