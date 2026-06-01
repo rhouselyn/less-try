@@ -6,7 +6,7 @@ import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
 import WordDetail from './WordDetail'
 
-function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang, pageSize = 50 }) {
+function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, pageSize = 50 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedWord, setExpandedWord] = useState(null)
   const [enrichedWords, setEnrichedWords] = useState({})
@@ -35,7 +35,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang, p
       return
     }
     scrollToWord(wordKey)
-    setExpandedWord(wordKey)
+    setTimeout(() => setExpandedWord(wordKey), 50)
 
     if (currentFileId && !enrichedWords[wordKey]) {
       setLoadingWord(wordKey)
@@ -150,8 +150,8 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang, p
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
         <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang, p
               )}
             </div>
             <button
-              onClick={onBack}
+              onClick={onClose}
               className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
             >
               <X className="w-4 h-4" />
@@ -297,7 +297,7 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang, p
                                           return hasDetail ? (
                                             <div className="pt-3">
                                               <div className="mb-2">
-                                                <h3 className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                                <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
                                                   <Brain className="w-3 h-3" />
                                                   {t.definition || '释义'}
                                                 </h3>

@@ -397,9 +397,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setExpandedWord(null)
       return
     }
-    setExpandedWord(wordKey)
-    scrollToWord(wordKey, 200)
-    fetchWordDetail(wordKey)
+    scrollToWord(wordKey, 0)
+    setTimeout(() => {
+      setExpandedWord(wordKey)
+      fetchWordDetail(wordKey)
+    }, 50)
   }, [expandedWord, fetchWordDetail, scrollToWord])
 
   const scrollToGlobalWord = useCallback((wordKey, delay = 50) => {
@@ -428,26 +430,28 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setExpandedWord(null)
       return
     }
-    setExpandedWord(globalKey)
-    scrollToGlobalWord(word.word, 200)
+    scrollToGlobalWord(word.word, 0)
+    setTimeout(() => {
+      setExpandedWord(globalKey)
 
-    const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)
-    if (hasDetail) {
-      setWordDetails(prev => ({ ...prev, [globalKey]: word }))
-      return
-    }
-
-    if (!wordDetails[globalKey] && !loadingWords[globalKey]) {
-      setLoadingWords(prev => ({ ...prev, [globalKey]: true }))
-      try {
-        const detail = await api.getWordDetail(word.word, actualSourceLang)
-        setWordDetails(prev => ({ ...prev, [globalKey]: detail }))
-      } catch (err) {
-        console.error('Failed to load global word detail:', err)
-      } finally {
-        setLoadingWords(prev => ({ ...prev, [globalKey]: false }))
+      const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)
+      if (hasDetail) {
+        setWordDetails(prev => ({ ...prev, [globalKey]: word }))
+        return
       }
-    }
+
+      if (!wordDetails[globalKey] && !loadingWords[globalKey]) {
+        setLoadingWords(prev => ({ ...prev, [globalKey]: true }))
+        try {
+          const detail = await api.getWordDetail(word.word, actualSourceLang)
+          setWordDetails(prev => ({ ...prev, [globalKey]: detail }))
+        } catch (err) {
+          console.error('Failed to load global word detail:', err)
+        } finally {
+          setLoadingWords(prev => ({ ...prev, [globalKey]: false }))
+        }
+      }
+    }, 50)
   }, [expandedWord, wordDetails, loadingWords, actualSourceLang])
 
   const handleSentenceJump = useCallback((sentenceIndex) => {
@@ -990,16 +994,16 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     {word.meaning}
                                   </span>
                                 </div>
-                                <Volume2
-                                  className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
-                                  onClick={(e) => speakWord(word.word, e)}
-                                />
                                 {isExpanded && (
                                   <RefreshCw
                                     className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
                                     onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
                                   />
                                 )}
+                                <Volume2
+                                  className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                  onClick={(e) => speakWord(word.word, e)}
+                                />
                               </button>
                               <AnimatePresence>
                                 {isExpanded && (
@@ -1019,7 +1023,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       ) : detail ? (
                                         <div className="pt-3">
                                           <div className="mb-2">
-                                            <h3 className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                            <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
                                               <Brain className="w-3 h-3" />
                                               {t.definition || '释义'}
                                             </h3>
@@ -1104,16 +1108,16 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   {word.meaning || word.context_meaning}
                                 </span>
                               </div>
-                              <Volume2
-                                className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
-                                onClick={(e) => speakWord(word.word, e)}
-                              />
                               {isExpanded && (
                                 <RefreshCw
                                   className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
                                   onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
                                 />
                               )}
+                              <Volume2
+                                className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                onClick={(e) => speakWord(word.word, e)}
+                              />
                             </button>
 
                             <AnimatePresence>
@@ -1134,7 +1138,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     ) : detail ? (
                                       <div className="pt-3">
                                         <div className="mb-2">
-                                          <h3 className="text-[10px] font-semibold text-stone-400 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                          <h3 className="text-[10px] font-semibold text-amber-600 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
                                             <Brain className="w-3 h-3" />
                                             {t.definition || '释义'}
                                           </h3>

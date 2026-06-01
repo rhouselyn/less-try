@@ -103,11 +103,11 @@ function App() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
-  const [previousStep, setPreviousStep] = useState(null)
+  const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
   const learningContainerRef = useRef(null)
 
-  const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
+  const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
   useEffect(() => {
     warmupSpeech()
@@ -973,8 +973,7 @@ function App() {
   }
 
   const handleOpenVocabList = () => {
-    setPreviousStep(step)
-    setStep('vocab-list')
+    setShowVocabList(true)
   }
 
   const handleConfirmBack = (targetStep) => {
@@ -1428,23 +1427,12 @@ function App() {
               wrongItemsCount={wrongItems.length}
             />
           )}
-          {step === 'vocab-list' && (
-            <VocabListStep
-              key="vocab-list"
-              vocab={vocab}
-              onBack={() => setStep(previousStep || 'all-units')}
-              loading={loading}
-              t={t}
-              currentFileId={currentFileId}
-              sourceLang={sourceLang}
-              pageSize={pageSize}
-            />
-          )}
         </AnimatePresence>
           </div>
         )}
       </main>
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
+      {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={t.confirmExit || '确认退出'}

@@ -181,19 +181,17 @@ function warmupSpeech() {
 
   const unlock = () => {
     if (speechUnlocked) return
-    speechUnlocked = true
     ensureVoicesLoaded().then(() => {
       window.speechSynthesis.cancel()
-      const u = new SpeechSynthesisUtterance(' ')
+      const u = new SpeechSynthesisUtterance('a')
       u.volume = 0.01
       u.rate = 10
-      u.onend = () => {}
+      u.onend = () => {
+        speechUnlocked = true
+      }
       u.onerror = () => {}
       window.speechSynthesis.speak(u)
     })
-    document.removeEventListener('click', unlock)
-    document.removeEventListener('touchstart', unlock)
-    document.removeEventListener('keydown', unlock)
   }
 
   document.addEventListener('click', unlock, { once: true })
