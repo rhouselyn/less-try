@@ -367,37 +367,6 @@ def filter_eligible_sentences(sentences):
         eligible.append(s)
     return eligible
 
-def apply_only_new_words_filter(plan, vocab, file_id):
-    prefs = storage.load_user_preferences()
-    if not prefs.get("only_new_words", False):
-        return plan
-    cached_words = set()
-    for v in vocab:
-        word = v.get("word", "")
-        if word and storage.load_word_cache(file_id, word):
-            cached_words.add(word.lower())
-    if not cached_words:
-        return plan
-    filtered_items = []
-    for unit in plan:
-        for item in unit.get("items", []):
-            if item.get("type") == "word":
-                vi = item.get("vocab_index")
-                if vi is not None and vi < len(vocab):
-                    word = vocab[vi].get("word", "")
-                    if word.lower() in cached_words:
-                        continue
-            filtered_items.append(item)
-    max_items_per_unit = 10
-    rechunked_plan = []
-    for i in range(0, len(filtered_items), max_items_per_unit):
-        chunk = filtered_items[i:i + max_items_per_unit]
-        rechunked_plan.append({
-            "unit_id": len(rechunked_plan),
-            "items": chunk
-        })
-    return rechunked_plan
-
 def find_item_in_plan(plan, flat_index):
     accumulated = 0
     for unit_id, unit_plan in enumerate(plan):
@@ -1497,8 +1466,6 @@ async def get_random_word(file_id: str):
             generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
             plan = storage.load_learning_plan(file_id)
         
-        plan = apply_only_new_words_filter(plan, vocab, file_id)
-        
         unit_id, step_in_unit = find_item_in_plan(plan, current_index)
         
         if unit_id is not None:
@@ -1788,8 +1755,6 @@ async def next_word(file_id: str):
             storage.save_learning_progress(file_id, new_index)
             return {"success": True, "new_index": new_index}
         
-        plan = apply_only_new_words_filter(plan, vocab, file_id)
-        
         current_unit_id, current_step = find_item_in_plan(plan, current_index)
         
         if current_unit_id is not None:
@@ -1951,8 +1916,6 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
         plan = storage.load_learning_plan(file_id)
         if not plan:
             return
-        
-        plan = apply_only_new_words_filter(plan, vocab, file_id)
         
         unit_id, step_in_unit = find_item_in_plan(plan, next_index)
         if unit_id is None:
@@ -2682,7 +2645,36 @@ async def get_phase_units(file_id: str, phase_number: int):
                 generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
                 plan = storage.load_learning_plan(file_id)
             
-            plan = apply_only_new_words_filter(plan, vocab, file_id)
+            prefs = storage.load_user_preferences()
+            only_new_words = prefs.get("only_new_words", False)
+            
+            if only_new_words:
+                cached_words = set()
+                for v in vocab:
+                    word = v.get("word", "")
+                    if word and storage.load_word_cache(file_id, word):
+                        cached_words.add(word.lower())
+                
+                filtered_items = []
+                for unit in plan:
+                    for item in unit.get("items", []):
+                        if item.get("type") == "word":
+                            vi = item.get("vocab_index")
+                            if vi is not None and vi < len(vocab):
+                                word = vocab[vi].get("word", "")
+                                if word.lower() in cached_words:
+                                    continue
+                        filtered_items.append(item)
+                
+                max_items_per_unit = 10
+                rechunked_plan = []
+                for i in range(0, len(filtered_items), max_items_per_unit):
+                    chunk = filtered_items[i:i + max_items_per_unit]
+                    rechunked_plan.append({
+                        "unit_id": len(rechunked_plan),
+                        "items": chunk
+                    })
+                plan = rechunked_plan
             
             phase1_units = []
             accumulated = 0
