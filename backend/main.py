@@ -2645,37 +2645,6 @@ async def get_phase_units(file_id: str, phase_number: int):
                 generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
                 plan = storage.load_learning_plan(file_id)
             
-            prefs = storage.load_user_preferences()
-            only_new_words = prefs.get("only_new_words", False)
-            
-            if only_new_words:
-                cached_words = set()
-                for v in vocab:
-                    word = v.get("word", "")
-                    if word and storage.load_word_cache(file_id, word):
-                        cached_words.add(word.lower())
-                
-                filtered_items = []
-                for unit in plan:
-                    for item in unit.get("items", []):
-                        if item.get("type") == "word":
-                            vi = item.get("vocab_index")
-                            if vi is not None and vi < len(vocab):
-                                word = vocab[vi].get("word", "")
-                                if word.lower() in cached_words:
-                                    continue
-                        filtered_items.append(item)
-                
-                max_items_per_unit = 10
-                rechunked_plan = []
-                for i in range(0, len(filtered_items), max_items_per_unit):
-                    chunk = filtered_items[i:i + max_items_per_unit]
-                    rechunked_plan.append({
-                        "unit_id": len(rechunked_plan),
-                        "items": chunk
-                    })
-                plan = rechunked_plan
-            
             phase1_units = []
             accumulated = 0
             for i, unit_plan in enumerate(plan):
@@ -3429,7 +3398,6 @@ class UserPreferencesUpdate(BaseModel):
     skip_listening: Optional[bool] = None
     recent_languages: Optional[List[str]] = None
     page_size: Optional[int] = None
-    only_new_words: Optional[bool] = None
 
 
 @app.post("/api/user-preferences")
@@ -3450,8 +3418,6 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["recent_languages"] = req.recent_languages
         if req.page_size is not None:
             current["page_size"] = req.page_size
-        if req.only_new_words is not None:
-            current["only_new_words"] = req.only_new_words
         storage.save_user_preferences(current)
         return current
     except Exception as e:
