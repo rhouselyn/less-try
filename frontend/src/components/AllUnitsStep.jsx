@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool } from 'lucide-react';
 
 function AllUnitsStep({
@@ -20,6 +20,8 @@ function AllUnitsStep({
   fileTitle,
   currentFileId
 }) {
+  const [activeTab, setActiveTab] = useState(0);
+
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
     for (let i = 0; i < index; i++) {
@@ -40,6 +42,11 @@ function AllUnitsStep({
   const phase2Completed = phase2Units.filter(u => u.completed).length;
   const phase1Total = phase1Units.length;
   const phase2Total = phase2Units.length;
+
+  const tabs = [
+    { key: 'phase1', label: t.phase1, icon: BookOpen, completed: phase1Completed, total: phase1Total },
+    { key: 'phase2', label: t.phase2, icon: PenTool, completed: phase2Completed, total: phase2Total }
+  ];
 
   const renderUnitCard = (unit, index, onClick, keyPrefix, isUnlocked, phaseNumber) => {
     const isCompleted = unit.completed;
@@ -104,59 +111,56 @@ function AllUnitsStep({
     );
   };
 
-  const renderPhaseSection = (title, subtitle, Icon, units, currentUnit, onClick, keyPrefix, isUnlockedFn, phaseNumber, completed, total) => {
+  const renderPhaseContent = (phaseNumber) => {
+    const units = phaseNumber === 1 ? phase1Units : phase2Units;
+    const currentUnit = phaseNumber === 1 ? currentPhase1Unit : currentPhase2Unit;
+    const onClick = phaseNumber === 1 ? onPhase1UnitClick : onPhase2UnitClick;
+    const keyPrefix = phaseNumber === 1 ? 'phase1' : 'phase2';
+    const isUnlockedFn = phaseNumber === 1 ? isPhase1Unlocked : isPhase2Unlocked;
+    const completed = phaseNumber === 1 ? phase1Completed : phase2Completed;
+    const total = phaseNumber === 1 ? phase1Total : phase2Total;
     const progress = total > 0 ? (completed / total) * 100 : 0;
 
+    if (phaseNumber === 2 && (units.length === 0 || (units.length === 1 && units[0]?.no_eligible_sentences))) {
+      return (
+        <div className="py-12 text-center">
+          <p className="text-xs text-stone-400">{t.noPracticeContent || '暂无可练习内容'}</p>
+        </div>
+      );
+    }
+
     return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, delay: phaseNumber === 1 ? 0.05 : 0.12 }}
-        className="bg-white rounded-2xl border border-stone-200/50 shadow-[0_1px_3px_rgba(0,0,0,0.04)]"
-      >
-        <div className="px-5 pt-4 pb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-              phaseNumber === 1 ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-500'
-            }`}>
-              <Icon className="w-4 h-4" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-sm font-semibold text-stone-800 leading-tight">{title}</h3>
-              <p className="text-[11px] text-stone-400 mt-0.5">{subtitle}</p>
-            </div>
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-stone-400 tabular-nums">{completed}<span className="text-stone-300">/{total}</span></span>
           </div>
+        </div>
 
-          <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden mb-4">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.6, delay: 0.2, ease: 'easeOut' }}
-              className={`h-full rounded-full ${
-                phaseNumber === 1 ? 'bg-emerald-400' : 'bg-blue-400'
-              }`}
-            />
-          </div>
+        <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden mb-5">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            className={`h-full rounded-full ${
+              phaseNumber === 1 ? 'bg-emerald-400' : 'bg-blue-400'
+            }`}
+          />
+        </div>
 
-          {phaseNumber === 2 && (units.length === 0 || (units.length === 1 && units[0]?.no_eligible_sentences)) ? (
-            <p className="text-xs text-stone-400 py-3 text-center">{t.noPracticeContent || '暂无可练习内容'}</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {units.map((unit, index) =>
-                renderUnitCard(
-                  unit,
-                  index,
-                  () => onClick(index),
-                  keyPrefix,
-                  isUnlockedFn(index),
-                  phaseNumber
-                )
-              )}
-            </div>
+        <div className="flex flex-wrap gap-2">
+          {units.map((unit, index) =>
+            renderUnitCard(
+              unit,
+              index,
+              () => onClick(index),
+              keyPrefix,
+              isUnlockedFn(index),
+              phaseNumber
+            )
           )}
         </div>
-      </motion.div>
+      </div>
     );
   };
 
@@ -222,34 +226,57 @@ function AllUnitsStep({
           <p className="text-xs text-stone-400">{t.loading}</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {renderPhaseSection(
-            t.phase1,
-            t.phase1Desc || '单词认知与记忆',
-            BookOpen,
-            phase1Units,
-            currentPhase1Unit,
-            onPhase1UnitClick,
-            'phase1',
-            isPhase1Unlocked,
-            1,
-            phase1Completed,
-            phase1Total
-          )}
+        <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
+          <div className="bg-stone-50/80 px-3 pt-2.5">
+            <div className="flex gap-1 relative">
+              {tabs.map((tab, i) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === i;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(i)}
+                    className="relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabBg"
+                        className="absolute inset-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <div className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${
+                      isActive ? 'text-stone-800' : 'text-stone-400 hover:text-stone-600'
+                    }`}>
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{tab.label}</span>
+                      {tab.total > 0 && (
+                        <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors duration-300 ${
+                          isActive ? 'bg-stone-100 text-stone-500' : 'text-stone-300'
+                        }`}>
+                          {tab.completed}/{tab.total}
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
-          {renderPhaseSection(
-            t.phase2,
-            t.phase2Desc || '句子理解与运用',
-            PenTool,
-            phase2Units,
-            currentPhase2Unit,
-            onPhase2UnitClick,
-            'phase2',
-            isPhase2Unlocked,
-            2,
-            phase2Completed,
-            phase2Total
-          )}
+          <div className="px-5 pb-5 pt-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                {renderPhaseContent(activeTab + 1)}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       )}
     </motion.div>
