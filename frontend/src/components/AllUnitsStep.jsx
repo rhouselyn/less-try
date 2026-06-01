@@ -334,6 +334,14 @@ function AllUnitsStep({
         <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
           <div className="bg-stone-50/80 px-3 pt-2.5">
             <div className="flex gap-1 relative">
+              <motion.div
+                className="absolute top-0 bottom-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
+                animate={{
+                  left: `${activeTab * 50 + 0.25}%`,
+                  width: '49.5%',
+                }}
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              />
               {tabs.map((tab, i) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === i;
@@ -341,16 +349,9 @@ function AllUnitsStep({
                   <button
                     key={tab.key}
                     onClick={() => { setActiveTab(i); setPage(0); }}
-                    className="relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
+                    className="relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium z-10"
                   >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeTabBg"
-                        className="absolute inset-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
-                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                      />
-                    )}
-                    <div className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${
+                    <div className={`flex items-center gap-1.5 transition-colors duration-300 ${
                       isActive ? 'text-stone-800' : 'text-stone-400 hover:text-stone-600'
                     }`}>
                       <Icon className="w-3.5 h-3.5" />
@@ -370,12 +371,11 @@ function AllUnitsStep({
             <div className="relative h-[2px] mx-3">
               <motion.div
                 className="absolute bottom-0 h-[2px] bg-stone-700 rounded-full"
-                layout
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                style={{
-                  width: `${100 / tabs.length - 10}%`,
-                  left: `${activeTab * (100 / tabs.length) + 5}%`,
+                animate={{
+                  left: `${activeTab * 50 + 5}%`,
+                  width: '40%',
                 }}
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
               />
             </div>
           </div>
