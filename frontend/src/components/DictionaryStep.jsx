@@ -1019,7 +1019,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       ) : detail ? (
                                         <div className="pt-3">
                                           <div className="mb-2">
-                                            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5 pl-5">
                                               <Brain className="w-3 h-3" />
                                               {t.definition || '释义'}
                                             </h3>
@@ -1134,7 +1134,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     ) : detail ? (
                                       <div className="pt-3">
                                         <div className="mb-2">
-                                          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                                          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5 pl-5">
                                             <Brain className="w-3 h-3" />
                                             {t.definition || '释义'}
                                           </h3>

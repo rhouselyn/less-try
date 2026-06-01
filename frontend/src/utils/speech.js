@@ -175,6 +175,16 @@ function findBestVoice(lang) {
   return null
 }
 
+function warmupSpeech() {
+  if (!('speechSynthesis' in window)) return
+  ensureVoicesLoaded().then(() => {
+    const u = new SpeechSynthesisUtterance('')
+    u.volume = 0
+    u.rate = 10
+    window.speechSynthesis.speak(u)
+  })
+}
+
 function speakText(text, sourceLang = 'en', slow = false) {
   if (!text || !('speechSynthesis' in window)) return
 
@@ -211,4 +221,4 @@ function speakText(text, sourceLang = 'en', slow = false) {
   }
 }
 
-export { SPEECH_LANG_MAP as LANG_MAP, speakText }
+export { SPEECH_LANG_MAP as LANG_MAP, speakText, warmupSpeech }

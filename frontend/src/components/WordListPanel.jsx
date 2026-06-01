@@ -23,7 +23,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
         )}
 
         <div>
-          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5 pl-5">
             <Brain className="w-3 h-3" />
             {t.definition || '释义'}
           </h3>
@@ -34,7 +34,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
         {word.variants_detail && word.variants_detail.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 pl-5">
               <GitBranch className="w-3 h-3" />
               {t.variants || '词形变化'}
             </h3>
@@ -53,7 +53,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
         {word.examples && word.examples.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 pl-5">
               <BookText className="w-3 h-3" />
               {t.examples || '例句'}
             </h3>
@@ -82,13 +82,15 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
         {word.memory_hint && (
           <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 pl-5">
               <Lightbulb className="w-3 h-3" />
               {t.memoryHint || '记忆辅助'}
             </h3>
-            <p className="text-[13px] text-stone-600 leading-relaxed bg-amber-50/70 px-3 py-2 rounded-lg border border-amber-100">
-              {word.memory_hint}
-            </p>
+            <div className="pl-5">
+              <p className="text-[13px] text-stone-600 leading-relaxed bg-amber-50/70 px-3 py-2 rounded-lg border border-amber-100">
+                {word.memory_hint}
+              </p>
+            </div>
           </div>
         )}
       </div>

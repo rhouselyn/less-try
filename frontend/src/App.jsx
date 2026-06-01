@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
+import { warmupSpeech } from './utils/speech'
 import ConfirmDialog from './components/ConfirmDialog'
 
 import InputStep from './components/InputStep'
@@ -89,7 +90,6 @@ function App() {
   const [phase2Units, setPhase2Units] = useState([])
   const [currentPhase1Unit, setCurrentPhase1Unit] = useState(0)
   const [currentPhase2Unit, setCurrentPhase2Unit] = useState(0)
-  const [previousStep, setPreviousStep] = useState(null)
   const [unitEndIndex, setUnitEndIndex] = useState(null)
   const [completedUnitId, setCompletedUnitId] = useState(null)
   const [completedPhase, setCompletedPhase] = useState(1)
@@ -104,11 +104,13 @@ function App() {
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
   const [fileTitle, setFileTitle] = useState('')
+  const [showVocabList, setShowVocabList] = useState(false)
   const learningContainerRef = useRef(null)
 
-  const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
+  const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
   useEffect(() => {
+    warmupSpeech()
     api.getUserPreferences().then(prefs => {
       if (prefs.source_lang) setSourceLang(prefs.source_lang)
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
@@ -971,8 +973,7 @@ function App() {
   }
 
   const handleOpenVocabList = () => {
-    setPreviousStep(step)
-    setStep('vocab-list')
+    setShowVocabList(true)
   }
 
   const handleConfirmBack = (targetStep) => {
@@ -1426,23 +1427,24 @@ function App() {
               wrongItemsCount={wrongItems.length}
             />
           )}
-
-          {step === 'vocab-list' && (
-            <VocabListStep
-              key="vocab-list"
-              vocab={vocab}
-              onBack={() => setStep(previousStep || 'all-units')}
-              loading={loading}
-              t={t}
-              currentFileId={currentFileId}
-              sourceLang={sourceLang}
-            />
-          )}
         </AnimatePresence>
           </div>
         )}
       </main>
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
+      <AnimatePresence>
+        {showVocabList && (
+          <VocabListStep
+            vocab={vocab}
+            onClose={() => setShowVocabList(false)}
+            loading={loading}
+            t={t}
+            currentFileId={currentFileId}
+            sourceLang={sourceLang}
+            pageSize={pageSize}
+          />
+        )}
+      </AnimatePresence>
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={t.confirmExit || '确认退出'}

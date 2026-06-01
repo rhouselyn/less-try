@@ -14,7 +14,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
       <div className="space-y-3">
         {!hideDefinition && (
         <div>
-          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
+          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5 pl-5">
             <Brain className="w-3 h-3" />
             {t.definition}
           </h3>
@@ -26,7 +26,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
 
         {word.variants_detail && word.variants_detail.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 pl-5">
               <GitBranch className="w-3 h-3" />
               {t.variants}
             </h3>
@@ -45,7 +45,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
 
         {word.examples && word.examples.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 pl-5">
               <BookText className="w-3 h-3" />
               {t.examples}
             </h3>
@@ -72,7 +72,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
 
         {word.memory_hint && (
           <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 pl-5">
               <Lightbulb className="w-3 h-3" />
               {t.memoryHint}
             </h3>
@@ -86,7 +86,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
 
         {!hideContextSentences && word.context_sentences && word.context_sentences.length > 0 && (
           <div>
-            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5 flex items-center gap-1.5 pl-5">
               <Quote className="w-3 h-3" />
               {t.originalSent || '原文例句'}
             </h3>
