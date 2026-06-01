@@ -1449,8 +1449,14 @@ async def get_vocab(file_id: str):
             if cached:
                 if cached.get("enriched_meaning"):
                     enriched_entry["enriched_meaning"] = cached["enriched_meaning"]
+                if cached.get("meaning") and not enriched_entry.get("meaning"):
+                    enriched_entry["meaning"] = cached["meaning"]
+                if cached.get("context_meaning") and not enriched_entry.get("context_meaning"):
+                    enriched_entry["context_meaning"] = cached["context_meaning"]
                 if cached.get("ipa"):
                     enriched_entry["ipa"] = cached["ipa"]
+                if cached.get("part_of_speech") and not enriched_entry.get("part_of_speech"):
+                    enriched_entry["part_of_speech"] = cached["part_of_speech"]
                 if cached.get("morphology"):
                     enriched_entry["morphology"] = cached["morphology"]
                 if cached.get("variants_detail"):
