@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2, Home } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool } from 'lucide-react';
 
 function AllUnitsStep({
   phase1Units,
@@ -38,6 +38,8 @@ function AllUnitsStep({
 
   const phase1Completed = phase1Units.filter(u => u.completed).length;
   const phase2Completed = phase2Units.filter(u => u.completed).length;
+  const phase1Total = phase1Units.length;
+  const phase2Total = phase2Units.length;
 
   const renderUnitCard = (unit, index, onClick, keyPrefix, isUnlocked, phaseNumber) => {
     const isCompleted = unit.completed;
@@ -50,88 +52,115 @@ function AllUnitsStep({
     return (
       <motion.button
         key={`${keyPrefix}-unit-${index}`}
-        initial={{ opacity: 0, y: 6 }}
+        initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.03, duration: 0.25 }}
-        whileHover={!isLocked && !isGenerating ? { y: -1 } : {}}
-        whileTap={!isLocked && !isGenerating ? { scale: 0.96 } : {}}
+        transition={{ delay: index * 0.04, duration: 0.3 }}
+        whileHover={!isLocked && !isGenerating ? { y: -2, transition: { duration: 0.15 } } : {}}
+        whileTap={!isLocked && !isGenerating ? { scale: 0.97 } : {}}
         onClick={isLocked || isGenerating ? undefined : onClick}
         disabled={isLocked || isGenerating}
-        className={`relative flex flex-col items-center justify-center rounded-lg transition-colors ${
+        className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-stone-800 text-white hover:bg-stone-700'
+            ? 'bg-white shadow-sm border border-emerald-200/60 hover:shadow-md hover:border-emerald-300/80'
             : isGenerating
-            ? 'bg-stone-100 text-stone-400 cursor-not-allowed'
+            ? 'bg-amber-50/60 border border-amber-200/40 cursor-not-allowed'
             : isLocked
-            ? 'bg-stone-50 text-stone-300 cursor-not-allowed'
+            ? 'bg-stone-50 border border-stone-200/40 cursor-not-allowed'
             : isCurrent
-            ? 'bg-amber-500 text-white hover:bg-amber-600'
-            : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+            ? 'bg-white shadow-md border-2 border-amber-300/80 hover:shadow-lg'
+            : 'bg-white shadow-sm border border-stone-200/60 hover:shadow-md hover:border-amber-200/60'
         }`}
-        style={{ width: '3rem', height: '3rem' }}
+        style={{ width: '4.5rem', height: '4.5rem' }}
       >
         {isGenerating ? (
-          <Loader2 className="w-4 h-4 animate-spin" />
+          <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
         ) : isLocked ? (
-          <Lock className="w-3.5 h-3.5" />
+          <Lock className="w-4 h-4 text-stone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-xs font-bold">{index + 1}</span>
+            <span className="text-sm font-semibold text-emerald-600">{index + 1}</span>
             {typeof starCount === 'number' && (
-              <div className="flex items-center gap-px mt-0.5">
+              <div className="flex items-center justify-center gap-0.5 mt-0.5">
                 {[0, 1, 2].map((i) => (
                   <Star
                     key={i}
-                    className={`w-2 h-2 ${i < starCount ? 'text-amber-400 fill-amber-400' : 'text-stone-500 fill-stone-500'}`}
+                    className={`w-2.5 h-2.5 ${
+                      i < starCount
+                        ? 'text-amber-400 fill-amber-400'
+                        : 'text-stone-200 fill-stone-200'
+                    }`}
                   />
                 ))}
               </div>
             )}
           </>
         ) : (
-          <span className="text-xs font-bold">{index + 1}</span>
+          <>
+            <span className={`text-sm font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{index + 1}</span>
+            <div className={`w-1 h-1 rounded-full mt-1 ${isCurrent ? 'bg-amber-400' : 'bg-stone-300'}`} />
+          </>
         )}
       </motion.button>
     );
   };
 
-  const renderPhaseSection = (title, units, currentUnit, onClick, keyPrefix, isUnlockedFn, phaseNumber, completed) => {
-    const total = units.length;
+  const renderPhaseSection = (title, subtitle, Icon, units, currentUnit, onClick, keyPrefix, isUnlockedFn, phaseNumber, completed, total) => {
     const progress = total > 0 ? (completed / total) * 100 : 0;
 
     return (
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-stone-700">{title}</h3>
-          <span className="text-xs text-stone-400">{completed}/{total}</span>
-        </div>
-
-        <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden mb-4">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="h-full rounded-full bg-amber-400"
-          />
-        </div>
-
-        {phaseNumber === 2 && (units.length === 0 || (units.length === 1 && units[0]?.no_eligible_sentences)) ? (
-          <p className="text-sm text-stone-400 py-3 text-center">{t.noPracticeContent || '暂无可练习内容'}</p>
-        ) : (
-          <div className="flex flex-wrap gap-2">
-            {units.map((unit, index) =>
-              renderUnitCard(
-                unit,
-                index,
-                () => onClick(index),
-                keyPrefix,
-                isUnlockedFn(index),
-                phaseNumber
-              )
-            )}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: phaseNumber === 1 ? 0.1 : 0.2 }}
+        className="bg-white rounded-2xl border border-stone-200/60 shadow-sm overflow-hidden"
+      >
+        <div className="px-6 pt-5 pb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                phaseNumber === 1 ? 'bg-emerald-50 text-emerald-500' : 'bg-blue-50 text-blue-500'
+              }`}>
+                <Icon className="w-4.5 h-4.5" />
+              </div>
+              <div>
+                <h3 className="text-[15px] font-semibold text-stone-800 leading-tight">{title}</h3>
+                <p className="text-[11px] text-stone-400 mt-0.5">{subtitle}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-xs font-medium text-stone-500">{completed}<span className="text-stone-300">/{total}</span></span>
+            </div>
           </div>
-        )}
-      </div>
+
+          <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden mb-4">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+              className={`h-full rounded-full ${
+                phaseNumber === 1 ? 'bg-emerald-400' : 'bg-blue-400'
+              }`}
+            />
+          </div>
+
+          {phaseNumber === 2 && (units.length === 0 || (units.length === 1 && units[0]?.no_eligible_sentences)) ? (
+            <p className="text-sm text-stone-400 py-4 text-center">{t.noPracticeContent || '暂无可练习内容'}</p>
+          ) : (
+            <div className="flex flex-wrap gap-2.5">
+              {units.map((unit, index) =>
+                renderUnitCard(
+                  unit,
+                  index,
+                  () => onClick(index),
+                  keyPrefix,
+                  isUnlockedFn(index),
+                  phaseNumber
+                )
+              )}
+            </div>
+          )}
+        </div>
+      </motion.div>
     );
   };
 
@@ -145,7 +174,7 @@ function AllUnitsStep({
       <div className="flex items-center gap-3 mb-8">
         <button
           onClick={onBack}
-          className="p-2 text-stone-400 hover:text-stone-700 transition-colors rounded-lg hover:bg-stone-100"
+          className="p-2 text-stone-400 hover:text-stone-700 transition-colors rounded-xl hover:bg-stone-100"
         >
           <ArrowLeft className="w-4 h-4" />
         </button>
@@ -158,26 +187,9 @@ function AllUnitsStep({
 
         <div className="flex-1 min-w-0" />
 
-        <label className="flex items-center gap-2 cursor-pointer select-none group mr-1">
-          <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
-            <Headphones className="w-3 h-3" />
-            {t.skipListening || '跳过听力'}
-          </span>
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={skipListening || false}
-              onChange={(e) => onSkipListeningChange?.(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-8 h-[18px] bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors" />
-            <div className="absolute left-[2px] top-[2px] bg-white w-[14px] h-[14px] rounded-full transition-transform peer-checked:translate-x-[14px] shadow-sm" />
-          </div>
-        </label>
-
         <button
           onClick={onHome}
-          className="p-2 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors"
+          className="p-2 text-stone-400 hover:text-stone-700 rounded-xl hover:bg-stone-100 transition-colors"
           title={t.backToHome || '返回主页'}
         >
           <Home className="w-4 h-4" />
@@ -193,36 +205,59 @@ function AllUnitsStep({
 
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3">
-          <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
           <p className="text-sm text-stone-400">{t.loading}</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-stone-200/60 shadow-sm p-6 space-y-8">
+        <div className="space-y-5">
           {renderPhaseSection(
             t.phase1,
+            t.phase1Desc || '单词认知与记忆',
+            BookOpen,
             phase1Units,
             currentPhase1Unit,
             onPhase1UnitClick,
             'phase1',
             isPhase1Unlocked,
             1,
-            phase1Completed
+            phase1Completed,
+            phase1Total
           )}
-
-          <div className="border-t border-stone-100" />
 
           {renderPhaseSection(
             t.phase2,
+            t.phase2Desc || '句子理解与运用',
+            PenTool,
             phase2Units,
             currentPhase2Unit,
             onPhase2UnitClick,
             'phase2',
             isPhase2Unlocked,
             2,
-            phase2Completed
+            phase2Completed,
+            phase2Total
           )}
         </div>
       )}
+
+      <div className="mt-6 flex justify-center">
+        <label className="flex items-center gap-2.5 cursor-pointer select-none group">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={skipListening || false}
+              onChange={(e) => onSkipListeningChange?.(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors" />
+            <div className="absolute left-[2px] top-[2px] bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-4 shadow-sm" />
+          </div>
+          <span className="text-xs text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1.5">
+            <Headphones className="w-3.5 h-3.5" />
+            {t.skipListening || '跳过听力'}
+          </span>
+        </label>
+      </div>
     </motion.div>
   );
 }
