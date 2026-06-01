@@ -97,6 +97,7 @@ function App() {
   const unitErrorCountRef = useRef(0)
   const isFetchingNextRef = useRef(false)
   const [skipListening, setSkipListening] = useState(false)
+  const [onlyNewWords, setOnlyNewWords] = useState(false)
   const [generatingUnits, setGeneratingUnits] = useState(new Set())
   const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
@@ -114,6 +115,7 @@ function App() {
     api.getUserPreferences().then(prefs => {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
+      if (prefs.only_new_words !== undefined) setOnlyNewWords(prefs.only_new_words)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
       if (prefs.page_size) setPageSize(prefs.page_size)
     }).catch(() => {})
@@ -1036,6 +1038,11 @@ function App() {
     api.saveUserPreferences({ skip_listening: value }).catch(() => {})
   }
 
+  const handleOnlyNewWordsChange = (value) => {
+    setOnlyNewWords(value)
+    api.saveUserPreferences({ only_new_words: value }).catch(() => {})
+  }
+
   const handleOpenWordList = (lang) => {
     setWordListLang(prev => prev === lang ? null : lang)
   }
@@ -1308,6 +1315,8 @@ function App() {
               unitStarCounts={unitStarCounts}
               skipListening={skipListening}
               onSkipListeningChange={handleSkipListeningChange}
+              onlyNewWords={onlyNewWords}
+              onOnlyNewWordsChange={handleOnlyNewWordsChange}
               generatingUnits={generatingUnits}
               fileTitle={fileTitle}
               currentFileId={currentFileId}
