@@ -111,11 +111,6 @@ export const api = {
     const response = await axios.get(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/units`);
     return response.data;
   },
-
-  getNewWordsUnits: async (fileId) => {
-    const response = await axios.get(`${baseUrl}/api/${fileId}/phase/1/new-words-units`);
-    return response.data;
-  },
   
   // 获取指定单元的当前练习
   getPhaseUnitExercise: async (fileId, phaseNumber, unitId) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
@@ -97,7 +97,6 @@ function App() {
   const unitErrorCountRef = useRef(0)
   const isFetchingNextRef = useRef(false)
   const [skipListening, setSkipListening] = useState(false)
-  const [onlyNewWords, setOnlyNewWords] = useState(false)
   const [generatingUnits, setGeneratingUnits] = useState(new Set())
   const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
@@ -110,19 +109,11 @@ function App() {
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
-  const fetchPhase1Units = useCallback(async (fileId) => {
-    if (onlyNewWords) {
-      return await api.getNewWordsUnits(fileId)
-    }
-    return await api.getPhaseUnits(fileId, 1)
-  }, [onlyNewWords])
-
   useEffect(() => {
     warmupSpeech()
     api.getUserPreferences().then(prefs => {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
-      if (prefs.only_new_words !== undefined) setOnlyNewWords(prefs.only_new_words)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
       if (prefs.page_size) setPageSize(prefs.page_size)
     }).catch(() => {})
@@ -169,7 +160,7 @@ function App() {
 
     const interval = setInterval(async () => {
       try {
-        const phase1UnitsData = await fetchPhase1Units(currentFileId)
+        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
         const newGenUnits = new Set()
         phase1UnitsData.units.forEach((u, i) => { if (u.generating) newGenUnits.add(i) })
         setGeneratingUnits(newGenUnits)
@@ -415,7 +406,7 @@ function App() {
     setLoading(true)
     try {
       const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
-        fetchPhase1Units(currentFileId),
+        api.getPhaseUnits(currentFileId, 1),
         api.getPhaseUnits(currentFileId, 2),
         api.getUnitStars(currentFileId)
       ])
@@ -497,7 +488,7 @@ function App() {
         setStep('listening-quiz')
       } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          fetchPhase1Units(currentFileId),
+          api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -547,7 +538,7 @@ function App() {
       const exerciseData = await api.getPhaseUnitExercise(currentFileId, 2, unitId)
       if (exerciseData.unit_complete) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          fetchPhase1Units(currentFileId),
+          api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -630,7 +621,7 @@ function App() {
       
       if (nextRes.unit_complete || nextRes.all_complete) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          fetchPhase1Units(currentFileId),
+          api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -853,7 +844,7 @@ function App() {
       
       if (nextWordResponse.type === 'unit_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          fetchPhase1Units(currentFileId),
+          api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -911,7 +902,7 @@ function App() {
         setStep('listening-quiz')
       } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          fetchPhase1Units(currentFileId),
+          api.getPhaseUnits(currentFileId, 1),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -1043,26 +1034,6 @@ function App() {
   const handleSkipListeningChange = (value) => {
     setSkipListening(value)
     api.saveUserPreferences({ skip_listening: value }).catch(() => {})
-  }
-
-  const handleOnlyNewWordsChange = async (value) => {
-    setOnlyNewWords(value)
-    api.saveUserPreferences({ only_new_words: value }).catch(() => {})
-    if (currentFileId && step === 'all-units') {
-      setLoading(true)
-      try {
-        const phase1UnitsData = value ? await api.getNewWordsUnits(currentFileId) : await api.getPhaseUnits(currentFileId, 1)
-        setPhase1Units(phase1UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        const genUnits = new Set()
-        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
-        setGeneratingUnits(genUnits)
-      } catch (e) {
-        console.error('刷新单元错误:', e)
-      } finally {
-        setLoading(false)
-      }
-    }
   }
 
   const handleOpenWordList = (lang) => {
@@ -1228,7 +1199,7 @@ function App() {
               onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 if (currentFileId && currentPhase) {
-                  const phase1UnitsData = await fetchPhase1Units(currentFileId)
+                  const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
                   const nextUnit = phase1UnitsData.current_unit + 1
                   await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
                 }
@@ -1337,8 +1308,6 @@ function App() {
               unitStarCounts={unitStarCounts}
               skipListening={skipListening}
               onSkipListeningChange={handleSkipListeningChange}
-              onlyNewWords={onlyNewWords}
-              onOnlyNewWordsChange={handleOnlyNewWordsChange}
               generatingUnits={generatingUnits}
               fileTitle={fileTitle}
               currentFileId={currentFileId}
@@ -1378,7 +1347,7 @@ function App() {
               onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-                  fetchPhase1Units(currentFileId),
+                  api.getPhaseUnits(currentFileId, 1),
                   api.getPhaseUnits(currentFileId, 2)
                 ])
                 setPhase1Units(phase1UnitsData.units)
@@ -1418,7 +1387,7 @@ function App() {
               onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-                  fetchPhase1Units(currentFileId),
+                  api.getPhaseUnits(currentFileId, 1),
                   api.getPhaseUnits(currentFileId, 2)
                 ])
                 setPhase1Units(phase1UnitsData.units)
