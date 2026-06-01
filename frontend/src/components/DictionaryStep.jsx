@@ -431,7 +431,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       return
     }
     scrollToGlobalWord(word.word, 0)
-    setTimeout(() => {
+    setTimeout(async () => {
       setExpandedWord(globalKey)
 
       const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)

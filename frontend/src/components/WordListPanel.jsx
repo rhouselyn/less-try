@@ -206,7 +206,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       return
     }
     scrollToWord(wordText, 0)
-    setTimeout(() => {
+    setTimeout(async () => {
       setExpandedWord(wordText)
 
       const existing = words.find(w => w.word === wordText)
