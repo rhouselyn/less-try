@@ -209,11 +209,11 @@ function AllUnitsStep({
         </button>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-6 text-center">
         <h2 className="text-lg font-semibold text-stone-800">
           {t.learningUnits || '学习单元'}
         </h2>
-        <p className="text-xs text-stone-400 mt-0.5">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
+        <p className="text-[11px] text-stone-400 mt-1">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
       </div>
 
       {loading ? (
