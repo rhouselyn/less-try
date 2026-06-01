@@ -112,7 +112,6 @@ function App() {
   useEffect(() => {
     warmupSpeech()
     api.getUserPreferences().then(prefs => {
-      if (prefs.source_lang) setSourceLang(prefs.source_lang)
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
@@ -345,7 +344,6 @@ function App() {
           const detectResult = await api.detectLanguage(finalText)
           if (detectResult.detected_language) {
             finalSourceLang = detectResult.detected_language
-            setSourceLang(detectResult.detected_language)
           }
         } catch (e) {
           console.error('Language detection failed:', e)
@@ -997,15 +995,6 @@ function App() {
       setCurrentFileId(fileId)
       setFileId(fileId)
       if (title) setFileTitle(title)
-      if (srcLang && srcLang !== 'auto') {
-        setSourceLang(srcLang)
-      } else {
-        try {
-          const langData = await api.getFileLanguages(fileId)
-          if (langData.source_lang) setSourceLang(langData.source_lang)
-          if (langData.target_lang) setTargetLang(langData.target_lang)
-        } catch (e) {}
-      }
       if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
