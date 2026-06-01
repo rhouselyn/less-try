@@ -334,12 +334,6 @@ function AllUnitsStep({
         <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
           <div className="bg-stone-50/80 px-3 pt-2.5">
             <div className="flex gap-1 relative">
-              <motion.div
-                className="absolute top-0 bottom-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
-                style={{ width: 'calc(50% - 4px)' }}
-                animate={{ left: `calc(${activeTab * 50}% + ${activeTab === 0 ? 4 : 0}px)` }}
-                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              />
               {tabs.map((tab, i) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === i;
@@ -349,6 +343,13 @@ function AllUnitsStep({
                     onClick={() => { setActiveTab(i); setPage(0); }}
                     className="relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
                   >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabBg"
+                        className="absolute inset-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                      />
+                    )}
                     <div className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${
                       isActive ? 'text-stone-800' : 'text-stone-400 hover:text-stone-600'
                     }`}>
@@ -368,14 +369,14 @@ function AllUnitsStep({
             </div>
           </div>
 
-          <div className="px-5 pb-5 pt-4 overflow-hidden">
+          <div className="px-5 pb-5 pt-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, x: activeTab === 0 ? -24 : 24 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: activeTab === 0 ? 24 : -24 }}
-                transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 {renderPhaseContent(activeTab + 1)}
               </motion.div>
