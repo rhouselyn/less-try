@@ -100,10 +100,9 @@ function AllUnitsStep({
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 px-3 py-1.5 text-stone-400 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100"
+          className="p-1.5 text-stone-400 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">{t.back}</span>
         </button>
 
         {fileTitle && (

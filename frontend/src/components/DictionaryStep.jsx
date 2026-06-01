@@ -28,6 +28,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [sentencePage, setSentencePage] = useState(1)
   const [globalVocabPage, setGlobalVocabPage] = useState(1)
   const [wordGenProgress, setWordGenProgress] = useState(null)
+  const [meaningOverrides, setMeaningOverrides] = useState({})
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
@@ -517,6 +518,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       if (data) {
         setWordDetails(prev => ({ ...prev, [localKey]: data, [globalKey]: data }))
         setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
+        const newMeaning = data.enriched_meaning || data.meaning || data.context_meaning
+        if (newMeaning) {
+          setMeaningOverrides(prev => ({ ...prev, [wordKey]: newMeaning }))
+        }
       }
     } catch (e) {
       console.error('Failed to regenerate word:', e)
@@ -913,7 +918,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             </div>
             <div className="flex-1 flex min-h-0">
               {((!showGlobalVocab && allLetterIndex.length > 1) || (showGlobalVocab && allGlobalLetterIndex.length > 1)) && (
-                <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-r border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-0.5 py-2 border-r border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
                   {(showGlobalVocab ? allGlobalLetterIndex : allLetterIndex).map(letter => {
                     const currentIdx = showGlobalVocab ? globalLetterIndex : letterIndex
                     const onCurrentPage = currentIdx.includes(letter)
@@ -991,7 +996,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     </span>
                                   )}
                                   <span className={`text-[12px] text-stone-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
-                                    {word.meaning}
+                                    {meaningOverrides[wordKey] || word.meaning}
                                   </span>
                                 </div>
                                 {isExpanded && (
@@ -1105,7 +1110,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   </span>
                                 )}
                                 <span className={`text-[12px] text-stone-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
-                                  {word.meaning || word.context_meaning}
+                                  {meaningOverrides[word.word] || word.meaning || word.context_meaning}
                                 </span>
                               </div>
                               {isExpanded && (

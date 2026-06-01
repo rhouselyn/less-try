@@ -202,7 +202,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
           ) : (
             <>
               {allLetterIndex.length > 1 && (
-                <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-r border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-0.5 py-2 border-r border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
                   {allLetterIndex.map(letter => {
                     const onCurrentPage = letterIndex.includes(letter)
                     return (

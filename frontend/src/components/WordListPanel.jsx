@@ -103,6 +103,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetails, setWordDetails] = useState({})
   const [detailLoading, setDetailLoading] = useState({})
+  const [meaningOverrides, setMeaningOverrides] = useState({})
   const [isOpen, setIsOpen] = useState(false)
   const [displayMode, setDisplayMode] = useState(0)
   const [page, setPage] = useState(1)
@@ -138,6 +139,10 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             ? { ...w, ...data }
             : w
         ))
+        const newMeaning = data.enriched_meaning || data.meaning || data.context_meaning
+        if (newMeaning) {
+          setMeaningOverrides(prev => ({ ...prev, [wordKey]: newMeaning }))
+        }
       }
     } catch (e) {
       console.error('Failed to regenerate word:', e)
@@ -325,7 +330,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                         )}
                       </div>
                       {word.meaning && (
-                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.meaning}</p>
+                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.meaning}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
