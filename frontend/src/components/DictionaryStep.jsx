@@ -1106,13 +1106,13 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
                                   </span>
                                 )}
-                                {(word.morphology || word.part_of_speech) && (
+                                {word.morphology && (
                                   <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide shrink-0">
-                                    {word.part_of_speech || word.morphology}
+                                    {word.morphology}
                                   </span>
                                 )}
                                 <span className={`text-[12px] text-stone-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
-                                  {meaningOverrides[word.word] || word.meaning || word.context_meaning || word.enriched_meaning}
+                                  {meaningOverrides[word.word] || word.meaning || word.context_meaning}
                                 </span>
                               </div>
                               {isExpanded && (
