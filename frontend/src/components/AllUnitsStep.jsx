@@ -4,8 +4,6 @@ import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, Ch
 
 const UNITS_PER_PAGE = 30;
 
-const savedState = { tab: 0, page: 0 };
-
 function AllUnitsStep({
   phase1Units,
   phase2Units,
@@ -26,17 +24,39 @@ function AllUnitsStep({
   fileTitle,
   currentFileId
 }) {
-  const [activeTab, setActiveTab] = useState(savedState.tab);
-  const [page, setPage] = useState(savedState.page);
+  const [activeTab, setActiveTab] = useState(0);
+  const [page, setPage] = useState(0);
   const containerRef = useRef(null);
+  const tabRef = useRef(0);
+  const scrollRef = useRef(0);
+  const pageRef = useRef(0);
 
   useEffect(() => {
-    savedState.tab = activeTab;
+    tabRef.current = activeTab;
   }, [activeTab]);
 
   useEffect(() => {
-    savedState.page = page;
+    pageRef.current = page;
   }, [page]);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      scrollRef.current = containerRef.current.scrollTop;
+    }
+  });
+
+  useEffect(() => {
+    const savedTab = tabRef.current;
+    const savedPage = pageRef.current;
+    const savedScroll = scrollRef.current;
+    setActiveTab(savedTab);
+    setPage(savedPage);
+    requestAnimationFrame(() => {
+      if (containerRef.current) {
+        containerRef.current.scrollTop = savedScroll;
+      }
+    });
+  }, []);
 
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
