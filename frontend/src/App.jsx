@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
