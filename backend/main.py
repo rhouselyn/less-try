@@ -751,6 +751,40 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                     elif "context_meaning" in word_entry:
                         correct_meaning = word_entry["context_meaning"]
                 
+                if not correct_meaning:
+                    print(f"[DEBUG] Meaning missing for '{word_to_gen}', generating via LLM...")
+                    try:
+                        if word_gen_rate_limiter:
+                            await word_gen_rate_limiter.acquire()
+                        fill_result = await nvidia_api.generate_word_meaning(
+                            word_to_gen, word_entry.get("morphology", ""), context, source_lang, target_lang
+                        )
+                        if fill_result.get("meaning"):
+                            correct_meaning = fill_result["meaning"]
+                            word_entry["meaning"] = correct_meaning
+                            if fill_result.get("ipa") and not word_entry.get("ipa"):
+                                word_entry["ipa"] = fill_result["ipa"]
+                            vocab_data = storage.load_vocab(file_id)
+                            if isinstance(vocab_data, dict) and "vocab" in vocab_data:
+                                for v in vocab_data["vocab"]:
+                                    if v.get("word", "").lower() == word_to_gen.lower():
+                                        v["meaning"] = correct_meaning
+                                        if fill_result.get("ipa") and not v.get("ipa"):
+                                            v["ipa"] = fill_result["ipa"]
+                                        break
+                                storage.save_vocab(file_id, vocab_data["vocab"])
+                            elif isinstance(vocab_data, list):
+                                for v in vocab_data:
+                                    if v.get("word", "").lower() == word_to_gen.lower():
+                                        v["meaning"] = correct_meaning
+                                        if fill_result.get("ipa") and not v.get("ipa"):
+                                            v["ipa"] = fill_result["ipa"]
+                                        break
+                                storage.save_vocab(file_id, vocab_data)
+                            print(f"[DEBUG] Filled meaning for '{word_to_gen}': {correct_meaning}")
+                    except Exception as e:
+                        print(f"[WARN] Failed to generate meaning for '{word_to_gen}': {e}")
+                
                 global word_gen_rate_limiter
                 if word_gen_rate_limiter:
                     await word_gen_rate_limiter.acquire()
