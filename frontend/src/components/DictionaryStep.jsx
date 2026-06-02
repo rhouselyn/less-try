@@ -998,7 +998,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     </span>
                                   )}
                                   <span className={`text-[12px] text-stone-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
-                                    {meaningOverrides[wordKey] || word.enriched_meaning || word.meaning || word.context_meaning}
+                                    {meaningOverrides[wordKey] || word.meaning}
                                   </span>
                                 </div>
                                 {isExpanded && (
@@ -1112,7 +1112,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   </span>
                                 )}
                                 <span className={`text-[12px] text-stone-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
-                                  {meaningOverrides[word.word] || word.enriched_meaning || word.meaning || word.context_meaning}
+                                  {meaningOverrides[word.word] || word.meaning || word.context_meaning}
                                 </span>
                               </div>
                               {isExpanded && (

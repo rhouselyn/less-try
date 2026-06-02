@@ -1,8 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
-
-const UNITS_PER_PAGE = 30;
+import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool } from 'lucide-react';
 
 function AllUnitsStep({
   phase1Units,
@@ -18,17 +16,11 @@ function AllUnitsStep({
   unitStarCounts,
   skipListening,
   onSkipListeningChange,
-  newWordsOnly,
-  onNewWordsOnlyChange,
   generatingUnits,
   fileTitle,
   currentFileId,
   lastActiveTab,
-  onTabChange,
-  phase1Page,
-  phase2Page,
-  onPhase1PageChange,
-  onPhase2PageChange
+  onTabChange
 }) {
   const [activeTab, setActiveTab] = useState(lastActiveTab || 0);
 
@@ -37,18 +29,6 @@ function AllUnitsStep({
       setActiveTab(lastActiveTab);
     }
   }, [lastActiveTab]);
-
-  useEffect(() => {
-    if (currentPhase1Unit !== undefined) {
-      onPhase1PageChange?.(Math.floor(currentPhase1Unit / UNITS_PER_PAGE) + 1);
-    }
-  }, [currentPhase1Unit]);
-
-  useEffect(() => {
-    if (currentPhase2Unit !== undefined) {
-      onPhase2PageChange?.(Math.floor(currentPhase2Unit / UNITS_PER_PAGE) + 1);
-    }
-  }, [currentPhase2Unit]);
 
   const handleTabChange = (index) => {
     setActiveTab(index);
@@ -145,32 +125,6 @@ function AllUnitsStep({
     );
   };
 
-  const renderPagination = (currentPage, totalPages, onPageChange) => {
-    if (totalPages <= 1) return null;
-
-    return (
-      <div className="flex items-center justify-center gap-2 mt-5">
-        <button
-          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
-          disabled={currentPage <= 1}
-          className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
-        <span className="text-[11px] text-stone-400 tabular-nums">
-          {currentPage} / {totalPages}
-        </span>
-        <button
-          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage >= totalPages}
-          className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-    );
-  };
-
   const renderPhaseContent = (phaseNumber) => {
     const units = phaseNumber === 1 ? phase1Units : phase2Units;
     const currentUnit = phaseNumber === 1 ? currentPhase1Unit : currentPhase2Unit;
@@ -180,13 +134,6 @@ function AllUnitsStep({
     const completed = phaseNumber === 1 ? phase1Completed : phase2Completed;
     const total = phaseNumber === 1 ? phase1Total : phase2Total;
     const progress = total > 0 ? (completed / total) * 100 : 0;
-    const currentPage = phaseNumber === 1 ? phase1Page : phase2Page;
-    const setCurrentPage = phaseNumber === 1 ? onPhase1PageChange : onPhase2PageChange;
-
-    const totalPages = Math.max(1, Math.ceil((units?.length || 0) / UNITS_PER_PAGE));
-    const pageStart = (currentPage - 1) * UNITS_PER_PAGE;
-    const pageEnd = Math.min(pageStart + UNITS_PER_PAGE, units?.length || 0);
-    const pageUnits = units?.slice(pageStart, pageEnd) || [];
 
     if (!units || units.length === 0 || (phaseNumber === 2 && units.length === 1 && units[0]?.no_eligible_sentences)) {
       return (
@@ -216,20 +163,17 @@ function AllUnitsStep({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {pageUnits.map((unit, pageIdx) => {
-            const globalIdx = pageStart + pageIdx;
-            return renderUnitCard(
+          {units.map((unit, index) =>
+            renderUnitCard(
               unit,
-              globalIdx,
-              () => onClick(globalIdx),
+              index,
+              () => onClick(index),
               keyPrefix,
-              isUnlockedFn(globalIdx),
+              isUnlockedFn(index),
               phaseNumber
-            );
-          })}
+            )
+          )}
         </div>
-
-        {renderPagination(currentPage, totalPages, setCurrentPage)}
       </div>
     );
   };
@@ -256,23 +200,6 @@ function AllUnitsStep({
         )}
 
         <div className="flex-1 min-w-0" />
-
-        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-2">
-          <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
-            <Sparkles className="w-3 h-3" />
-            {t.newWordsOnly || '只学新词'}
-          </span>
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={newWordsOnly || false}
-              onChange={(e) => onNewWordsOnlyChange?.(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-7 h-4 bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors" />
-            <div className="absolute left-[1.5px] top-[1.5px] bg-white w-[13px] h-[13px] rounded-full transition-transform peer-checked:translate-x-3 shadow-sm" />
-          </div>
-        </label>
 
         <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
           <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">

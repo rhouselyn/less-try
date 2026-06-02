@@ -653,11 +653,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
         
-        lang_settings = storage.load_language_settings(file_id)
-        src_lang = lang_settings.get("source_lang", "en")
-        all_word_texts = [entry.get("word", "") for entry in all_vocab if entry.get("word")]
-        storage.add_words_to_master(src_lang, all_word_texts)
-        
         if all_vocab:
             generate_and_save_learning_plan(file_id, all_vocab, sentence_translations)
         
@@ -785,7 +780,7 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                 cache_data = dict(options_result)
                 cache_data["word"] = options_result.get("word", word_to_gen)
                 cache_data["ipa"] = word_entry.get("ipa", "")
-                cache_data["meaning"] = correct_meaning or options_result.get("enriched_meaning", "")
+                cache_data["meaning"] = correct_meaning
                 cache_data["examples"] = options_result.get("examples", [])
                 cache_data["context"] = context
                 cache_data["context_sentences"] = context_sentences
@@ -1433,8 +1428,6 @@ async def get_vocab(file_id: str):
                     enriched_entry["examples"] = cached["examples"]
                 if cached.get("memory_hint"):
                     enriched_entry["memory_hint"] = cached["memory_hint"]
-            if not enriched_entry.get("meaning") and enriched_entry.get("enriched_meaning"):
-                enriched_entry["meaning"] = enriched_entry["enriched_meaning"]
             enriched_list.append(enriched_entry)
         
         return {"vocab": enriched_list}
@@ -1455,7 +1448,7 @@ async def get_sentences(file_id: str):
 pre_generated_words = {}
 
 @app.get("/api/learn/{file_id}/random-word")
-async def get_random_word(file_id: str, new_words_only: bool = False, unit_id: int = 0):
+async def get_random_word(file_id: str):
     try:
         storage.touch_history_record(file_id)
         vocab = storage.load_vocab(file_id)
@@ -1465,165 +1458,6 @@ async def get_random_word(file_id: str, new_words_only: bool = False, unit_id: i
         language_settings = storage.load_language_settings(file_id)
         target_lang = language_settings["target_lang"]
         source_lang = language_settings.get("source_lang", "en")
-        
-        if new_words_only:
-            src_lang = language_settings.get("source_lang", "en")
-            master_words = storage.load_master_words(src_lang)
-            
-            new_word_indices = []
-            for i, v in enumerate(vocab):
-                word = v.get("word", "")
-                if word and word.lower() not in master_words:
-                    new_word_indices.append(i)
-            
-            if not new_word_indices:
-                return {"type": "all_complete"}
-            
-            unit_size = 10
-            unit_start = unit_id * unit_size
-            unit_end = min(unit_start + unit_size, len(new_word_indices))
-            unit_word_indices = new_word_indices[unit_start:unit_end]
-            
-            mode = "_new_words_only"
-            mode_progress = storage.load_unit_stars_mode(file_id, mode)
-            mode_stars = mode_progress if isinstance(mode_progress, dict) else {}
-            
-            star_key = f"1-{unit_id}"
-            star_count = mode_stars.get(star_key, 0)
-            
-            progress_key = str(unit_id)
-            progress_data = storage.load_new_words_progress(file_id)
-            step_in_unit = progress_data.get(progress_key, 0)
-            
-            if step_in_unit >= len(unit_word_indices):
-                return {
-                    "type": "unit_complete",
-                    "unit_end_index": unit_end,
-                    "current_index": unit_start + step_in_unit,
-                    "unit_start_index": unit_start,
-                    "total_items_in_unit": len(unit_word_indices),
-                    "listening_count_in_unit": 0,
-                    "step_in_unit": step_in_unit
-                }
-            
-            vocab_idx = unit_word_indices[step_in_unit]
-            random_word = vocab[vocab_idx]
-            word = random_word["word"]
-            
-            unit_end_index = unit_start + len(unit_word_indices)
-            
-            cached_word = storage.load_word_cache(file_id, word)
-            if cached_word:
-                mc = cached_word.get("multiple_choice", {})
-                mc_options = []
-                if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-                    mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
-                if mc_options:
-                    options = []
-                    correct_index = 0
-                    for i, opt in enumerate(mc_options):
-                        options.append(opt["text"])
-                        if opt.get("is_correct"):
-                            correct_index = i
-                    
-                    context_sents = cached_word.get("context_sentences", [])
-                    
-                    return {
-                        "word": cached_word.get("word", word),
-                        "ipa": cached_word.get("ipa", ""),
-                        "correct_meaning": cached_word.get("meaning", ""),
-                        "options": options,
-                        "correct_index": correct_index,
-                        "context": cached_word.get("context", ""),
-                        "context_sentences": context_sents,
-                        "variants_detail": cached_word.get("variants_detail", []),
-                        "examples": cached_word.get("examples", []),
-                        "memory_hint": cached_word.get("memory_hint", ""),
-                        "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
-                        "context_meaning": cached_word.get("meaning", cached_word.get("context_meaning", "")),
-                        "unit_end_index": unit_end_index,
-                        "current_index": unit_start + step_in_unit,
-                        "unit_start_index": unit_start,
-                        "total_items_in_unit": len(unit_word_indices),
-                        "listening_count_in_unit": 0,
-                        "step_in_unit": step_in_unit,
-                        "new_words_only": True
-                    }
-            
-            state = word_gen_state.get(file_id)
-            if state:
-                state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
-                state["priority_queue"].insert(0, word)
-                if not state.get("running"):
-                    state["running"] = True
-                    state["task"] = asyncio.create_task(background_word_gen(file_id))
-            else:
-                word_gen_state[file_id] = {
-                    "running": True,
-                    "vocab": vocab,
-                    "priority_queue": [word],
-                    "task": asyncio.create_task(background_word_gen(file_id)),
-                    "processing_words": set()
-                }
-            
-            for _ in range(60):
-                await asyncio.sleep(1)
-                cached_word = storage.load_word_cache(file_id, word)
-                if cached_word:
-                    mc = cached_word.get("multiple_choice", {})
-                    mc_options = []
-                    if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-                        mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
-                    if mc_options:
-                        break
-            
-            if cached_word and isinstance(cached_word.get("multiple_choice"), dict):
-                mc = cached_word["multiple_choice"]
-                mc_options = [o for o in mc.get("options", []) if isinstance(o, dict) and "text" in o]
-                options = []
-                correct_index = 0
-                for i, opt in enumerate(mc_options):
-                    options.append(opt["text"])
-                    if opt.get("is_correct"):
-                        correct_index = i
-                
-                return {
-                    "word": cached_word.get("word", word),
-                    "ipa": cached_word.get("ipa", ""),
-                    "correct_meaning": cached_word.get("meaning", ""),
-                    "options": options,
-                    "correct_index": correct_index,
-                    "context": cached_word.get("context", ""),
-                    "context_sentences": cached_word.get("context_sentences", []),
-                    "variants_detail": cached_word.get("variants_detail", []),
-                    "examples": cached_word.get("examples", []),
-                    "memory_hint": cached_word.get("memory_hint", ""),
-                    "enriched_meaning": cached_word.get("enriched_meaning", cached_word.get("meaning", "")),
-                    "context_meaning": cached_word.get("meaning", cached_word.get("context_meaning", "")),
-                    "unit_end_index": unit_end_index,
-                    "current_index": unit_start + step_in_unit,
-                    "unit_start_index": unit_start,
-                    "total_items_in_unit": len(unit_word_indices),
-                    "listening_count_in_unit": 0,
-                    "step_in_unit": step_in_unit,
-                    "new_words_only": True
-                }
-            
-            correct_meaning = random_word.get("meaning", "") or random_word.get("context_meaning", "") or random_word.get("translation", "")
-            return {
-                "word": word,
-                "ipa": random_word.get("ipa", ""),
-                "correct_meaning": correct_meaning,
-                "options": [correct_meaning, "—", "—", "—"],
-                "correct_index": 0,
-                "unit_end_index": unit_end_index,
-                "current_index": unit_start + step_in_unit,
-                "unit_start_index": unit_start,
-                "total_items_in_unit": len(unit_word_indices),
-                "listening_count_in_unit": 0,
-                "step_in_unit": step_in_unit,
-                "new_words_only": True
-            }
         
         current_index = storage.load_learning_progress(file_id)
         
@@ -1907,63 +1741,8 @@ async def get_random_word(file_id: str, new_words_only: bool = False, unit_id: i
 
 
 @app.post("/api/learn/{file_id}/next-word")
-async def next_word(file_id: str, request: dict = None):
+async def next_word(file_id: str):
     try:
-        new_words_only = (request or {}).get("new_words_only", False)
-        unit_id_param = (request or {}).get("unit_id", 0)
-        
-        if new_words_only:
-            vocab = storage.load_vocab(file_id)
-            language_settings = storage.load_language_settings(file_id)
-            src_lang = language_settings.get("source_lang", "en")
-            master_words = storage.load_master_words(src_lang)
-            
-            new_word_indices = []
-            for i, v in enumerate(vocab):
-                word = v.get("word", "")
-                if word and word.lower() not in master_words:
-                    new_word_indices.append(i)
-            
-            if not new_word_indices:
-                return {"success": True, "type": "all_complete"}
-            
-            unit_size = 10
-            unit_start = unit_id_param * unit_size
-            unit_end = min(unit_start + unit_size, len(new_word_indices))
-            unit_word_indices = new_word_indices[unit_start:unit_end]
-            
-            progress_data = storage.load_new_words_progress(file_id)
-            progress_key = str(unit_id_param)
-            current_step = progress_data.get(progress_key, 0)
-            new_step = current_step + 1
-            
-            if new_step >= len(unit_word_indices):
-                progress_data[progress_key] = new_step
-                storage.save_new_words_progress(file_id, progress_data)
-                
-                mode = "_new_words_only"
-                mode_stars = storage.load_unit_stars_mode(file_id, mode)
-                star_key = f"1-{unit_id_param}"
-                if star_key not in mode_stars or mode_stars[star_key] < 3:
-                    mode_stars[star_key] = 3
-                    storage.save_unit_stars_mode(file_id, mode_stars, mode)
-                
-                return {
-                    "success": True,
-                    "type": "unit_complete",
-                    "completed_unit_id": unit_id_param,
-                    "new_words_only": True
-                }
-            
-            progress_data[progress_key] = new_step
-            storage.save_new_words_progress(file_id, progress_data)
-            
-            return {
-                "success": True,
-                "new_step": new_step,
-                "new_words_only": True
-            }
-        
         vocab = storage.load_vocab(file_id)
         if not vocab:
             raise HTTPException(status_code=404, detail="Vocab not found")
@@ -2112,9 +1891,9 @@ async def set_progress(file_id: str, request: dict):
         raise HTTPException(status_code=500, detail=f"Error setting progress: {str(e)}")
 
 @app.get("/api/learn/{file_id}/unit-stars")
-async def get_unit_stars(file_id: str, mode: str = ""):
+async def get_unit_stars(file_id: str):
     try:
-        stars = storage.load_unit_stars_mode(file_id, mode)
+        stars = storage.load_unit_stars(file_id)
         return {"stars": stars}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error loading stars: {str(e)}")
@@ -2123,8 +1902,7 @@ async def get_unit_stars(file_id: str, mode: str = ""):
 async def save_unit_stars(file_id: str, request: dict):
     try:
         stars_data = request.get("stars", {})
-        mode = request.get("mode", "")
-        storage.save_unit_stars_mode(file_id, stars_data, mode)
+        storage.save_unit_stars(file_id, stars_data)
         return {"success": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error saving stars: {str(e)}")
@@ -2851,7 +2629,7 @@ async def get_phases(file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/{file_id}/phase/{phase_number}/units")
-async def get_phase_units(file_id: str, phase_number: int, new_words_only: bool = False):
+async def get_phase_units(file_id: str, phase_number: int):
     try:
         sentences = storage.load_pipeline_data(file_id)
         vocab = storage.load_vocab(file_id)
@@ -2866,75 +2644,6 @@ async def get_phase_units(file_id: str, phase_number: int, new_words_only: bool 
             if not plan:
                 generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
                 plan = storage.load_learning_plan(file_id)
-            
-            if new_words_only:
-                lang_settings = storage.load_language_settings(file_id)
-                src_lang = lang_settings.get("source_lang", "en")
-                master_words = storage.load_master_words(src_lang)
-                
-                new_word_indices = []
-                for i, v in enumerate(vocab):
-                    word = v.get("word", "")
-                    if word and word.lower() not in master_words:
-                        new_word_indices.append(i)
-                
-                if not new_word_indices:
-                    return {
-                        "phase_number": phase_number,
-                        "units": [],
-                        "current_unit": 0
-                    }
-                
-                unit_size = 10
-                num_units = max(1, (len(new_word_indices) + unit_size - 1) // unit_size)
-                
-                mode = "_new_words_only"
-                mode_progress = storage.load_unit_stars_mode(file_id, mode)
-                mode_stars = mode_progress if isinstance(mode_progress, dict) else {}
-                
-                units = []
-                for i in range(num_units):
-                    start = i * unit_size
-                    end = min(start + unit_size, len(new_word_indices))
-                    unit_word_indices = new_word_indices[start:end]
-                    
-                    word_items = []
-                    for wi in unit_word_indices:
-                        if wi < len(vocab):
-                            w = vocab[wi].get("word", "")
-                            if w and not storage.load_word_cache(file_id, w):
-                                word_items.append(w)
-                    
-                    star_key = f"1-{i}"
-                    star_count = mode_stars.get(star_key, 0)
-                    
-                    completed = star_count >= 3
-                    
-                    units.append({
-                        "unit_id": i,
-                        "word_count": end - start,
-                        "exercises_count": end - start,
-                        "completed": completed,
-                        "start_index": start,
-                        "end_index": end,
-                        "generating": len(word_items) > 0,
-                        "new_words_only": True,
-                        "vocab_indices": unit_word_indices
-                    })
-                
-                current_unit = 0
-                for i, unit in enumerate(units):
-                    if not unit["completed"]:
-                        current_unit = i
-                        break
-                else:
-                    current_unit = len(units) - 1 if units else 0
-                
-                return {
-                    "phase_number": phase_number,
-                    "units": units,
-                    "current_unit": current_unit
-                }
             
             phase1_units = []
             accumulated = 0
@@ -3687,7 +3396,6 @@ class UserPreferencesUpdate(BaseModel):
     rpm: Optional[int] = None
     retry_interval: Optional[float] = None
     skip_listening: Optional[bool] = None
-    new_words_only: Optional[bool] = None
     recent_languages: Optional[List[str]] = None
     page_size: Optional[int] = None
 
@@ -3706,8 +3414,6 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["retry_interval"] = req.retry_interval
         if req.skip_listening is not None:
             current["skip_listening"] = req.skip_listening
-        if req.new_words_only is not None:
-            current["new_words_only"] = req.new_words_only
         if req.recent_languages is not None:
             current["recent_languages"] = req.recent_languages
         if req.page_size is not None:

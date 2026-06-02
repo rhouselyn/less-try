@@ -423,12 +423,7 @@ class Storage:
         if prefs_path.exists():
             try:
                 with open(prefs_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                defaults = {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False, "new_words_only": False}
-                for k, v in defaults.items():
-                    if k not in data:
-                        data[k] = v
-                return data
+                    return json.load(f)
             except (json.JSONDecodeError, IOError):
                 pass
         old_path = self.base_dir / "user_preferences.json"
@@ -461,75 +456,4 @@ class Storage:
                 return migrated
             except (json.JSONDecodeError, IOError):
                 pass
-        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False, "new_words_only": False}
-
-    def _get_master_words_path(self, source_lang: str) -> Path:
-        lang_dir = self.languages_dir / source_lang
-        lang_dir.mkdir(parents=True, exist_ok=True)
-        return lang_dir / "master_words.json"
-
-    def load_new_words_progress(self, file_id: str) -> Dict:
-        file_dir = self.get_file_dir(file_id)
-        path = file_dir / "new_words_progress.json"
-        if path.exists():
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
-        return {}
-
-    def save_new_words_progress(self, file_id: str, data: Dict):
-        file_dir = self.get_file_dir(file_id)
-        path = file_dir / "new_words_progress.json"
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
-    def load_master_words(self, source_lang: str) -> set:
-        path = self._get_master_words_path(source_lang)
-        if path.exists():
-            try:
-                with open(path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    return set(data.get("words", []))
-            except (json.JSONDecodeError, IOError):
-                pass
-        return set()
-
-    def save_master_words(self, source_lang: str, words: set):
-        path = self._get_master_words_path(source_lang)
-        with open(path, 'w', encoding='utf-8') as f:
-            json.dump({"words": sorted(list(words))}, f, ensure_ascii=False, indent=2)
-
-    def add_words_to_master(self, source_lang: str, new_words: list):
-        current = self.load_master_words(source_lang)
-        current.update(w.lower() for w in new_words if w)
-        self.save_master_words(source_lang, current)
-
-    def save_unit_stars_mode(self, file_id: str, stars_data: Dict, mode: str = ""):
-        file_dir = self.get_file_dir(file_id)
-        suffix = f"_{mode}" if mode else ""
-        stars_path = file_dir / f"unit_stars{suffix}.json"
-        existing = {}
-        if stars_path.exists():
-            try:
-                with open(stars_path, 'r', encoding='utf-8') as f:
-                    existing = json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
-        for key, count in stars_data.items():
-            existing[key] = count
-        with open(stars_path, 'w', encoding='utf-8') as f:
-            json.dump(existing, f, ensure_ascii=False, indent=2)
-
-    def load_unit_stars_mode(self, file_id: str, mode: str = "") -> Dict:
-        file_dir = self.get_file_dir(file_id)
-        suffix = f"_{mode}" if mode else ""
-        stars_path = file_dir / f"unit_stars{suffix}.json"
-        if stars_path.exists():
-            try:
-                with open(stars_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, IOError):
-                pass
-        return {}
+        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False}

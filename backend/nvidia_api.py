@@ -409,39 +409,6 @@ class NvidiaAPI:
     async def call_with_rotation(cls, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         return await call_minimax_with_rotation(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
 
-    async def generate_word_meaning(self, word: str, morphology: str, context: str, source_lang: str, target_lang: str):
-        tool_def = {
-            "type": "function",
-            "function": {
-                "name": "fill_word_info",
-                "description": "Fill in missing word information",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "meaning": {"type": "string", "description": f"Concise meaning of the word in {target_lang}, just a few words. MUST be non-empty for every word including function words."},
-                        "ipa": {"type": "string", "description": "IPA pronunciation of this word in its source language"}
-                    },
-                    "required": ["meaning", "ipa"]
-                }
-            }
-        }
-
-        messages = [
-            {"role": "system", "content": f"You are a dictionary expert. Provide the meaning and IPA pronunciation for the given word in {get_lang_name(source_lang)}. Every word must have a meaning, including function words like prepositions, conjunctions, articles, pronouns, and auxiliaries. Output only the tool call JSON."},
-            {"role": "user", "content": f"Word: {word}\nMorphology: {morphology or 'unknown'}\nContext: {context or 'N/A'}\nSource language: {get_lang_name(source_lang)}\nTarget language: {get_lang_name(target_lang)}"}
-        ]
-
-        result = await self.call_minimax(messages, tools=[tool_def], temperature=0.3, max_tokens=256)
-        tool_calls = result.get("choices", [{}])[0].get("message", {}).get("tool_calls", [])
-        if tool_calls:
-            import json as _json
-            args = _json.loads(tool_calls[0]["function"]["arguments"])
-            return {
-                "meaning": args.get("meaning", ""),
-                "ipa": args.get("ipa", "")
-            }
-        return {"meaning": "", "ipa": ""}
-
     async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str, temperature: float = 0.7):
         tool_def = {
             "type": "function",
@@ -612,7 +579,7 @@ class NvidiaAPI:
                                     "text": {"type": "string", "description": "A single word or fixed multi-word expression from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). Punctuation does NOT belong to any token — it is completely discarded. Hyphens(-) and apostrophes(') must be preserved if they are internal parts of a word in that language. TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'token' is the smallest meaningful unit that can appear independently in a dictionary of that language, OR a fixed multi-word expression whose meaning cannot be derived from its individual parts. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) 【CRITICAL·Fixed Collocations & Multi-Word Expressions】When two or more consecutive words form a fixed collocation, set phrase, phrasal verb, idiom, or any expression where the whole meaning ≠ sum of parts, they MUST be treated as ONE single token (one text field containing the entire multi-word expression). This applies to ALL languages. Examples of patterns that must be one token: discourse markers, greetings, phrasal verbs, compound prepositions, fixed conjunctions, and any expression that functions as a single semantic unit. If you would list it as one entry in a phrase dictionary, it should be one token. (4) After removing punctuation from all 'text' values, their concatenation in order MUST equal the original source text with punctuation removed — no characters may be omitted or added. Each character belongs to exactly ONE token; no overlap, no duplication. NEVER split a word into characters, syllables, morphemes, or stem+affix. NEVER add tokens that do not correspond to actual words in the source text."},
                                     "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
                                     "morphology": {"type": "string"},
-                                    "meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - concise, just a few independent words, not a full sentence explanation. 【CRITICAL】Every single token MUST have a non-empty meaning, including function words (prepositions, conjunctions, articles, pronouns, auxiliaries, particles, etc.). For example: 'at'→'在', 'for'→'为了', 'the'→'这个', 'is'→'是', 'I'→'我'. Never leave this field empty."}
+                                    "meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - concise, just a few independent words, not a full sentence explanation"}
                                 },
                                 "required": ["text", "phonetic", "morphology", "meaning"]
                             }
@@ -685,7 +652,7 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
   - text: 原文中的一个词（严格遵循源语言的自然词边界！）
   - phonetic: 发音标注。使用该语言最常用、最被广泛认可的注音系统——可以是 IPA、拼音、罗马字或其他母语者和学习者期望的标准注音方式。声调语言需标注声调信息
   - morphology: 只能是词性缩写（如 n, v, adj）
-  - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释。【极其重要】每个词都必须有非空的释义，包括虚词（介词、连词、冠词、代词、助词等）！例如：at→在，for→为了，the→这个，is→是，I→我。绝对不能留空！
+  - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式。【极其重要】必须翻译完整，不能遗漏任何内容，原文的每个语义成分都必须体现在翻译中。原文中的说话者标识（如 A:、B:、Speaker 1: 等）必须在译文中完整保留，不得省略
 - translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则·与源语言token拆分规则完全一致】1.遵循目标语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词；2.变位/屈折形式是单个片段：不要将变位形式拆分为词干+词缀；3.【极其重要·固定搭配与多词表达】当两个或多个连续的词构成固定搭配、短语动词、习语、惯用语等非组合性表达时，必须作为一个片段，不能拆分。这是所有语言的通用原则。判断标准：如果拆分后各部分无法独立表达整体含义，则必须保持为一个片段。话语标记、问候语、短语动词、复合介词等必须作为单个片段处理；4.【极其重要·标点禁令】每个片段绝对禁止包含任何标点符号，标点不属于任何片段。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留；5.所有片段去除标点后按顺序拼接必须等于 tokenized_translation 去除标点后的内容，不能遗漏或增加文字内容；6.【极其重要·禁止增减原则】所有片段必须与 tokenized_translation 中的词语一一对应，绝对不能随意增加不存在的片段，也不能将一个词拆分成多个片段；7.虚词可以与相邻词合并；8.每个片段不能是单个无意义虚词
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
