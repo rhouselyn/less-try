@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool } from 'lucide-react';
 
 function AllUnitsStep({
@@ -117,7 +117,11 @@ function AllUnitsStep({
           <>
             <span className={`text-[13px] font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{index + 1}</span>
             {isCurrent && (
-              <div className="w-4 h-[2px] rounded-full mt-0.5 bg-amber-400" />
+              <motion.div
+                layoutId="currentIndicator"
+                className="w-4 h-[2px] rounded-full mt-0.5 bg-amber-400"
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
             )}
           </>
         )}
@@ -241,58 +245,56 @@ function AllUnitsStep({
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
-          <LayoutGroup>
-            <div className="bg-stone-50/80 px-3 pt-2.5">
-              <div className="flex gap-1 relative">
-                {tabs.map((tab, i) => {
-                  const Icon = tab.icon;
-                  const isActive = activeTab === i;
-                  return (
-                    <button
-                      key={tab.key}
-                      onClick={() => handleTabChange(i)}
-                      className="relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
-                    >
-                      {isActive && (
-                        <motion.div
-                          layoutId="allUnitsTabBg"
-                          className="absolute inset-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
-                          transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                        />
+          <div className="bg-stone-50/80 px-3 pt-2.5">
+            <div className="flex gap-1 relative">
+              {tabs.map((tab, i) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === i;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => handleTabChange(i)}
+                    className="relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeTabBg"
+                        className="absolute inset-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
+                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                      />
+                    )}
+                    <div className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${
+                      isActive ? 'text-stone-800' : 'text-stone-400 hover:text-stone-600'
+                    }`}>
+                      <Icon className="w-3.5 h-3.5" />
+                      <span>{tab.label}</span>
+                      {tab.total > 0 && (
+                        <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors duration-300 ${
+                          isActive ? 'bg-stone-100 text-stone-500' : 'text-stone-300'
+                        }`}>
+                          {tab.completed}/{tab.total}
+                        </span>
                       )}
-                      <div className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${
-                        isActive ? 'text-stone-800' : 'text-stone-400 hover:text-stone-600'
-                      }`}>
-                        <Icon className="w-3.5 h-3.5" />
-                        <span>{tab.label}</span>
-                        {tab.total > 0 && (
-                          <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors duration-300 ${
-                            isActive ? 'bg-stone-100 text-stone-500' : 'text-stone-300'
-                          }`}>
-                            {tab.completed}/{tab.total}
-                          </span>
-                        )}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <div className="px-5 pb-5 pt-4">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -12 }}
-                  transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-                >
-                  {renderPhaseContent(activeTab + 1)}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </LayoutGroup>
+          <div className="px-5 pb-5 pt-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                {renderPhaseContent(activeTab + 1)}
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
       )}
     </motion.div>
