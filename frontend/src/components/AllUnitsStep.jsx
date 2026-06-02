@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, Sparkles } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const UNITS_PER_PAGE = 30;
 
 function AllUnitsStep({
   phase1Units,
@@ -25,12 +27,26 @@ function AllUnitsStep({
   onTabChange
 }) {
   const [activeTab, setActiveTab] = useState(lastActiveTab || 0);
+  const [phase1Page, setPhase1Page] = useState(1);
+  const [phase2Page, setPhase2Page] = useState(1);
 
   useEffect(() => {
     if (lastActiveTab !== undefined && lastActiveTab !== null) {
       setActiveTab(lastActiveTab);
     }
   }, [lastActiveTab]);
+
+  useEffect(() => {
+    if (currentPhase1Unit !== undefined) {
+      setPhase1Page(Math.floor(currentPhase1Unit / UNITS_PER_PAGE) + 1);
+    }
+  }, [currentPhase1Unit]);
+
+  useEffect(() => {
+    if (currentPhase2Unit !== undefined) {
+      setPhase2Page(Math.floor(currentPhase2Unit / UNITS_PER_PAGE) + 1);
+    }
+  }, [currentPhase2Unit]);
 
   const handleTabChange = (index) => {
     setActiveTab(index);
@@ -127,6 +143,32 @@ function AllUnitsStep({
     );
   };
 
+  const renderPagination = (currentPage, totalPages, onPageChange) => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className="flex items-center justify-center gap-2 mt-5">
+        <button
+          onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          disabled={currentPage <= 1}
+          className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <span className="text-[11px] text-stone-400 tabular-nums">
+          {currentPage} / {totalPages}
+        </span>
+        <button
+          onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          disabled={currentPage >= totalPages}
+          className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  };
+
   const renderPhaseContent = (phaseNumber) => {
     const units = phaseNumber === 1 ? phase1Units : phase2Units;
     const currentUnit = phaseNumber === 1 ? currentPhase1Unit : currentPhase2Unit;
@@ -136,6 +178,13 @@ function AllUnitsStep({
     const completed = phaseNumber === 1 ? phase1Completed : phase2Completed;
     const total = phaseNumber === 1 ? phase1Total : phase2Total;
     const progress = total > 0 ? (completed / total) * 100 : 0;
+    const currentPage = phaseNumber === 1 ? phase1Page : phase2Page;
+    const setCurrentPage = phaseNumber === 1 ? setPhase1Page : setPhase2Page;
+
+    const totalPages = Math.max(1, Math.ceil((units?.length || 0) / UNITS_PER_PAGE));
+    const pageStart = (currentPage - 1) * UNITS_PER_PAGE;
+    const pageEnd = Math.min(pageStart + UNITS_PER_PAGE, units?.length || 0);
+    const pageUnits = units?.slice(pageStart, pageEnd) || [];
 
     if (!units || units.length === 0 || (phaseNumber === 2 && units.length === 1 && units[0]?.no_eligible_sentences)) {
       return (
@@ -165,17 +214,20 @@ function AllUnitsStep({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {units.map((unit, index) =>
-            renderUnitCard(
+          {pageUnits.map((unit, pageIdx) => {
+            const globalIdx = pageStart + pageIdx;
+            return renderUnitCard(
               unit,
-              index,
-              () => onClick(index),
+              globalIdx,
+              () => onClick(globalIdx),
               keyPrefix,
-              isUnlockedFn(index),
+              isUnlockedFn(globalIdx),
               phaseNumber
-            )
-          )}
+            );
+          })}
         </div>
+
+        {renderPagination(currentPage, totalPages, setCurrentPage)}
       </div>
     );
   };

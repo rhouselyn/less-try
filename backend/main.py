@@ -1453,7 +1453,7 @@ async def get_sentences(file_id: str):
 pre_generated_words = {}
 
 @app.get("/api/learn/{file_id}/random-word")
-async def get_random_word(file_id: str, new_words_only: bool = False):
+async def get_random_word(file_id: str):
     try:
         storage.touch_history_record(file_id)
         vocab = storage.load_vocab(file_id)
@@ -1470,31 +1470,6 @@ async def get_random_word(file_id: str, new_words_only: bool = False):
         if not plan:
             generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
             plan = storage.load_learning_plan(file_id)
-        
-        if new_words_only:
-            language_settings = storage.load_language_settings(file_id)
-            source_lang_nwo = language_settings.get("source_lang", "en")
-            master_words_nwo = storage.load_master_words(source_lang_nwo)
-            
-            if master_words_nwo:
-                flat_items = []
-                for unit in plan:
-                    flat_items.extend(unit.get("items", []))
-                
-                while current_index < len(flat_items):
-                    item = flat_items[current_index]
-                    if item.get("type") == "word":
-                        vi = item.get("vocab_index")
-                        if vi is not None and vi < len(vocab):
-                            word = vocab[vi].get("word", "").lower()
-                            if word in master_words_nwo:
-                                current_index += 1
-                                storage.save_learning_progress(file_id, current_index)
-                                continue
-                    break
-                
-                if current_index >= len(flat_items):
-                    return {"type": "all_complete"}
         
         unit_id, step_in_unit = find_item_in_plan(plan, current_index)
         
@@ -2660,7 +2635,7 @@ async def get_phases(file_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/{file_id}/phase/{phase_number}/units")
-async def get_phase_units(file_id: str, phase_number: int, new_words_only: bool = False):
+async def get_phase_units(file_id: str, phase_number: int):
     try:
         sentences = storage.load_pipeline_data(file_id)
         vocab = storage.load_vocab(file_id)
@@ -2676,77 +2651,14 @@ async def get_phase_units(file_id: str, phase_number: int, new_words_only: bool 
                 generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
                 plan = storage.load_learning_plan(file_id)
             
-            effective_plan = plan
-            original_flat_items = []
-            for unit in plan:
-                original_flat_items.extend(unit.get("items", []))
-            
-            if new_words_only:
-                language_settings = storage.load_language_settings(file_id)
-                source_lang = language_settings.get("source_lang", "en")
-                master_words = storage.load_master_words(source_lang)
-                
-                if master_words:
-                    filtered_items_with_orig_idx = []
-                    for orig_idx, item in enumerate(original_flat_items):
-                        if item.get("type") == "word":
-                            vi = item.get("vocab_index")
-                            if vi is not None and vi < len(vocab):
-                                word = vocab[vi].get("word", "").lower()
-                                if word in master_words:
-                                    continue
-                        filtered_items_with_orig_idx.append((orig_idx, item))
-                    
-                    max_items_per_unit = 10
-                    effective_plan = []
-                    for i in range(0, len(filtered_items_with_orig_idx), max_items_per_unit):
-                        chunk = filtered_items_with_orig_idx[i:i + max_items_per_unit]
-                        effective_plan.append({
-                            "unit_id": len(effective_plan),
-                            "items_with_idx": chunk
-                        })
-            
-            learned_vocab_words = set()
-            for item in original_flat_items:
-                if item.get("type") == "word":
-                    vi = item.get("vocab_index")
-                    if vi is not None and vi < len(vocab):
-                        learned_vocab_words.add(vocab[vi].get("word", "").lower())
-            
             phase1_units = []
-            for i, unit_plan in enumerate(effective_plan):
-                if "items_with_idx" in unit_plan:
-                    items_data = unit_plan["items_with_idx"]
-                    items = [item for _, item in items_data]
-                    start_index = items_data[0][0]
-                    end_index = items_data[-1][0] + 1
-                else:
-                    items = unit_plan.get("items", [])
-                    start_index = sum(len(u.get("items", [])) for u in effective_plan[:i])
-                    end_index = start_index + len(items)
-                
+            accumulated = 0
+            for i, unit_plan in enumerate(plan):
+                items = unit_plan.get("items", [])
+                start_index = accumulated
+                end_index = accumulated + len(items)
                 word_count = sum(1 for item in items if item["type"] == "word")
-                
-                if new_words_only:
-                    unit_has_learned_word = False
-                    for item in items:
-                        if item.get("type") == "word":
-                            vi = item.get("vocab_index")
-                            if vi is not None and vi < len(vocab):
-                                w = vocab[vi].get("word", "").lower()
-                                if w in learned_vocab_words:
-                                    unit_has_learned_word = True
-                                    break
-                    completed = max_index >= end_index
-                    unlocked = unit_has_learned_word or completed or i == 0
-                    if not unlocked and i > 0 and phase1_units:
-                        prev = phase1_units[-1]
-                        if prev.get("unlocked") or prev.get("completed"):
-                            unlocked = True
-                else:
-                    completed = max_index >= end_index
-                    unlocked = None
-                
+                completed = max_index >= end_index
                 word_items = [item for item in items if item["type"] == "word"]
                 all_words_cached = True
                 for item in word_items:
@@ -2762,9 +2674,9 @@ async def get_phase_units(file_id: str, phase_number: int, new_words_only: bool 
                     "completed": completed,
                     "start_index": start_index,
                     "end_index": end_index,
-                    "generating": not all_words_cached,
-                    **({"unlocked": unlocked} if unlocked is not None else {})
+                    "generating": not all_words_cached
                 })
+                accumulated += len(items)
             
             current_unit = 0
             for i, unit in enumerate(phase1_units):
@@ -2784,13 +2696,11 @@ async def get_phase_units(file_id: str, phase_number: int, new_words_only: bool 
                         "completed": unit["completed"],
                         "start_index": unit["start_index"],
                         "end_index": unit["end_index"],
-                        "generating": unit["generating"],
-                        **({"unlocked": unit["unlocked"]} if "unlocked" in unit else {})
+                        "generating": unit["generating"]
                     }
                     for i, unit in enumerate(phase1_units)
                 ],
-                "current_unit": current_unit,
-                "new_words_only": new_words_only
+                "current_unit": current_unit
             }
         else:
             eligible_sentences = filter_eligible_sentences(sentences)

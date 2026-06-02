@@ -423,7 +423,12 @@ class Storage:
         if prefs_path.exists():
             try:
                 with open(prefs_path, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                defaults = {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False, "new_words_only": False}
+                for k, v in defaults.items():
+                    if k not in data:
+                        data[k] = v
+                return data
             except (json.JSONDecodeError, IOError):
                 pass
         old_path = self.base_dir / "user_preferences.json"
