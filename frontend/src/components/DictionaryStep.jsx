@@ -40,6 +40,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const filteredVocabRef = useRef([])
   const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
+  const stateRefs = useRef({ vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch })
+
+  useEffect(() => {
+    stateRefs.current = { vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch }
+  })
 
   const saveState = () => {
     if (dictStateRef) {
@@ -58,6 +63,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   useEffect(() => {
     saveState()
   }, [vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch])
+
+  useEffect(() => {
+    if (vocabListRef.current && (saved.vocabScrollPos || saved.globalVocabScrollPos)) {
+      const targetPos = saved.showGlobalVocab ? (saved.globalVocabScrollPos || 0) : (saved.vocabScrollPos || 0)
+      requestAnimationFrame(() => {
+        if (vocabListRef.current) {
+          vocabListRef.current.scrollTop = targetPos
+        }
+      })
+    }
+  }, [])
 
   useEffect(() => {
     if (currentFileId) {
@@ -696,15 +712,23 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   useEffect(() => {
     return () => {
+      if (vocabListRef.current) {
+        if (stateRefs.current.showGlobalVocab) {
+          globalVocabScrollPos.current = vocabListRef.current.scrollTop
+        } else {
+          localVocabScrollPos.current = vocabListRef.current.scrollTop
+        }
+      }
       if (dictStateRef) {
+        const s = stateRefs.current
         dictStateRef.current = {
-          ...dictStateRef.current,
+          vocabPage: s.vocabPage, sentencePage: s.sentencePage, globalVocabPage: s.globalVocabPage,
           vocabScrollPos: localVocabScrollPos.current,
+          sentenceScrollPos: 0,
           globalVocabScrollPos: globalVocabScrollPos.current,
-          vocabPage, sentencePage, globalVocabPage,
-          vocabDisplayMode, sentenceDisplayMode,
-          showOriginal, showGlobalVocab,
-          vocabSearch, sentenceSearch
+          vocabDisplayMode: s.vocabDisplayMode, sentenceDisplayMode: s.sentenceDisplayMode,
+          showOriginal: s.showOriginal, showGlobalVocab: s.showGlobalVocab,
+          vocabSearch: s.vocabSearch, sentenceSearch: s.sentenceSearch
         }
       }
     }
