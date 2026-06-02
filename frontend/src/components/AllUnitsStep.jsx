@@ -25,10 +25,10 @@ function AllUnitsStep({
   const [activeTab, setActiveTab] = useState(lastActiveTab || 0);
 
   useEffect(() => {
-    if (lastActiveTab !== undefined) {
+    if (lastActiveTab !== undefined && lastActiveTab !== null) {
       setActiveTab(lastActiveTab);
     }
-  }, []);
+  }, [lastActiveTab]);
 
   const handleTabChange = (index) => {
     setActiveTab(index);
@@ -51,10 +51,10 @@ function AllUnitsStep({
     return true;
   };
 
-  const phase1Completed = phase1Units.filter(u => u.completed).length;
-  const phase2Completed = phase2Units.filter(u => u.completed).length;
-  const phase1Total = phase1Units.length;
-  const phase2Total = phase2Units.length;
+  const phase1Completed = phase1Units?.filter(u => u.completed).length || 0;
+  const phase2Completed = phase2Units?.filter(u => u.completed).length || 0;
+  const phase1Total = phase1Units?.length || 0;
+  const phase2Total = phase2Units?.length || 0;
 
   const tabs = [
     { key: 'phase1', label: t.phase1, icon: BookOpen, completed: phase1Completed, total: phase1Total },
@@ -117,11 +117,7 @@ function AllUnitsStep({
           <>
             <span className={`text-[13px] font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{index + 1}</span>
             {isCurrent && (
-              <motion.div
-                layoutId="currentIndicator"
-                className="w-4 h-[2px] rounded-full mt-0.5 bg-amber-400"
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              />
+              <div className="w-4 h-[2px] rounded-full mt-0.5 bg-amber-400" />
             )}
           </>
         )}
@@ -139,7 +135,7 @@ function AllUnitsStep({
     const total = phaseNumber === 1 ? phase1Total : phase2Total;
     const progress = total > 0 ? (completed / total) * 100 : 0;
 
-    if (phaseNumber === 2 && (units.length === 0 || (units.length === 1 && units[0]?.no_eligible_sentences))) {
+    if (!units || units.length === 0 || (phaseNumber === 2 && units.length === 1 && units[0]?.no_eligible_sentences)) {
       return (
         <div className="py-12 text-center">
           <p className="text-xs text-stone-400">{t.noPracticeContent || '暂无可练习内容'}</p>
@@ -247,6 +243,12 @@ function AllUnitsStep({
         <div className="bg-white rounded-2xl shadow-[0_1px_4px_rgba(0,0,0,0.06)] overflow-hidden">
           <div className="bg-stone-50/80 px-3 pt-2.5">
             <div className="flex gap-1 relative">
+              <motion.div
+                className="absolute top-0 bottom-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
+                style={{ width: 'calc(50% - 4px)' }}
+                animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
+                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+              />
               {tabs.map((tab, i) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === i;
@@ -254,16 +256,9 @@ function AllUnitsStep({
                   <button
                     key={tab.key}
                     onClick={() => handleTabChange(i)}
-                    className="relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
+                    className="relative z-10 flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
                   >
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeTabBg"
-                        className="absolute inset-0 bg-white rounded-t-xl shadow-[0_-1px_4px_rgba(0,0,0,0.04)]"
-                        transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                      />
-                    )}
-                    <div className={`relative z-10 flex items-center gap-1.5 transition-colors duration-300 ${
+                    <div className={`flex items-center gap-1.5 transition-colors duration-300 ${
                       isActive ? 'text-stone-800' : 'text-stone-400 hover:text-stone-600'
                     }`}>
                       <Icon className="w-3.5 h-3.5" />
