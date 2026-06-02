@@ -16,10 +16,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [wordDetails, setWordDetails] = useState({})
   const [sentenceSearch, setSentenceSearch] = useState(saved.sentenceSearch || '')
   const [vocabSearch, setVocabSearch] = useState(saved.vocabSearch || '')
-  const [sentenceDisplayMode, setSentenceDisplayMode] = useState(saved.sentenceDisplayMode || 0)
-  const [vocabDisplayMode, setVocabDisplayMode] = useState(saved.vocabDisplayMode || 0)
-  const [showOriginal, setShowOriginal] = useState(saved.showOriginal || false)
-  const [showGlobalVocab, setShowGlobalVocab] = useState(saved.showGlobalVocab || false)
+  const [sentenceDisplayMode, setSentenceDisplayMode] = useState(saved.sentenceDisplayMode ?? 0)
+  const [vocabDisplayMode, setVocabDisplayMode] = useState(saved.vocabDisplayMode ?? 0)
+  const [showOriginal, setShowOriginal] = useState(saved.showOriginal ?? false)
+  const [showGlobalVocab, setShowGlobalVocab] = useState(saved.showGlobalVocab ?? false)
   const [globalVocab, setGlobalVocab] = useState([])
   const [globalVocabLoading, setGlobalVocabLoading] = useState(false)
   const [actualSourceLang, setActualSourceLang] = useState(sourceLang)
@@ -40,24 +40,30 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const filteredVocabRef = useRef([])
   const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
+  const restoredScroll = useRef(false)
 
-  const saveState = () => {
+  const stateRef = useRef({})
+  stateRef.current = {
+    vocabPage, sentencePage, globalVocabPage,
+    vocabDisplayMode, sentenceDisplayMode,
+    showOriginal, showGlobalVocab,
+    vocabSearch, sentenceSearch
+  }
+
+  const saveState = useCallback(() => {
     if (dictStateRef) {
       dictStateRef.current = {
-        vocabPage, sentencePage, globalVocabPage,
+        ...stateRef.current,
         vocabScrollPos: localVocabScrollPos.current,
-        sentenceScrollPos: 0,
         globalVocabScrollPos: globalVocabScrollPos.current,
-        vocabDisplayMode, sentenceDisplayMode,
-        showOriginal, showGlobalVocab,
-        vocabSearch, sentenceSearch
+        sentenceScrollPos: 0
       }
     }
-  }
+  }, [dictStateRef])
 
   useEffect(() => {
     saveState()
-  }, [vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch])
+  }, [vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch, saveState])
 
   useEffect(() => {
     if (currentFileId) {
@@ -236,6 +242,26 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       vocabListRef.current.scrollTop = targetPos
     }
   }, [showGlobalVocab, globalVocabLoading])
+
+  useEffect(() => {
+    if (restoredScroll.current) return
+    if (!vocabListRef.current) return
+    if (vocab.length === 0) return
+    const savedPos = dictStateRef?.current
+    if (!savedPos) return
+    const hasSavedState = savedPos.vocabPage > 1 || savedPos.vocabScrollPos > 0 || savedPos.globalVocabScrollPos > 0 || savedPos.sentencePage > 1
+    if (!hasSavedState) { restoredScroll.current = true; return }
+    requestAnimationFrame(() => {
+      if (vocabListRef.current) {
+        const isGlobal = savedPos.showGlobalVocab
+        const targetPos = isGlobal ? savedPos.globalVocabScrollPos : savedPos.vocabScrollPos
+        if (targetPos > 0) {
+          vocabListRef.current.scrollTop = targetPos
+        }
+      }
+      restoredScroll.current = true
+    })
+  }, [vocab, dictStateRef])
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
@@ -696,15 +722,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   useEffect(() => {
     return () => {
-      if (dictStateRef) {
+      if (dictStateRef && vocabListRef.current) {
+        const currentScroll = vocabListRef.current.scrollTop
+        const isGlobal = stateRef.current.showGlobalVocab
         dictStateRef.current = {
-          ...dictStateRef.current,
-          vocabScrollPos: localVocabScrollPos.current,
-          globalVocabScrollPos: globalVocabScrollPos.current,
-          vocabPage, sentencePage, globalVocabPage,
-          vocabDisplayMode, sentenceDisplayMode,
-          showOriginal, showGlobalVocab,
-          vocabSearch, sentenceSearch
+          ...stateRef.current,
+          vocabScrollPos: isGlobal ? localVocabScrollPos.current : currentScroll,
+          globalVocabScrollPos: isGlobal ? currentScroll : globalVocabScrollPos.current,
+          sentenceScrollPos: 0
         }
       }
     }
