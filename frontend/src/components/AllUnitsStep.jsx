@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, ChevronLeft, ChevronRight } from 'lucide-react';
+
+const UNITS_PER_PAGE = 30;
 
 function AllUnitsStep({
   phase1Units,
@@ -23,12 +25,28 @@ function AllUnitsStep({
   onTabChange
 }) {
   const [activeTab, setActiveTab] = useState(lastActiveTab || 0);
+  const [phase1Page, setPhase1Page] = useState(0);
+  const [phase2Page, setPhase2Page] = useState(0);
 
   useEffect(() => {
     if (lastActiveTab !== undefined && lastActiveTab !== null) {
       setActiveTab(lastActiveTab);
     }
   }, [lastActiveTab]);
+
+  useEffect(() => {
+    if (currentPhase1Unit > 0 && phase1Units?.length > 0) {
+      const targetPage = Math.floor(currentPhase1Unit / UNITS_PER_PAGE);
+      setPhase1Page(targetPage);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (currentPhase2Unit > 0 && phase2Units?.length > 0) {
+      const targetPage = Math.floor(currentPhase2Unit / UNITS_PER_PAGE);
+      setPhase2Page(targetPage);
+    }
+  }, []);
 
   const handleTabChange = (index) => {
     setActiveTab(index);
@@ -135,6 +153,13 @@ function AllUnitsStep({
     const total = phaseNumber === 1 ? phase1Total : phase2Total;
     const progress = total > 0 ? (completed / total) * 100 : 0;
 
+    const currentPage = phaseNumber === 1 ? phase1Page : phase2Page;
+    const setCurrentPage = phaseNumber === 1 ? setPhase1Page : setPhase2Page;
+    const totalPages = Math.ceil(total / UNITS_PER_PAGE);
+    const startIdx = currentPage * UNITS_PER_PAGE;
+    const endIdx = Math.min(startIdx + UNITS_PER_PAGE, total);
+    const pageUnits = units?.slice(startIdx, endIdx) || [];
+
     if (!units || units.length === 0 || (phaseNumber === 2 && units.length === 1 && units[0]?.no_eligible_sentences)) {
       return (
         <div className="py-12 text-center">
@@ -149,6 +174,27 @@ function AllUnitsStep({
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-stone-400 tabular-nums">{completed}<span className="text-stone-300">/{total}</span></span>
           </div>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
+                className="p-1 text-stone-400 hover:text-stone-600 disabled:text-stone-200 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="text-[11px] text-stone-400 tabular-nums min-w-[60px] text-center">
+                {currentPage + 1}/{totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={currentPage >= totalPages - 1}
+                className="p-1 text-stone-400 hover:text-stone-600 disabled:text-stone-200 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="w-full h-1 bg-stone-100 rounded-full overflow-hidden mb-5">
@@ -163,16 +209,17 @@ function AllUnitsStep({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {units.map((unit, index) =>
-            renderUnitCard(
+          {pageUnits.map((unit, pageIdx) => {
+            const globalIdx = startIdx + pageIdx;
+            return renderUnitCard(
               unit,
-              index,
-              () => onClick(index),
+              globalIdx,
+              () => onClick(globalIdx),
               keyPrefix,
-              isUnlockedFn(index),
+              isUnlockedFn(globalIdx),
               phaseNumber
-            )
-          )}
+            );
+          })}
         </div>
       </div>
     );

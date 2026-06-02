@@ -432,7 +432,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         print(f"[DEBUG] 开始处理文件 {file_id}, RPM={rpm}")
         processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0}
         
-        storage.save_language_settings(file_id, source_lang, target_lang, rpm)
+        storage.save_language_settings(file_id, source_lang, target_lang)
         
         t_split_start = time.time()
         sentences = text_processor.split_sentences(text)

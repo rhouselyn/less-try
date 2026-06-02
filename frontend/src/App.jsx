@@ -107,6 +107,7 @@ function App() {
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
   const learningContainerRef = useRef(null)
+  const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -1151,10 +1152,11 @@ function App() {
               sourceLang={sourceLang}
               targetLang={targetLang}
               preprocessStatus={preprocessStatus}
-              onBack={() => setStep('input')}
+              onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }; setStep('input') }}
               fileTitle={fileTitle}
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
+              dictStateRef={dictStateRef}
             />
           )}
           

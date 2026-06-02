@@ -8,25 +8,26 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50 }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef }) {
+  const saved = dictStateRef?.current || {}
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
   const [wordDetails, setWordDetails] = useState({})
-  const [sentenceSearch, setSentenceSearch] = useState('')
-  const [vocabSearch, setVocabSearch] = useState('')
-  const [sentenceDisplayMode, setSentenceDisplayMode] = useState(0)
-  const [vocabDisplayMode, setVocabDisplayMode] = useState(0)
-  const [showOriginal, setShowOriginal] = useState(false)
-  const [showGlobalVocab, setShowGlobalVocab] = useState(false)
+  const [sentenceSearch, setSentenceSearch] = useState(saved.sentenceSearch || '')
+  const [vocabSearch, setVocabSearch] = useState(saved.vocabSearch || '')
+  const [sentenceDisplayMode, setSentenceDisplayMode] = useState(saved.sentenceDisplayMode || 0)
+  const [vocabDisplayMode, setVocabDisplayMode] = useState(saved.vocabDisplayMode || 0)
+  const [showOriginal, setShowOriginal] = useState(saved.showOriginal || false)
+  const [showGlobalVocab, setShowGlobalVocab] = useState(saved.showGlobalVocab || false)
   const [globalVocab, setGlobalVocab] = useState([])
   const [globalVocabLoading, setGlobalVocabLoading] = useState(false)
   const [actualSourceLang, setActualSourceLang] = useState(sourceLang)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
-  const [vocabPage, setVocabPage] = useState(1)
-  const [sentencePage, setSentencePage] = useState(1)
-  const [globalVocabPage, setGlobalVocabPage] = useState(1)
+  const [vocabPage, setVocabPage] = useState(saved.vocabPage || 1)
+  const [sentencePage, setSentencePage] = useState(saved.sentencePage || 1)
+  const [globalVocabPage, setGlobalVocabPage] = useState(saved.globalVocabPage || 1)
   const [wordGenProgress, setWordGenProgress] = useState(null)
   const [meaningOverrides, setMeaningOverrides] = useState({})
   const vocabListRef = useRef(null)
@@ -34,11 +35,29 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const sentenceRefs = useRef({})
   const titleInputRef = useRef(null)
   const pendingScrollWord = useRef(null)
-  const localVocabScrollPos = useRef(0)
-  const globalVocabScrollPos = useRef(0)
+  const localVocabScrollPos = useRef(saved.vocabScrollPos || 0)
+  const globalVocabScrollPos = useRef(saved.globalVocabScrollPos || 0)
   const filteredVocabRef = useRef([])
-  const vocabPageRef = useRef(1)
+  const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
+
+  const saveState = () => {
+    if (dictStateRef) {
+      dictStateRef.current = {
+        vocabPage, sentencePage, globalVocabPage,
+        vocabScrollPos: localVocabScrollPos.current,
+        sentenceScrollPos: 0,
+        globalVocabScrollPos: globalVocabScrollPos.current,
+        vocabDisplayMode, sentenceDisplayMode,
+        showOriginal, showGlobalVocab,
+        vocabSearch, sentenceSearch
+      }
+    }
+  }
+
+  useEffect(() => {
+    saveState()
+  }, [vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch])
 
   useEffect(() => {
     if (currentFileId) {
@@ -674,6 +693,22 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       </div>
     )
   }
+
+  useEffect(() => {
+    return () => {
+      if (dictStateRef) {
+        dictStateRef.current = {
+          ...dictStateRef.current,
+          vocabScrollPos: localVocabScrollPos.current,
+          globalVocabScrollPos: globalVocabScrollPos.current,
+          vocabPage, sentencePage, globalVocabPage,
+          vocabDisplayMode, sentenceDisplayMode,
+          showOriginal, showGlobalVocab,
+          vocabSearch, sentenceSearch
+        }
+      }
+    }
+  }, [])
 
   return (
     <motion.div
