@@ -8,21 +8,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   const [answerChecked, setAnswerChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
-  if (!data) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-3xl mx-auto"
-      >
-        <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-stone-400" />
-          <p className="text-lg text-stone-600">{t.loading}</p>
-        </div>
-      </motion.div>
-    )
-  }
-
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((exerciseIndexInUnit ?? 0) + 1)
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (totalExercisesInUnit ?? 0)
   const isLastExercise = reviewMode ? (wrongItemsCount === 0) : (stepInUnit >= (totalExercisesInUnit ?? 10))
