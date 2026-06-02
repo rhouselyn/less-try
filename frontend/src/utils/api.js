@@ -50,14 +50,22 @@ export const api = {
   },
 
   // 获取随机单词
-  getRandomWord: async (fileId) => {
-    const response = await axios.get(`${baseUrl}/api/learn/${fileId}/random-word`);
+  getRandomWord: async (fileId, newWordsOnly = false, unitId = 0) => {
+    const params = new URLSearchParams();
+    if (newWordsOnly) {
+      params.set('new_words_only', 'true');
+      params.set('unit_id', String(unitId));
+    }
+    const response = await axios.get(`${baseUrl}/api/learn/${fileId}/random-word?${params.toString()}`);
     return response.data;
   },
 
   // 获取下一个单词
-  nextWord: async (fileId) => {
-    const response = await axios.post(`${baseUrl}/api/learn/${fileId}/next-word`);
+  nextWord: async (fileId, newWordsOnly = false, unitId = 0) => {
+    const response = await axios.post(`${baseUrl}/api/learn/${fileId}/next-word`, {
+      new_words_only: newWordsOnly,
+      unit_id: unitId
+    });
     return response.data;
   },
 
@@ -107,8 +115,13 @@ export const api = {
   },
   
   // 获取指定阶段的单元列表
-  getPhaseUnits: async (fileId, phaseNumber) => {
-    const response = await axios.get(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/units`);
+  getPhaseUnits: async (fileId, phaseNumber, newWordsOnly = false) => {
+    const params = new URLSearchParams();
+    if (newWordsOnly && phaseNumber === 1) {
+      params.set('new_words_only', 'true');
+    }
+    const qs = params.toString();
+    const response = await axios.get(`${baseUrl}/api/${fileId}/phase/${phaseNumber}/units${qs ? '?' + qs : ''}`);
     return response.data;
   },
   

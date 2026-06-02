@@ -468,6 +468,23 @@ class Storage:
         lang_dir.mkdir(parents=True, exist_ok=True)
         return lang_dir / "master_words.json"
 
+    def load_new_words_progress(self, file_id: str) -> Dict:
+        file_dir = self.get_file_dir(file_id)
+        path = file_dir / "new_words_progress.json"
+        if path.exists():
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
+        return {}
+
+    def save_new_words_progress(self, file_id: str, data: Dict):
+        file_dir = self.get_file_dir(file_id)
+        path = file_dir / "new_words_progress.json"
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+
     def load_master_words(self, source_lang: str) -> set:
         path = self._get_master_words_path(source_lang)
         if path.exists():

@@ -24,11 +24,13 @@ function AllUnitsStep({
   fileTitle,
   currentFileId,
   lastActiveTab,
-  onTabChange
+  onTabChange,
+  phase1Page,
+  phase2Page,
+  onPhase1PageChange,
+  onPhase2PageChange
 }) {
   const [activeTab, setActiveTab] = useState(lastActiveTab || 0);
-  const [phase1Page, setPhase1Page] = useState(1);
-  const [phase2Page, setPhase2Page] = useState(1);
 
   useEffect(() => {
     if (lastActiveTab !== undefined && lastActiveTab !== null) {
@@ -38,13 +40,13 @@ function AllUnitsStep({
 
   useEffect(() => {
     if (currentPhase1Unit !== undefined) {
-      setPhase1Page(Math.floor(currentPhase1Unit / UNITS_PER_PAGE) + 1);
+      onPhase1PageChange?.(Math.floor(currentPhase1Unit / UNITS_PER_PAGE) + 1);
     }
   }, [currentPhase1Unit]);
 
   useEffect(() => {
     if (currentPhase2Unit !== undefined) {
-      setPhase2Page(Math.floor(currentPhase2Unit / UNITS_PER_PAGE) + 1);
+      onPhase2PageChange?.(Math.floor(currentPhase2Unit / UNITS_PER_PAGE) + 1);
     }
   }, [currentPhase2Unit]);
 
@@ -179,7 +181,7 @@ function AllUnitsStep({
     const total = phaseNumber === 1 ? phase1Total : phase2Total;
     const progress = total > 0 ? (completed / total) * 100 : 0;
     const currentPage = phaseNumber === 1 ? phase1Page : phase2Page;
-    const setCurrentPage = phaseNumber === 1 ? setPhase1Page : setPhase2Page;
+    const setCurrentPage = phaseNumber === 1 ? onPhase1PageChange : onPhase2PageChange;
 
     const totalPages = Math.max(1, Math.ceil((units?.length || 0) / UNITS_PER_PAGE));
     const pageStart = (currentPage - 1) * UNITS_PER_PAGE;

@@ -332,8 +332,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                           </span>
                         )}
                       </div>
-                      {word.meaning && (
-                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.meaning}</p>
+                      {(word.meaning || word.enriched_meaning) && (
+                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.enriched_meaning || word.meaning}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">

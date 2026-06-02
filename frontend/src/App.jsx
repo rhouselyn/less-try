@@ -100,6 +100,8 @@ function App() {
   const [newWordsOnly, setNewWordsOnly] = useState(false)
   const [generatingUnits, setGeneratingUnits] = useState(new Set())
   const [lastActiveTab, setLastActiveTab] = useState(0)
+  const [phase1Page, setPhase1Page] = useState(1)
+  const [phase2Page, setPhase2Page] = useState(1)
   const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
@@ -163,7 +165,7 @@ function App() {
 
     const interval = setInterval(async () => {
       try {
-        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+        const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1, newWordsOnly)
         const newGenUnits = new Set()
         phase1UnitsData.units.forEach((u, i) => { if (u.generating) newGenUnits.add(i) })
         setGeneratingUnits(newGenUnits)
@@ -409,7 +411,7 @@ function App() {
     setLoading(true)
     try {
       const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
-        api.getPhaseUnits(currentFileId, 1),
+        api.getPhaseUnits(currentFileId, 1, newWordsOnly),
         api.getPhaseUnits(currentFileId, 2),
         api.getUnitStars(currentFileId)
       ])
@@ -472,48 +474,78 @@ function App() {
     setLoading(true)
     try {
       const unit = phase1Units[unitId]
-      const startIndex = unit?.start_index ?? unitId * 10
-      await api.setProgress(currentFileId, startIndex)
-      const response = await api.getRandomWord(currentFileId)
-      if (response.type === 'sentence_quiz') {
-        setQuizData(response)
-        setUnitEndIndex(response.unit_end_index)
-        setLearningMode('sentence')
-        setStep('sentence-quiz')
-      } else if (response.type === 'listening_quiz') {
-        if (skipListening) {
-          setLoading(false)
-          return getNextWord(0)
+      if (newWordsOnly) {
+        const response = await api.getRandomWord(currentFileId, true, unitId)
+        if (response.type === 'unit_complete' || response.type === 'all_complete') {
+          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+            api.getPhaseUnits(currentFileId, 1, true),
+            api.getPhaseUnits(currentFileId, 2)
+          ])
+          setPhase1Units(phase1UnitsData.units)
+          const genUnits = new Set()
+          phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+          setGeneratingUnits(genUnits)
+          setPhase2Units(phase2UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          setCompletedUnitId(unitId)
+          setCompletedPhase(1)
+          const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+          updateUnitStars(`1-${unitId}`, starCount)
+          setStep('unit-complete')
+        } else {
+          setLearningData(response)
+          setUnitEndIndex(response.unit_end_index)
+          setShowWordCard(false)
+          setSelectedOption(null)
+          setIsCorrect(null)
+          setLearningMode('word')
+          setStep('learning')
         }
-        setListeningQuizData(response)
-        setUnitEndIndex(response.unit_end_index)
-        setLearningMode('listening')
-        setStep('listening-quiz')
-      } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
-        const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
-          api.getPhaseUnits(currentFileId, 2)
-        ])
-        setPhase1Units(phase1UnitsData.units)
-        const genUnits = new Set()
-        phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
-        setGeneratingUnits(genUnits)
-        setPhase2Units(phase2UnitsData.units)
-        setCurrentPhase1Unit(phase1UnitsData.current_unit)
-        setCurrentPhase2Unit(phase2UnitsData.current_unit)
-        setCompletedUnitId(unitId)
-        setCompletedPhase(1)
-        const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
-        updateUnitStars(`1-${unitId}`, starCount)
-        setStep('unit-complete')
       } else {
-        setLearningData(response)
-        setUnitEndIndex(response.unit_end_index)
-        setShowWordCard(false)
-        setSelectedOption(null)
-        setIsCorrect(null)
-        setLearningMode('word')
-        setStep('learning')
+        const startIndex = unit?.start_index ?? unitId * 10
+        await api.setProgress(currentFileId, startIndex)
+        const response = await api.getRandomWord(currentFileId)
+        if (response.type === 'sentence_quiz') {
+          setQuizData(response)
+          setUnitEndIndex(response.unit_end_index)
+          setLearningMode('sentence')
+          setStep('sentence-quiz')
+        } else if (response.type === 'listening_quiz') {
+          if (skipListening) {
+            setLoading(false)
+            return getNextWord(0)
+          }
+          setListeningQuizData(response)
+          setUnitEndIndex(response.unit_end_index)
+          setLearningMode('listening')
+          setStep('listening-quiz')
+        } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
+          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+            api.getPhaseUnits(currentFileId, 1, newWordsOnly),
+            api.getPhaseUnits(currentFileId, 2)
+          ])
+          setPhase1Units(phase1UnitsData.units)
+          const genUnits = new Set()
+          phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+          setGeneratingUnits(genUnits)
+          setPhase2Units(phase2UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          setCompletedUnitId(unitId)
+          setCompletedPhase(1)
+          const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+          updateUnitStars(`1-${unitId}`, starCount)
+          setStep('unit-complete')
+        } else {
+          setLearningData(response)
+          setUnitEndIndex(response.unit_end_index)
+          setShowWordCard(false)
+          setSelectedOption(null)
+          setIsCorrect(null)
+          setLearningMode('word')
+          setStep('learning')
+        }
       }
     } catch (error) {
       console.error('获取单元单词错误:', error)
@@ -541,7 +573,7 @@ function App() {
       const exerciseData = await api.getPhaseUnitExercise(currentFileId, 2, unitId)
       if (exerciseData.unit_complete) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 1, newWordsOnly),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -624,7 +656,7 @@ function App() {
       
       if (nextRes.unit_complete || nextRes.all_complete) {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 1, newWordsOnly),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -842,12 +874,63 @@ function App() {
     
     setLoading(true)
     try {
+      if (newWordsOnly) {
+        const nextWordResponse = await api.nextWord(currentFileId, true, currentPhase1Unit)
+        
+        if (nextWordResponse.type === 'unit_complete') {
+          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+            api.getPhaseUnits(currentFileId, 1, true),
+            api.getPhaseUnits(currentFileId, 2)
+          ])
+          setPhase1Units(phase1UnitsData.units)
+          const genUnits = new Set()
+          phase1UnitsData.units.forEach((u, i) => { if (u.generating) genUnits.add(i) })
+          setGeneratingUnits(genUnits)
+          setPhase2Units(phase2UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          const completedUnit = nextWordResponse.completed_unit_id ?? currentPhase1Unit
+          setCompletedUnitId(completedUnit)
+          setCompletedPhase(1)
+          const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+          updateUnitStars(`1-${completedUnit}`, starCount)
+          setStep('unit-complete')
+          return
+        }
+        
+        const response = await api.getRandomWord(currentFileId, true, currentPhase1Unit)
+        if (response.type === 'unit_complete' || response.type === 'all_complete') {
+          const [phase1UnitsData, phase2UnitsData] = await Promise.all([
+            api.getPhaseUnits(currentFileId, 1, true),
+            api.getPhaseUnits(currentFileId, 2)
+          ])
+          setPhase1Units(phase1UnitsData.units)
+          setPhase2Units(phase2UnitsData.units)
+          setCurrentPhase1Unit(phase1UnitsData.current_unit)
+          setCurrentPhase2Unit(phase2UnitsData.current_unit)
+          setCompletedUnitId(currentPhase1Unit)
+          setCompletedPhase(1)
+          const starCount = Math.max(0, 3 - Math.floor(unitErrorCountRef.current / 3))
+          updateUnitStars(`1-${currentPhase1Unit}`, starCount)
+          setStep('unit-complete')
+        } else {
+          setLearningData(response)
+          setUnitEndIndex(response.unit_end_index)
+          setShowWordCard(false)
+          setSelectedOption(null)
+          setIsCorrect(null)
+          setLearningMode('word')
+          setStep('learning')
+        }
+        return
+      }
+      
       const nextWordResponse = await api.nextWord(currentFileId)
       const newIndex = nextWordResponse.new_index
       
       if (nextWordResponse.type === 'unit_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 1, newWordsOnly),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -905,7 +988,7 @@ function App() {
         setStep('listening-quiz')
       } else if (response.type === 'unit_complete' || response.type === 'all_complete') {
         const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-          api.getPhaseUnits(currentFileId, 1),
+          api.getPhaseUnits(currentFileId, 1, newWordsOnly),
           api.getPhaseUnits(currentFileId, 2)
         ])
         setPhase1Units(phase1UnitsData.units)
@@ -1007,7 +1090,7 @@ function App() {
       setSentenceTranslations(Array.isArray(sentenceList) ? sentenceList : [])
       try {
         const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
-          api.getPhaseUnits(fileId, 1),
+          api.getPhaseUnits(fileId, 1, newWordsOnly),
           api.getPhaseUnits(fileId, 2),
           api.getUnitStars(fileId)
         ])
@@ -1158,7 +1241,7 @@ function App() {
               sourceLang={sourceLang}
               targetLang={targetLang}
               preprocessStatus={preprocessStatus}
-              onBack={() => setStep('input')}
+              onBack={() => { setStep('input'); setPhase1Page(1); setPhase2Page(1); setLastActiveTab(0); }}
               fileTitle={fileTitle}
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
@@ -1207,7 +1290,7 @@ function App() {
               onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 if (currentFileId && currentPhase) {
-                  const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1)
+                  const phase1UnitsData = await api.getPhaseUnits(currentFileId, 1, newWordsOnly)
                   const nextUnit = phase1UnitsData.current_unit + 1
                   await api.setPhaseProgress(currentFileId, 1, nextUnit, 0)
                 }
@@ -1310,7 +1393,7 @@ function App() {
               onPhase1UnitClick={handlePhase1UnitClick}
               onPhase2UnitClick={handlePhase2UnitClick}
               onBack={() => setStep('dictionary')}
-              onHome={() => setStep('input')}
+              onHome={() => { setStep('input'); setPhase1Page(1); setPhase2Page(1); setLastActiveTab(0); }}
               loading={loading}
               t={t}
               unitStarCounts={unitStarCounts}
@@ -1323,6 +1406,10 @@ function App() {
               currentFileId={currentFileId}
               lastActiveTab={lastActiveTab}
               onTabChange={setLastActiveTab}
+              phase1Page={phase1Page}
+              phase2Page={phase2Page}
+              onPhase1PageChange={setPhase1Page}
+              onPhase2PageChange={setPhase2Page}
             />
           )}
           
@@ -1359,7 +1446,7 @@ function App() {
               onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-                  api.getPhaseUnits(currentFileId, 1),
+                  api.getPhaseUnits(currentFileId, 1, newWordsOnly),
                   api.getPhaseUnits(currentFileId, 2)
                 ])
                 setPhase1Units(phase1UnitsData.units)
@@ -1399,7 +1486,7 @@ function App() {
               onBack={() => handleConfirmBack('all-units')}
               onComplete={async () => {
                 const [phase1UnitsData, phase2UnitsData] = await Promise.all([
-                  api.getPhaseUnits(currentFileId, 1),
+                  api.getPhaseUnits(currentFileId, 1, newWordsOnly),
                   api.getPhaseUnits(currentFileId, 2)
                 ])
                 setPhase1Units(phase1UnitsData.units)
