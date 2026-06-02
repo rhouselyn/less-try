@@ -107,7 +107,7 @@ function App() {
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
   const learningContainerRef = useRef(null)
-  const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '', outerScrollPos: 0 })
+  const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -131,7 +131,7 @@ function App() {
   }, [step, currentFileId])
 
   useEffect(() => {
-    if (learningContainerRef.current && step !== 'dictionary') {
+    if (learningContainerRef.current) {
       learningContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
     }
   }, [step, currentExerciseData, learningData, quizData, listeningQuizData])
@@ -1152,12 +1152,11 @@ function App() {
               sourceLang={sourceLang}
               targetLang={targetLang}
               preprocessStatus={preprocessStatus}
-              onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '', outerScrollPos: 0 }; setStep('input') }}
+              onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }; setStep('input') }}
               fileTitle={fileTitle}
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
               dictStateRef={dictStateRef}
-              outerScrollRef={learningContainerRef}
             />
           )}
           
