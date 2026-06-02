@@ -1,31 +1,31 @@
 import { useState, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Search, BookOpen, Volume2, Loader2, Brain } from 'lucide-react'
+import { Search, X, BookOpen, Volume2, Loader2, Brain, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
 import WordDetail from './WordDetail'
 
-function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang }) {
+function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, pageSize = 50 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedWord, setExpandedWord] = useState(null)
   const [enrichedWords, setEnrichedWords] = useState({})
   const [loadingWord, setLoadingWord] = useState(null)
+  const [currentPage, setCurrentPage] = useState(1)
   const listRef = useRef(null)
   const wordRefs = useRef({})
 
-  const scrollToWord = useCallback((wordKey, delay = 100) => {
-    setTimeout(() => {
+  const scrollToWord = useCallback((wordKey) => {
+    requestAnimationFrame(() => {
       const el = wordRefs.current[wordKey]
       if (el && listRef.current) {
         const container = listRef.current
         const containerRect = container.getBoundingClientRect()
         const elRect = el.getBoundingClientRect()
-        const stickyOffset = 32
-        const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
-        container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+        const scrollOffset = elRect.top - containerRect.top + container.scrollTop - 32
+        container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'instant' })
       }
-    }, delay)
+    })
   }, [])
 
   const handleWordClick = useCallback(async (word) => {
@@ -34,9 +34,9 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
       setExpandedWord(null)
       return
     }
-    setExpandedWord(wordKey)
-    scrollToWord(wordKey, 100)
-    scrollToWord(wordKey, 300)
+    speakText(word.word, sourceLang)
+    scrollToWord(wordKey)
+    setTimeout(() => setExpandedWord(wordKey), 50)
 
     if (currentFileId && !enrichedWords[wordKey]) {
       setLoadingWord(wordKey)
@@ -62,13 +62,18 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
     )
   }, [vocab, searchQuery])
 
-  const groupedVocab = useMemo(() => {
-    return groupVocab(filteredVocab)
-  }, [filteredVocab])
+  const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredVocab.length / pageSize)), [filteredVocab, pageSize])
 
-  const letterIndex = useMemo(() => {
-    return groupedVocab.map(([letter]) => letter)
-  }, [groupedVocab])
+  const pagedVocab = useMemo(() => {
+    const start = (currentPage - 1) * pageSize
+    return filteredVocab.slice(start, start + pageSize)
+  }, [filteredVocab, currentPage, pageSize])
+
+  const groupedVocab = useMemo(() => groupVocab(pagedVocab), [pagedVocab])
+
+  const letterIndex = useMemo(() => groupedVocab.map(([letter]) => letter), [groupedVocab])
+
+  const allLetterIndex = useMemo(() => groupVocab(filteredVocab).map(([letter]) => letter), [filteredVocab])
 
   const speakWord = useCallback((text, e) => {
     if (e) e.stopPropagation()
@@ -81,192 +86,251 @@ function VocabListStep({ vocab, onBack, loading, t, currentFileId, sourceLang })
       const container = listRef.current
       const containerRect = container.getBoundingClientRect()
       const elRect = el.getBoundingClientRect()
-      const stickyOffset = 32
-      const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+      const scrollOffset = elRect.top - containerRect.top + container.scrollTop - 32
       container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+    } else {
+      const letterLower = letter.toLowerCase()
+      const wordIdx = filteredVocab.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
+      if (wordIdx >= 0) {
+        const targetPage = Math.floor(wordIdx / pageSize) + 1
+        if (targetPage !== currentPage) setCurrentPage(targetPage)
+      }
     }
   }
 
   const getEnriched = (word) => enrichedWords[word] || {}
 
+  const renderPagination = () => {
+    if (totalPages <= 1) return null
+    const pages = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => {
+      if (totalPages <= 7) return true
+      if (p === 1 || p === totalPages) return true
+      if (Math.abs(p - currentPage) <= 1) return true
+      return false
+    }).reduce((acc, p, i, arr) => {
+      if (i > 0 && p - arr[i - 1] > 1) acc.push('...')
+      acc.push(p)
+      return acc
+    }, [])
+
+    return (
+      <div className="flex items-center justify-center gap-0.5 py-2 border-t border-stone-200/60 bg-stone-50/40 shrink-0">
+        <button
+          onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+          disabled={currentPage <= 1}
+          className={`p-1 rounded transition-colors ${currentPage <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`}
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+        {pages.map((p, i) =>
+          p === '...' ? (
+            <span key={`dots-${i}`} className="text-[10px] text-stone-300 px-0.5">…</span>
+          ) : (
+            <button
+              key={p}
+              onClick={() => setCurrentPage(p)}
+              className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
+                currentPage === p
+                  ? 'bg-amber-100 text-amber-700 font-semibold'
+                  : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'
+              }`}
+            >
+              {p}
+            </button>
+          )
+        )}
+        <button
+          onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+          disabled={currentPage >= totalPages}
+          className={`p-1 rounded transition-colors ${currentPage >= totalPages ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`}
+        >
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="max-w-4xl mx-auto"
-    >
-      <motion.button
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: 1, x: 0 }}
-        onClick={onBack}
-        className="flex items-center gap-2 px-4 py-2 text-stone-500 hover:text-stone-800 transition-colors rounded-lg hover:bg-stone-100 mb-6"
-      >
-        <ArrowLeft className="w-4 h-4" />
-        {t.back}
-      </motion.button>
-
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="mb-6"
-      >
-        <div className="flex items-end justify-between mb-5">
-          <div>
-            <h2 className="text-2xl font-bold text-stone-800 tracking-tight">{t.vocabList || '单词表'}</h2>
-            <p className="text-sm text-stone-400 mt-1">
-              {t.total || '共'} <span className="text-amber-600 font-semibold">{vocab.length}</span> {t.words || '个单词'}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+      <div className="bg-white border border-stone-200/80 rounded-2xl shadow-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
+        <div className="px-5 py-3.5 border-b border-stone-200/80 bg-stone-50/60">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-amber-500" />
+              <h2 className="text-sm font-semibold text-stone-700">{t.vocabList || '单词表'}</h2>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700">
+                {vocab.length}
+              </span>
               {searchQuery && filteredVocab.length !== vocab.length && (
-                <span> · {t.matched || '匹配'} <span className="text-amber-600 font-semibold">{filteredVocab.length}</span></span>
+                <span className="text-xs text-stone-400">· {t.matched || '匹配'} {filteredVocab.length}</span>
               )}
-            </p>
-          </div>
-          <BookOpen className="w-5 h-5 text-stone-300" />
-        </div>
-
-        <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-300" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-stone-200/80 rounded-xl text-sm text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
-          />
-        </div>
-      </motion.div>
-
-      {loading ? (
-        <div className="text-center py-20">
-          <div className="w-8 h-8 border-2 border-amber-300 border-t-amber-600 rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-stone-400 text-sm">{t.loading}</p>
-        </div>
-      ) : filteredVocab.length === 0 ? (
-        <div className="text-center py-20">
-          <p className="text-stone-400 text-sm">
-            {searchQuery ? (t.noMatchFound || '没有找到匹配的单词') : (t.noWordsYet || '暂无单词')}
-          </p>
-        </div>
-      ) : (
-        <div className="flex gap-4">
-          {letterIndex.length > 1 && (
-            <div className="hidden sm:flex flex-col items-center gap-0.5 pt-8 sticky top-8 self-start shrink-0">
-              {letterIndex.map(letter => (
-                <button
-                  key={letter}
-                  onClick={() => scrollToLetter(letter)}
-                  className="w-6 h-6 flex items-center justify-center text-[10px] font-semibold text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
-                >
-                  {letter}
-                </button>
-              ))}
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="space-y-3" ref={listRef} style={{ maxHeight: '70vh', overflowY: 'auto' }}>
-              {groupedVocab.map(([letter, words], groupIdx) => (
-                <div key={letter} id={`vocab-group-${letter}`}>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: groupIdx * 0.04 }}
-                    className="sticky top-0 z-10 backdrop-blur-sm bg-stone-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
-                  >
-                    <span className="text-xs font-bold text-amber-600/80 tracking-widest">{letter}</span>
-                  </motion.div>
-                  <div className="space-y-px">
-                    {words.map((word, index) => {
-                      const isExpanded = expandedWord === word.word
-                      const enriched = getEnriched(word.word)
-                      const displayMeaning = word.enriched_meaning || word.meaning || word.context_meaning
-                      return (
-                        <motion.div
-                          key={word.word}
-                          ref={el => { wordRefs.current[word.word] = el }}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
-                          className="bg-white"
-                        >
-                          <button
-                            onClick={() => handleWordClick(word)}
-                            className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group"
-                          >
-                            <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                              <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
-                                {word.word}
-                              </span>
-                              {(enriched.ipa || word.ipa) && (
-                                <span className="text-[11px] text-stone-400 ipa-font shrink-0">
-                                  {(enriched.ipa || word.ipa).startsWith('/') ? (enriched.ipa || word.ipa) : `/${enriched.ipa || word.ipa}/`}
-                                </span>
-                              )}
-                              {(enriched.morphology || word.morphology) && (
-                                <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide shrink-0">
-                                  {enriched.morphology || word.morphology}
-                                </span>
-                              )}
-                              <span className="text-[12px] text-stone-500">
-                                {displayMeaning}
-                              </span>
-                            </div>
-                            <Volume2
-                              className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
-                              onClick={(e) => speakWord(word.word, e)}
-                            />
-                          </button>
+            <button
+              onClick={onClose}
+              className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-lg transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
 
-                          <AnimatePresence>
-                            {isExpanded && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.2 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="pb-3.5 border-t border-stone-100/80">
-                                  {loadingWord === word.word ? (
-                                    <div className="pt-4 flex flex-col items-center justify-center gap-3">
-                                      <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
-                                      <p className="text-[12px] text-stone-400">{t.loadingWordDetails || '正在加载单词详情...'}</p>
-                                    </div>
-                                  ) : (() => {
-                                    const mergedWord = { ...word, ...enriched }
-                                    const hasDetail = mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.variants_detail || mergedWord.examples || mergedWord.memory_hint || mergedWord.context_sentences
-                                    return hasDetail ? (
-                                      <div>
-                                        <div className="mb-2">
-                                          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                                            <Brain className="w-3 h-3" />
-                                            {t.definition || '释义'}
-                                          </h3>
-                                          <p className="text-[13px] text-stone-700 leading-relaxed pl-5">
-                                            {mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.context_meaning}
-                                          </p>
-                                        </div>
-                                        <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} hideDefinition disableContextSentenceClick />
-                                      </div>
-                                    ) : (
-                                      <div className="pt-3 text-center text-stone-400 text-[12px]">{t.noDetails || '暂无详情'}</div>
-                                    )
-                                  })()}
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
+        <div className="px-4 py-2 border-b border-stone-100">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1) }}
+              placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
+              className="w-full pl-9 pr-3 py-1.5 bg-white border border-stone-200/80 rounded-lg text-[13px] text-stone-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-200/60 focus:border-amber-300/60 transition-all"
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 flex min-h-0">
+          {loading ? (
+            <div className="flex-1 py-16 text-center">
+              <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-amber-400" />
+              <p className="text-stone-400 text-sm">{t.loading}</p>
+            </div>
+          ) : filteredVocab.length === 0 ? (
+            <div className="flex-1 py-16 text-center">
+              <BookOpen className="w-10 h-10 mx-auto mb-3 text-stone-200" />
+              <p className="text-stone-400 text-sm">
+                {searchQuery ? (t.noMatchFound || '没有找到匹配的单词') : (t.noWordsYet || '暂无单词')}
+              </p>
+            </div>
+          ) : (
+            <>
+              {allLetterIndex.length > 1 && (
+                <div className="flex flex-col items-center gap-0.5 py-2 border-r border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
+                  {allLetterIndex.map(letter => {
+                    const onCurrentPage = letterIndex.includes(letter)
+                    return (
+                      <button
+                        key={letter}
+                        onClick={() => scrollToLetter(letter)}
+                        className={`w-5 h-5 flex items-center justify-center text-[9px] font-semibold rounded transition-colors shrink-0 ${
+                          onCurrentPage
+                            ? 'text-stone-600 hover:text-amber-600 hover:bg-amber-50'
+                            : 'text-stone-300 hover:text-amber-500 hover:bg-amber-50/50'
+                        }`}
+                      >
+                        {letter}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              <div className="flex-1 min-w-0 flex flex-col">
+                <div className="flex-1 overflow-y-scroll min-h-0" ref={listRef} style={{ scrollbarGutter: 'stable' }}>
+                  <div className="space-y-3">
+                    {groupedVocab.map(([letter, words], groupIdx) => (
+                      <div key={letter} id={`vocab-group-${letter}`}>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: groupIdx * 0.04 }}
+                          className="sticky top-0 z-10 backdrop-blur-sm bg-stone-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
+                        >
+                          <span className="text-xs font-bold text-amber-600/80 tracking-widest">{letter}</span>
                         </motion.div>
-                      )
-                    })}
+                        <div className="space-y-px">
+                          {words.map((word, index) => {
+                            const isExpanded = expandedWord === word.word
+                            const enriched = getEnriched(word.word)
+                            const displayMeaning = word.enriched_meaning || word.meaning || word.context_meaning
+                            return (
+                              <motion.div
+                                key={word.word}
+                                ref={el => { wordRefs.current[word.word] = el }}
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
+                                className="bg-white"
+                              >
+                                <button
+                                  onClick={() => handleWordClick(word)}
+                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-amber-50/40 transition-colors group"
+                                >
+                                  <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
+                                    <span className="text-[14px] font-semibold text-stone-800 tracking-tight shrink-0">
+                                      {word.word}
+                                    </span>
+                                    {(enriched.ipa || word.ipa) && (
+                                      <span className="text-[11px] text-stone-400 ipa-font shrink-0">
+                                        {(enriched.ipa || word.ipa).startsWith('/') ? (enriched.ipa || word.ipa) : `/${enriched.ipa || word.ipa}/`}
+                                      </span>
+                                    )}
+                                    {(enriched.morphology || word.morphology) && (
+                                      <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium tracking-wide shrink-0">
+                                        {enriched.morphology || word.morphology}
+                                      </span>
+                                    )}
+                                    <span className="text-[12px] text-stone-500 truncate">
+                                      {displayMeaning}
+                                    </span>
+                                  </div>
+                                  <Volume2
+                                    className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                    onClick={(e) => speakWord(word.word, e)}
+                                  />
+                                </button>
+
+                                <AnimatePresence>
+                                  {isExpanded && (
+                                    <motion.div
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      transition={{ duration: 0.2 }}
+                                      className="overflow-hidden"
+                                    >
+                                      <div className="px-4 pb-3.5 border-t border-stone-100/80">
+                                        {loadingWord === word.word ? (
+                                          <div className="pt-4 flex flex-col items-center justify-center gap-3">
+                                            <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+                                            <p className="text-[12px] text-stone-400">{t.loadingWordDetails || '正在加载单词详情...'}</p>
+                                          </div>
+                                        ) : (() => {
+                                          const mergedWord = { ...word, ...enriched }
+                                          const hasDetail = mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.variants_detail || mergedWord.examples || mergedWord.memory_hint || mergedWord.context_sentences
+                                          return hasDetail ? (
+                                            <div className="pt-3">
+                                              <div className="mb-2">
+                                                <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                                  <Brain className="w-3 h-3 text-amber-500" />
+                                                  {t.definition || '释义'}
+                                                </h3>
+                                                <p className="text-[13px] text-stone-700 leading-relaxed">
+                                                  {mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.context_meaning}
+                                                </p>
+                                              </div>
+                                              <WordDetail word={mergedWord} t={t} sourceLang={sourceLang} hideDefinition disableContextSentenceClick />
+                                            </div>
+                                          ) : (
+                                            <div className="pt-3 text-center text-stone-400 text-[12px]">{t.noDetails || '暂无详情'}</div>
+                                          )
+                                        })()}
+                                      </div>
+                                    </motion.div>
+                                  )}
+                                </AnimatePresence>
+                              </motion.div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
+                {renderPagination()}
+              </div>
+            </>
+          )}
         </div>
-      )}
-    </motion.div>
+      </div>
+    </div>
   )
 }
 

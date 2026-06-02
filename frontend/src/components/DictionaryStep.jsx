@@ -8,36 +8,56 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50 }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef }) {
+  const saved = dictStateRef?.current || {}
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
   const [loadingWords, setLoadingWords] = useState({})
   const [wordDetails, setWordDetails] = useState({})
-  const [sentenceSearch, setSentenceSearch] = useState('')
-  const [vocabSearch, setVocabSearch] = useState('')
-  const [sentenceDisplayMode, setSentenceDisplayMode] = useState(0)
-  const [vocabDisplayMode, setVocabDisplayMode] = useState(0)
-  const [showOriginal, setShowOriginal] = useState(false)
-  const [showGlobalVocab, setShowGlobalVocab] = useState(false)
+  const [sentenceSearch, setSentenceSearch] = useState(saved.sentenceSearch || '')
+  const [vocabSearch, setVocabSearch] = useState(saved.vocabSearch || '')
+  const [sentenceDisplayMode, setSentenceDisplayMode] = useState(saved.sentenceDisplayMode || 0)
+  const [vocabDisplayMode, setVocabDisplayMode] = useState(saved.vocabDisplayMode || 0)
+  const [showOriginal, setShowOriginal] = useState(saved.showOriginal || false)
+  const [showGlobalVocab, setShowGlobalVocab] = useState(saved.showGlobalVocab || false)
   const [globalVocab, setGlobalVocab] = useState([])
   const [globalVocabLoading, setGlobalVocabLoading] = useState(false)
   const [actualSourceLang, setActualSourceLang] = useState(sourceLang)
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
-  const [vocabPage, setVocabPage] = useState(1)
-  const [sentencePage, setSentencePage] = useState(1)
-  const [globalVocabPage, setGlobalVocabPage] = useState(1)
+  const [vocabPage, setVocabPage] = useState(saved.vocabPage || 1)
+  const [sentencePage, setSentencePage] = useState(saved.sentencePage || 1)
+  const [globalVocabPage, setGlobalVocabPage] = useState(saved.globalVocabPage || 1)
   const [wordGenProgress, setWordGenProgress] = useState(null)
+  const [meaningOverrides, setMeaningOverrides] = useState({})
   const vocabListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
   const titleInputRef = useRef(null)
   const pendingScrollWord = useRef(null)
-  const localVocabScrollPos = useRef(0)
-  const globalVocabScrollPos = useRef(0)
+  const localVocabScrollPos = useRef(saved.vocabScrollPos || 0)
+  const globalVocabScrollPos = useRef(saved.globalVocabScrollPos || 0)
   const filteredVocabRef = useRef([])
-  const vocabPageRef = useRef(1)
+  const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
+
+  const saveState = () => {
+    if (dictStateRef) {
+      dictStateRef.current = {
+        vocabPage, sentencePage, globalVocabPage,
+        vocabScrollPos: localVocabScrollPos.current,
+        sentenceScrollPos: 0,
+        globalVocabScrollPos: globalVocabScrollPos.current,
+        vocabDisplayMode, sentenceDisplayMode,
+        showOriginal, showGlobalVocab,
+        vocabSearch, sentenceSearch
+      }
+    }
+  }
+
+  useEffect(() => {
+    saveState()
+  }, [vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch])
 
   useEffect(() => {
     if (currentFileId) {
@@ -397,9 +417,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setExpandedWord(null)
       return
     }
-    setExpandedWord(wordKey)
-    scrollToWord(wordKey, 200)
-    fetchWordDetail(wordKey)
+    speakText(word.word, actualSourceLang)
+    scrollToWord(wordKey, 0)
+    setTimeout(() => {
+      setExpandedWord(wordKey)
+      fetchWordDetail(wordKey)
+    }, 50)
   }, [expandedWord, fetchWordDetail, scrollToWord])
 
   const scrollToGlobalWord = useCallback((wordKey, delay = 50) => {
@@ -428,26 +451,29 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setExpandedWord(null)
       return
     }
-    setExpandedWord(globalKey)
-    scrollToGlobalWord(word.word, 200)
+    speakText(word.word, actualSourceLang)
+    scrollToGlobalWord(word.word, 0)
+    setTimeout(async () => {
+      setExpandedWord(globalKey)
 
-    const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)
-    if (hasDetail) {
-      setWordDetails(prev => ({ ...prev, [globalKey]: word }))
-      return
-    }
-
-    if (!wordDetails[globalKey] && !loadingWords[globalKey]) {
-      setLoadingWords(prev => ({ ...prev, [globalKey]: true }))
-      try {
-        const detail = await api.getWordDetail(word.word, actualSourceLang)
-        setWordDetails(prev => ({ ...prev, [globalKey]: detail }))
-      } catch (err) {
-        console.error('Failed to load global word detail:', err)
-      } finally {
-        setLoadingWords(prev => ({ ...prev, [globalKey]: false }))
+      const hasDetail = word && (word.examples?.length > 0 || word.memory_hint || word.variants_detail?.length > 0)
+      if (hasDetail) {
+        setWordDetails(prev => ({ ...prev, [globalKey]: word }))
+        return
       }
-    }
+
+      if (!wordDetails[globalKey] && !loadingWords[globalKey]) {
+        setLoadingWords(prev => ({ ...prev, [globalKey]: true }))
+        try {
+          const detail = await api.getWordDetail(word.word, actualSourceLang)
+          setWordDetails(prev => ({ ...prev, [globalKey]: detail }))
+        } catch (err) {
+          console.error('Failed to load global word detail:', err)
+        } finally {
+          setLoadingWords(prev => ({ ...prev, [globalKey]: false }))
+        }
+      }
+    }, 50)
   }, [expandedWord, wordDetails, loadingWords, actualSourceLang])
 
   const handleSentenceJump = useCallback((sentenceIndex) => {
@@ -513,6 +539,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       if (data) {
         setWordDetails(prev => ({ ...prev, [localKey]: data, [globalKey]: data }))
         setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
+        const newMeaning = data.enriched_meaning || data.meaning || data.context_meaning
+        if (newMeaning) {
+          setMeaningOverrides(prev => ({ ...prev, [wordKey]: newMeaning }))
+        }
       }
     } catch (e) {
       console.error('Failed to regenerate word:', e)
@@ -663,6 +693,22 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       </div>
     )
   }
+
+  useEffect(() => {
+    return () => {
+      if (dictStateRef) {
+        dictStateRef.current = {
+          ...dictStateRef.current,
+          vocabScrollPos: localVocabScrollPos.current,
+          globalVocabScrollPos: globalVocabScrollPos.current,
+          vocabPage, sentencePage, globalVocabPage,
+          vocabDisplayMode, sentenceDisplayMode,
+          showOriginal, showGlobalVocab,
+          vocabSearch, sentenceSearch
+        }
+      }
+    }
+  }, [])
 
   return (
     <motion.div
@@ -909,7 +955,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             </div>
             <div className="flex-1 flex min-h-0">
               {((!showGlobalVocab && allLetterIndex.length > 1) || (showGlobalVocab && allGlobalLetterIndex.length > 1)) && (
-                <div className="hidden md:flex flex-col items-center gap-0.5 py-2 border-r border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-0.5 py-2 border-r border-stone-200/60 bg-stone-50/40 w-7 shrink-0 overflow-y-auto">
                   {(showGlobalVocab ? allGlobalLetterIndex : allLetterIndex).map(letter => {
                     const currentIdx = showGlobalVocab ? globalLetterIndex : letterIndex
                     const onCurrentPage = currentIdx.includes(letter)
@@ -987,19 +1033,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     </span>
                                   )}
                                   <span className={`text-[12px] text-stone-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
-                                    {word.meaning}
+                                    {meaningOverrides[wordKey] || word.meaning}
                                   </span>
                                 </div>
-                                <Volume2
-                                  className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
-                                  onClick={(e) => speakWord(word.word, e)}
-                                />
                                 {isExpanded && (
                                   <RefreshCw
                                     className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
                                     onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
                                   />
                                 )}
+                                <Volume2
+                                  className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                  onClick={(e) => speakWord(word.word, e)}
+                                />
                               </button>
                               <AnimatePresence>
                                 {isExpanded && (
@@ -1010,7 +1056,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden"
                                   >
-                                    <div className="pb-3.5 border-t border-stone-100/80">
+                                    <div className="px-4 pb-3.5 border-t border-stone-100/80">
                                       {isLoading ? (
                                         <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                           <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
@@ -1019,11 +1065,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       ) : detail ? (
                                         <div className="pt-3">
                                           <div className="mb-2">
-                                            <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                                              <Brain className="w-3 h-3" />
+                                            <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                              <Brain className="w-3 h-3 text-amber-500" />
                                               {t.definition || '释义'}
                                             </h3>
-                                            <p className="text-[13px] text-stone-700 leading-relaxed pl-5">
+                                            <p className="text-[13px] text-stone-700 leading-relaxed">
                                               {detail.enriched_meaning || detail.meaning || detail.context_meaning}
                                             </p>
                                           </div>
@@ -1101,19 +1147,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   </span>
                                 )}
                                 <span className={`text-[12px] text-stone-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
-                                  {word.meaning || word.context_meaning}
+                                  {meaningOverrides[word.word] || word.meaning || word.context_meaning}
                                 </span>
                               </div>
-                              <Volume2
-                                className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
-                                onClick={(e) => speakWord(word.word, e)}
-                              />
                               {isExpanded && (
                                 <RefreshCw
                                   className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
                                   onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
                                 />
                               )}
+                              <Volume2
+                                className="w-3.5 h-3.5 text-stone-300 hover:text-amber-600 shrink-0 transition-colors"
+                                onClick={(e) => speakWord(word.word, e)}
+                              />
                             </button>
 
                             <AnimatePresence>
@@ -1125,7 +1171,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   transition={{ duration: 0.2 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="pb-3.5 border-t border-stone-100/80">
+                                  <div className="px-4 pb-3.5 border-t border-stone-100/80">
                                     {isLoading ? (
                                       <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                         <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
@@ -1134,11 +1180,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     ) : detail ? (
                                       <div className="pt-3">
                                         <div className="mb-2">
-                                          <h3 className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest mb-1 flex items-center gap-1.5">
-                                            <Brain className="w-3 h-3" />
+                                          <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                            <Brain className="w-3 h-3 text-amber-500" />
                                             {t.definition || '释义'}
                                           </h3>
-                                          <p className="text-[13px] text-stone-700 leading-relaxed pl-5">
+                                          <p className="text-[13px] text-stone-700 leading-relaxed">
                                             {detail.enriched_meaning || detail.meaning || detail.context_meaning}
                                           </p>
                                         </div>

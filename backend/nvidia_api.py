@@ -241,6 +241,7 @@ def get_lang_name(code):
 
 
 async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+    import time as _time
     settings = _load_settings()
     configs = settings.get("configs", [])
     active_index = settings.get("active_index", 0)
@@ -257,9 +258,17 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
     except Exception:
         retry_interval = 1.0
 
+    start_time = _time.time()
+    max_duration = 600
     last_exception = None
     attempt = 0
     while True:
+        elapsed = _time.time() - start_time
+        if elapsed >= max_duration:
+            if last_exception:
+                raise last_exception
+            raise Exception("API call timed out after 10 minutes")
+
         idx = (active_index + attempt) % num_configs
         config = configs[idx]
         try:
@@ -276,7 +285,7 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
                 if e.response.status_code in (429, 503, 502):
                     is_rate_limit = True
             if is_rate_limit:
-                print(f"[RETRY] Config {idx} rate-limited ({e.response.status_code if e.response else 'N/A'}), waiting {retry_interval}s then trying config {(idx + 1) % num_configs}...")
+                print(f"[ROTATE] Config {idx} rate-limited ({e.response.status_code if e.response else 'N/A'}), waiting {retry_interval}s then switching to config {(idx + 1) % num_configs}")
                 await asyncio.sleep(retry_interval)
                 attempt += 1
                 last_exception = e
@@ -339,35 +348,19 @@ class NvidiaAPI:
     def reload(self):
         self._reload()
 
-    def _sync_post(self, url, headers, payload, timeout, max_retries=3):
-        import time as _time
-        try:
-            from storage import Storage as _Storage
-            _storage = _Storage()
-            _prefs = _storage.load_user_preferences()
-            _retry_interval = _prefs.get("retry_interval", 1.0)
-        except Exception:
-            _retry_interval = 1.0
-        for attempt in range(max_retries):
-            try:
-                response = requests.post(url, headers=headers, json=payload, timeout=timeout)
-                response.raise_for_status()
-                result = response.json()
-                if "choices" in result and len(result["choices"]) > 0:
-                    choice = result["choices"][0]
-                    message = choice.get("message", {})
-                    content = message.get("content", "")
-                    reasoning_content = message.get("reasoning_content", "")
-                    if not content and reasoning_content:
-                        message["content"] = reasoning_content
-                        result["choices"][0]["message"] = message
-                return result
-            except requests.exceptions.HTTPError as e:
-                if e.response is not None and e.response.status_code in (503, 429, 502) and attempt < max_retries - 1:
-                    print(f"[RETRY] API returned {e.response.status_code}, retrying in {_retry_interval}s (attempt {attempt + 1}/{max_retries})")
-                    _time.sleep(_retry_interval)
-                    continue
-                raise
+    def _sync_post(self, url, headers, payload, timeout):
+        response = requests.post(url, headers=headers, json=payload, timeout=timeout)
+        response.raise_for_status()
+        result = response.json()
+        if "choices" in result and len(result["choices"]) > 0:
+            choice = result["choices"][0]
+            message = choice.get("message", {})
+            content = message.get("content", "")
+            reasoning_content = message.get("reasoning_content", "")
+            if not content and reasoning_content:
+                message["content"] = reasoning_content
+                result["choices"][0]["message"] = message
+        return result
 
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         import time as _time
@@ -583,7 +576,7 @@ class NvidiaAPI:
                             "items": {
                                 "type": "object",
                                 "properties": {
-                                    "text": {"type": "string", "description": "A single word from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). Punctuation does NOT belong to any token — it is completely discarded. Hyphens(-) and apostrophes(') must be preserved if they are internal parts of a word in that language. TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'word' is the smallest meaningful unit that can appear independently in a dictionary of that language. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) Non-compositional expressions (where the whole meaning ≠ sum of parts) MUST be one token — this includes fixed collocations, idioms, phrasal verbs, and any expression whose meaning cannot be derived from its individual parts. If splitting would destroy the meaning, keep it as one token. (4) After removing punctuation from all 'text' values, their concatenation in order MUST equal the original source text with punctuation removed — no characters may be omitted or added. Each character belongs to exactly ONE token; no overlap, no duplication. NEVER split a word into characters, syllables, morphemes, or stem+affix. NEVER add tokens that do not correspond to actual words in the source text."},
+                                    "text": {"type": "string", "description": "A single word or fixed multi-word expression from the source text. MUST NOT contain any punctuation marks (periods, commas, question marks, exclamation marks, colons, semicolons, or any language-specific punctuation). Punctuation does NOT belong to any token — it is completely discarded. Hyphens(-) and apostrophes(') must be preserved if they are internal parts of a word in that language. TOKENIZATION PRINCIPLE: Follow the natural word boundaries of the source language. A 'token' is the smallest meaningful unit that can appear independently in a dictionary of that language, OR a fixed multi-word expression whose meaning cannot be derived from its individual parts. Key rules: (1) Characters like hyphens and apostrophes are often internal parts of words (not separators) — respect the orthographic conventions of each language. (2) Inflected/conjugated forms are one token, never split into stem+affix. (3) 【CRITICAL·Fixed Collocations & Multi-Word Expressions】When two or more consecutive words form a fixed collocation, set phrase, phrasal verb, idiom, or any expression where the whole meaning ≠ sum of parts, they MUST be treated as ONE single token (one text field containing the entire multi-word expression). This applies to ALL languages. Examples of patterns that must be one token: discourse markers, greetings, phrasal verbs, compound prepositions, fixed conjunctions, and any expression that functions as a single semantic unit. If you would list it as one entry in a phrase dictionary, it should be one token. (4) After removing punctuation from all 'text' values, their concatenation in order MUST equal the original source text with punctuation removed — no characters may be omitted or added. Each character belongs to exactly ONE token; no overlap, no duplication. NEVER split a word into characters, syllables, morphemes, or stem+affix. NEVER add tokens that do not correspond to actual words in the source text."},
                                     "phonetic": {"type": "string", "description": "Pronunciation of this word. Use the most commonly used and widely recognized pronunciation notation for the source language — this may be IPA, pinyin, romaji, or any other standard system that native speakers and learners would expect. For tonal languages, include tone information."},
                                     "morphology": {"type": "string"},
                                     "meaning": {"type": "string", "description": "Meaning in TARGET_LANG based on the context - concise, just a few independent words, not a full sentence explanation"}
@@ -598,7 +591,7 @@ class NvidiaAPI:
                         "translation_phrases": {
                             "type": "array",
                             "items": {"type": "string"},
-                            "description": "将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则·与源语言token拆分规则完全一致】1.遵循目标语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词；2.变位/屈折形式是单个片段：不要将变位形式拆分为词干+词缀；3.【极其重要·非组合性原则·固定搭配】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个片段，不能拆分。这包括但不限于：固定搭配、习语、短语动词、惯用表达等。判断标准：如果拆分后各部分无法独立表达整体含义，则必须保持为一个片段。这是所有语言的通用原则；4.【极其重要·标点禁令】每个片段绝对禁止包含任何标点符号（句号、逗号、问号、感叹号、分号、冒号、省略号等），标点不属于任何片段。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留；5.所有片段去除标点后按顺序拼接必须等于 tokenized_translation 去除标点后的内容，不能遗漏或增加文字内容；6.【极其重要·禁止增减原则】所有片段必须与 tokenized_translation 中的词语一一对应，绝对不能随意增加不存在的片段，也不能将一个词拆分成多个片段；7.虚词（的、了、地等）可以与相邻词合并；8.每个片段不能是单个无意义虚词"
+                            "description": "将 tokenized_translation 按目标语言的词（token）进行分词后的结果，用于翻译排序练习。必须至少拆分为2个片段！【核心原则·这是对目标语言翻译的分词，不是对源语言的分词】每个片段应该是目标语言翻译中的一个词或固定搭配。【拆分原则·严格遵循目标语言的自然词边界】1.遵循目标语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言（如中文、日语等）按语言学上的词边界分词，每个片段应该是一个可以在该语言词典中查到的最小意义单位或固定多词表达；2.【极其重要·禁止按标点拆分】绝对不能按标点符号（逗号、句号等）来拆分片段！标点符号必须被丢弃，不属于任何片段。拆分的依据是目标语言的词边界，而不是标点符号的位置；3.变位/屈折形式是单个片段：不要将变位形式拆分为词干+词缀；4.【极其重要·固定搭配与多词表达】当两个或多个连续的词构成固定搭配、短语动词、习语、惯用语等非组合性表达时，必须作为一个片段，不能拆分。这是所有语言的通用原则。判断标准：如果拆分后各部分无法独立表达整体含义，则必须保持为一个片段；5.【极其重要·标点禁令】每个片段绝对禁止包含任何标点符号（句号、逗号、问号、感叹号、分号、冒号、省略号等），标点不属于任何片段。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留；6.所有片段去除标点后按顺序拼接必须等于 tokenized_translation 去除标点后的内容，不能遗漏或增加文字内容；7.【极其重要·禁止增减原则】所有片段必须与 tokenized_translation 中的词语一一对应，绝对不能随意增加不存在的片段，也不能将一个词拆分成多个片段；8.虚词（的、了、地等）可以与相邻词合并；9.每个片段不能是单个无意义虚词"
                         },
                         "grammar_explanation": {
                             "type": "string",
@@ -645,7 +638,7 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
 1. 遵循该语言的正字法惯例：每种语言都有自己的词边界规则。连字符(-)、撇号(')等字符在某些语言中是词的内部组成部分，在另一些语言中可能是分隔符。请根据该语言自身的正字法来判断。
 2. 变位/屈折形式是单个词：不要将变位形式拆分为词干+词缀。词的形态信息放在 morphology 字段，不通过拆分来表达。
 3. 尊重该语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词。
-4. 【极其重要·非组合性原则·固定搭配】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个 token，不能拆分。这包括但不限于：固定搭配、习语、短语动词、惯用表达等。这是所有语言的通用原则，不限于任何特定语言。判断标准：如果拆分后各部分无法独立表达整体含义，则必须保持为一个 token。
+4. 【极其重要·固定搭配与多词表达】当两个或多个连续的词构成固定搭配、短语动词、习语、惯用语、话语标记、复合介词、固定连词等，且整体含义不等于各组成部分字面含义的简单叠加时，必须将整个多词表达作为一个 token，text 字段包含完整的多词表达。这是所有语言的通用原则，不限于任何特定语言。判断标准：(1) 如果在短语词典中会作为一个独立条目出现，则应为一个 token；(2) 如果拆分后各部分无法独立表达整体含义，则必须保持为一个 token；(3) 话语标记、问候语、短语动词、复合介词等必须作为单个 token。例如：任何语言中的固定搭配、惯用表达都必须作为整体处理。
 5. 【极其重要·标点禁令】text 字段绝对禁止包含任何标点符号（句号、逗号、问号、感叹号、分号、冒号、省略号等）。标点不属于任何 token，它们不属于任何词。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留。所有标点符号必须被排除在 token 之外，只保留纯文字内容。
 6. 所有条目的 text 去除标点后按顺序拼接必须等于原文去除标点后的内容，不能遗漏或增加文字内容。标点符号被完全丢弃，不属于任何 token。每个文字字符必须且只能属于一个 token，不能重叠，也不能重复出现。
 7. 【极其重要·禁止增减原则】translation 数组中的 text 条目必须与原文中的词语一一对应，绝对不能随意增加原文中不存在的 token，也不能将原文中的一个词拆分成多个 token。每个 text 必须对应原文中一个真实存在的词语，不得凭空添加任何词语、解释性文字或冗余内容。
@@ -661,12 +654,13 @@ translation 数组中每个条目的 text 字段代表原文中的一个"词"。
   - morphology: 只能是词性缩写（如 n, v, adj）
   - meaning: 基于上下文的 TARGET_LANG 释义，简洁的几个独立词，不需要用完整句子解释
 - tokenized_translation: 完整自然的 TARGET_LANG 翻译，正常句子格式。【极其重要】必须翻译完整，不能遗漏任何内容，原文的每个语义成分都必须体现在翻译中。原文中的说话者标识（如 A:、B:、Speaker 1: 等）必须在译文中完整保留，不得省略
-- translation_phrases: 将 tokenized_translation 拆分为独立片段，用于翻译排序练习。必须至少拆分为2个片段！【拆分原则·与源语言token拆分规则完全一致】1.遵循目标语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词；2.变位/屈折形式是单个片段：不要将变位形式拆分为词干+词缀；3.【极其重要·非组合性原则·固定搭配】如果一个连续文本片段的整体含义不等于其各组成部分字面含义的简单叠加（即非组合性表达），则必须作为一个片段，不能拆分。这包括但不限于：固定搭配、习语、短语动词、惯用表达等。判断标准：如果拆分后各部分无法独立表达整体含义，则必须保持为一个片段。这是所有语言的通用原则；4.【极其重要·标点禁令】每个片段绝对禁止包含任何标点符号，标点不属于任何片段。但连字符(-)和撇号(')如果在该语言中是词的内部组成部分则必须保留；5.所有片段去除标点后按顺序拼接必须等于 tokenized_translation 去除标点后的内容，不能遗漏或增加文字内容；6.【极其重要·禁止增减原则】所有片段必须与 tokenized_translation 中的词语一一对应，绝对不能随意增加不存在的片段，也不能将一个词拆分成多个片段；7.虚词可以与相邻词合并；8.每个片段不能是单个无意义虚词
+- translation_phrases: 将 tokenized_translation 按目标语言的词（token）进行分词后的结果，用于翻译排序练习。必须至少拆分为2个片段！【核心原则·这是对目标语言翻译的分词，不是对源语言的分词】每个片段应该是目标语言翻译中的一个词或固定搭配。【拆分原则·严格遵循目标语言的自然词边界】1.遵循目标语言的自然词边界：用空格分隔词语的语言按空格分词；不用空格的语言按语言学上的词边界分词，每个片段应该是一个可以在该语言词典中查到的最小意义单位或固定多词表达；2.【极其重要·禁止按标点拆分】绝对不能按标点符号（逗号、句号等）来拆分片段！标点符号必须被丢弃，不属于任何片段。拆分的依据是目标语言的词边界，而不是标点符号的位置；3.变位/屈折形式是单个片段；4.【极其重要·固定搭配与多词表达】当两个或多个连续的词构成固定搭配、短语动词、习语、惯用语等非组合性表达时，必须作为一个片段；5.【极其重要·标点禁令】每个片段绝对禁止包含任何标点符号；6.所有片段去除标点后按顺序拼接必须等于 tokenized_translation 去除标点后的内容；7.【极其重要·禁止增减原则】所有片段必须与 tokenized_translation 中的词语一一对应；8.虚词可以与相邻词合并；9.每个片段不能是单个无意义虚词
 - grammar_explanation: 整个文本的一个完整语法解释，用 TARGET_LANG
 - redundant_tokens: 4个与原文相关的合理冗余tokens，用于测验目的，必须全部使用TARGET_LANG。【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组
 
 【重要要求】
 - 翻译题应该用整个句子的翻译按token进行拆分后的结果作为答案，而不是分别每个单词的意思所组成的
+- 【极其重要·禁止空白字段】translation 数组中每个条目的 phonetic、morphology、meaning 字段都必须有实际内容，绝对不能留空！即使是虚词、介词等也必须填写完整的音标、词性和释义。如果某个词的音标不确定，请给出最合理的标注，但绝不能留空字符串
 - 生成冗余词时要注意：
   1. 必须使用TARGET_LANG（目标语言）生成冗余词
   2. 【极其重要】每个冗余token必须是单个独立的词，不能是多个词组成的短语或词组

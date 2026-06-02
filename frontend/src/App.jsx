@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
+import { warmupSpeech } from './utils/speech'
 import ConfirmDialog from './components/ConfirmDialog'
 
 import InputStep from './components/InputStep'
@@ -89,7 +90,6 @@ function App() {
   const [phase2Units, setPhase2Units] = useState([])
   const [currentPhase1Unit, setCurrentPhase1Unit] = useState(0)
   const [currentPhase2Unit, setCurrentPhase2Unit] = useState(0)
-  const [previousStep, setPreviousStep] = useState(null)
   const [unitEndIndex, setUnitEndIndex] = useState(null)
   const [completedUnitId, setCompletedUnitId] = useState(null)
   const [completedPhase, setCompletedPhase] = useState(1)
@@ -98,19 +98,22 @@ function App() {
   const isFetchingNextRef = useRef(false)
   const [skipListening, setSkipListening] = useState(false)
   const [generatingUnits, setGeneratingUnits] = useState(new Set())
+  const [lastActiveTab, setLastActiveTab] = useState(0)
   const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
+  const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
   const learningContainerRef = useRef(null)
+  const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
 
-  const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'vocab-list', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
+  const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
   useEffect(() => {
+    warmupSpeech()
     api.getUserPreferences().then(prefs => {
-      if (prefs.source_lang) setSourceLang(prefs.source_lang)
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
@@ -343,7 +346,6 @@ function App() {
           const detectResult = await api.detectLanguage(finalText)
           if (detectResult.detected_language) {
             finalSourceLang = detectResult.detected_language
-            setSourceLang(detectResult.detected_language)
           }
         } catch (e) {
           console.error('Language detection failed:', e)
@@ -971,8 +973,7 @@ function App() {
   }
 
   const handleOpenVocabList = () => {
-    setPreviousStep(step)
-    setStep('vocab-list')
+    setShowVocabList(true)
   }
 
   const handleConfirmBack = (targetStep) => {
@@ -996,15 +997,6 @@ function App() {
       setCurrentFileId(fileId)
       setFileId(fileId)
       if (title) setFileTitle(title)
-      if (srcLang && srcLang !== 'auto') {
-        setSourceLang(srcLang)
-      } else {
-        try {
-          const langData = await api.getFileLanguages(fileId)
-          if (langData.source_lang) setSourceLang(langData.source_lang)
-          if (langData.target_lang) setTargetLang(langData.target_lang)
-        } catch (e) {}
-      }
       if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
@@ -1160,10 +1152,11 @@ function App() {
               sourceLang={sourceLang}
               targetLang={targetLang}
               preprocessStatus={preprocessStatus}
-              onBack={() => setStep('input')}
+              onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }; setStep('input') }}
               fileTitle={fileTitle}
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
+              dictStateRef={dictStateRef}
             />
           )}
           
@@ -1321,6 +1314,8 @@ function App() {
               generatingUnits={generatingUnits}
               fileTitle={fileTitle}
               currentFileId={currentFileId}
+              lastActiveTab={lastActiveTab}
+              onTabChange={setLastActiveTab}
             />
           )}
           
@@ -1426,23 +1421,12 @@ function App() {
               wrongItemsCount={wrongItems.length}
             />
           )}
-
-          {step === 'vocab-list' && (
-            <VocabListStep
-              key="vocab-list"
-              vocab={vocab}
-              onBack={() => setStep(previousStep || 'all-units')}
-              loading={loading}
-              t={t}
-              currentFileId={currentFileId}
-              sourceLang={sourceLang}
-            />
-          )}
         </AnimatePresence>
           </div>
         )}
       </main>
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
+      {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
         title={t.confirmExit || '确认退出'}

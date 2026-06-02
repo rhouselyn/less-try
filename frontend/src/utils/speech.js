@@ -122,6 +122,7 @@ const SPEECH_LANG_MAP = {
 
 let voicesLoaded = false
 let voicesReadyPromise = null
+let speechUnlocked = false
 
 function ensureVoicesLoaded() {
   if (voicesReadyPromise) return voicesReadyPromise
@@ -175,6 +176,29 @@ function findBestVoice(lang) {
   return null
 }
 
+function warmupSpeech() {
+  if (!('speechSynthesis' in window)) return
+
+  const unlock = () => {
+    if (speechUnlocked) return
+    ensureVoicesLoaded().then(() => {
+      window.speechSynthesis.cancel()
+      const u = new SpeechSynthesisUtterance('a')
+      u.volume = 0.01
+      u.rate = 10
+      u.onend = () => {
+        speechUnlocked = true
+      }
+      u.onerror = () => {}
+      window.speechSynthesis.speak(u)
+    })
+  }
+
+  document.addEventListener('click', unlock, { once: true })
+  document.addEventListener('touchstart', unlock, { once: true })
+  document.addEventListener('keydown', unlock, { once: true })
+}
+
 function speakText(text, sourceLang = 'en', slow = false) {
   if (!text || !('speechSynthesis' in window)) return
 
@@ -188,7 +212,7 @@ function speakText(text, sourceLang = 'en', slow = false) {
     } else {
       u.lang = sourceLang + '-' + sourceLang.toUpperCase()
     }
-    u.rate = slow ? 0.6 : 1.0
+    u.rate = slow ? 0.6 : 1.15
 
     const voice = findBestVoice(u.lang)
     if (voice) {
@@ -211,4 +235,4 @@ function speakText(text, sourceLang = 'en', slow = false) {
   }
 }
 
-export { SPEECH_LANG_MAP as LANG_MAP, speakText }
+export { SPEECH_LANG_MAP as LANG_MAP, speakText, warmupSpeech }

@@ -116,14 +116,13 @@ class Storage:
             import shutil
             shutil.rmtree(cache_dir)
     
-    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str, rpm: int = 60):
+    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str):
         file_dir = self.get_file_dir(file_id)
         settings_path = file_dir / "language_settings.json"
         with open(settings_path, 'w', encoding='utf-8') as f:
             json.dump({
                 "source_lang": source_lang,
-                "target_lang": target_lang,
-                "rpm": rpm
+                "target_lang": target_lang
             }, f, ensure_ascii=False, indent=2)
     
     def load_language_settings(self, file_id: str) -> Dict[str, str]:
@@ -132,13 +131,10 @@ class Storage:
         if settings_path.exists():
             with open(settings_path, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                if "rpm" not in data:
-                    data["rpm"] = 60
                 return data
         return {
             "source_lang": "en",
-            "target_lang": "zh",
-            "rpm": 60
+            "target_lang": "zh"
         }
     
     def save_learning_progress(self, file_id: str, current_index: int):

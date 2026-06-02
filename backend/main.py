@@ -402,33 +402,11 @@ processing_status = {}
 word_gen_state = {}
 word_gen_rate_limiter = None
 
-import edge_tts
 import io
-
-EDGE_VOICE_MAP = {
-    'en': 'en-US-AvaNeural',
-    'zh': 'zh-CN-XiaoxiaoNeural',
-    'ja': 'ja-JP-NanamiNeural',
-    'ko': 'ko-KR-SunHiNeural',
-    'fr': 'fr-FR-DeniseNeural',
-    'de': 'de-DE-KatjaNeural',
-    'es': 'es-ES-ElviraNeural',
-    'it': 'it-IT-ElsaNeural',
-    'pt': 'pt-BR-FranciscaNeural',
-    'ru': 'ru-RU-SvetlanaNeural',
-}
 
 tts_cache = {}
 tts_cache_lock = asyncio.Lock()
 MAX_TTS_CACHE = 200
-
-async def _generate_tts_edge(text, voice, rate='+0%'):
-    communicate = edge_tts.Communicate(text, voice, rate=rate)
-    buffer = io.BytesIO()
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            buffer.write(chunk["data"])
-    return buffer.getvalue()
 
 @app.on_event("startup")
 async def startup_event():
@@ -436,39 +414,10 @@ async def startup_event():
     settings = get_settings()
     rpm = settings.get("rpm", 20)
     word_gen_rate_limiter = RateLimiter(rpm)
-    try:
-        await _generate_tts_edge("ok", EDGE_VOICE_MAP.get('en'))
-        print("[TTS] Warmup complete")
-    except Exception as e:
-        print(f"[TTS] Warmup failed (non-fatal): {e}")
 
 @app.get("/api/tts")
 async def tts_endpoint(text: str, lang: str = "en", slow: bool = False):
-    if not text or not text.strip():
-        raise HTTPException(status_code=400, detail="Text is required")
-
-    voice = EDGE_VOICE_MAP.get(lang, EDGE_VOICE_MAP.get('en'))
-    rate = '-30%' if slow else '+0%'
-
-    cache_key = f"{lang}:{'slow' if slow else 'normal'}:{text}"
-    async with tts_cache_lock:
-        if cache_key in tts_cache:
-            from fastapi.responses import Response
-            return Response(content=tts_cache[cache_key], media_type="audio/mpeg")
-
-    try:
-        audio_data = await _generate_tts_edge(text, voice, rate)
-
-        async with tts_cache_lock:
-            if len(tts_cache) >= MAX_TTS_CACHE:
-                oldest_key = next(iter(tts_cache))
-                del tts_cache[oldest_key]
-            tts_cache[cache_key] = audio_data
-
-        from fastapi.responses import Response
-        return Response(content=audio_data, media_type="audio/mpeg")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"TTS failed: {str(e)}")
+    raise HTTPException(status_code=410, detail="TTS is now handled by Web Speech API on the frontend")
 
 
 
@@ -483,7 +432,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         print(f"[DEBUG] 开始处理文件 {file_id}, RPM={rpm}")
         processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0}
         
-        storage.save_language_settings(file_id, source_lang, target_lang, rpm)
+        storage.save_language_settings(file_id, source_lang, target_lang)
         
         t_split_start = time.time()
         sentences = text_processor.split_sentences(text)
