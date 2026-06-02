@@ -139,16 +139,16 @@ function AllUnitsStep({
     const total = phaseNumber === 1 ? phase1Total : phase2Total;
     const progress = total > 0 ? (completed / total) * 100 : 0;
 
-    if (units.length === 0 || (units.length === 1 && units[0]?.no_eligible_sentences)) {
+    if (phaseNumber === 2 && (units.length === 0 || (units.length === 1 && units[0]?.no_eligible_sentences))) {
       return (
-        <div className="py-12 text-center min-h-[200px] flex items-center justify-center">
+        <div className="py-12 text-center">
           <p className="text-xs text-stone-400">{t.noPracticeContent || '暂无可练习内容'}</p>
         </div>
       );
     }
 
     return (
-      <div className="min-h-[200px]">
+      <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-medium text-stone-400 tabular-nums">{completed}<span className="text-stone-300">/{total}</span></span>
