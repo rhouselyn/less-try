@@ -8,7 +8,7 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, targetLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef, outerScrollRef }) {
   const saved = dictStateRef?.current || {}
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
@@ -40,6 +40,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const filteredVocabRef = useRef([])
   const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
+  const hasRestoredRef = useRef(false)
+  const prevPageSizeRef = useRef(pageSize)
 
   const saveState = () => {
     if (dictStateRef) {
@@ -50,7 +52,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         globalVocabScrollPos: globalVocabScrollPos.current,
         vocabDisplayMode, sentenceDisplayMode,
         showOriginal, showGlobalVocab,
-        vocabSearch, sentenceSearch
+        vocabSearch, sentenceSearch,
+        outerScrollPos: outerScrollRef?.current?.scrollTop || 0
       }
     }
   }
@@ -58,6 +61,21 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   useEffect(() => {
     saveState()
   }, [vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch])
+
+  useEffect(() => {
+    if (hasRestoredRef.current) return
+    hasRestoredRef.current = true
+    const timer = setTimeout(() => {
+      if (vocabListRef.current) {
+        const targetPos = showGlobalVocab ? globalVocabScrollPos.current : localVocabScrollPos.current
+        vocabListRef.current.scrollTop = targetPos
+      }
+      if (outerScrollRef?.current && saved.outerScrollPos) {
+        outerScrollRef.current.scrollTop = saved.outerScrollPos
+      }
+    }, 50)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (currentFileId) {
@@ -201,9 +219,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const globalVocabTotalPages = useMemo(() => Math.max(1, Math.ceil(filteredGlobalVocab.length / pageSize)), [filteredGlobalVocab, pageSize])
 
   useEffect(() => {
-    setVocabPage(1)
-    setSentencePage(1)
-    setGlobalVocabPage(1)
+    if (pageSize !== prevPageSizeRef.current) {
+      prevPageSizeRef.current = pageSize
+      setVocabPage(1)
+      setSentencePage(1)
+      setGlobalVocabPage(1)
+    }
   }, [pageSize])
 
   useEffect(() => {
@@ -704,7 +725,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           vocabPage, sentencePage, globalVocabPage,
           vocabDisplayMode, sentenceDisplayMode,
           showOriginal, showGlobalVocab,
-          vocabSearch, sentenceSearch
+          vocabSearch, sentenceSearch,
+          outerScrollPos: outerScrollRef?.current?.scrollTop || dictStateRef.current?.outerScrollPos || 0
         }
       }
     }
