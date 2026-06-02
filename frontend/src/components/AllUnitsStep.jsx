@@ -72,9 +72,8 @@ function AllUnitsStep({
     return (
       <motion.button
         key={`${keyPrefix}-unit-${index}`}
-        initial={{ opacity: 0, y: 8 }}
+        initial={false}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: index * 0.03, duration: 0.25 }}
         whileHover={!isLocked && !isGenerating ? { y: -2, transition: { duration: 0.15 } } : {}}
         whileTap={!isLocked && !isGenerating ? { scale: 0.97 } : {}}
         onClick={isLocked || isGenerating ? undefined : onClick}
@@ -283,7 +282,7 @@ function AllUnitsStep({
             </div>
           </div>
 
-          <div class="px-5 pb-5 pt-4">
+          <div className="px-5 pb-5 pt-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
