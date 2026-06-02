@@ -98,6 +98,7 @@ function App() {
   const isFetchingNextRef = useRef(false)
   const [skipListening, setSkipListening] = useState(false)
   const [generatingUnits, setGeneratingUnits] = useState(new Set())
+  const [lastActiveTab, setLastActiveTab] = useState(0)
   const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
@@ -1311,6 +1312,8 @@ function App() {
               generatingUnits={generatingUnits}
               fileTitle={fileTitle}
               currentFileId={currentFileId}
+              lastActiveTab={lastActiveTab}
+              onTabChange={setLastActiveTab}
             />
           )}
           

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool } from 'lucide-react';
 
@@ -18,9 +18,22 @@ function AllUnitsStep({
   onSkipListeningChange,
   generatingUnits,
   fileTitle,
-  currentFileId
+  currentFileId,
+  lastActiveTab,
+  onTabChange
 }) {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(lastActiveTab || 0);
+
+  useEffect(() => {
+    if (lastActiveTab !== undefined) {
+      setActiveTab(lastActiveTab);
+    }
+  }, []);
+
+  const handleTabChange = (index) => {
+    setActiveTab(index);
+    onTabChange?.(index);
+  };
 
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
@@ -104,7 +117,13 @@ function AllUnitsStep({
         ) : (
           <>
             <span className={`text-[13px] font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{index + 1}</span>
-            {isCurrent && <div className="w-1 h-1 rounded-full mt-0.5 bg-amber-400" />}
+            {isCurrent && (
+              <motion.div
+                layoutId="currentIndicator"
+                className="w-4 h-[2px] rounded-full mt-0.5 bg-amber-400"
+                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+              />
+            )}
           </>
         )}
       </motion.button>
@@ -235,7 +254,7 @@ function AllUnitsStep({
                 return (
                   <button
                     key={tab.key}
-                    onClick={() => setActiveTab(i)}
+                    onClick={() => handleTabChange(i)}
                     className="relative flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
                   >
                     {isActive && (
@@ -264,7 +283,7 @@ function AllUnitsStep({
             </div>
           </div>
 
-          <div className="px-5 pb-5 pt-4">
+          <div class="px-5 pb-5 pt-4">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
