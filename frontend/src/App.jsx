@@ -1117,7 +1117,7 @@ function App() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowSettings(true)}
-                    className="absolute top-0 right-0 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-xl transition-colors z-10"
+                    className="absolute top-3 right-4 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-xl transition-colors z-10"
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>

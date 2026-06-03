@@ -278,10 +278,10 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 text-sm font-medium text-ink-700 hover:text-ink-900 transition-colors"
+          className="flex items-center gap-1.5 text-base font-medium text-ink-700 hover:text-ink-900 transition-colors"
         >
           <span className="leading-none">
-            {isAuto ? <LangIcon langCode="auto" size="sm" /> : <LangIcon langCode={value} size="sm" />}
+            {isAuto ? <LangIcon langCode="auto" size="md" /> : <LangIcon langCode={value} size="md" />}
           </span>
           <span className="text-ink-800">{currentLabel}</span>
           <ChevronDown className={`w-3.5 h-3.5 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
@@ -454,7 +454,7 @@ function ModeSelector({ mode, setMode, t }) {
             key={key}
             type="button"
             onClick={() => setMode(key)}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-200 ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
               isActive ? 'bg-cream-200/80 text-ink-700' : 'text-ink-400 hover:text-ink-500 hover:bg-cream-100'
             }`}
           >
@@ -495,17 +495,44 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
-      {/* Top area - language selector only */}
-      <div className="flex items-center gap-3 pt-2">
+    <div className="flex flex-col h-full w-full items-center">
+      {/* Top bar - language selector left, settings right */}
+      <div className="w-full max-w-2xl flex items-center justify-between pt-3 pb-2">
         <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
       </div>
 
-      {/* Spacer to push input to bottom */}
-      <div className="flex-1" />
+      {/* Center content - brand and tagline */}
+      <div className="flex-1 flex flex-col items-center justify-center max-w-2xl w-full px-4">
+        <motion.h1
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="text-4xl font-display font-bold text-ink-800 mb-2"
+        >
+          {t.title || '呱邻国'}
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-base text-ink-400 mb-1"
+        >
+          {t.subtitle || 'Gualingo'}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="text-sm text-ink-300 text-center max-w-md"
+        >
+          {targetLang === 'zh'
+            ? '输入文本，开始你的语言学习之旅'
+            : 'Enter text, start your language learning journey'}
+        </motion.p>
+      </div>
 
       {/* Bottom area - input box */}
-      <div className="w-full max-w-2xl mx-auto pb-2">
+      <div className="w-full max-w-2xl pb-4 px-4">
         <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
           {/* Mode tabs at top of input */}
           <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
@@ -521,7 +548,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
               rows={4}
               className="w-full resize-none bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-sm text-ink-700 placeholder-ink-400 leading-relaxed"
             />
-            
+
             {/* Submit button inside textarea, bottom-right */}
             <div className="flex items-center justify-end px-3 pb-3">
               <motion.button
