@@ -3,6 +3,7 @@ UI_TRANSLATION_SCHEMA = {
     "subtitle": {"desc": "App subtitle/tagline", "zh": "Gualingo", "en": ""},
     "startLearning": {"desc": "Button to start learning", "zh": "开始学习", "en": "Start Learning"},
     "inputHint": {"desc": "Hint text for input area", "zh": "输入任意文本，AI 将自动生成单词表和学习资料", "en": "Enter any text, AI will automatically generate word list and study materials"},
+    "tagline": {"desc": "Tagline below the app title on home page", "zh": "输入文本，开始你的语言学习之旅", "en": "Enter text, start your language learning journey"},
     "learnLang": {"desc": "Label for language to learn", "zh": "学习语言", "en": "Learn Language"},
     "nativeLang": {"desc": "Label for native/mother tongue", "zh": "母语", "en": "Native Language"},
     "targetLang": {"desc": "Label for target language", "zh": "目标语言", "en": "Target Language"},
