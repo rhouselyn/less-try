@@ -231,5 +231,11 @@ export const api = {
       target_language: targetLang,
     });
     return response.data;
+  },
+
+  // Translate UI strings
+  translateUI: async (langCode) => {
+    const response = await axios.get(`${baseUrl}/api/translate_ui/${langCode}`);
+    return response.data;
   }
 };

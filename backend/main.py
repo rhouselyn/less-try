@@ -12,8 +12,11 @@ import re
 from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
 from storage import Storage
+from ui_translations import UI_TRANSLATION_SCHEMA, TRANSLATION_PROMPT
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
+
+_ui_translation_cache = {}
 
 import re
 
@@ -3699,6 +3702,68 @@ async def generate_text(request: dict):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/translate_ui/{lang_code}")
+async def translate_ui(lang_code: str):
+    # Return cached if available
+    if lang_code in _ui_translation_cache:
+        return _ui_translation_cache[lang_code]
+    
+    # For zh and en, return from schema directly
+    if lang_code in ('zh', 'en'):
+        result = {}
+        for key, val in UI_TRANSLATION_SCHEMA.items():
+            result[key] = val.get(lang_code, val.get('en', ''))
+        _ui_translation_cache[lang_code] = result
+        return result
+    
+    # Get language name
+    lang_name = get_lang_name(lang_code)
+    
+    # Build strings JSON for the prompt
+    strings_for_prompt = {}
+    for key, val in UI_TRANSLATION_SCHEMA.items():
+        strings_for_prompt[key] = {
+            "description": val["desc"],
+            "chinese": val["zh"],
+            "english": val["en"]
+        }
+    
+    prompt = TRANSLATION_PROMPT.format(
+        target_lang_name=lang_name,
+        target_lang_code=lang_code,
+        strings_json=json.dumps(strings_for_prompt, ensure_ascii=False, indent=2)
+    )
+    
+    messages = [
+        {"role": "system", "content": "You are a professional UI translator. Always respond with valid JSON only."},
+        {"role": "user", "content": prompt}
+    ]
+    
+    try:
+        api = NvidiaAPI()
+        result = await api.call_minimax(messages, temperature=0.3, max_tokens=4096)
+        
+        if result and result.get("choices"):
+            content = result["choices"][0]["message"]["content"]
+            # Extract JSON from response
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+            
+            translated = json.loads(content.strip())
+            _ui_translation_cache[lang_code] = translated
+            return translated
+    except Exception as e:
+        print(f"UI translation error: {e}")
+    
+    # Fallback to English
+    result = {}
+    for key, val in UI_TRANSLATION_SCHEMA.items():
+        result[key] = val.get('en', '')
+    return result
 
 
 if __name__ == "__main__":

@@ -47,6 +47,8 @@ function App() {
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
+  const [customTranslations, setCustomTranslations] = useState({})
+  const [translatingUI, setTranslatingUI] = useState(false)
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
@@ -153,7 +155,30 @@ function App() {
   }
   
   // 获取当前语言的翻译
-  const t = translations[targetLang] || translations.zh;
+  const baseT = translations[targetLang] || translations.zh;
+  const t = customTranslations[targetLang] 
+    ? { ...translations.zh, ...translations[targetLang], ...customTranslations[targetLang] }
+    : baseT;
+
+  // Fetch LLM translations when targetLang changes to a non-zh/en language
+  useEffect(() => {
+    if (targetLang === 'zh' || targetLang === 'en') return
+    if (customTranslations[targetLang]) return // already cached
+    
+    let cancelled = false
+    setTranslatingUI(true)
+    api.translateUI(targetLang)
+      .then(data => {
+        if (!cancelled) {
+          setCustomTranslations(prev => ({ ...prev, [targetLang]: data }))
+          setTranslatingUI(false)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setTranslatingUI(false)
+      })
+    return () => { cancelled = true }
+  }, [targetLang])
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -1121,6 +1146,14 @@ function App() {
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>
+                  {translatingUI && (
+                    <div className="absolute inset-0 bg-cream-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
+                      <div className="flex items-center gap-3 bg-cream-50 border border-bone-200 rounded-2xl px-6 py-4 shadow-warm">
+                        <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
+                        <span className="text-sm text-ink-600">{t.translatingUI || '正在切换界面语言...'}</span>
+                      </div>
+                    </div>
+                  )}
                   <AnimatePresence mode="wait">
                     <InputStep
                       key="input"
