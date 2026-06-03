@@ -1104,11 +1104,11 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
-                  <FrogLogo size={28} />
+                <div className="w-14 h-14 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
+                  <FrogLogo size={32} />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-display font-bold text-ink-700">{t.title}</h1>
+                  <h1 className="text-3xl font-display font-bold text-ink-700">{t.title}</h1>
                   <p className="text-sm text-ink-400">{t.subtitle}</p>
                 </div>
               </div>

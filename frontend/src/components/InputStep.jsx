@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, PenLine, Languages, Wand2, Zap } from 'lucide-react'
+import { Loader2, Search, X, ChevronDown, ChevronRight, ArrowRight, PenLine, Languages, Wand2, Zap } from 'lucide-react'
 
 const LANG_COLORS = {
   'en': '#3b82f6', 'fr': '#6366f1', 'pt': '#22c55e', 'de': '#eab308', 'ro': '#2563eb',
@@ -449,7 +449,7 @@ const MODES = [
 
 function ModeSelector({ mode, setMode, t }) {
   return (
-    <div className="flex gap-1 p-1 bg-cream-100/80 rounded-2xl">
+    <div className="flex gap-0.5">
       {MODES.map(({ key, icon: Icon, color }) => {
         const isActive = mode === key
         const labelMap = { direct: t.modeDirect, translate: t.modeTranslate, generate: t.modeGenerate }
@@ -458,37 +458,16 @@ function ModeSelector({ mode, setMode, t }) {
             key={key}
             type="button"
             onClick={() => setMode(key)}
-            className={`relative flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-              isActive ? 'tab-warm-active' : 'tab-warm-inactive'
+            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all duration-200 ${
+              isActive ? 'bg-cream-200/80 text-ink-700' : 'text-ink-400 hover:text-ink-500 hover:bg-cream-100'
             }`}
           >
-            <Icon className="w-3.5 h-3.5" />
+            <Icon className="w-3 h-3" />
             <span>{labelMap[key]}</span>
           </button>
         )
       })}
     </div>
-  )
-}
-
-function ModeDescription({ mode, t }) {
-  const descMap = { direct: t.modeDirectDesc, translate: t.modeTranslateDesc, generate: t.modeGenerateDesc }
-  const colorMap = {
-    direct: 'text-ochre-500/70',
-    translate: 'text-blue-600/70',
-    generate: 'text-violet-600/70',
-  }
-  return (
-    <motion.p
-      key={mode}
-      initial={{ opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
-      transition={{ duration: 0.2 }}
-      className={`text-[11px] leading-relaxed ${colorMap[mode]}`}
-    >
-      {descMap[mode]}
-    </motion.p>
   )
 }
 
@@ -519,126 +498,62 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
     return t.modeDirectPlaceholder
   }
 
-  const getLabel = () => {
-    if (inputMode === 'translate') return t.inputText
-    if (inputMode === 'generate') return t.inputText
-    return t.inputText
-  }
-
-  const getButtonText = () => {
-    if (loading) return t.processing
-    return t.generateMaterials
-  }
-
-  const getAccentColor = () => {
-    if (inputMode === 'translate') return 'blue'
-    if (inputMode === 'generate') return 'violet'
-    return 'amber'
-  }
-
-  const accent = getAccentColor()
-
-  const btnStyles = {
-    amber: {
-      active: 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25',
-      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
-    },
-    blue: {
-      active: 'bg-blue-500 text-white shadow-md shadow-blue-500/20 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/25',
-      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
-    },
-    violet: {
-      active: 'bg-violet-500 text-white shadow-md shadow-violet-500/20 hover:bg-violet-600 hover:shadow-lg hover:shadow-violet-500/25',
-      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
-    },
-  }
-
-  const textareaBorder = {
-    amber: 'focus:border-ochre-400/80 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.06)]',
-    blue: 'focus:border-blue-400/80 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.06)]',
-    violet: 'focus:border-violet-400/80 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.06)]',
-  }
-
-  const iconColor = {
-    amber: 'group-focus-within:text-ochre-300',
-    blue: 'group-focus-within:text-blue-300',
-    violet: 'group-focus-within:text-violet-300',
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -16 }}
       transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="max-w-lg mx-auto"
+      className="max-w-2xl mx-auto w-full"
     >
-      <div className="relative">
-        <div className="absolute -inset-3 bg-gradient-to-b from-ochre-100/20 via-cream-100/10 to-transparent rounded-3xl pointer-events-none" />
+      {/* Language selector - top left */}
+      <div className="mb-4">
+        <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
+      </div>
 
-        <div className="relative space-y-5 bg-cream-50 border border-bone-200 rounded-3xl shadow-warm p-6">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05, duration: 0.4 }}
-            className="flex items-center justify-between gap-3"
-          >
-            <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
-            <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
-          </motion.div>
+      {/* Main input area - no big card, just a clean container */}
+      <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
+        {/* Mode tabs at top */}
+        <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
+          <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
+        </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-          >
-            <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
-              {getLabel()}
-            </label>
-            <div className="relative group">
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={getPlaceholder()}
-                rows={4}
-                className={`w-full input-warm resize-none leading-relaxed transition-all duration-200`}
-              />
-              <div className="absolute top-3 right-3 pointer-events-none">
-                <PenLine className={`w-4 h-4 text-bone-200 ${iconColor[accent]} transition-colors`} />
-              </div>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-          >
+        {/* Textarea area */}
+        <div className="relative">
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={getPlaceholder()}
+            rows={4}
+            className="w-full resize-none bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-sm text-ink-700 placeholder-ink-400 leading-relaxed"
+          />
+          
+          {/* Submit button inside textarea, bottom-right */}
+          <div className="flex items-center justify-end px-3 pb-3">
             <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={onProcess}
               disabled={loading || !text.trim()}
-              className={`w-full btn-primary flex items-center justify-center gap-2 transition-all duration-200 ${
-                loading || !text.trim() ? 'opacity-50 cursor-not-allowed' : ''
+              className={`p-2 rounded-xl transition-all duration-200 ${
+                loading || !text.trim()
+                  ? 'bg-cream-100 text-ink-400 cursor-not-allowed'
+                  : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25'
               }`}
             >
               <AnimatePresence mode="wait">
                 {loading ? (
-                  <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
+                  <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    {getButtonText()}
                   </motion.span>
                 ) : (
-                  <motion.span key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    {getButtonText()}
-                    <ArrowRight className="w-3.5 h-3.5 opacity-70" />
+                  <motion.span key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <ArrowRight className="w-4 h-4" />
                   </motion.span>
                 )}
               </AnimatePresence>
             </motion.button>
-          </motion.div>
+          </div>
         </div>
       </div>
     </motion.div>

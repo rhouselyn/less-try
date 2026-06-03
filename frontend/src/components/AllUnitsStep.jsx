@@ -109,7 +109,7 @@ function AllUnitsStep({
             ? 'bg-ochre-50 border-ochre-300/70 shadow-warm-sm'
             : 'bg-ochre-50/40 border-ochre-200/40 hover:border-ochre-300/60'
         }`}
-        style={{ width: '4.5rem', height: '4.5rem' }}
+        style={{ width: '5rem', height: '5rem' }}
       >
         {isGenerating ? (
           <Loader2 className="w-3.5 h-3.5 animate-spin text-bone-300" />
@@ -117,13 +117,13 @@ function AllUnitsStep({
           <Lock className="w-3.5 h-3.5 text-bone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-[15px] font-semibold text-moss-600">{index + 1}</span>
+            <span className="text-base font-semibold text-moss-600">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
                   <Star
                     key={i}
-                    className={`w-2.5 h-2.5 ${
+                    className={`w-3 h-3 ${
                       i < starCount
                         ? 'text-ochre-400 fill-ochre-400'
                         : 'text-bone-300 fill-bone-300'
@@ -135,7 +135,7 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-[15px] font-semibold text-ochre-500`}>{index + 1}</span>
+            <span className={`text-base font-semibold text-ochre-500`}>{index + 1}</span>
             <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-ochre-400' : 'bg-ochre-300/60'}`} />
           </>
         )}
@@ -230,18 +230,18 @@ function AllUnitsStep({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-4xl mx-auto"
+      className="max-w-3xl mx-auto"
     >
       <div className="flex items-center gap-2 mb-6">
         <button
           onClick={onBack}
-          className="btn-ghost p-1.5"
+          className="btn-ghost p-2"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
 
         {fileTitle && (
-          <span className="text-sm font-medium text-ink-500 truncate max-w-[240px]">
+          <span className="text-base font-medium text-ink-500 truncate max-w-[240px]">
             {fileTitle}
           </span>
         )}
@@ -284,10 +284,10 @@ function AllUnitsStep({
 
         <button
           onClick={onHome}
-          className="btn-ghost p-1.5"
+          className="btn-ghost p-2"
           title={t.backToHome || '返回主页'}
         >
-          <Home className="w-4 h-4" />
+          <Home className="w-5 h-5" />
         </button>
       </div>
 

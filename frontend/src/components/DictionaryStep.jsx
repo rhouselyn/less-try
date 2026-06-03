@@ -715,21 +715,21 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col gap-3"
+      className="flex flex-col gap-3 max-w-3xl mx-auto w-full"
       style={{ height: '100%' }}
     >
       <div className="flex items-center gap-3 px-1">
         <button
           onClick={onBack}
-          className="btn-ghost p-1.5 -ml-1.5"
+          className="btn-ghost p-2 -ml-1.5"
           title={t.backToHome || '返回主页'}
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
 
         <div className="flex items-center gap-2">
-          <LangIcon langCode={actualSourceLang} size="sm" />
-          <span className="text-[13px] font-semibold text-ink-700">
+          <LangIcon langCode={actualSourceLang} size="md" />
+          <span className="text-sm font-semibold text-ink-700">
             {LANGUAGES.find(l => l.value === actualSourceLang)?.en || actualSourceLang?.toUpperCase()}
           </span>
         </div>
@@ -739,7 +739,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             onClick={handleTitleClick}
             className="flex items-center gap-1.5 max-w-[250px] group"
           >
-            <span className="truncate text-[15px] font-medium text-ink-600 group-hover:text-ink-800 transition-colors">{fileTitle}</span>
+            <span className="truncate text-base font-medium text-ink-600 group-hover:text-ink-800 transition-colors">{fileTitle}</span>
             <Pencil className="w-2.5 h-2.5 text-bone-300 group-hover:text-ink-400 shrink-0 transition-colors" />
           </button>
         )}
