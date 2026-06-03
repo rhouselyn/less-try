@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
+from pathlib import Path
 import os
 import json
 import random
@@ -17,6 +18,7 @@ from ui_translations import UI_TRANSLATION_SCHEMA, TRANSLATION_PROMPT
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
 _ui_translation_cache = {}
+UI_TRANSLATIONS_DIR = Path("/workspace/config/ui_translations")
 
 import re
 
@@ -472,6 +474,16 @@ async def startup_event():
     settings = get_settings()
     rpm = settings.get("rpm", 20)
     word_gen_rate_limiter = RateLimiter(rpm)
+    
+    # Load existing translation files into cache
+    if UI_TRANSLATIONS_DIR.exists():
+        for cache_file in UI_TRANSLATIONS_DIR.glob("*.json"):
+            lang_code = cache_file.stem
+            try:
+                with open(cache_file, 'r', encoding='utf-8') as f:
+                    _ui_translation_cache[lang_code] = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
 
 @app.get("/api/tts")
 async def tts_endpoint(text: str, lang: str = "en", slow: bool = False):
@@ -3706,7 +3718,7 @@ async def generate_text(request: dict):
 
 @app.get("/api/translate_ui/{lang_code}")
 async def translate_ui(lang_code: str):
-    # Return cached if available
+    # Check in-memory cache first
     if lang_code in _ui_translation_cache:
         return _ui_translation_cache[lang_code]
     
@@ -3718,10 +3730,21 @@ async def translate_ui(lang_code: str):
         _ui_translation_cache[lang_code] = result
         return result
     
-    # Get language name
+    # Check file cache
+    UI_TRANSLATIONS_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = UI_TRANSLATIONS_DIR / f"{lang_code}.json"
+    if cache_file.exists():
+        try:
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                result = json.load(f)
+            _ui_translation_cache[lang_code] = result
+            return result
+        except (json.JSONDecodeError, IOError):
+            pass
+    
+    # Call LLM to translate
     lang_name = get_lang_name(lang_code)
     
-    # Build strings JSON for the prompt
     strings_for_prompt = {}
     for key, val in UI_TRANSLATION_SCHEMA.items():
         strings_for_prompt[key] = {
@@ -3742,12 +3765,11 @@ async def translate_ui(lang_code: str):
     ]
     
     try:
-        api = NvidiaAPI()
-        result = await api.call_minimax(messages, temperature=0.3, max_tokens=4096)
+        api_instance = NvidiaAPI()
+        result = await api_instance.call_minimax(messages, temperature=0.3, max_tokens=4096)
         
         if result and result.get("choices"):
             content = result["choices"][0]["message"]["content"]
-            # Extract JSON from response
             if "```json" in content:
                 content = content.split("```json")[1].split("```")[0]
             elif "```" in content:
@@ -3755,6 +3777,14 @@ async def translate_ui(lang_code: str):
             
             translated = json.loads(content.strip())
             _ui_translation_cache[lang_code] = translated
+            
+            # Save to file
+            try:
+                with open(cache_file, 'w', encoding='utf-8') as f:
+                    json.dump(translated, f, ensure_ascii=False, indent=2)
+            except IOError as e:
+                print(f"Failed to save UI translation cache: {e}")
+            
             return translated
     except Exception as e:
         print(f"UI translation error: {e}")

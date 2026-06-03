@@ -10,7 +10,7 @@ const slideVariants = {
   exit: (dir) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
 }
 
-function NativeLangSelector({ value, onChange }) {
+function NativeLangSelector({ value, onChange, recentLangs = [] }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const containerRef = useRef(null)
@@ -29,6 +29,16 @@ function NativeLangSelector({ value, onChange }) {
     const s = search.toLowerCase()
     return l.native.toLowerCase().includes(s) || l.en.toLowerCase().includes(s) || l.zh.includes(search) || l.value.toLowerCase().includes(s)
   })
+
+  const recentFiltered = recentLangs
+    .filter(code => code !== value && code !== 'zh' && code !== 'en')
+    .map(code => LANGUAGES.find(l => l.value === code))
+    .filter(Boolean)
+    .filter(l => {
+      if (!search) return true
+      const s = search.toLowerCase()
+      return l.native.toLowerCase().includes(s) || l.en.toLowerCase().includes(s) || l.zh.includes(search)
+    })
 
   // Group by family, show most common first
   const commonLangs = ['zh', 'en', 'ja', 'ko', 'fr', 'de', 'es', 'ru', 'pt', 'it', 'ar', 'hi', 'th', 'vi', 'id']
@@ -58,6 +68,24 @@ function NativeLangSelector({ value, onChange }) {
             />
           </div>
           <div className="max-h-48 overflow-y-auto">
+            {recentFiltered.length > 0 && (
+              <>
+                <div className="px-3 py-1 text-[10px] text-ink-400 font-semibold uppercase">Recent</div>
+                {recentFiltered.map(l => (
+                  <button
+                    key={l.value}
+                    type="button"
+                    onClick={() => { onChange(l.value); setOpen(false); setSearch('') }}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
+                      value === l.value ? 'bg-ochre-50 text-ochre-600' : 'text-ink-600 hover:bg-cream-50'
+                    }`}
+                  >
+                    <LangIcon langCode={l.value} size="sm" />
+                    <span>{l.native}</span>
+                  </button>
+                ))}
+              </>
+            )}
             {commonFiltered.length > 0 && (
               <>
                 <div className="px-3 py-1 text-[10px] text-ink-400 font-semibold uppercase">Common</div>
@@ -101,7 +129,7 @@ function NativeLangSelector({ value, onChange }) {
   )
 }
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSize, onPageSizeChange, t }) {
+function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSize, onPageSizeChange, t, recentLangs }) {
   const [configs, setConfigs] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -484,7 +512,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                   <Languages className="w-3 h-3" />
                   {t.nativeLang || '母语'}
                 </label>
-                <NativeLangSelector value={localTargetLang} onChange={setLocalTargetLang} />
+                <NativeLangSelector value={localTargetLang} onChange={setLocalTargetLang} recentLangs={recentLangs} />
               </div>
 
               <motion.button

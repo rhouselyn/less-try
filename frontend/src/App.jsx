@@ -49,6 +49,7 @@ function App() {
   const [targetLang, setTargetLang] = useState('zh')
   const [customTranslations, setCustomTranslations] = useState({})
   const [translatingUI, setTranslatingUI] = useState(false)
+  const [loadedLangs, setLoadedLangs] = useState(new Set())
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
@@ -157,30 +158,28 @@ function App() {
   // 获取当前语言的翻译
   const baseT = translations[targetLang] || translations.zh;
   const t = customTranslations[targetLang] 
-    ? { ...translations.zh, ...translations[targetLang], ...customTranslations[targetLang] }
+    ? { ...translations.zh, ...(translations[targetLang] || {}), ...customTranslations[targetLang] }
     : baseT;
 
   // Fetch LLM translations when targetLang changes to a non-zh/en language
-  const customTranslationsRef = useRef({})
-  customTranslationsRef.current = customTranslations
-  
   useEffect(() => {
-    if (targetLang === 'zh' || targetLang === 'en') return
-    if (customTranslationsRef.current[targetLang]) return // already cached
+    if (targetLang === 'zh' || targetLang === 'en') {
+      setTranslatingUI(false)
+      return
+    }
+    if (loadedLangs.has(targetLang)) return
     
-    let cancelled = false
+    setLoadedLangs(prev => new Set([...prev, targetLang]))
     setTranslatingUI(true)
     api.translateUI(targetLang)
       .then(data => {
-        if (!cancelled) {
-          setCustomTranslations(prev => ({ ...prev, [targetLang]: data }))
-          setTranslatingUI(false)
-        }
+        setCustomTranslations(prev => ({ ...prev, [targetLang]: data }))
+        setTranslatingUI(false)
       })
       .catch(() => {
-        if (!cancelled) setTranslatingUI(false)
+        setTranslatingUI(false)
+        setLoadedLangs(prev => { const next = new Set(prev); next.delete(targetLang); return next })
       })
-    return () => { cancelled = true }
   }, [targetLang])
 
   useEffect(() => {
@@ -1477,7 +1476,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} recentLangs={recentLanguages} />
       {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
