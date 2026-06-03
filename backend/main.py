@@ -1537,11 +1537,26 @@ async def get_random_word(file_id: str):
         only_new_words = bool(app_settings.get("only_new_words", False))
         learned_words = storage.load_learned_words(file_id) if only_new_words else set()
         if only_new_words and current_index is not None:
+            cur_unit_id, _ = find_item_in_plan(plan, current_index)
             new_unit_id, new_step, _ = find_next_non_learned_position(
                 plan, vocab, learned_words, True, current_index
             )
             if new_unit_id is None:
                 return {"type": "all_complete"}
+            # 如果下一个未学单词不在当前单元，说明当前单元已做完
+            if cur_unit_id is not None and new_unit_id != cur_unit_id:
+                _, cur_unit_end = get_unit_flat_range(plan, cur_unit_id)
+                new_flat_index = sum(len(plan[i].get("items", [])) for i in range(new_unit_id)) + new_step
+                storage.save_learning_progress(file_id, new_flat_index)
+                return {
+                    "type": "unit_complete",
+                    "unit_end_index": cur_unit_end,
+                    "current_index": current_index,
+                    "unit_start_index": cur_unit_end,
+                    "total_items_in_unit": 0,
+                    "listening_count_in_unit": 0,
+                    "step_in_unit": 0
+                }
             new_flat_index = sum(len(plan[i].get("items", [])) for i in range(new_unit_id)) + new_step
             if new_flat_index != current_index:
                 current_index = new_flat_index
@@ -1842,6 +1857,38 @@ async def next_word(file_id: str):
         learned_words = storage.load_learned_words(file_id) if only_new_words else set()
         
         if only_new_words:
+            # 先判断当前单元是否还有未学单词
+            cur_unit_id, _ = find_item_in_plan(plan, current_index)
+            if cur_unit_id is not None:
+                cur_items = plan[cur_unit_id].get("items", [])
+                has_more_in_unit = False
+                cur_start, _ = get_unit_flat_range(plan, cur_unit_id)
+                for si, it in enumerate(cur_items):
+                    if cur_start + si <= current_index:
+                        continue
+                    if not _is_word_item_learned(it, vocab, learned_words):
+                        has_more_in_unit = True
+                        break
+                if not has_more_in_unit:
+                    # 当前单元的非已学单词都做完了 → 单元完成
+                    _, cur_unit_end = get_unit_flat_range(plan, cur_unit_id)
+                    # 把进度推进到下一个单元开头
+                    nxt_unit_id = cur_unit_id + 1
+                    new_idx = cur_unit_end
+                    if nxt_unit_id < len(plan):
+                        nxt_items = plan[nxt_unit_id].get("items", [])
+                        has_any = any(not _is_word_item_learned(it, vocab, learned_words) for it in nxt_items)
+                        if has_any:
+                            new_idx = sum(len(plan[i].get("items", [])) for i in range(nxt_unit_id))
+                    storage.save_learning_progress(file_id, new_idx)
+                    return {
+                        "success": True,
+                        "type": "unit_complete",
+                        "new_index": new_idx,
+                        "unit_end_index": cur_unit_end,
+                        "completed_unit_id": cur_unit_id
+                    }
+            
             nxt_unit_id, nxt_step, _ = find_next_non_learned_position(
                 plan, vocab, learned_words, True, current_index + 1
             )

@@ -373,6 +373,7 @@ function App() {
     } catch (error) {
       console.error('处理文本错误:', error)
       setPreprocessStatus(null)
+      setStep('input')
       if (error.response && error.response.status === 504) {
         alert('网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {

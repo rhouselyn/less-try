@@ -100,14 +100,14 @@ function AllUnitsStep({
         disabled={isLocked || isGenerating}
         className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-emerald-50/80 border border-emerald-200/50 hover:bg-emerald-50'
+            ? 'bg-emerald-50 border border-emerald-200/50 hover:bg-emerald-50'
             : isGenerating
-            ? 'bg-amber-50/50 border border-amber-200/30 cursor-not-allowed'
+            ? 'bg-amber-50 border border-amber-200/30 cursor-not-allowed'
             : isLocked
-            ? 'bg-stone-50/50 border border-stone-200/30 cursor-not-allowed'
+            ? 'bg-stone-50 border border-stone-200/30 cursor-not-allowed'
             : isCurrent
-            ? 'bg-amber-50/60 border border-amber-300/70 shadow-sm'
-            : 'bg-white border border-stone-200/50 hover:border-amber-200/50 shadow-[0_1px_2px_rgba(0,0,0,0.04)]'
+            ? 'bg-amber-50 border border-amber-300/70 shadow-sm'
+            : 'bg-amber-50/40 border border-amber-200/40 hover:border-amber-300/60'
         }`}
         style={{ width: '3.75rem', height: '3.75rem' }}
       >
@@ -135,10 +135,8 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-[13px] font-semibold ${isCurrent ? 'text-amber-600' : 'text-stone-500'}`}>{index + 1}</span>
-            {isCurrent && (
-              <div className="w-4 h-[2px] rounded-full mt-0.5 bg-amber-400" />
-            )}
+            <span className={`text-[13px] font-semibold text-amber-600`}>{index + 1}</span>
+            <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-amber-400' : 'bg-amber-300/60'}`} />
           </>
         )}
       </motion.button>
