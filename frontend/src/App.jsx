@@ -47,7 +47,6 @@ function App() {
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
-  const [uiLang, setUiLang] = useState('zh')
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
@@ -117,7 +116,6 @@ function App() {
     warmupSpeech()
     api.getUserPreferences().then(prefs => {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
-      if (prefs.ui_lang) setUiLang(prefs.ui_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.only_new_words !== undefined) setOnlyNewWords(prefs.only_new_words)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
@@ -153,7 +151,7 @@ function App() {
   }
   
   // 获取当前语言的翻译
-  const t = translations[uiLang] || translations.zh;
+  const t = translations[targetLang] || translations.zh;
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -719,8 +717,11 @@ function App() {
         })
       }
       if (reviewMode) {
-        // In review mode, don't append wrong items - just leave it in place for retry
-        // The review ends after going through all current wrong items once
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
       } else {
         setWrongItems(prev => [...prev, { type: 'word', data: learningData }])
       }
@@ -737,7 +738,11 @@ function App() {
         })
       }
       if (reviewMode) {
-        // In review mode, don't append wrong items - just leave it in place for retry
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
       } else {
         setWrongItems(prev => [...prev, { type: 'sentence_quiz', data: quizData }])
       }
@@ -759,7 +764,11 @@ function App() {
         })
       }
       if (reviewMode) {
-        // In review mode, don't append wrong items - just leave it in place for retry
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
       } else {
         setWrongItems(prev => [...prev, { type: 'listening_quiz', data: listeningQuizData }])
       }
@@ -781,7 +790,11 @@ function App() {
         })
       }
       if (reviewMode) {
-        // In review mode, don't append wrong items - just leave it in place for retry
+        const currentItem = wrongItems[reviewIndex]
+        if (currentItem) {
+          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
+          setReviewIndex(prev => prev)
+        }
       } else {
         setWrongItems(prev => [...prev, { type: exerciseType, data: currentExerciseData }])
       }
@@ -1110,11 +1123,7 @@ function App() {
                       sourceLang={sourceLang}
                       setSourceLang={setSourceLang}
                       targetLang={targetLang}
-                      setTargetLang={(lang) => {
-                        setTargetLang(lang)
-                        setUiLang(lang)
-                        api.saveUserPreferences({ ui_lang: lang }).catch(() => {})
-                      }}
+                      setTargetLang={setTargetLang}
                       loading={loading}
                       onProcess={handleProcess}
                       t={t}
@@ -1426,7 +1435,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} uiLang={uiLang} onUiLangChange={setUiLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
       {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}
