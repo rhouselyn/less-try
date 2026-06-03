@@ -1,11 +1,11 @@
-/* IPA Font Support */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+IPA&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans&display=swap');
+/* Typography Imports */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Base ===== */
 * {
   margin: 0;
   padding: 0;
@@ -13,20 +13,73 @@
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: #ffffff;
-  color: #1e293b;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f4efe6;
+  color: #1a1a1a;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* IPA Font Class */
+/* ===== Editorial Typography ===== */
+.font-display {
+  font-family: 'Cormorant Garamond', 'Noto Serif SC', Georgia, serif;
+  font-feature-settings: "liga" 1, "kern" 1, "calt" 1;
+}
+
+.font-mono-ui {
+  font-family: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+  font-feature-settings: "calt" 1, "ss01" 1;
+}
+
 .ipa-font {
   font-family: 'Noto Sans IPA', 'Doulos SIL', 'Charis SIL', 'Noto Sans', system-ui, sans-serif;
   font-feature-settings: "tnum" 0;
 }
 
+/* ===== Layer utilities ===== */
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+
+  .editorial-overline {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  .paper-grain {
+    background-image:
+      radial-gradient(at 0% 0%, rgba(180, 140, 100, 0.05) 0px, transparent 50%),
+      radial-gradient(at 100% 100%, rgba(120, 100, 80, 0.04) 0px, transparent 50%);
+  }
+
+  .hairline {
+    background-image: linear-gradient(90deg, transparent 0%, currentColor 50%, transparent 100%);
+  }
+}
+
+/* ===== Scrollbar ===== */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.24);
+}
+
+/* ===== Selection ===== */
+::selection {
+  background: #d4a574;
+  color: #1a1a1a;
 }

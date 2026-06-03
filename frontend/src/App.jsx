@@ -23,21 +23,17 @@ import HistorySidebar from './components/HistorySidebar'
 import WordListPanel from './components/WordListPanel'
 import SettingsModal from './components/SettingsModal'
 
-function FrogLogo({ size = 40 }) {
+function FrogLogo({ size = 28 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
-      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
-      <circle cx="34" cy="38" r="16" fill="#4ade80" />
-      <circle cx="66" cy="38" r="16" fill="#4ade80" />
-      <circle cx="34" cy="38" r="13" fill="#fff" />
-      <circle cx="66" cy="38" r="13" fill="#fff" />
-      <circle cx="36" cy="37" r="6" fill="#166534" />
-      <circle cx="68" cy="37" r="6" fill="#166534" />
-      <circle cx="38" cy="35" r="2" fill="#fff" />
-      <circle cx="70" cy="35" r="2" fill="#fff" />
-      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
-      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+      {/* Editorial line-art frog */}
+      <ellipse cx="50" cy="58" rx="34" ry="28" stroke="currentColor" strokeWidth="2" fill="none" />
+      <circle cx="35" cy="38" r="12" stroke="currentColor" strokeWidth="2" fill="none" />
+      <circle cx="65" cy="38" r="12" stroke="currentColor" strokeWidth="2" fill="none" />
+      <circle cx="35" cy="38" r="5" fill="currentColor" />
+      <circle cx="65" cy="38" r="5" fill="currentColor" />
+      <path d="M38 60 Q50 70 62 60" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M44 55 Q50 60 56 55" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
     </svg>
   )
 }
@@ -1074,19 +1070,37 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen paper-grain" style={{ background: '#f4efe6' }}>
       {step === 'input' && (
-        <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <header className="border-b border-stone-900/10">
+          <div className="max-w-[1400px] mx-auto px-8 lg:px-12 py-5">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
-                  <FrogLogo size={22} />
+              <div className="flex items-center gap-3.5 text-stone-900">
+                <FrogLogo size={28} />
+                <div className="flex items-baseline gap-3">
+                  <h1 className="font-display text-[26px] font-medium leading-none tracking-tight">
+                    {t.title}
+                  </h1>
+                  <span className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase">
+                    Est. 2025
+                  </span>
                 </div>
-                <div>
-                  <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
-                  <p className="text-sm text-stone-400">{t.subtitle}</p>
-                </div>
+              </div>
+              <div className="flex items-center gap-5">
+                <span className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-400 uppercase hidden sm:inline">
+                  {t.subtitle}
+                </span>
+                <div className="w-px h-4 bg-stone-900/15 hidden sm:block" />
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="group flex items-center gap-2 text-stone-500 hover:text-stone-900 transition-colors"
+                  title={t.settings || 'Settings'}
+                >
+                  <span className="font-mono-ui text-[10px] tracking-[0.2em] uppercase hidden sm:inline">
+                    {t.settings || 'Settings'}
+                  </span>
+                  <Settings className="w-4 h-4" />
+                </button>
               </div>
             </div>
           </div>
@@ -1095,9 +1109,9 @@ function App() {
 
       <main>
         {step === 'input' ? (
-          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ height: 'calc(100vh - 72px)' }}>
+          <div className="flex max-w-[1400px] mx-auto px-8 lg:px-12 py-8" style={{ minHeight: 'calc(100vh - 73px)' }}>
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
-            <div className="flex-1 min-w-0 relative h-full">
+            <div className="flex-1 min-w-0 relative">
               {wordListLang ? (
                 <WordListPanel
                   sourceLang={wordListLang}
@@ -1106,33 +1120,23 @@ function App() {
                   pageSize={pageSize}
                 />
               ) : (
-                <>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowSettings(true)}
-                    className="absolute top-0 right-0 p-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors z-10"
-                  >
-                    <Settings className="w-5 h-5" />
-                  </motion.button>
-                  <AnimatePresence mode="wait">
-                    <InputStep
-                      key="input"
-                      text={text}
-                      setText={setText}
-                      sourceLang={sourceLang}
-                      setSourceLang={setSourceLang}
-                      targetLang={targetLang}
-                      setTargetLang={setTargetLang}
-                      loading={loading}
-                      onProcess={handleProcess}
-                      t={t}
-                      inputMode={inputMode}
-                      setInputMode={setInputMode}
-                      recentLanguages={recentLanguages}
-                    />
-                  </AnimatePresence>
-                </>
+                <AnimatePresence mode="wait">
+                  <InputStep
+                    key="input"
+                    text={text}
+                    setText={setText}
+                    sourceLang={sourceLang}
+                    setSourceLang={setSourceLang}
+                    targetLang={targetLang}
+                    setTargetLang={setTargetLang}
+                    loading={loading}
+                    onProcess={handleProcess}
+                    t={t}
+                    inputMode={inputMode}
+                    setInputMode={setInputMode}
+                    recentLanguages={recentLanguages}
+                  />
+                </AnimatePresence>
               )}
             </div>
           </div>

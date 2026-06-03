@@ -171,41 +171,47 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
         onClick={onClose}
       >
         <motion.div
-          initial={{ opacity: 0, y: -10, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -10, scale: 0.95 }}
-          transition={{ duration: 0.15 }}
-          className="bg-white rounded-xl shadow-2xl border border-stone-200/80 w-[340px] overflow-hidden mt-2"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.18 }}
+          className="bg-[#faf6ed] border border-stone-900 shadow-2xl shadow-stone-900/20 w-[360px] overflow-hidden mt-2"
+          style={{ borderRadius: 0 }}
           onClick={e => e.stopPropagation()}
         >
-          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-stone-900/15">
             <div className="flex items-center gap-2.5">
-              <Settings className="w-4 h-4 text-stone-500" />
-              <h2 className="text-xs font-semibold text-stone-800">{t.settings || '设置'}</h2>
+              <span className="w-3 h-px bg-stone-900" />
+              <h2 className="font-mono-ui text-[10px] tracking-[0.25em] text-stone-700 uppercase">
+                {t.settings || 'Settings'}
+              </h2>
             </div>
             <button
               onClick={onClose}
-              className="p-1 text-stone-300 hover:text-stone-600 rounded-md transition-colors"
+              className="p-1 text-stone-400 hover:text-stone-900 transition-colors"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
 
           {loading ? (
             <div className="p-8 flex justify-center">
-              <Loader2 className="w-5 h-5 animate-spin text-stone-300" />
+              <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
             </div>
           ) : (
-            <div className="p-5 space-y-4 overflow-y-auto max-h-[70vh]">
+            <div className="p-5 space-y-5 overflow-y-auto max-h-[70vh] scrollbar-thin">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest">
-                    {t.apiConfig || 'API 配置'} {currentIndex + 1}/{configs.length}
-                  </span>
+                <div className="flex items-center justify-between mb-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-px bg-stone-900/40" />
+                    <span className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase">
+                      {t.apiConfig || 'API Configuration'} · {String(currentIndex + 1).padStart(2, '0')}/{String(configs.length).padStart(2, '0')}
+                    </span>
+                  </div>
                   {configs.length > 1 && (
                     <button
                       onClick={() => removeConfig(currentIndex)}
-                      className="flex items-center gap-1 text-[10px] text-stone-400 hover:text-red-500 transition-colors"
+                      className="font-mono-ui text-[10px] tracking-[0.15em] text-stone-500 hover:text-red-600 transition-colors uppercase flex items-center gap-1"
                     >
                       <Minus className="w-3 h-3" />
                       {t.remove || 'Remove'}
@@ -213,21 +219,21 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                   )}
                 </div>
 
-                <div className="relative">
+                <div>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={goPrev}
                       disabled={isFirst}
-                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center transition-all ${
                         isFirst
                           ? 'text-stone-200 cursor-not-allowed'
-                          : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100 active:scale-90'
+                          : 'text-stone-500 hover:text-stone-900 hover:bg-stone-900/5'
                       }`}
                     >
-                      <ChevronLeft className="w-4 h-4" />
+                      <ChevronLeft className="w-3.5 h-3.5" />
                     </button>
 
-                    <div className="flex-1 min-w-0 overflow-hidden rounded-lg border border-stone-200/80 bg-stone-50/50">
+                    <div className="flex-1 min-w-0 overflow-hidden border border-stone-900/15 bg-transparent">
                       <AnimatePresence mode="wait" custom={direction}>
                         <motion.div
                           key={currentIndex}
@@ -237,51 +243,54 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                           animate="center"
                           exit="exit"
                           transition={{ duration: 0.2, ease: 'easeInOut' }}
-                          className="p-3 space-y-3"
+                          className="p-3.5 space-y-3"
                         >
                           <div>
-                            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                            <label className="flex items-center gap-1.5 font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase mb-1.5">
                               <Key className="w-3 h-3" />
-                              API Key
-                              {current?.has_key && <span className="text-[10px] text-green-500 normal-case tracking-normal">● {t.configured || '已配置'}</span>}
+                              <span>API Key</span>
+                              {current?.has_key && <span className="text-emerald-600 normal-case tracking-normal font-mono-ui text-[10px]">● {t.configured || 'Set'}</span>}
                             </label>
                             <input
                               type="password"
                               value={current?.api_key || ''}
                               onChange={e => updateConfig(currentIndex, 'api_key', e.target.value)}
                               placeholder={current?.masked_key || 'sk-...'}
-                              className="w-full px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                              className="w-full px-3 py-2 text-[12px] bg-transparent border border-stone-900/20 text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 font-mono-ui transition-colors"
+                              style={{ borderRadius: 0 }}
                             />
                             {current?.has_key && !current?.api_key && (
-                              <p className="text-[11px] text-stone-400 mt-1">{t.leaveEmptyKeepKey || '留空则保持当前 Key 不变'}</p>
+                              <p className="font-mono-ui text-[10px] text-stone-500 mt-1">{t.leaveEmptyKeepKey || 'Leave empty to keep'}</p>
                             )}
                           </div>
 
                           <div>
-                            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                            <label className="flex items-center gap-1.5 font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase mb-1.5">
                               <Globe className="w-3 h-3" />
-                              Base URL
+                              <span>Base URL</span>
                             </label>
                             <input
                               type="text"
                               value={current?.base_url || ''}
                               onChange={e => updateConfig(currentIndex, 'base_url', e.target.value)}
                               placeholder="https://api.siliconflow.cn/v1"
-                              className="w-full px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                              className="w-full px-3 py-2 text-[12px] bg-transparent border border-stone-900/20 text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 font-mono-ui transition-colors"
+                              style={{ borderRadius: 0 }}
                             />
                           </div>
 
                           <div>
-                            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                            <label className="flex items-center gap-1.5 font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase mb-1.5">
                               <Cpu className="w-3 h-3" />
-                              Model
+                              <span>Model</span>
                             </label>
                             <input
                               type="text"
                               value={current?.model || ''}
                               onChange={e => updateConfig(currentIndex, 'model', e.target.value)}
                               placeholder="Qwen/Qwen3.6-27B"
-                              className="w-full px-3 py-2 text-xs bg-white border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-200 focus:border-amber-300 transition-all placeholder:text-stone-300"
+                              className="w-full px-3 py-2 text-[12px] bg-transparent border border-stone-900/20 text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 font-mono-ui transition-colors"
+                              style={{ borderRadius: 0 }}
                             />
                           </div>
                         </motion.div>
@@ -291,16 +300,16 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                     {isLast ? (
                       <button
                         onClick={addConfig}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-amber-500 hover:text-amber-600 hover:bg-amber-50 transition-all active:scale-90"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-stone-900 hover:bg-stone-900/5 transition-all"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3.5 h-3.5" />
                       </button>
                     ) : (
                       <button
                         onClick={goNext}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-stone-400 hover:text-stone-600 hover:bg-stone-100 transition-all active:scale-90"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center text-stone-500 hover:text-stone-900 hover:bg-stone-900/5 transition-all"
                       >
-                        <ChevronRight className="w-4 h-4" />
+                        <ChevronRight className="w-3.5 h-3.5" />
                       </button>
                     )}
                   </div>
@@ -314,10 +323,10 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                             setDirection(i > currentIndex ? 1 : -1)
                             setCurrentIndex(i)
                           }}
-                          className={`rounded-full transition-all duration-200 ${
+                          className={`transition-all duration-200 ${
                             i === currentIndex
-                              ? 'w-4 h-1.5 bg-amber-400'
-                              : 'w-1.5 h-1.5 bg-stone-300 hover:bg-stone-400'
+                              ? 'w-5 h-px bg-stone-900'
+                              : 'w-1.5 h-px bg-stone-300 hover:bg-stone-500'
                           }`}
                         />
                       ))}
@@ -327,108 +336,113 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
               </div>
 
               <div className="pt-1">
-                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                <label className="flex items-center gap-1.5 font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase mb-2">
+                  <span className="w-3 h-px bg-stone-900/40" />
                   <Gauge className="w-3 h-3" />
-                  {t.retryInterval || '重试间隔'}
+                  <span>{t.retryInterval || 'Retry Interval'}</span>
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-stone-400">{t.retryIntervalDesc || '限速后重试等待时间'}</span>
-                    <span className="text-[11px] font-semibold text-amber-600">{retryInterval.toFixed(1)}s</span>
+                    <span className="font-display italic text-[12px] text-stone-500">{t.retryIntervalDesc || 'Wait between retries'}</span>
+                    <span className="font-mono-ui text-[11px] tabular-nums text-stone-900">{retryInterval.toFixed(1)}s</span>
                   </div>
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min={0.1}
-                      max={20}
-                      step={0.1}
-                      value={retryInterval}
-                      onChange={e => setRetryInterval(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer bg-stone-100"
-                      style={{
-                        background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${((retryInterval - 0.1) / (20 - 0.1)) * 100}%, #f5f5f4 ${((retryInterval - 0.1) / (20 - 0.1)) * 100}%, #f5f5f4 100%)`
-                      }}
-                    />
-                    <div className="flex justify-between mt-1">
-                      <span className="text-[10px] text-stone-300">0.1s</span>
-                      <span className="text-[10px] text-stone-300">20s</span>
-                    </div>
+                  <input
+                    type="range"
+                    min={0.1}
+                    max={20}
+                    step={0.1}
+                    value={retryInterval}
+                    onChange={e => setRetryInterval(Number(e.target.value))}
+                    className="w-full appearance-none cursor-pointer bg-stone-900/10"
+                    style={{
+                      height: '1px',
+                      background: `linear-gradient(to right, #1c1917 0%, #1c1917 ${((retryInterval - 0.1) / (20 - 0.1)) * 100}%, rgba(0,0,0,0.1) ${((retryInterval - 0.1) / (20 - 0.1)) * 100}%, rgba(0,0,0,0.1) 100%)`
+                    }}
+                  />
+                  <div className="flex justify-between">
+                    <span className="font-mono-ui text-[9px] text-stone-400 tabular-nums">0.1s</span>
+                    <span className="font-mono-ui text-[9px] text-stone-400 tabular-nums">20s</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                <label className="flex items-center gap-1.5 font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase mb-2">
+                  <span className="w-3 h-px bg-stone-900/40" />
                   <BookOpen className="w-3 h-3" />
-                  {t.itemsPerPage || '每页数量'}
+                  <span>{t.itemsPerPage || 'Items Per Page'}</span>
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-stone-400">{t.wordsPerPage || '每页显示单词数'}</span>
-                    <span className="text-[11px] font-semibold text-amber-600">{localPageSize}</span>
+                    <span className="font-display italic text-[12px] text-stone-500">{t.wordsPerPage || 'Words shown per page'}</span>
+                    <span className="font-mono-ui text-[11px] tabular-nums text-stone-900">{String(localPageSize).padStart(3, '0')}</span>
                   </div>
-                  <div className="relative">
-                    <input
-                      type="range"
-                      min={10}
-                      max={200}
-                      step={10}
-                      value={localPageSize}
-                      onChange={e => setLocalPageSize(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer bg-stone-100"
-                      style={{
-                        background: `linear-gradient(to right, #f59e0b 0%, #f59e0b ${((localPageSize - 10) / (200 - 10)) * 100}%, #f5f5f4 ${((localPageSize - 10) / (200 - 10)) * 100}%, #f5f5f4 100%)`
-                      }}
-                    />
-                    <div className="flex justify-between mt-1">
-                      <span className="text-[10px] text-stone-300">10</span>
-                      <span className="text-[10px] text-stone-300">200</span>
-                    </div>
+                  <input
+                    type="range"
+                    min={10}
+                    max={200}
+                    step={10}
+                    value={localPageSize}
+                    onChange={e => setLocalPageSize(Number(e.target.value))}
+                    className="w-full appearance-none cursor-pointer"
+                    style={{
+                      height: '1px',
+                      background: `linear-gradient(to right, #1c1917 0%, #1c1917 ${((localPageSize - 10) / (200 - 10)) * 100}%, rgba(0,0,0,0.1) ${((localPageSize - 10) / (200 - 10)) * 100}%, rgba(0,0,0,0.1) 100%)`
+                    }}
+                  />
+                  <div className="flex justify-between">
+                    <span className="font-mono-ui text-[9px] text-stone-400 tabular-nums">010</span>
+                    <span className="font-mono-ui text-[9px] text-stone-400 tabular-nums">200</span>
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="flex items-center gap-1.5 text-[10px] font-semibold text-stone-400 uppercase tracking-widest mb-1.5">
+                <label className="flex items-center gap-1.5 font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase mb-2">
+                  <span className="w-3 h-px bg-stone-900/40" />
                   <Languages className="w-3 h-3" />
-                  {t.nativeLang || '母语'}
+                  <span>{t.nativeLang || 'Native Language'}</span>
                 </label>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-0 border border-stone-900/20">
                   {[
                     { value: 'zh', label: '中文' },
                     { value: 'en', label: 'English' },
-                  ].map((opt) => (
+                  ].map((opt, idx) => (
                     <button
                       key={opt.value}
                       type="button"
                       onClick={() => setLocalTargetLang(opt.value)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border text-xs font-medium transition-all duration-200 ${
+                      className={`flex items-center justify-center gap-2 px-3 py-2.5 text-[12px] font-medium transition-all duration-200 ${
                         localTargetLang === opt.value
-                          ? 'border-amber-400/80 bg-amber-50 text-amber-700 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-                          : 'border-stone-200/80 bg-white text-stone-500 hover:border-stone-300 hover:text-stone-700'
-                      }`}
+                          ? 'bg-stone-900 text-stone-50'
+                          : 'bg-transparent text-stone-600 hover:bg-stone-900/5'
+                      } ${idx > 0 ? 'border-l border-stone-900/20' : ''}`}
                     >
                       <LangIcon langCode={opt.value} size="sm" />
-                      {opt.label}
+                      <span className="font-mono-ui tracking-wider text-[11px] uppercase">{opt.label}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+              <button
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full py-2.5 bg-stone-800 text-white text-xs font-medium rounded-lg hover:bg-stone-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="w-full flex items-center justify-between px-4 py-3 border border-stone-900 text-stone-900 hover:bg-stone-900 hover:text-stone-50 disabled:opacity-50 transition-all group"
+                style={{ borderRadius: 0 }}
               >
-                {saving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : saved ? (
-                  <Check className="w-4 h-4" />
-                ) : null}
-                {saving ? (t.saving || '保存中...') : saved ? (t.saved || '已保存') : (t.save || '保存')}
-              </motion.button>
+                <div className="flex items-center gap-2">
+                  {saving ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : saved ? (
+                    <Check className="w-3.5 h-3.5" />
+                  ) : null}
+                  <span className="font-mono-ui text-[10px] tracking-[0.25em] uppercase">
+                    {saving ? (t.saving || 'Saving…') : saved ? (t.saved || 'Saved') : (t.save || 'Save')}
+                  </span>
+                </div>
+                <span className="font-display italic text-[13px]">→</span>
+              </button>
             </div>
           )}
         </motion.div>
