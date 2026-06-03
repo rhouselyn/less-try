@@ -31,7 +31,7 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
   })
 
   const recentFiltered = recentLangs
-    .filter(code => code !== value && code !== 'zh' && code !== 'en')
+    .filter(code => code !== value)
     .map(code => LANGUAGES.find(l => l.value === code))
     .filter(Boolean)
     .filter(l => {
@@ -129,7 +129,7 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
   )
 }
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSize, onPageSizeChange, t, recentLangs }) {
+function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSize, onPageSizeChange, t, recentLangs, onRecentLangsChange }) {
   const [configs, setConfigs] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -252,7 +252,12 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setConfigs(loaded)
       setCurrentIndex(data.active_index ?? currentIndex)
 
-      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize })
+      const updatedRecentLangs = [localTargetLang, ...recentLangs.filter(code => code !== localTargetLang)].slice(0, 5)
+      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize, recent_languages: updatedRecentLangs })
+
+      if (onRecentLangsChange) {
+        onRecentLangsChange(updatedRecentLangs)
+      }
 
       if (onTargetLangChange && localTargetLang !== targetLang) {
         onTargetLangChange(localTargetLang)

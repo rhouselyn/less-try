@@ -161,7 +161,10 @@ export const translations = {
     noMatchingSentences: "没有找到匹配的句子",
     retryInterval: "重试间隔",
     retryIntervalDesc: "限速后重试等待时间",
-    wordsPerPage: "每页显示单词数"
+    wordsPerPage: "每页显示单词数",
+    backToHome: "返回主页",
+    noPracticeContent: "暂无可练习内容",
+    translatingUI: "正在切换界面语言..."
   },
   en: {
     title: "Gualingo",
@@ -324,6 +327,9 @@ export const translations = {
     noMatchingSentences: "No matching sentences found",
     retryInterval: "Retry Interval",
     retryIntervalDesc: "Wait time before retry after rate limit",
-    wordsPerPage: "Words per page"
+    wordsPerPage: "Words per page",
+    backToHome: "Back to Home",
+    noPracticeContent: "No practice content available",
+    translatingUI: "Switching interface language..."
   }
 };

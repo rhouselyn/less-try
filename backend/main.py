@@ -3766,7 +3766,7 @@ async def translate_ui(lang_code: str):
     
     try:
         api_instance = NvidiaAPI()
-        result = await api_instance.call_minimax(messages, temperature=0.3, max_tokens=4096)
+        result = await api_instance.call_minimax(messages, temperature=0, max_tokens=4096)
         
         if result and result.get("choices"):
             content = result["choices"][0]["message"]["content"]
@@ -3776,6 +3776,7 @@ async def translate_ui(lang_code: str):
                 content = content.split("```")[1].split("```")[0]
             
             translated = json.loads(content.strip())
+            translated["_lang_code"] = lang_code
             _ui_translation_cache[lang_code] = translated
             
             # Save to file
