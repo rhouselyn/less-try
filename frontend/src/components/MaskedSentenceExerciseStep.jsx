@@ -104,7 +104,6 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-lg text-ink-600"
-              style={{ wordSpacing: '0.15em' }}
             >
               {data.masked_sentence}
             </motion.p>

@@ -1,7 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import os
@@ -478,6 +476,11 @@ async def tts_endpoint(text: str, lang: str = "en", slow: bool = False):
 
 
 
+@app.get("/")
+async def root():
+    return {"message": "少邻国 - Lesslingo API"}
+
+
 async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str, rpm: int = 20):
     try:
         t_total_start = time.time()
@@ -668,42 +671,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                             "sentence_index": i
                         }
                         all_vocab.append(entry)
-        
-        # Merge consecutive tokens with empty meanings within the same sentence
-        merged_vocab = []
-        i = 0
-        while i < len(all_vocab):
-            entry = all_vocab[i]
-            meaning = entry.get("meaning", "").strip()
-            if not meaning:
-                # Look ahead for consecutive empty-meaning tokens in the same sentence
-                combined_words = [entry["word"]]
-                combined_ipa = [entry.get("ipa", "")] if entry.get("ipa", "") else []
-                sent_idx = entry.get("sentence_index", -1)
-                j = i + 1
-                while j < len(all_vocab) and all_vocab[j].get("sentence_index", -1) == sent_idx and not all_vocab[j].get("meaning", "").strip():
-                    combined_words.append(all_vocab[j]["word"])
-                    if all_vocab[j].get("ipa", ""):
-                        combined_ipa.append(all_vocab[j]["ipa"])
-                    j += 1
-                if len(combined_words) > 1:
-                    # Merge into a single entry
-                    merged_word = " ".join(combined_words)
-                    entry = {
-                        "word": merged_word,
-                        "ipa": " ".join(combined_ipa) if combined_ipa else "",
-                        "meaning": "",
-                        "tokens": [merged_word],
-                        "morphology": "",
-                        "sentence_index": sent_idx
-                    }
-                    i = j  # Skip the merged tokens
-                else:
-                    i += 1
-            else:
-                i += 1
-            merged_vocab.append(entry)
-        all_vocab = merged_vocab
         
         seen = set()
         unique_vocab = []
@@ -3726,11 +3693,6 @@ async def generate_text(request: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# Serve frontend static files in production
-frontend_dist = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "dist")
-if os.path.isdir(frontend_dist):
-    app.mount("/", StaticFiles(directory=frontend_dist, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn

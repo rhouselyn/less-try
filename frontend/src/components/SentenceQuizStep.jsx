@@ -130,7 +130,6 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
               className="text-lg text-ink-600"
-              style={{ wordSpacing: '0.15em' }}
             >
               {quizData.original_sentence}
             </motion.p>
