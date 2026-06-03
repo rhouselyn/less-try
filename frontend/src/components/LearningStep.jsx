@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, ChevronRight, Brain, BookOpen, Volume2 } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, Brain, BookOpen, Volume2 } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { speakText } from '../utils/speech'
 
@@ -125,7 +125,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4">
               {learningData.options.map((option, index) => (
                 <motion.button
                   key={index}
@@ -136,7 +136,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-ember-50 border border-ember-400 text-ember-500') : 'border-bone-200 bg-cream-50 text-ink-800 hover:border-ochre-300'}`}
+                  className={`w-full py-4 px-6 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-ember-50 border border-ember-400 text-ember-500') : 'border-bone-200 bg-cream-50 text-ink-800 hover:border-ochre-300'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && (
@@ -145,12 +145,14 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                         animate={{ scale: 1 }}
                         className="w-5 h-5 rounded-full flex items-center justify-center"
                       >
-                        {isCorrect && (
+                        {isCorrect ? (
                           <CheckCircle2 className="w-4 h-4 text-moss-600" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-ember-500" />
                         )}
                       </motion.div>
                     )}
-                    <span className="text-base">{option}</span>
+                    <span className="text-lg">{option}</span>
                   </div>
                 </motion.button>
               ))}
