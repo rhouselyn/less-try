@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
+import { BookOpen, ArrowLeft, Settings, Loader2 } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech } from './utils/speech'
@@ -161,9 +161,12 @@ function App() {
     : baseT;
 
   // Fetch LLM translations when targetLang changes to a non-zh/en language
+  const customTranslationsRef = useRef({})
+  customTranslationsRef.current = customTranslations
+  
   useEffect(() => {
     if (targetLang === 'zh' || targetLang === 'en') return
-    if (customTranslations[targetLang]) return // already cached
+    if (customTranslationsRef.current[targetLang]) return // already cached
     
     let cancelled = false
     setTranslatingUI(true)
