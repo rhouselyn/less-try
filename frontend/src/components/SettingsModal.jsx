@@ -16,7 +16,6 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
   const [direction, setDirection] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [saveError, setSaveError] = useState('')
   const [loading, setLoading] = useState(true)
   const [rpm, setRpm] = useState(60)
   const [retryInterval, setRetryInterval] = useState(1)
@@ -27,7 +26,6 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
     if (isOpen) {
       setLoading(true)
       setSaved(false)
-      setSaveError('')
       Promise.all([
         fetch('/api/settings').then(res => res.json()),
         api.getUserPreferences().catch(() => ({}))
@@ -78,45 +76,36 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
   }, [currentIndex])
 
   const addConfig = useCallback(() => {
-    setConfigs(prev => {
-      const current = prev[prev.length - 1]
-      const newConfig = {
-        api_key: '',
-        base_url: current?.base_url || '',
-        model: current?.model || '',
-        has_key: false,
-        masked_key: '',
-      }
-      return [...prev, newConfig]
-    })
+    const current = configs[configs.length - 1]
+    const newConfig = {
+      api_key: '',
+      base_url: current?.base_url || '',
+      model: current?.model || '',
+      has_key: false,
+      masked_key: '',
+    }
     setDirection(1)
-  }, [])
+    setConfigs(prev => [...prev, newConfig])
+    setCurrentIndex(configs.length)
+  }, [configs])
 
   const removeConfig = useCallback((index) => {
+    if (configs.length <= 1) return
     setConfigs(prev => {
-      if (prev.length <= 1) return prev
       const next = prev.filter((_, i) => i !== index)
-      const newLen = next.length
-      setCurrentIndex(curr => {
-        if (curr > index) return curr - 1
-        if (curr >= newLen) return newLen - 1
-        return curr
-      })
       return next
     })
+    setCurrentIndex(prev => {
+      if (prev >= configs.length - 1) return Math.max(0, configs.length - 2)
+      if (prev > index) return prev - 1
+      return Math.min(prev, configs.length - 2)
+    })
     setDirection(-1)
-  }, [])
-
-  useEffect(() => {
-    if (configs.length > 0 && currentIndex >= configs.length) {
-      setCurrentIndex(configs.length - 1)
-    }
-  }, [configs.length, currentIndex])
+  }, [configs.length])
 
   const handleSave = async () => {
     setSaving(true)
     setSaved(false)
-    setSaveError('')
     try {
       const payload = {
         configs: configs.map(c => ({
@@ -131,10 +120,6 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
-      if (!res.ok) {
-        const text = await res.text().catch(() => '')
-        throw new Error(`HTTP ${res.status}: ${text || res.statusText}`)
-      }
       const data = await res.json()
       const loaded = (data.configs && data.configs.length > 0)
         ? data.configs.map(c => ({
@@ -148,11 +133,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setConfigs(loaded)
       setCurrentIndex(data.active_index ?? currentIndex)
 
-      try {
-        await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize })
-      } catch (prefErr) {
-        console.warn('saveUserPreferences failed:', prefErr)
-      }
+      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize })
 
       if (onTargetLangChange && localTargetLang !== targetLang) {
         onTargetLangChange(localTargetLang)
@@ -166,10 +147,9 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setTimeout(() => {
         setSaved(false)
         onClose()
-      }, 900)
+      }, 250)
     } catch (e) {
       console.error('Failed to save settings:', e)
-      setSaveError(e?.message || '保存失败')
     } finally {
       setSaving(false)
     }
@@ -222,24 +202,15 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                   <span className="label-warm text-[10px] font-semibold text-ink-400 uppercase tracking-widest">
                     {t.apiConfig || 'API 配置'} {currentIndex + 1}/{configs.length}
                   </span>
-                  <div className="flex items-center gap-1">
+                  {configs.length > 1 && (
                     <button
-                      onClick={addConfig}
-                      title={t.addConfig || '新增配置'}
-                      className="w-6 h-6 flex items-center justify-center rounded-lg text-ochre-500 hover:bg-ochre-50 hover:text-ochre-600 transition-colors"
+                      onClick={() => removeConfig(currentIndex)}
+                      className="flex items-center gap-1 text-[10px] text-ink-400 hover:text-ember-500 transition-colors"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Minus className="w-3 h-3" />
+                      {t.remove || 'Remove'}
                     </button>
-                    {configs.length > 1 && (
-                      <button
-                        onClick={() => removeConfig(currentIndex)}
-                        title={t.remove || '删除当前配置'}
-                        className="w-6 h-6 flex items-center justify-center rounded-lg text-ink-400 hover:bg-ember-50 hover:text-ember-500 transition-colors"
-                      >
-                        <Minus className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
+                  )}
                 </div>
 
                 <div className="relative">
@@ -247,9 +218,9 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                     <button
                       onClick={goPrev}
                       disabled={isFirst}
-                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                      className={`btn-ghost flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
                         isFirst
-                          ? 'text-bone-300 cursor-not-allowed'
+                          ? 'text-bone-200 cursor-not-allowed'
                           : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100 active:scale-90'
                       }`}
                     >
@@ -317,17 +288,21 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                       </AnimatePresence>
                     </div>
 
-                    <button
-                      onClick={goNext}
-                      disabled={isLast}
-                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
-                        isLast
-                          ? 'text-bone-300 cursor-not-allowed'
-                          : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100 active:scale-90'
-                      }`}
-                    >
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                    {isLast ? (
+                      <button
+                        onClick={addConfig}
+                        className="btn-secondary flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 transition-all active:scale-90"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={goNext}
+                        className="btn-ghost flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ink-400 hover:text-ink-600 hover:bg-cream-100 transition-all active:scale-90"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
 
                   {configs.length > 1 && (
@@ -440,17 +415,12 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                 </div>
               </div>
 
-              {saveError && (
-                <div className="px-3 py-2 rounded-xl bg-ember-50 border border-ember-200 text-[11px] text-ember-500">
-                  {t.saveFailed || '保存失败'}：{saveError}
-                </div>
-              )}
-
-              <button
-                type="button"
+              <motion.button
+                whileHover={{ scale: 1.01 }}
+                whileTap={{ scale: 0.99 }}
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full py-2.5 mt-1 text-xs font-semibold text-white rounded-2xl bg-ochre-400 hover:bg-ochre-500 active:bg-ochre-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-warm-sm"
+                className="btn-primary w-full py-2.5 bg-ink-800 text-white text-xs font-medium rounded-2xl hover:bg-ink-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -458,7 +428,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                   <Check className="w-4 h-4" />
                 ) : null}
                 {saving ? (t.saving || '保存中...') : saved ? (t.saved || '已保存') : (t.save || '保存')}
-              </button>
+              </motion.button>
             </div>
           )}
         </motion.div>
