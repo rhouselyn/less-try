@@ -18,7 +18,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
         {detailLoading ? (
           <div className="pt-4 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
-            <p className="text-[12px] text-ink-400">正在生成单词详解...</p>
+            <p className="text-[12px] text-ink-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
           </div>
         ) : (
           <>
@@ -343,7 +343,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
                           className="p-1.5 text-bone-300 hover:text-ochre-500 hover:bg-ochre-50 rounded-full transition-colors"
-                          title="重新生成"
+                          title={t.regenerate || '重新生成'}
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
@@ -382,7 +382,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       <div className="h-full flex flex-col bg-cream-50 rounded-2xl border border-bone-200/60 shadow-warm-sm overflow-hidden min-h-0">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-bone-200/60 bg-gradient-to-r from-ochre-50/50 to-cream-50">
           <div className="flex items-center gap-2.5">
-            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-ochre-500' : 'text-ochre-500 hover:text-ochre-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? '显示全部' : displayMode === 1 ? '隐藏释义' : '隐藏单词'} />
+            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-ochre-500' : 'text-ochre-500 hover:text-ochre-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
             <span className="text-base font-semibold font-display text-ink-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
               <span className="badge-ochre text-xs text-ink-400 bg-cream-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>

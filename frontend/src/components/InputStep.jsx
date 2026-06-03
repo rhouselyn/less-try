@@ -205,7 +205,7 @@ const FAMILY_ORDER = [
   'other',
 ]
 
-function LanguageSelector({ value, onChange, targetLang, inputMode, recentLanguages, compact }) {
+function LanguageSelector({ value, onChange, targetLang, inputMode, recentLanguages, compact, t }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [collapsed, setCollapsed] = useState({})
@@ -268,7 +268,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
     setSearch('')
   }
 
-  const autoLabel = targetLang === 'zh' ? '自动检测' : 'Auto Detect'
+  const autoLabel = t.autoDetect || '自动检测'
 
   const currentLabel = isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value
 
@@ -334,7 +334,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
                   ref={searchRef}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder={targetLang === 'zh' ? '搜索语言...' : 'Search languages...'}
+                  placeholder={t.searchLanguages || '搜索语言...'}
                   className="w-full pl-9 pr-8 py-2 rounded-lg bg-cream-50 border border-cream-100 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300 focus:bg-cream-50 transition-colors"
                 />
                 {search && (
@@ -382,7 +382,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
 
               {Object.keys(groupedLanguages).length === 0 && (
                 <div className="py-8 text-center text-sm text-ink-400">
-                  {targetLang === 'zh' ? '未找到语言' : 'No languages found'}
+                  {t.noLanguagesFound || '未找到语言'}
                 </div>
               )}
               {FAMILY_ORDER.map((family) => {
@@ -517,7 +517,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
     <div className="flex flex-col h-full w-full">
       {/* Top-left: language selector */}
       <div className="flex items-center gap-3 pt-3 px-4">
-        <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
+        <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} t={t} />
       </div>
 
       {/* Center content - brand logo and tagline */}
@@ -544,9 +544,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-sm text-ink-300 text-center max-w-md"
         >
-          {targetLang === 'zh'
-            ? '输入文本，开始你的语言学习之旅'
-            : 'Enter text, start your language learning journey'}
+          {t.tagline || '输入文本，开始你的语言学习之旅'}
         </motion.p>
       </div>
 

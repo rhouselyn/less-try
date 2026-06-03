@@ -1152,7 +1152,12 @@ function App() {
                     <div className="absolute inset-0 bg-cream-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
                       <div className="flex items-center gap-3 bg-cream-50 border border-bone-200 rounded-2xl px-6 py-4 shadow-warm">
                         <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
-                        <span className="text-sm text-ink-600">{t.translatingUI || '正在切换界面语言...'}</span>
+                        <span className="text-sm text-ink-600">{
+                          (customTranslations[targetLang]?.translatingUI)
+                          || (customTranslations[Array.from(loadedLangs).filter(l => l !== targetLang).pop()]?.translatingUI)
+                          || t.translatingUI
+                          || '正在切换界面语言...'
+                        }</span>
                       </div>
                     </div>
                   )}

@@ -1,6 +1,7 @@
 UI_TRANSLATION_SCHEMA = {
     "title": {"desc": "App name displayed in header", "zh": "呱邻国", "en": "Gualingo"},
     "subtitle": {"desc": "App subtitle/tagline", "zh": "Gualingo", "en": ""},
+    "tagline": {"desc": "App tagline/slogan", "zh": "输入文本，开始你的语言学习之旅", "en": "Enter text, start your language learning journey"},
     "startLearning": {"desc": "Button to start learning", "zh": "开始学习", "en": "Start Learning"},
     "inputHint": {"desc": "Hint text for input area", "zh": "输入任意文本，AI 将自动生成单词表和学习资料", "en": "Enter any text, AI will automatically generate word list and study materials"},
     "learnLang": {"desc": "Label for language to learn", "zh": "学习语言", "en": "Learn Language"},
@@ -153,6 +154,11 @@ UI_TRANSLATION_SCHEMA = {
     "backToHome": {"desc": "Back to home button tooltip", "zh": "返回主页", "en": "Back to Home"},
     "noPracticeContent": {"desc": "No practice content available", "zh": "暂无可练习内容", "en": "No practice content available"},
     "translatingUI": {"desc": "Loading state while translating UI", "zh": "正在切换界面语言...", "en": "Switching interface language..."},
+    "maskedHint": {"desc": "Hint text for masked sentence exercise", "zh": "点击下方选项填入...", "en": "Tap options below to fill in..."},
+    "regenerate": {"desc": "Regenerate button tooltip", "zh": "重新生成", "en": "Regenerate"},
+    "autoDetect": {"desc": "Auto detect language label", "zh": "自动检测", "en": "Auto Detect"},
+    "searchLanguages": {"desc": "Search languages placeholder", "zh": "搜索语言...", "en": "Search languages..."},
+    "noLanguagesFound": {"desc": "No languages found message", "zh": "未找到语言", "en": "No languages found"},
 }
 
 TRANSLATION_PROMPT = """You are a professional UI translator. Translate the following UI strings into {target_lang_name} ({target_lang_code}).
