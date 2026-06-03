@@ -1000,7 +1000,6 @@ function App() {
       setCurrentFileId(fileId)
       setFileId(fileId)
       if (title) setFileTitle(title)
-      if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)

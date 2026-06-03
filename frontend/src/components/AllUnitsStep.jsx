@@ -102,7 +102,7 @@ function AllUnitsStep({
           isCompleted
             ? 'bg-moss-50 border-moss-200/50 hover:bg-moss-50'
             : isGenerating
-            ? 'bg-ochre-50 border-ochre-200/30 cursor-not-allowed'
+            ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
             : isLocked
             ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
             : isCurrent
@@ -112,7 +112,7 @@ function AllUnitsStep({
         style={{ width: '3.75rem', height: '3.75rem' }}
       >
         {isGenerating ? (
-          <Loader2 className="w-4 h-4 animate-spin text-ochre-400" />
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-bone-300" />
         ) : isLocked ? (
           <Lock className="w-3.5 h-3.5 text-bone-300" />
         ) : isCompleted ? (
@@ -260,8 +260,8 @@ function AllUnitsStep({
               onChange={(e) => onOnlyNewWordsChange?.(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] top-[2.5px] toggle-warm-dot peer-checked:translate-x-4" />
+            <div className="toggle-sm peer-checked:bg-ochre-400 peer-focus:outline-none" />
+            <div className="absolute left-[2px] top-[2px] toggle-sm-dot peer-checked:translate-x-3" />
           </div>
         </label>
 
@@ -277,8 +277,8 @@ function AllUnitsStep({
               onChange={(e) => onSkipListeningChange?.(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] top-[2.5px] toggle-warm-dot peer-checked:translate-x-4" />
+            <div className="toggle-sm peer-checked:bg-ochre-400 peer-focus:outline-none" />
+            <div className="absolute left-[2px] top-[2px] toggle-sm-dot peer-checked:translate-x-3" />
           </div>
         </label>
 

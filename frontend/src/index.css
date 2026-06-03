@@ -105,6 +105,14 @@ body {
     @apply inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200;
   }
 
+  /* 小开关 */
+  .toggle-sm {
+    @apply relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200;
+  }
+  .toggle-sm-dot {
+    @apply inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform duration-200;
+  }
+
   /* 小徽章 */
   .badge-warm {
     @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
