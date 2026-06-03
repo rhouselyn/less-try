@@ -152,7 +152,13 @@ export const translations = {
     confirmExit: "确认退出",
     exitMessage: "你确定要退出当前练习吗？退出后进度将不会保存。",
     exitAction: "退出",
-    continueLearning: "继续练习"
+    continueLearning: "继续练习",
+    showAll: "显示全部",
+    hideTranslation: "隐藏翻译",
+    hideOriginal: "隐藏原文",
+    hideMeaning: "隐藏释义",
+    hideWord: "隐藏单词",
+    noMatchingSentences: "没有找到匹配的句子"
   },
   en: {
     title: "Gualingo",
@@ -306,6 +312,12 @@ export const translations = {
     confirmExit: "Confirm Exit",
     exitMessage: "Are you sure you want to exit? Your progress will not be saved.",
     exitAction: "Exit",
-    continueLearning: "Continue"
+    continueLearning: "Continue",
+    showAll: "Show All",
+    hideTranslation: "Hide Translation",
+    hideOriginal: "Hide Original",
+    hideMeaning: "Hide Meaning",
+    hideWord: "Hide Word",
+    noMatchingSentences: "No matching sentences found"
   }
 };

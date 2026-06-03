@@ -835,7 +835,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="px-5 py-3.5 border-b border-bone-200/80 bg-cream-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
-                  <Languages className={`w-4 h-4 transition-colors cursor-pointer ${sentenceDisplayMode !== 0 ? 'text-ochre-500' : 'text-ink-500 hover:text-ochre-500'}`} onClick={(e) => { e.stopPropagation(); setSentenceDisplayMode(v => (v + 1) % 3) }} title={sentenceDisplayMode === 0 ? '显示全部' : sentenceDisplayMode === 1 ? '隐藏翻译' : '隐藏原文'} />
+                  <Languages className={`w-4 h-4 transition-colors cursor-pointer ${sentenceDisplayMode !== 0 ? 'text-ochre-500' : 'text-ink-500 hover:text-ochre-500'}`} onClick={(e) => { e.stopPropagation(); setSentenceDisplayMode(v => (v + 1) % 3) }} title={sentenceDisplayMode === 0 ? t.showAll : sentenceDisplayMode === 1 ? t.hideTranslation : t.hideOriginal} />
                   <h3 className="text-sm font-semibold text-ink-700 font-display">
                     <span className="cursor-pointer select-none" onClick={() => setShowOriginal(v => !v)}>
                       <span className={!showOriginal ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.sentTranslation}</span>
@@ -853,7 +853,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                     type="text"
                     value={sentenceSearch}
                     onChange={e => setSentenceSearch(e.target.value)}
-                    placeholder="搜索单词或释义..."
+                    placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
                     className="input-warm w-full pl-9 pr-3 text-[13px]"
                   />
                 </div>
@@ -916,7 +916,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               ) : (
                 <div className="py-16 text-center">
                   <Languages className="w-10 h-10 mx-auto mb-3 text-bone-200" />
-                  <p className="text-ink-400 text-sm">{sentenceSearch ? '没有找到匹配的句子' : t.loading}</p>
+                  <p className="text-ink-400 text-sm">{sentenceSearch ? (t.noMatchingSentences || '没有找到匹配的句子') : t.loading}</p>
                 </div>
               )}
             </div>
@@ -929,7 +929,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="px-5 py-3.5 border-b border-bone-200/80 bg-cream-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
-                  <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${vocabDisplayMode !== 0 ? 'text-ochre-500' : 'text-ink-500 hover:text-ochre-500'}`} onClick={(e) => { e.stopPropagation(); setVocabDisplayMode(v => (v + 1) % 3) }} title={vocabDisplayMode === 0 ? '显示全部' : vocabDisplayMode === 1 ? '隐藏释义' : '隐藏单词'} />
+                  <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${vocabDisplayMode !== 0 ? 'text-ochre-500' : 'text-ink-500 hover:text-ochre-500'}`} onClick={(e) => { e.stopPropagation(); setVocabDisplayMode(v => (v + 1) % 3) }} title={vocabDisplayMode === 0 ? t.showAll : vocabDisplayMode === 1 ? t.hideMeaning : t.hideWord} />
                   <h3 className="text-sm font-semibold text-ink-700 font-display">
                     <span className="cursor-pointer select-none" onClick={handleToggleGlobalVocab}>
                       <span className={!showGlobalVocab ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.vocabList}</span>
@@ -947,7 +947,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                     type="text"
                     value={vocabSearch}
                     onChange={e => setVocabSearch(e.target.value)}
-                    placeholder="搜索单词或释义..."
+                    placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
                     className="input-warm w-full pl-9 pr-3 text-[13px]"
                   />
                 </div>
@@ -985,7 +985,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 ) : groupedGlobalVocab.length === 0 ? (
                   <div className="py-16 text-center">
                     <BookOpen className="w-10 h-10 mx-auto mb-3 text-bone-200" />
-                    <p className="text-ink-400 text-sm">{vocabSearch ? '没有找到匹配的单词' : t.noWordsYetHint || '暂无单词'}</p>
+                    <p className="text-ink-400 text-sm">{vocabSearch ? (t.noMatchFound || '没有找到匹配的单词') : (t.noWordsYetHint || '暂无单词')}</p>
                   </div>
                 ) : (
                 <div className="space-y-3">
@@ -1060,7 +1060,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       {isLoading ? (
                                         <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                           <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
-                                          <p className="text-[12px] text-ink-400">正在生成单词详解...</p>
+                                          <p className="text-[12px] text-ink-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
                                         </div>
                                       ) : detail ? (
                                         <div className="pt-3">
@@ -1077,7 +1077,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                         </div>
                                       ) : (
                                         <div className="pt-3 text-center text-ink-400 text-[12px]">
-                                          暂无详情
+                                          {t.noDetails || '暂无详情'}
                                         </div>
                                       )}
                                     </div>
@@ -1097,7 +1097,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               {groupedVocab.length === 0 ? (
                 <div className="py-16 text-center">
                   <BookOpen className="w-10 h-10 mx-auto mb-3 text-bone-200" />
-                  <p className="text-ink-400 text-sm">{loading ? t.loading : (vocabSearch ? '没有找到匹配的单词' : t.loading)}</p>
+                  <p className="text-ink-400 text-sm">{loading ? t.loading : (vocabSearch ? (t.noMatchFound || '没有找到匹配的单词') : t.loading)}</p>
                 </div>
               ) : (
               <div className="space-y-3">
@@ -1175,7 +1175,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     {isLoading ? (
                                       <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                         <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
-                                        <p className="text-[12px] text-ink-400">正在生成单词详解...</p>
+                                        <p className="text-[12px] text-ink-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
                                       </div>
                                     ) : detail ? (
                                       <div className="pt-3">
@@ -1192,7 +1192,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       </div>
                                     ) : (
                                       <div className="pt-3 text-center text-ink-400 text-[12px]">
-                                        暂无详情
+                                        {t.noDetails || '暂无详情'}
                                       </div>
                                     )}
                                   </div>
