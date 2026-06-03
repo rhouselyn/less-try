@@ -275,10 +275,10 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 text-left group ${
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
           open
-            ? 'border-amber-400/80 bg-amber-50/30 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-            : 'border-stone-200/80 bg-white hover:border-stone-300 hover:shadow-sm'
+            ? 'border-ochre-200 bg-ochre-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
+            : 'border-bone-200 bg-cream-100 hover:border-bone-300 hover:shadow-warm-sm'
         }`}
       >
         {isAuto ? (
@@ -287,19 +287,19 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
           <span className="leading-none"><LangIcon langCode={value} size="md" /></span>
         )}
         <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-stone-800">
+          <span className="text-sm font-medium text-ink-800">
             {isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value}
           </span>
           {!isAuto && selectedLang && getSecondary(selectedLang) && (
-            <span className="text-xs text-stone-400 ml-2">{getSecondary(selectedLang)}</span>
+            <span className="text-xs text-ink-400 ml-2">{getSecondary(selectedLang)}</span>
           )}
           {isAuto && (
-            <span className="text-xs text-stone-400 ml-2">
+            <span className="text-xs text-ink-400 ml-2">
               <Zap className="w-3 h-3 inline -mt-0.5" />
             </span>
           )}
         </div>
-        <ChevronDown className={`w-4 h-4 text-stone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-4 h-4 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
       </button>
 
       <AnimatePresence>
@@ -309,21 +309,21 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className="absolute z-50 w-full mt-2 bg-white rounded-xl border border-stone-200/80 shadow-xl shadow-stone-900/8 overflow-hidden"
+            className="absolute z-50 w-full mt-2 bg-cream-50 rounded-2xl border border-bone-200 shadow-xl shadow-ink-900/8 overflow-hidden"
           >
-            <div className="p-3 border-b border-stone-100">
+            <div className="p-3 border-b border-cream-100">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
                 <input
                   ref={searchRef}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={targetLang === 'zh' ? '搜索语言...' : 'Search languages...'}
-                  className="w-full pl-9 pr-8 py-2 rounded-lg bg-stone-50 border border-stone-100 text-sm text-stone-700 placeholder-stone-400 focus:outline-none focus:border-amber-300 focus:bg-white transition-colors"
+                  className="w-full pl-9 pr-8 py-2 rounded-lg bg-cream-50 border border-cream-100 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300 focus:bg-cream-50 transition-colors"
                 />
                 {search && (
-                  <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-stone-200 transition-colors">
-                    <X className="w-3.5 h-3.5 text-stone-400" />
+                  <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-bone-200 transition-colors">
+                    <X className="w-3.5 h-3.5 text-ink-400" />
                   </button>
                 )}
               </div>
@@ -331,18 +331,18 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
 
             <div className="max-h-72 overflow-y-auto overscroll-contain">
               {!search && (showAuto || recentLangs.length > 0) && (
-                <div className="border-b border-stone-100">
+                <div className="border-b border-cream-100">
                   {showAuto && (
                     <button
                       type="button"
                       onClick={() => handleSelect('auto')}
                       className={`w-full flex items-center gap-2.5 px-5 py-2 text-sm transition-colors ${
-                        isAuto ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-50'
+                        isAuto ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
                       }`}
                     >
                       <LangIcon langCode="auto" size="sm" />
                       <span className={isAuto ? 'font-medium' : ''}>{autoLabel}</span>
-                      <span className="text-xs text-stone-400">
+                      <span className="text-xs text-ink-400">
                         <Zap className="w-3 h-3 inline -mt-0.5" />
                       </span>
                     </button>
@@ -353,19 +353,19 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
                       type="button"
                       onClick={() => handleSelect(lang.value)}
                       className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                        value === lang.value ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-50'
+                        value === lang.value ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
                       }`}
                     >
                       <LangIcon langCode={lang.value} size="sm" />
                       <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
-                      {getSecondary(lang) && <span className="text-xs text-stone-400">{getSecondary(lang)}</span>}
+                      {getSecondary(lang) && <span className="text-xs text-ink-400">{getSecondary(lang)}</span>}
                     </button>
                   ))}
                 </div>
               )}
 
               {Object.keys(groupedLanguages).length === 0 && (
-                <div className="py-8 text-center text-sm text-stone-400">
+                <div className="py-8 text-center text-sm text-ink-400">
                   {targetLang === 'zh' ? '未找到语言' : 'No languages found'}
                 </div>
               )}
@@ -378,11 +378,11 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
                     <button
                       type="button"
                       onClick={() => toggleFamily(family)}
-                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-stone-500 uppercase tracking-wider hover:bg-stone-50 transition-colors"
+                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-ink-500 uppercase tracking-wider hover:bg-cream-50 transition-colors"
                     >
                       {isCollapsed ? <ChevronRight className="w-3 h-3 flex-shrink-0" /> : <ChevronDown className="w-3 h-3 flex-shrink-0" />}
                       <span>{FAMILIES[family]}</span>
-                      <span className="text-stone-300 font-normal normal-case tracking-normal">{langs.length}</span>
+                      <span className="text-bone-300 font-normal normal-case tracking-normal">{langs.length}</span>
                     </button>
                     <AnimatePresence initial={false}>
                       {!isCollapsed && (
@@ -399,12 +399,12 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
                               type="button"
                               onClick={() => handleSelect(lang.value)}
                               className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                                value === lang.value ? 'bg-amber-50 text-amber-700' : 'text-stone-600 hover:bg-stone-50'
+                                value === lang.value ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
                               }`}
                             >
                               <LangIcon langCode={lang.value} size="sm" />
                               <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
-                              {getSecondary(lang) && <span className="text-xs text-stone-400">{getSecondary(lang)}</span>}
+                              {getSecondary(lang) && <span className="text-xs text-ink-400">{getSecondary(lang)}</span>}
                             </button>
                           ))}
                         </motion.div>
@@ -429,22 +429,17 @@ const MODES = [
 
 function ModeSelector({ mode, setMode, t }) {
   return (
-    <div className="flex gap-1 p-1 bg-stone-100/80 rounded-xl">
+    <div className="flex gap-1 p-1 bg-cream-100/80 rounded-2xl">
       {MODES.map(({ key, icon: Icon, color }) => {
         const isActive = mode === key
         const labelMap = { direct: t.modeDirect, translate: t.modeTranslate, generate: t.modeGenerate }
-        const activeBg = {
-          amber: 'bg-amber-500 text-white shadow-sm shadow-amber-500/20',
-          blue: 'bg-blue-500 text-white shadow-sm shadow-blue-500/20',
-          violet: 'bg-violet-500 text-white shadow-sm shadow-violet-500/20',
-        }
         return (
           <button
             key={key}
             type="button"
             onClick={() => setMode(key)}
             className={`relative flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-              isActive ? activeBg[color] : 'text-stone-500 hover:text-stone-700 hover:bg-white/60'
+              isActive ? 'tab-warm-active' : 'tab-warm-inactive'
             }`}
           >
             <Icon className="w-3.5 h-3.5" />
@@ -459,7 +454,7 @@ function ModeSelector({ mode, setMode, t }) {
 function ModeDescription({ mode, t }) {
   const descMap = { direct: t.modeDirectDesc, translate: t.modeTranslateDesc, generate: t.modeGenerateDesc }
   const colorMap = {
-    direct: 'text-amber-600/70',
+    direct: 'text-ochre-500/70',
     translate: 'text-blue-600/70',
     generate: 'text-violet-600/70',
   }
@@ -525,27 +520,27 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
 
   const btnStyles = {
     amber: {
-      active: 'bg-amber-500 text-white shadow-md shadow-amber-500/20 hover:bg-amber-600 hover:shadow-lg hover:shadow-amber-500/25',
-      disabled: 'bg-stone-100 text-stone-400 cursor-not-allowed',
+      active: 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25',
+      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
     },
     blue: {
       active: 'bg-blue-500 text-white shadow-md shadow-blue-500/20 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/25',
-      disabled: 'bg-stone-100 text-stone-400 cursor-not-allowed',
+      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
     },
     violet: {
       active: 'bg-violet-500 text-white shadow-md shadow-violet-500/20 hover:bg-violet-600 hover:shadow-lg hover:shadow-violet-500/25',
-      disabled: 'bg-stone-100 text-stone-400 cursor-not-allowed',
+      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
     },
   }
 
   const textareaBorder = {
-    amber: 'focus:border-amber-400/80 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.06)]',
+    amber: 'focus:border-ochre-400/80 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.06)]',
     blue: 'focus:border-blue-400/80 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.06)]',
     violet: 'focus:border-violet-400/80 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.06)]',
   }
 
   const iconColor = {
-    amber: 'group-focus-within:text-amber-300',
+    amber: 'group-focus-within:text-ochre-300',
     blue: 'group-focus-within:text-blue-300',
     violet: 'group-focus-within:text-violet-300',
   }
@@ -559,19 +554,19 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
       className="max-w-lg mx-auto"
     >
       <div className="relative">
-        <div className="absolute -inset-3 bg-gradient-to-b from-amber-100/20 via-amber-50/10 to-transparent rounded-3xl pointer-events-none" />
+        <div className="absolute -inset-3 bg-gradient-to-b from-ochre-100/20 via-cream-100/10 to-transparent rounded-3xl pointer-events-none" />
 
-        <div className="relative space-y-5">
+        <div className="relative space-y-5 bg-cream-50 border border-bone-200 rounded-3xl shadow-warm p-6">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.05, duration: 0.4 }}
             className="flex items-center gap-3"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 flex items-center justify-center shadow-sm shadow-amber-500/20">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-ochre-300 to-ochre-400 flex items-center justify-center shadow-warm-sm shadow-ochre-500/20">
               <Globe2 className="w-4.5 h-4.5 text-white" />
             </div>
-            <h2 className="text-lg font-semibold text-stone-800 tracking-tight">{t.startLearning}</h2>
+            <h2 className="text-lg font-display font-semibold text-ink-800 tracking-tight">{t.startLearning}</h2>
           </motion.div>
 
           <motion.div
@@ -579,7 +574,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08, duration: 0.4 }}
           >
-            <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
+            <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
               {t.modeLabel}
             </label>
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
@@ -597,7 +592,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             className="space-y-3"
           >
             <div>
-              <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
+              <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
                 {t.learnLang}
               </label>
               <LanguageSelector value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
@@ -609,7 +604,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.4 }}
           >
-            <label className="block text-[11px] font-medium text-stone-500 mb-1.5 uppercase tracking-wider">
+            <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
               {getLabel()}
             </label>
             <div className="relative group">
@@ -618,10 +613,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
                 onChange={(e) => setText(e.target.value)}
                 placeholder={getPlaceholder()}
                 rows={4}
-                className={`w-full px-4 py-3 rounded-xl border border-stone-200/80 bg-white text-sm text-stone-800 placeholder-stone-400 focus:outline-none ${textareaBorder[accent]} resize-none leading-relaxed transition-all duration-200 hover:border-stone-300`}
+                className={`w-full input-warm resize-none leading-relaxed transition-all duration-200`}
               />
               <div className="absolute top-3 right-3 pointer-events-none">
-                <PenLine className={`w-4 h-4 text-stone-200 ${iconColor[accent]} transition-colors`} />
+                <PenLine className={`w-4 h-4 text-bone-200 ${iconColor[accent]} transition-colors`} />
               </div>
             </div>
           </motion.div>
@@ -636,8 +631,8 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
               whileTap={{ scale: 0.98 }}
               onClick={onProcess}
               disabled={loading || !text.trim()}
-              className={`w-full py-3 rounded-xl font-semibold text-sm flex items-center justify-center gap-2 transition-all duration-200 ${
-                loading || !text.trim() ? btnStyles[accent].disabled : btnStyles[accent].active
+              className={`w-full btn-primary flex items-center justify-center gap-2 transition-all duration-200 ${
+                loading || !text.trim() ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
               <AnimatePresence mode="wait">

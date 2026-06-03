@@ -17,27 +17,27 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
           onClick={onSkipReview}
-          className="absolute -top-2 left-0 z-10 flex items-center gap-1.5 px-3 py-1.5 text-stone-400 hover:text-stone-600 text-xs font-medium rounded-lg border border-stone-200 hover:border-stone-300 bg-white/80 backdrop-blur-sm transition-all"
+          className="absolute -top-2 left-0 z-10 flex items-center gap-1.5 btn-ghost text-xs border border-bone-200 hover:border-bone-300 backdrop-blur-sm"
         >
           <X className="w-3 h-3" />
           {t.skipReview || '不想复习了'}
         </motion.button>
       )}
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-12 shadow-sm text-center">
+      <div className="bg-cream-50 border border-bone-200 rounded-3xl p-12 shadow-warm text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.2 }}
-          className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-8"
+          className="w-24 h-24 bg-ochre-50 rounded-full flex items-center justify-center mx-auto mb-8"
         >
-          <Trophy className="w-12 h-12 text-amber-600" />
+          <Trophy className="w-12 h-12 text-ochre-500" />
         </motion.div>
 
         <motion.h2
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-3xl font-bold text-stone-800 mb-4"
+          className="text-3xl font-bold font-display text-ink-800 mb-4"
         >
           🎉 {t.unitComplete || '单元完成！'}
         </motion.h2>
@@ -46,7 +46,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="text-lg text-stone-600 mb-2"
+          className="text-lg text-ink-600 mb-2"
         >
           {phase === 1 ? (t.phase1 || '阶段一') : (t.phase2 || '阶段二')} · {(t.unitNumberFormat || '第 {0} 单元').replace('{0}', unitNumber + 1)}
         </motion.p>
@@ -55,7 +55,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5 }}
-          className="text-base text-stone-500 mb-8"
+          className="text-base text-ink-500 mb-8"
         >
           {errorCount === 0
             ? (t.perfectScore || '太棒了！全部答对，完美表现！')
@@ -78,8 +78,8 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
               <Star
                 className={`w-8 h-8 transition-colors ${
                   i < starCount
-                    ? 'text-amber-400 fill-amber-400'
-                    : 'text-stone-200 fill-stone-200'
+                    ? 'text-ochre-400 fill-ochre-400'
+                    : 'text-bone-300 fill-bone-300'
                 }`}
               />
             </motion.div>
@@ -91,13 +91,13 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-xl"
+            className="mb-8 p-4 bg-ochre-50 border border-ochre-200 rounded-xl"
           >
             <div className="flex items-center gap-2 justify-center mb-2">
-              <RotateCcw className="w-4 h-4 text-amber-600" />
-              <span className="text-amber-800 font-medium">{t.wrongItemReview || '错题复习'}</span>
+              <RotateCcw className="w-4 h-4 text-ochre-500" />
+              <span className="text-ink-700 font-medium">{t.wrongItemReview || '错题复习'}</span>
             </div>
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-ink-500">
               {(t.wrongItemsToReview || '你有 {0} 道错题需要复习').replace('{0}', wrongItemsCount ?? errorCount)}
             </p>
           </motion.div>
@@ -109,13 +109,13 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           transition={{ delay: 0.9 }}
           className="flex items-center justify-center gap-3"
         >
-          <Sparkles className="w-5 h-5 text-amber-500" />
-          <span className="text-stone-500 text-sm">
+          <Sparkles className="w-5 h-5 text-ochre-500" />
+          <span className="text-ink-500 text-sm">
             {unitNumber + 1 < totalUnits
               ? (t.moreUnitsToGo || '还有 {0} 个单元等你挑战').replace('{0}', totalUnits - unitNumber - 1)
               : (t.congratsAllUnits || '恭喜完成所有单元！')}
           </span>
-          <Sparkles className="w-5 h-5 text-amber-500" />
+          <Sparkles className="w-5 h-5 text-ochre-500" />
         </motion.div>
 
         <motion.div
@@ -129,7 +129,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
               whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={onReview}
-              className="px-8 py-4 bg-amber-500 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2"
+              className="btn-primary text-lg flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-5 h-5" />
               {t.startWrongItemReview || '开始错题复习'}
@@ -139,7 +139,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
               whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={onContinue}
-              className="px-10 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all flex items-center justify-center gap-2"
+              className="btn-primary text-lg flex items-center justify-center gap-2"
             >
               {t.continueLearning || '继续学习'}
               <ChevronRight className="w-5 h-5" />

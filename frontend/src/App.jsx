@@ -1074,18 +1074,18 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen bg-cream-50 bg-paper-grain">
       {step === 'input' && (
-        <header className="bg-white/80 backdrop-blur-sm border-b border-stone-200/60">
+        <header className="bg-cream-100/70 backdrop-blur-md border-b border-bone-200/60">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-600 rounded-xl flex items-center justify-center">
+                <div className="w-10 h-10 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
                   <FrogLogo size={22} />
                 </div>
                 <div>
-                  <h1 className="text-xl font-semibold text-stone-800">{t.title}</h1>
-                  <p className="text-sm text-stone-400">{t.subtitle}</p>
+                  <h1 className="text-xl font-display font-bold text-ink-700">{t.title}</h1>
+                  <p className="text-sm text-ink-400">{t.subtitle}</p>
                 </div>
               </div>
             </div>
@@ -1111,7 +1111,7 @@ function App() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowSettings(true)}
-                    className="absolute top-0 right-0 p-2 text-stone-300 hover:text-stone-600 hover:bg-stone-100 rounded-lg transition-colors z-10"
+                    className="absolute top-0 right-0 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-xl transition-colors z-10"
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>
