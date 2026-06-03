@@ -102,28 +102,28 @@ function AllUnitsStep({
           isCompleted
             ? 'bg-moss-50 border-moss-200/50 hover:bg-moss-50'
             : isGenerating
-            ? 'bg-ochre-50 border-ochre-200/30 cursor-not-allowed'
+            ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
             : isLocked
             ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
             : isCurrent
             ? 'bg-ochre-50 border-ochre-300/70 shadow-warm-sm'
             : 'bg-ochre-50/40 border-ochre-200/40 hover:border-ochre-300/60'
         }`}
-        style={{ width: '3.75rem', height: '3.75rem' }}
+        style={{ width: '4.5rem', height: '4.5rem' }}
       >
         {isGenerating ? (
-          <Loader2 className="w-4 h-4 animate-spin text-ochre-400" />
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-bone-300" />
         ) : isLocked ? (
           <Lock className="w-3.5 h-3.5 text-bone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-[13px] font-semibold text-moss-600">{index + 1}</span>
+            <span className="text-[15px] font-semibold text-moss-600">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
                   <Star
                     key={i}
-                    className={`w-2 h-2 ${
+                    className={`w-2.5 h-2.5 ${
                       i < starCount
                         ? 'text-ochre-400 fill-ochre-400'
                         : 'text-bone-300 fill-bone-300'
@@ -135,7 +135,7 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-[13px] font-semibold text-ochre-500`}>{index + 1}</span>
+            <span className={`text-[15px] font-semibold text-ochre-500`}>{index + 1}</span>
             <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-ochre-400' : 'bg-ochre-300/60'}`} />
           </>
         )}
@@ -197,7 +197,7 @@ function AllUnitsStep({
           )}
         </div>
 
-        <div className="w-full h-1 bg-cream-100 rounded-full overflow-hidden mb-5">
+        <div className="w-full h-1.5 bg-cream-100 rounded-full overflow-hidden mb-5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
@@ -208,7 +208,7 @@ function AllUnitsStep({
           />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           {pageUnits.map((unit, pageIdx) => {
             const globalIdx = startIdx + pageIdx;
             return renderUnitCard(
@@ -230,7 +230,7 @@ function AllUnitsStep({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-2xl mx-auto"
+      className="max-w-4xl mx-auto"
     >
       <div className="flex items-center gap-2 mb-6">
         <button
@@ -292,10 +292,10 @@ function AllUnitsStep({
       </div>
 
       <div className="mb-6 text-center">
-        <h2 className="text-lg font-semibold font-display text-ink-800">
+        <h2 className="text-xl font-semibold font-display text-ink-800">
           {t.learningUnits || '学习单元'}
         </h2>
-        <p className="text-[11px] text-ink-400 mt-1">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
+        <p className="text-xs text-ink-400 mt-1">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
       </div>
 
       {loading ? (

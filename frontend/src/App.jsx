@@ -109,6 +109,8 @@ function App() {
   const [fileTitle, setFileTitle] = useState('')
   const learningContainerRef = useRef(null)
   const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
+  const wrongItemsRef = useRef([])
+  const reviewIndexRef = useRef(0)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -177,6 +179,15 @@ function App() {
 
     return () => clearInterval(interval)
   }, [generatingUnits, currentFileId])
+
+  // Keep refs in sync with state for use in goToNextReviewItem
+  useEffect(() => {
+    wrongItemsRef.current = wrongItems
+  }, [wrongItems])
+
+  useEffect(() => {
+    reviewIndexRef.current = reviewIndex
+  }, [reviewIndex])
 
   // 轮询处理状态
   useEffect(() => {
@@ -693,7 +704,16 @@ function App() {
       if (isCorrectAnswer) {
         setShowWordCard(true)
         if (reviewMode) {
-          setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+          // After a wrong answer, the item was moved to the end of wrongItems,
+          // so reviewIndex may point to a different item now.
+          // Find the current item by its data to remove the correct one.
+          setWrongItems(prev => {
+            const idx = prev.findIndex(item => item.type === 'word' && item.data === learningData)
+            if (idx !== -1) {
+              return prev.filter((_, i) => i !== idx)
+            }
+            return prev.filter((_, i) => i !== reviewIndex)
+          })
           setReviewIndex(prev => prev)
         }
       }
@@ -807,17 +827,22 @@ function App() {
   }
 
   const goToNextReviewItem = () => {
-    if (wrongItems.length === 0) {
+    // Use refs to avoid stale closure values when this function is called
+    // after state updates that haven't been committed yet
+    const currentWrongItems = wrongItemsRef.current
+    const currentReviewIndex = reviewIndexRef.current
+
+    if (currentWrongItems.length === 0) {
       setReviewMode(false)
       setReviewIndex(0)
       setReviewRound(0)
       setStep('unit-complete')
       return
     }
-    const nextIdx = Math.min(reviewIndex, wrongItems.length - 1)
+    const nextIdx = Math.min(currentReviewIndex, currentWrongItems.length - 1)
     setReviewIndex(nextIdx)
     setReviewRound(prev => prev + 1)
-    const nextItem = wrongItems[nextIdx]
+    const nextItem = currentWrongItems[nextIdx]
     if (nextItem?.type === 'word') {
       setLearningData(nextItem.data)
       setShowWordCard(false)
@@ -1000,7 +1025,6 @@ function App() {
       setCurrentFileId(fileId)
       setFileId(fileId)
       if (title) setFileTitle(title)
-      if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)
@@ -1080,11 +1104,11 @@ function App() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
-                  <FrogLogo size={22} />
+                <div className="w-12 h-12 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
+                  <FrogLogo size={28} />
                 </div>
                 <div>
-                  <h1 className="text-xl font-display font-bold text-ink-700">{t.title}</h1>
+                  <h1 className="text-2xl font-display font-bold text-ink-700">{t.title}</h1>
                   <p className="text-sm text-ink-400">{t.subtitle}</p>
                 </div>
               </div>
