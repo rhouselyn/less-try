@@ -248,7 +248,7 @@ function AllUnitsStep({
 
         <div className="flex-1 min-w-0" />
 
-        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
+        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1 h-5">
           <span className="text-xs text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             {t.onlyNewWords || '只学新词'}
@@ -265,7 +265,7 @@ function AllUnitsStep({
           </div>
         </label>
 
-        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
+        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1 h-5">
           <span className="text-xs text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
             <Headphones className="w-3 h-3" />
             {t.skipListening || '跳过听力'}

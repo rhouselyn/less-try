@@ -437,6 +437,25 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
   )
 }
 
+function FrogLogo({ size = 40 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
+      <circle cx="34" cy="38" r="16" fill="#4ade80" />
+      <circle cx="66" cy="38" r="16" fill="#4ade80" />
+      <circle cx="34" cy="38" r="13" fill="#fff" />
+      <circle cx="66" cy="38" r="13" fill="#fff" />
+      <circle cx="36" cy="37" r="6" fill="#166534" />
+      <circle cx="68" cy="37" r="6" fill="#166534" />
+      <circle cx="38" cy="35" r="2" fill="#fff" />
+      <circle cx="70" cy="35" r="2" fill="#fff" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
+      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 const MODES = [
   { key: 'direct', icon: PenLine, color: 'amber' },
   { key: 'translate', icon: Languages, color: 'blue' },
@@ -495,34 +514,34 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   }
 
   return (
-    <div className="flex flex-col h-full w-full items-center">
-      {/* Top bar - language selector left, settings right */}
-      <div className="w-full max-w-2xl flex items-center justify-between pt-3 pb-2">
+    <div className="flex flex-col h-full w-full">
+      {/* Top-left: language selector */}
+      <div className="flex items-center gap-3 pt-3 px-4">
         <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
       </div>
 
-      {/* Center content - brand and tagline */}
-      <div className="flex-1 flex flex-col items-center justify-center max-w-2xl w-full px-4">
-        <motion.h1
+      {/* Center content - brand logo and tagline */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
+        <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-4xl font-display font-bold text-ink-800 mb-2"
+          className="flex items-center gap-3 mb-3"
         >
-          {t.title || '呱邻国'}
-        </motion.h1>
+          <div className="w-14 h-14 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
+            <FrogLogo size={32} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-display font-bold text-ink-800 leading-tight">
+              {t.title || '呱邻国'}
+            </h1>
+            <p className="text-sm text-ink-400">{t.subtitle || 'Gualingo'}</p>
+          </div>
+        </motion.div>
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-base text-ink-400 mb-1"
-        >
-          {t.subtitle || 'Gualingo'}
-        </motion.p>
-        <motion.p
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
           className="text-sm text-ink-300 text-center max-w-md"
         >
           {targetLang === 'zh'
@@ -532,7 +551,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
       </div>
 
       {/* Bottom area - input box */}
-      <div className="w-full max-w-2xl pb-4 px-4">
+      <div className="w-full max-w-2xl mx-auto pb-4 px-4">
         <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
           {/* Mode tabs at top of input */}
           <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
