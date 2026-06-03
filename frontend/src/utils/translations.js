@@ -158,7 +158,10 @@ export const translations = {
     hideOriginal: "隐藏原文",
     hideMeaning: "隐藏释义",
     hideWord: "隐藏单词",
-    noMatchingSentences: "没有找到匹配的句子"
+    noMatchingSentences: "没有找到匹配的句子",
+    retryInterval: "重试间隔",
+    retryIntervalDesc: "限速后重试等待时间",
+    wordsPerPage: "每页显示单词数"
   },
   en: {
     title: "Gualingo",
@@ -318,6 +321,9 @@ export const translations = {
     hideOriginal: "Hide Original",
     hideMeaning: "Hide Meaning",
     hideWord: "Hide Word",
-    noMatchingSentences: "No matching sentences found"
+    noMatchingSentences: "No matching sentences found",
+    retryInterval: "Retry Interval",
+    retryIntervalDesc: "Wait time before retry after rate limit",
+    wordsPerPage: "Words per page"
   }
 };
