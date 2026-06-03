@@ -249,8 +249,8 @@ function AllUnitsStep({
         <div className="flex-1 min-w-0" />
 
         <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
-          <span className="text-[10px] text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
-            <Sparkles className="w-2.5 h-2.5" />
+          <span className="text-[11px] text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
             {t.onlyNewWords || '只学新词'}
           </span>
           <div className="relative">
@@ -261,13 +261,13 @@ function AllUnitsStep({
               className="sr-only peer"
             />
             <div className="toggle-warm-sm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] top-[2px] toggle-warm-dot-sm peer-checked:translate-x-3" />
+            <div className="absolute left-[3px] top-1/2 -translate-y-1/2 toggle-warm-dot-sm peer-checked:translate-x-3" />
           </div>
         </label>
 
         <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
-          <span className="text-[10px] text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
-            <Headphones className="w-2.5 h-2.5" />
+          <span className="text-[11px] text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
+            <Headphones className="w-3 h-3" />
             {t.skipListening || '跳过听力'}
           </span>
           <div className="relative">
@@ -278,7 +278,7 @@ function AllUnitsStep({
               className="sr-only peer"
             />
             <div className="toggle-warm-sm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] top-[2px] toggle-warm-dot-sm peer-checked:translate-x-3" />
+            <div className="absolute left-[3px] top-1/2 -translate-y-1/2 toggle-warm-dot-sm peer-checked:translate-x-3" />
           </div>
         </label>
 

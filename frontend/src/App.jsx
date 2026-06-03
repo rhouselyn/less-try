@@ -719,11 +719,8 @@ function App() {
         })
       }
       if (reviewMode) {
-        const currentItem = wrongItems[reviewIndex]
-        if (currentItem) {
-          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
-          setReviewIndex(prev => prev)
-        }
+        // In review mode, don't append wrong items - just leave it in place for retry
+        // The review ends after going through all current wrong items once
       } else {
         setWrongItems(prev => [...prev, { type: 'word', data: learningData }])
       }
@@ -740,11 +737,7 @@ function App() {
         })
       }
       if (reviewMode) {
-        const currentItem = wrongItems[reviewIndex]
-        if (currentItem) {
-          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
-          setReviewIndex(prev => prev)
-        }
+        // In review mode, don't append wrong items - just leave it in place for retry
       } else {
         setWrongItems(prev => [...prev, { type: 'sentence_quiz', data: quizData }])
       }
@@ -766,11 +759,7 @@ function App() {
         })
       }
       if (reviewMode) {
-        const currentItem = wrongItems[reviewIndex]
-        if (currentItem) {
-          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
-          setReviewIndex(prev => prev)
-        }
+        // In review mode, don't append wrong items - just leave it in place for retry
       } else {
         setWrongItems(prev => [...prev, { type: 'listening_quiz', data: listeningQuizData }])
       }
@@ -792,11 +781,7 @@ function App() {
         })
       }
       if (reviewMode) {
-        const currentItem = wrongItems[reviewIndex]
-        if (currentItem) {
-          setWrongItems(prev => [...prev.filter((_, i) => i !== reviewIndex), currentItem])
-          setReviewIndex(prev => prev)
-        }
+        // In review mode, don't append wrong items - just leave it in place for retry
       } else {
         setWrongItems(prev => [...prev, { type: exerciseType, data: currentExerciseData }])
       }

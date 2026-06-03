@@ -292,7 +292,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               animate={{ width: SIDEBAR_WIDTH, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-              className="h-full overflow-hidden flex flex-col bg-amber-50/40 border-r border-amber-200/40"
+              className="h-full overflow-hidden flex flex-col bg-[#EDE4D4] border-r border-[#D9CCBA]"
               style={{ minWidth: 0 }}
             >
               <div className="px-3 pt-4 pb-2 flex items-center justify-between flex-shrink-0">
@@ -417,7 +417,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-amber-50/40 border-r border-amber-200/40"
+            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-[#EDE4D4] border-r border-[#D9CCBA]"
             style={{ width: 48 }}
           >
             <button
