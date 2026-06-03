@@ -157,15 +157,9 @@ function App() {
   
   // 获取当前语言的翻译
   const baseT = translations[targetLang] || translations.zh;
-  const hasCustomTranslations = !!customTranslations[targetLang]
-  const t = hasCustomTranslations
+  const t = customTranslations[targetLang] 
     ? { ...translations.zh, ...(translations[targetLang] || {}), ...customTranslations[targetLang] }
     : baseT;
-  
-  // Debug: log when t changes
-  if (targetLang !== 'zh' && targetLang !== 'en') {
-    console.log(`[i18n] t computed: targetLang=${targetLang}, hasCustom=${hasCustomTranslations}, settings=${t.settings}, nativeLang=${t.nativeLang}`)
-  }
 
   // Fetch LLM translations when targetLang changes to a non-zh/en language
   useEffect(() => {
@@ -173,22 +167,16 @@ function App() {
       setTranslatingUI(false)
       return
     }
-    if (loadedLangsRef.current.has(targetLang)) {
-      console.log(`[i18n] ${targetLang} already loaded, skipping. customTranslations has key: ${!!customTranslations[targetLang]}`)
-      return
-    }
+    if (loadedLangsRef.current.has(targetLang)) return
     
-    console.log(`[i18n] Fetching translations for ${targetLang}...`)
     loadedLangsRef.current.add(targetLang)
     setTranslatingUI(true)
     api.translateUI(targetLang)
       .then(data => {
-        console.log(`[i18n] Got ${Object.keys(data).length} keys for ${targetLang}, sample: settings=${data.settings}`)
         setCustomTranslations(prev => ({ ...prev, [targetLang]: data }))
         setTranslatingUI(false)
       })
-      .catch(err => {
-        console.error(`[i18n] Failed to load translations for ${targetLang}:`, err)
+      .catch(() => {
         setTranslatingUI(false)
         loadedLangsRef.current.delete(targetLang)
       })
@@ -1488,14 +1476,6 @@ function App() {
           </div>
         )}
       </main>
-      {/* DEBUG: i18n indicator */}
-      <div className="fixed bottom-1 right-1 text-[10px] bg-black/80 text-green-400 px-3 py-2 rounded z-50 font-mono" onClick={() => {
-        console.log('[i18n Debug]', { targetLang, loadedLangs: [...loadedLangsRef.current], customTranslationsKeys: Object.keys(customTranslations), tKeys: Object.keys(t).length, tSample: { settings: t.settings, nativeLang: t.nativeLang, startLearning: t.startLearning } })
-      }}>
-        <div>lang={targetLang} | ct_keys=[{Object.keys(customTranslations).join(',')}]</div>
-        <div>t.settings={t.settings} | t.nativeLang={t.nativeLang}</div>
-        <div>translating={String(translatingUI)} | loaded={loadedLangsRef.current.has(targetLang) ? 'yes' : 'no'}</div>
-      </div>
       <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} recentLangs={recentLanguages} onRecentLangsChange={setRecentLanguages} />
       {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
