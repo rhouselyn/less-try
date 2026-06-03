@@ -16,6 +16,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
   const [direction, setDirection] = useState(0)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [loading, setLoading] = useState(true)
   const [rpm, setRpm] = useState(60)
   const [retryInterval, setRetryInterval] = useState(1)
@@ -26,6 +27,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
     if (isOpen) {
       setLoading(true)
       setSaved(false)
+      setSaveError('')
       Promise.all([
         fetch('/api/settings').then(res => res.json()),
         api.getUserPreferences().catch(() => ({}))
@@ -114,6 +116,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
   const handleSave = async () => {
     setSaving(true)
     setSaved(false)
+    setSaveError('')
     try {
       const payload = {
         configs: configs.map(c => ({
@@ -128,6 +131,10 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       })
+      if (!res.ok) {
+        const text = await res.text().catch(() => '')
+        throw new Error(`HTTP ${res.status}: ${text || res.statusText}`)
+      }
       const data = await res.json()
       const loaded = (data.configs && data.configs.length > 0)
         ? data.configs.map(c => ({
@@ -141,7 +148,11 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setConfigs(loaded)
       setCurrentIndex(data.active_index ?? currentIndex)
 
-      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize })
+      try {
+        await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize })
+      } catch (prefErr) {
+        console.warn('saveUserPreferences failed:', prefErr)
+      }
 
       if (onTargetLangChange && localTargetLang !== targetLang) {
         onTargetLangChange(localTargetLang)
@@ -155,9 +166,10 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setTimeout(() => {
         setSaved(false)
         onClose()
-      }, 250)
+      }, 900)
     } catch (e) {
       console.error('Failed to save settings:', e)
+      setSaveError(e?.message || '保存失败')
     } finally {
       setSaving(false)
     }
@@ -428,9 +440,14 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                 </div>
               </div>
 
-              <motion.button
-                whileHover={{ scale: saving || saved ? 1 : 1.01 }}
-                whileTap={{ scale: saving || saved ? 1 : 0.99 }}
+              {saveError && (
+                <div className="px-3 py-2 rounded-xl bg-ember-50 border border-ember-200 text-[11px] text-ember-500">
+                  {t.saveFailed || '保存失败'}：{saveError}
+                </div>
+              )}
+
+              <button
+                type="button"
                 onClick={handleSave}
                 disabled={saving}
                 className="w-full py-2.5 mt-1 text-xs font-semibold text-white rounded-2xl bg-ochre-400 hover:bg-ochre-500 active:bg-ochre-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-warm-sm"
@@ -441,7 +458,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                   <Check className="w-4 h-4" />
                 ) : null}
                 {saving ? (t.saving || '保存中...') : saved ? (t.saved || '已保存') : (t.save || '保存')}
-              </motion.button>
+              </button>
             </div>
           )}
         </motion.div>
