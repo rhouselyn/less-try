@@ -76,32 +76,40 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
   }, [currentIndex])
 
   const addConfig = useCallback(() => {
-    const current = configs[configs.length - 1]
-    const newConfig = {
-      api_key: '',
-      base_url: current?.base_url || '',
-      model: current?.model || '',
-      has_key: false,
-      masked_key: '',
-    }
+    setConfigs(prev => {
+      const current = prev[prev.length - 1]
+      const newConfig = {
+        api_key: '',
+        base_url: current?.base_url || '',
+        model: current?.model || '',
+        has_key: false,
+        masked_key: '',
+      }
+      return [...prev, newConfig]
+    })
     setDirection(1)
-    setConfigs(prev => [...prev, newConfig])
-    setCurrentIndex(configs.length)
-  }, [configs])
+  }, [])
 
   const removeConfig = useCallback((index) => {
-    if (configs.length <= 1) return
     setConfigs(prev => {
+      if (prev.length <= 1) return prev
       const next = prev.filter((_, i) => i !== index)
+      const newLen = next.length
+      setCurrentIndex(curr => {
+        if (curr > index) return curr - 1
+        if (curr >= newLen) return newLen - 1
+        return curr
+      })
       return next
     })
-    setCurrentIndex(prev => {
-      if (prev >= configs.length - 1) return Math.max(0, configs.length - 2)
-      if (prev > index) return prev - 1
-      return Math.min(prev, configs.length - 2)
-    })
     setDirection(-1)
-  }, [configs.length])
+  }, [])
+
+  useEffect(() => {
+    if (configs.length > 0 && currentIndex >= configs.length) {
+      setCurrentIndex(configs.length - 1)
+    }
+  }, [configs.length, currentIndex])
 
   const handleSave = async () => {
     setSaving(true)
@@ -202,15 +210,24 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                   <span className="label-warm text-[10px] font-semibold text-ink-400 uppercase tracking-widest">
                     {t.apiConfig || 'API 配置'} {currentIndex + 1}/{configs.length}
                   </span>
-                  {configs.length > 1 && (
+                  <div className="flex items-center gap-1">
                     <button
-                      onClick={() => removeConfig(currentIndex)}
-                      className="flex items-center gap-1 text-[10px] text-ink-400 hover:text-ember-500 transition-colors"
+                      onClick={addConfig}
+                      title={t.addConfig || '新增配置'}
+                      className="w-6 h-6 flex items-center justify-center rounded-lg text-ochre-500 hover:bg-ochre-50 hover:text-ochre-600 transition-colors"
                     >
-                      <Minus className="w-3 h-3" />
-                      {t.remove || 'Remove'}
+                      <Plus className="w-3.5 h-3.5" />
                     </button>
-                  )}
+                    {configs.length > 1 && (
+                      <button
+                        onClick={() => removeConfig(currentIndex)}
+                        title={t.remove || '删除当前配置'}
+                        className="w-6 h-6 flex items-center justify-center rounded-lg text-ink-400 hover:bg-ember-50 hover:text-ember-500 transition-colors"
+                      >
+                        <Minus className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="relative">
@@ -218,9 +235,9 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                     <button
                       onClick={goPrev}
                       disabled={isFirst}
-                      className={`btn-ghost flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
                         isFirst
-                          ? 'text-bone-200 cursor-not-allowed'
+                          ? 'text-bone-300 cursor-not-allowed'
                           : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100 active:scale-90'
                       }`}
                     >
@@ -288,21 +305,17 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                       </AnimatePresence>
                     </div>
 
-                    {isLast ? (
-                      <button
-                        onClick={addConfig}
-                        className="btn-secondary flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 transition-all active:scale-90"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={goNext}
-                        className="btn-ghost flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ink-400 hover:text-ink-600 hover:bg-cream-100 transition-all active:scale-90"
-                      >
-                        <ChevronRight className="w-4 h-4" />
-                      </button>
-                    )}
+                    <button
+                      onClick={goNext}
+                      disabled={isLast}
+                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                        isLast
+                          ? 'text-bone-300 cursor-not-allowed'
+                          : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100 active:scale-90'
+                      }`}
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
 
                   {configs.length > 1 && (
@@ -416,11 +429,11 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileHover={{ scale: saving || saved ? 1 : 1.01 }}
+                whileTap={{ scale: saving || saved ? 1 : 0.99 }}
                 onClick={handleSave}
                 disabled={saving}
-                className="btn-primary w-full py-2.5 bg-ink-800 text-white text-xs font-medium rounded-2xl hover:bg-ink-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-2.5 mt-1 text-xs font-semibold text-white rounded-2xl bg-ochre-400 hover:bg-ochre-500 active:bg-ochre-600 disabled:opacity-60 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-warm-sm"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
