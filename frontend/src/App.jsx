@@ -47,6 +47,7 @@ function App() {
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
+  const [uiLang, setUiLang] = useState('zh')
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
@@ -116,6 +117,7 @@ function App() {
     warmupSpeech()
     api.getUserPreferences().then(prefs => {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
+      if (prefs.ui_lang) setUiLang(prefs.ui_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.only_new_words !== undefined) setOnlyNewWords(prefs.only_new_words)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
@@ -151,7 +153,7 @@ function App() {
   }
   
   // 获取当前语言的翻译
-  const t = translations[targetLang] || translations.zh;
+  const t = translations[uiLang] || translations.zh;
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -1123,7 +1125,11 @@ function App() {
                       sourceLang={sourceLang}
                       setSourceLang={setSourceLang}
                       targetLang={targetLang}
-                      setTargetLang={setTargetLang}
+                      setTargetLang={(lang) => {
+                        setTargetLang(lang)
+                        setUiLang(lang)
+                        api.saveUserPreferences({ ui_lang: lang }).catch(() => {})
+                      }}
                       loading={loading}
                       onProcess={handleProcess}
                       t={t}
@@ -1435,7 +1441,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} uiLang={uiLang} onUiLangChange={setUiLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
       {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}

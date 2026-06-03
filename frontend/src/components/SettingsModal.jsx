@@ -10,7 +10,7 @@ const slideVariants = {
   exit: (dir) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
 }
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSize, onPageSizeChange, t }) {
+function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, uiLang, onUiLangChange, pageSize, onPageSizeChange, t }) {
   const [configs, setConfigs] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -133,10 +133,14 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setConfigs(loaded)
       setCurrentIndex(data.active_index ?? currentIndex)
 
-      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize })
+      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, ui_lang: localTargetLang, page_size: localPageSize })
 
       if (onTargetLangChange && localTargetLang !== targetLang) {
         onTargetLangChange(localTargetLang)
+      }
+
+      if (onUiLangChange && localTargetLang !== uiLang) {
+        onUiLangChange(localTargetLang)
       }
 
       if (onPageSizeChange && localPageSize !== pageSize) {
