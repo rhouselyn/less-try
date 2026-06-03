@@ -14,43 +14,37 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
       transition={{ duration: 0.25, ease: 'easeInOut' }}
       className="overflow-hidden"
     >
-      <div className="px-5 pb-4 pt-3 border-t border-stone-900/10">
+      <div className="px-5 pb-4 pt-2 border-t border-stone-100">
         {detailLoading ? (
-          <div className="pt-4 flex flex-col items-center justify-center gap-2">
-            <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
-            <p className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-400 uppercase">
-              {t.generatingDetail || 'Generating…'}
-            </p>
+          <div className="pt-4 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+            <p className="text-[12px] text-stone-400">正在生成单词详解...</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-3 h-px bg-stone-900/40" />
-                <h3 className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase">
-                  {t.definition || 'Definition'}
-                </h3>
-              </div>
-              <p className="font-display text-[15px] text-stone-800 leading-relaxed">
+          <>
+            <div className="mb-2">
+              <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                <Brain className="w-3 h-3 text-amber-500" />
+                {t.definition || '释义'}
+              </h3>
+              <p className="text-[13px] text-stone-700 leading-relaxed">
                 {word.enriched_meaning || word.meaning}
               </p>
             </div>
 
             {word.variants_detail && word.variants_detail.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-3 h-px bg-stone-900/40" />
-                  <h3 className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase">
-                    {t.variants || 'Variants'}
-                  </h3>
-                </div>
+              <div className="mb-2">
+                <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                  <GitBranch className="w-3 h-3 text-amber-500" />
+                  {t.variants || '词形变化'}
+                </h3>
                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                   {word.variants_detail.map((variant, index) => (
                     <div key={index} className="flex items-center gap-1.5">
-                      <span className="px-1.5 py-0.5 border border-stone-900/20 text-stone-700 text-[10px] font-mono-ui tracking-wider uppercase">
+                      <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 rounded text-[11px] font-medium">
                         {variant.type}
                       </span>
-                      <span className="font-display text-stone-700 text-[14px] italic">{variant.form}</span>
+                      <span className="text-stone-600 text-[13px]">{variant.form}</span>
                     </div>
                   ))}
                 </div>
@@ -58,29 +52,27 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
             )}
 
             {word.examples && word.examples.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-3 h-px bg-stone-900/40" />
-                  <h3 className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase">
-                    {t.examples || 'Examples'}
-                  </h3>
-                </div>
-                <div className="space-y-1.5">
+              <div className="mb-2">
+                <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                  <BookText className="w-3 h-3 text-amber-500" />
+                  {t.examples || '例句'}
+                </h3>
+                <div className="space-y-1">
                   {word.examples.slice(0, 3).map((ex, i) => (
-                    <div key={i} className="border-l border-stone-900/30 pl-3">
+                    <div key={i} className="border-l-2 border-amber-200 pl-2.5">
                       <div className="flex items-start gap-1.5">
-                        <p className="font-display text-stone-800 text-[14px] leading-snug flex-1">{ex.sentence}</p>
+                        <p className="text-stone-700 text-[13px] leading-snug flex-1">{ex.sentence}</p>
                         {ex.sentence && (
                           <button
                             onClick={(e) => { e.stopPropagation(); speakText(ex.sentence, sourceLang) }}
-                            className="p-0.5 text-stone-400 hover:text-stone-900 transition-colors shrink-0"
+                            className="p-0.5 text-amber-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors shrink-0"
                           >
                             <Volume2 className="w-3 h-3" />
                           </button>
                         )}
                       </div>
                       {ex.translation && (
-                        <p className="font-display italic text-stone-500 text-[12px] leading-snug mt-0.5">{ex.translation}</p>
+                        <p className="text-stone-400 text-[11px] leading-snug">{ex.translation}</p>
                       )}
                     </div>
                   ))}
@@ -89,19 +81,17 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
             )}
 
             {word.memory_hint && (
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-3 h-px bg-stone-900/40" />
-                  <h3 className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 uppercase">
-                    {t.memoryHint || 'Mnemonic'}
-                  </h3>
-                </div>
-                <p className="font-display italic text-[14px] text-stone-700 leading-relaxed border-l-2 border-stone-900/30 pl-3">
+              <div className="mb-2">
+                <h3 className="text-[10px] font-semibold text-stone-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3 text-amber-500" />
+                  {t.memoryHint || '记忆辅助'}
+                </h3>
+                <p className="text-[13px] text-stone-600 leading-relaxed bg-amber-50/70 px-3 py-2 rounded-lg border border-amber-100">
                   {word.memory_hint}
                 </p>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
     </motion.div>
@@ -262,16 +252,14 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const renderPagination = () => {
     if (totalPages <= 1) return null
     return (
-      <div className="flex items-center justify-center gap-3 py-3 border-t border-stone-900/10">
+      <div className="flex items-center justify-center gap-1 py-2 border-t border-stone-200/60 bg-stone-50/40">
         <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-          className={`p-1 transition-colors ${page <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-stone-500 hover:text-stone-900'}`}>
+          className={`p-1 rounded transition-colors ${page <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`}>
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
-        <span className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-500 tabular-nums">
-          {String(page).padStart(2, '0')} / {String(totalPages).padStart(2, '0')}
-        </span>
+        <span className="text-[11px] text-stone-400 px-2">{page} / {totalPages}</span>
         <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-          className={`p-1 transition-colors ${page >= totalPages ? 'text-stone-200 cursor-not-allowed' : 'text-stone-500 hover:text-stone-900'}`}>
+          className={`p-1 rounded transition-colors ${page >= totalPages ? 'text-stone-200 cursor-not-allowed' : 'text-stone-400 hover:text-stone-600 hover:bg-stone-100'}`}>
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -281,11 +269,9 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const renderWordList = () => {
     if (loading) {
       return (
-        <div className="flex items-center justify-center py-16 gap-2">
-          <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
-          <span className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-400 uppercase">
-            {t.loadingVocab || 'Loading…'}
-          </span>
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+          <span className="ml-2 text-sm text-stone-400">{t.loadingVocab || '加载单词表...'}</span>
         </div>
       )
     }
@@ -293,11 +279,10 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     if (filteredWords.length === 0) {
       return (
         <div className="py-16 text-center">
-          <BookOpen className="w-6 h-6 text-stone-300 mx-auto mb-3" />
-          <p className="font-display italic text-[15px] text-stone-500">
-            {searchQuery ? (t.noMatchFound || 'No matches') : (t.noWordsYetHint || 'No words yet')}
+          <BookOpen className="w-8 h-8 text-stone-200 mx-auto mb-2" />
+          <p className="text-sm text-stone-400">
+            {searchQuery ? (t.noMatchFound || '未找到匹配的单词') : (t.noWordsYetHint || '暂无单词，开始学习后将自动收录')}
           </p>
-          <div className="mt-3 mx-auto w-8 h-px bg-stone-900/15" />
         </div>
       )
     }
@@ -305,68 +290,67 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     return (
       <div className="flex h-full">
         {letterIndex.length > 1 && !searchQuery && (
-          <div className="flex flex-col items-center py-2 px-1 border-r border-stone-900/10 shrink-0">
+          <div className="flex flex-col items-center py-2 px-1 border-r border-stone-100 bg-stone-50/50 shrink-0">
             {letterIndex.map(letter => (
               <button
                 key={letter}
                 onClick={() => scrollToLetter(letter)}
-                className="font-mono-ui text-[9px] tracking-wider text-stone-500 hover:text-stone-900 transition-colors leading-tight px-1 py-px"
+                className="text-[9px] font-medium text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded px-1 py-px transition-colors leading-tight"
               >
                 {letter}
               </button>
             ))}
           </div>
         )}
-        <div className="flex-1 min-w-0 overflow-y-auto scrollbar-thin" ref={listRef}>
+        <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>
           {groupedWords.map(([letter, groupWords]) => (
             <div key={letter} id={`letter-${letter}`}>
-              <div className="sticky top-0 z-10 px-5 py-1.5 bg-[#faf6ed]/95 backdrop-blur-sm border-b border-stone-900/10 flex items-center gap-2">
-                <span className="font-display text-[13px] text-stone-700 tracking-wider">{letter}</span>
-                <span className="font-mono-ui text-[10px] text-stone-400 tabular-nums">{String(groupWords.length).padStart(2, '0')}</span>
-                <span className="flex-1 h-px bg-stone-900/10" />
+              <div className="sticky top-0 z-10 px-5 py-1.5 bg-stone-50/90 backdrop-blur-sm border-b border-stone-100">
+                <span className="text-xs font-bold text-stone-400 tracking-wider">{letter}</span>
+                <span className="text-[10px] text-stone-300 ml-1.5">{groupWords.length}</span>
               </div>
               {groupWords.map((word) => (
-                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="border-b border-stone-900/8 last:border-b-0">
+                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="border-b border-stone-50 last:border-b-0">
                   <div
                     role="button"
                     tabIndex={0}
                     onClick={() => handleWordClick(word.word)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleWordClick(word.word) }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-stone-900/[0.03] transition-colors text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-stone-50/80 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2">
-                        <span className={`font-display text-[17px] text-stone-900 ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.word}</span>
+                      <div className="flex items-center gap-2">
+                        <span className={`text-sm font-semibold text-stone-800 ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.word}</span>
                         {word.ipa && (
-                          <span className={`font-mono-ui text-[10px] text-stone-400 ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>
+                          <span className={`text-xs text-stone-400 ipa-font ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>
                             {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
                           </span>
                         )}
                         {word.part_of_speech && (
-                          <span className="font-mono-ui text-[9px] px-1 py-px border border-stone-900/20 text-stone-500 tracking-wider uppercase">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-500 rounded font-medium">
                             {word.part_of_speech}
                           </span>
                         )}
                       </div>
                       {word.meaning && (
-                        <p className={`font-display italic text-[13px] text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.meaning}</p>
+                        <p className={`text-xs text-stone-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.meaning}</p>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {expandedWord === word.word && detailLoading[word.word] ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-400" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
                       ) : expandedWord === word.word ? (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
-                          className="p-1 text-stone-400 hover:text-stone-900 transition-colors"
-                          title={t.regenerate || 'Regenerate'}
+                          className="p-1.5 text-stone-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
+                          title="重新生成"
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                       ) : null}
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
-                        className="p-1 text-stone-400 hover:text-stone-900 transition-colors"
+                        className="p-1.5 text-stone-300 hover:text-amber-500 hover:bg-amber-50 rounded-full transition-colors"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
@@ -395,50 +379,38 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
   if (onBack) {
     return (
-      <div className="h-full flex flex-col bg-[#faf6ed] border border-stone-900/15 overflow-hidden min-h-0" style={{ borderRadius: 0 }}>
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-900/10 flex-shrink-0">
+      <div className="h-full flex flex-col bg-white rounded-xl border border-stone-200/60 shadow-sm overflow-hidden min-h-0">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-amber-50/50 to-white">
           <div className="flex items-center gap-2.5">
-            <span className="font-mono-ui text-[10px] tracking-[0.25em] text-stone-500 uppercase">
-              {t.vocabOverview || 'Vocabulary'}
-            </span>
-            <span className="w-px h-3 bg-stone-900/15" />
+            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-amber-500' : 'text-amber-500 hover:text-amber-600'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? '显示全部' : displayMode === 1 ? '隐藏释义' : '隐藏单词'} />
+            <span className="text-base font-semibold text-stone-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
-              <span className="font-mono-ui text-[10px] tracking-wider text-stone-500 tabular-nums">
-                {String(words.length).padStart(3, '0')} {t.wordCount || 'words'}
-              </span>
+              <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
             )}
-            <button
-              onClick={() => setDisplayMode(v => (v + 1) % 3)}
-              className="p-1 text-stone-400 hover:text-stone-900 transition-colors"
-              title={displayMode === 0 ? '显示全部' : displayMode === 1 ? '隐藏释义' : '隐藏单词'}
-            >
-              <BookOpen className="w-3.5 h-3.5" />
-            </button>
           </div>
           <button
             onClick={onBack}
-            className="flex items-center gap-1.5 font-mono-ui text-[10px] tracking-[0.2em] uppercase text-stone-500 hover:text-stone-900 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-stone-500 hover:text-stone-800 hover:bg-stone-100 rounded-lg transition-colors"
           >
-            <ArrowLeft className="w-3 h-3" />
-            {t.back || 'Back'}
+            <ArrowLeft className="w-4 h-4" />
+            {t.back || '返回'}
           </button>
         </div>
 
-        <div className="px-4 py-3 border-b border-stone-900/10 flex-shrink-0">
+        <div className="px-4 py-3 border-b border-stone-100">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t.searchWordOrMeaning || 'Search words…'}
-              className="w-full pl-9 pr-9 py-2 text-[13px] bg-transparent border border-stone-900/20 text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 font-display transition-colors"
-              style={{ borderRadius: 0 }}
+              placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
+              className="w-full pl-9 pr-9 py-2 text-sm bg-stone-50 border border-stone-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder-stone-400 transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-stone-400 hover:text-stone-900 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-stone-400 hover:text-stone-600 transition-colors"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -456,28 +428,23 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   return (
     <div className="mt-6">
       <motion.button
-        whileHover={{ y: -1 }}
-        whileTap={{ y: 0 }}
+        whileHover={{ scale: 1.01 }}
+        whileTap={{ scale: 0.99 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-[#faf6ed] border border-stone-900/20 hover:border-stone-900 transition-all"
-        style={{ borderRadius: 0 }}
+        className="w-full flex items-center justify-between px-5 py-3.5 bg-white/80 backdrop-blur-sm rounded-xl border border-stone-200/60 hover:border-amber-200/60 transition-all shadow-sm"
       >
         <div className="flex items-center gap-2.5">
-          <BookOpen className="w-3.5 h-3.5 text-stone-700" />
-          <span className="font-mono-ui text-[10px] tracking-[0.25em] text-stone-700 uppercase">
-            {t.vocabOverview || 'Vocabulary'}
-          </span>
+          <BookOpen className="w-4 h-4 text-amber-500" />
+          <span className="text-sm font-semibold text-stone-700">{t.vocabOverview || '词汇总览'}</span>
           {!isOpen && words.length > 0 && (
-            <span className="font-mono-ui text-[10px] tracking-wider text-stone-500 tabular-nums">
-              {String(words.length).padStart(3, '0')}
-            </span>
+            <span className="text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
           )}
         </div>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="w-3.5 h-3.5 text-stone-500" />
+          <ChevronDown className="w-4 h-4 text-stone-400" />
         </motion.div>
       </motion.button>
 
@@ -490,35 +457,34 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="mt-2 bg-[#faf6ed] border border-stone-900/20" style={{ borderRadius: 0 }}>
-              <div className="p-4 border-b border-stone-900/10">
+            <div className="mt-3 bg-white/80 backdrop-blur-sm rounded-xl border border-stone-200/60 shadow-sm">
+              <div className="p-4 border-b border-stone-100">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={t.searchWordOrMeaning || 'Search words…'}
-                    className="w-full pl-9 pr-9 py-2 text-[13px] bg-transparent border border-stone-900/20 text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-900 font-display transition-colors"
-                    style={{ borderRadius: 0 }}
+                    placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
+                    className="w-full pl-9 pr-9 py-2.5 text-sm bg-stone-50 border border-stone-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent placeholder-stone-400 transition-all"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-stone-400 hover:text-stone-900 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-stone-400 hover:text-stone-600 transition-colors"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="font-mono-ui text-[10px] tracking-[0.2em] text-stone-400 uppercase">
-                    {loading ? (t.loading || 'Loading…') : `${String(filteredWords.length).padStart(3, '0')} ${t.wordCount || 'words'}`}
+                <div className="flex items-center justify-between mt-2.5">
+                  <span className="text-xs text-stone-400">
+                    {loading ? (t.loading || '加载中...') : (t.totalWordCount || '共 {0} 个单词').replace('{0}', filteredWords.length)}
                   </span>
                 </div>
               </div>
 
-              <div className="max-h-[420px] overflow-y-auto scrollbar-thin">
+              <div className="max-h-[420px] overflow-y-auto">
                 {renderWordList()}
               </div>
             </div>
