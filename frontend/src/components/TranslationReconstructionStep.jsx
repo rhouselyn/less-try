@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, Languages } from 'lucide-react'
 import { speakText } from '../utils/speech'
@@ -7,6 +7,10 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   const [selectedTokens, setSelectedTokens] = useState([])
   const [answerChecked, setAnswerChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [data?.native_translation])
 
   if (!data) {
     return (

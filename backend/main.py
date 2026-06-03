@@ -3495,7 +3495,7 @@ async def update_llm_settings(req: SettingsUpdate):
         if req.configs is not None:
             new_configs = []
             for cfg in req.configs:
-                api_key = cfg.api_key if cfg.api_key and not cfg.api_key.startswith("****") else None
+                api_key = cfg.api_key if cfg.api_key and not cfg.api_key.startswith("****") and cfg.api_key.strip() else None
                 base_url = cfg.base_url
                 model = cfg.model
                 new_configs.append({

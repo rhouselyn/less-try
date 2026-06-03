@@ -21,6 +21,10 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
   }, [quizData?.original_sentence, sourceLang])
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [quizData?.original_sentence])
+
+  useEffect(() => {
     autoSpeak()
   }, [autoSpeak])
 

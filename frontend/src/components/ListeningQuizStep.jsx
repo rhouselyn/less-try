@@ -15,6 +15,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (skipListening ? rawTotalItemsInUnit - listeningCountInUnit : rawTotalItemsInUnit)
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [quizData?.original_sentence])
+
+  useEffect(() => {
     if (quizData?.original_sentence) {
       const timer = setTimeout(() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang), 300)
       return () => clearTimeout(timer)

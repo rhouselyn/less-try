@@ -109,7 +109,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
     try {
       const payload = {
         configs: configs.map(c => ({
-          api_key: c.api_key || (c.has_key ? `****${c.masked_key}` : ''),
+          api_key: c.api_key || '',
           base_url: c.base_url,
           model: c.model,
         })),
@@ -218,7 +218,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                     <button
                       onClick={goPrev}
                       disabled={isFirst}
-                      className={`btn-ghost flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
                         isFirst
                           ? 'text-bone-200 cursor-not-allowed'
                           : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100 active:scale-90'
@@ -291,14 +291,14 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                     {isLast ? (
                       <button
                         onClick={addConfig}
-                        className="btn-secondary flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 transition-all active:scale-90"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 transition-all active:scale-90"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                     ) : (
                       <button
                         onClick={goNext}
-                        className="btn-ghost flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ink-400 hover:text-ink-600 hover:bg-cream-100 transition-all active:scale-90"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ink-400 hover:text-ink-600 hover:bg-cream-100 transition-all active:scale-90"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
