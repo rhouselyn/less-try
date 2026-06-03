@@ -21,6 +21,10 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
   }, [quizData?.original_sentence, sourceLang])
 
   useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [quizData?.original_sentence])
+
+  useEffect(() => {
     autoSpeak()
   }, [autoSpeak])
 
@@ -32,8 +36,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         className="max-w-3xl mx-auto"
       >
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-stone-400" />
-          <p className="text-lg text-stone-600">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-ink-400" />
+          <p className="text-lg text-ink-600">{t.loading}</p>
         </div>
       </motion.div>
     )
@@ -83,7 +87,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         <div className="flex items-center gap-2">
           <motion.button
             onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+            className="flex items-center gap-2 btn-ghost"
             whileHover={{ scale: 1.05, x: -2 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -93,12 +97,12 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-stone-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
+            <span className="text-sm text-ink-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
           )}
           {onOpenVocabList && (
             <motion.button
               onClick={onOpenVocabList}
-              className="flex items-center gap-2 px-4 py-2 text-stone-600 hover:text-stone-800 transition-colors rounded-md hover:bg-stone-100"
+              className="flex items-center gap-2 btn-ghost"
               whileHover={{ scale: 1.05, x: 2 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -109,13 +113,13 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
       </div>
 
-      <div className="bg-white border border-stone-200/80 rounded-2xl p-8 shadow-sm">
+      <div className="bg-cream-50 border border-bone-200 rounded-3xl p-8 shadow-warm-sm">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 text-amber-700 rounded-full text-sm font-medium mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-ochre-50 text-ochre-500 rounded-full text-sm font-medium mb-4"
           >
             <Languages className="w-4 h-4" />
             {t.translationQuiz || '翻译题'}
@@ -125,7 +129,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="text-lg text-stone-700"
+              className="text-lg text-ink-600"
             >
               {quizData.original_sentence}
             </motion.p>
@@ -133,7 +137,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               onClick={(e) => { e.stopPropagation(); speakText(quizData.original_sentence, sourceLang) }}
-              className="p-2 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-full transition-colors"
+              className="p-2 text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 rounded-full transition-colors"
             >
               <Volume2 className="w-5 h-5" />
             </motion.button>
@@ -141,7 +145,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl flex flex-wrap gap-2 bg-stone-50/50 relative">
+          <div className="p-4 border-2 border-dashed border-bone-300 rounded-xl flex flex-wrap gap-2 bg-cream-50/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {quizData.correct_tokens.map((_, i) => (
                 <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{quizData.correct_tokens[i]}</span>
@@ -149,7 +153,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             </div>
             <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-start content-start">
               {selectedTokens.length === 0 && (
-                <span className="italic text-stone-400 pointer-events-none">{t.selectTokensHint}</span>
+                <span className="italic text-ink-400 pointer-events-none">{t.selectTokensHint}</span>
               )}
               <AnimatePresence mode="popLayout">
                 {selectedTokens.map((token, pos) => {
@@ -167,11 +171,11 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                       className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                         isChecked
                           ? isCorrect
-                            ? 'bg-green-100 text-green-800 border border-green-300'
+                            ? 'bg-moss-50 text-moss-600 border border-moss-400'
                             : isTokenCorrect
-                              ? 'bg-green-100 text-green-800 border border-green-300'
-                              : 'bg-red-100 text-red-800 border border-red-300'
-                          : 'bg-stone-800 text-white hover:bg-stone-700'
+                              ? 'bg-moss-50 text-moss-600 border border-moss-400'
+                              : 'bg-ember-50 text-ember-500 border border-ember-400'
+                          : 'bg-ink-800 text-white hover:bg-ink-700'
                       }`}
                     >
                       {displayToken(token)}
@@ -199,8 +203,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                     isSelected
                       ? 'pointer-events-none invisible'
                       : isChecked
-                        ? 'pointer-events-none bg-stone-800 text-white opacity-50'
-                        : 'bg-stone-800 text-white hover:bg-stone-700'
+                        ? 'pointer-events-none bg-ink-800 text-white opacity-50'
+                        : 'bg-ink-800 text-white hover:bg-ink-700'
                   }`}
                 >
                   {displayToken(token)}
@@ -215,14 +219,14 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}
+            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-moss-50 border-2 border-moss-400' : 'bg-ember-50 border-2 border-ember-400'}`}
           >
             <div className="flex items-center gap-3 mb-2">
-              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-green-600" /> : <XCircle className="w-6 h-6 text-red-600" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>{isCorrect ? t.correct : t.incorrect}</span>
+              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-moss-600" /> : <XCircle className="w-6 h-6 text-ember-500" />}
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-moss-600' : 'text-ember-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
-              <p className="text-stone-700 font-medium">
+              <p className="text-ink-600 font-medium">
                 {t.correctAnswer || '正确答案'}：{quizData.correct_translation || (quizData.correct_tokens ? quizData.correct_tokens.join('') : '')}
               </p>
             )}
@@ -236,7 +240,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={handleCheckAnswer}
               disabled={selectedIndices.length === 0}
-              className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}
             </motion.button>
@@ -247,7 +251,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={handleNextQuestion}
               disabled={loading}
-              className="flex-1 py-4 bg-stone-800 text-white font-semibold text-lg rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

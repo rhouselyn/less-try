@@ -61,6 +61,13 @@ class Storage:
         word_file = cache_dir / f"{word.lower()}.json"
         with open(word_file, 'w', encoding='utf-8') as f:
             json.dump(word_info, f, ensure_ascii=False, indent=2)
+        # 同时更新语言级单词索引，方便跨文件快速查找
+        try:
+            settings = self.load_language_settings(file_id)
+            source_lang = settings.get("source_lang", "en")
+            self.add_word_to_language_index(source_lang, word, file_id)
+        except Exception:
+            pass
 
     def load_word_cache(self, file_id: str, word: str) -> Optional[Dict]:
         file_dir = self.get_file_dir(file_id)
@@ -71,36 +78,58 @@ class Storage:
                 return json.load(f)
         return None
 
-    def find_global_word_cache(self, word: str, source_lang: str) -> Optional[Dict]:
-        if not self.files_dir.exists():
-            return None
-        word_lower = word.lower()
-        for file_dir in self.files_dir.iterdir():
-            if not file_dir.is_dir():
-                continue
-            settings_path = file_dir / "language_settings.json"
-            if not settings_path.exists():
-                continue
+    def _get_language_index_path(self, source_lang: str) -> Path:
+        return self.languages_dir / source_lang / "word_index.json"
+
+    def load_language_word_index(self, source_lang: str) -> Dict[str, str]:
+        """加载语言级单词索引，返回 {word_lower: file_id} 映射"""
+        path = self._get_language_index_path(source_lang)
+        if path.exists():
             try:
-                with open(settings_path, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                if settings.get("source_lang") != source_lang:
-                    continue
+                with open(path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
             except (json.JSONDecodeError, IOError):
-                continue
-            cache_dir = file_dir / "word_cache"
-            word_file = cache_dir / f"{word_lower}.json"
-            if word_file.exists():
-                try:
-                    with open(word_file, 'r', encoding='utf-8') as f:
-                        data = json.load(f)
-                    cached_word = data.get("word", "").lower()
-                    if cached_word != word_lower:
-                        continue
-                    return data
-                except (json.JSONDecodeError, IOError):
-                    continue
-        return None
+                return {}
+        return {}
+
+    def save_language_word_index(self, source_lang: str, index: Dict[str, str]):
+        path = self._get_language_index_path(source_lang)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(index, f, ensure_ascii=False, indent=2)
+
+    def add_word_to_language_index(self, source_lang: str, word: str, file_id: str):
+        """将单词加入语言级索引（如果尚未存在）"""
+        if not word or not source_lang:
+            return
+        word_lower = word.lower()
+        index = self.load_language_word_index(source_lang)
+        if word_lower not in index:
+            index[word_lower] = file_id
+            self.save_language_word_index(source_lang, index)
+
+    def find_global_word_cache(self, word: str, source_lang: str) -> Optional[Dict]:
+        # 通过语言级索引直接定位单词所在的文件，避免遍历所有文件目录
+        word_lower = word.lower()
+        index = self.load_language_word_index(source_lang)
+        cached_file_id = index.get(word_lower)
+        if not cached_file_id:
+            return None
+        word_file = self.files_dir / cached_file_id / "word_cache" / f"{word_lower}.json"
+        if not word_file.exists():
+            # 索引已过期，清理该条目
+            index.pop(word_lower, None)
+            self.save_language_word_index(source_lang, index)
+            return None
+        try:
+            with open(word_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            cached_word = data.get("word", "").lower()
+            if cached_word != word_lower:
+                return None
+            return data
+        except (json.JSONDecodeError, IOError):
+            return None
 
     def delete_word_cache(self, file_id: str, word: str):
         file_dir = self.get_file_dir(file_id)
@@ -408,6 +437,26 @@ class Storage:
                 self.save_history(records)
                 return True
         return False
+
+    def save_learned_words(self, file_id: str, words: List[str]):
+        """保存当前文件已学过的单词（已被其它文件缓存的单词）"""
+        file_dir = self.get_file_dir(file_id)
+        path = file_dir / "learned_words.json"
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump({"words": words}, f, ensure_ascii=False, indent=2)
+
+    def load_learned_words(self, file_id: str) -> set:
+        """加载当前文件已学过的单词集合（小写）"""
+        file_dir = self.get_file_dir(file_id)
+        path = file_dir / "learned_words.json"
+        if path.exists():
+            try:
+                with open(path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                return set(w.lower() for w in data.get("words", []) if w)
+            except (json.JSONDecodeError, IOError):
+                return set()
+        return set()
 
     def save_user_preferences(self, prefs: Dict):
         prefs_path = Path("/workspace/config/user_preferences.json")
