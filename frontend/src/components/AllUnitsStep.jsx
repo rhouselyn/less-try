@@ -261,7 +261,7 @@ function AllUnitsStep({
               className="sr-only peer"
             />
             <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] toggle-warm-dot peer-checked:translate-x-4" style={{ top: '50%', transform: 'translateY(-50%)' }} />
+            <div className="absolute left-[2px] top-[3px] toggle-warm-dot peer-checked:translate-x-4" />
           </div>
         </label>
 
@@ -278,7 +278,7 @@ function AllUnitsStep({
               className="sr-only peer"
             />
             <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] toggle-warm-dot peer-checked:translate-x-4" style={{ top: '50%', transform: 'translateY(-50%)' }} />
+            <div className="absolute left-[2px] top-[3px] toggle-warm-dot peer-checked:translate-x-4" />
           </div>
         </label>
 
