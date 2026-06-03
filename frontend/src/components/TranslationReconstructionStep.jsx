@@ -108,6 +108,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-lg text-ink-600 italic"
+              style={{ wordSpacing: '0.15em' }}
             >
               {data.native_translation}
             </motion.p>

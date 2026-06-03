@@ -208,7 +208,6 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                       className="flex items-center gap-1 text-[10px] text-ink-400 hover:text-ember-500 transition-colors"
                     >
                       <Minus className="w-3 h-3" />
-                      {t.remove || 'Remove'}
                     </button>
                   )}
                 </div>
