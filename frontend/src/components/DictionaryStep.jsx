@@ -715,7 +715,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="flex flex-col gap-3 max-w-3xl mx-auto w-full"
+      className="flex flex-col gap-3 w-full"
       style={{ height: '100%' }}
     >
       <div className="flex items-center gap-3 px-1">

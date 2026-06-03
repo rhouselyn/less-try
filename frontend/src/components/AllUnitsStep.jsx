@@ -230,7 +230,7 @@ function AllUnitsStep({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-3xl mx-auto"
+      className="w-full"
     >
       <div className="flex items-center gap-2 mb-6">
         <button

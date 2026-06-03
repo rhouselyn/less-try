@@ -278,11 +278,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all duration-200 text-sm font-medium ${
-            open
-              ? 'border-ochre-200 bg-cream-200 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-              : 'border-bone-200 bg-cream-100 hover:bg-cream-200'
-          }`}
+          className="flex items-center gap-1.5 text-sm font-medium text-ink-700 hover:text-ink-900 transition-colors"
         >
           <span className="leading-none">
             {isAuto ? <LangIcon langCode="auto" size="sm" /> : <LangIcon langCode={value} size="sm" />}
@@ -499,64 +495,63 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="max-w-2xl mx-auto w-full"
-    >
-      {/* Language selector - top left */}
-      <div className="mb-4">
+    <div className="flex flex-col h-full w-full">
+      {/* Top area - language selector only */}
+      <div className="flex items-center gap-3 pt-2">
         <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
       </div>
 
-      {/* Main input area - no big card, just a clean container */}
-      <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
-        {/* Mode tabs at top */}
-        <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
-          <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
-        </div>
+      {/* Spacer to push input to bottom */}
+      <div className="flex-1" />
 
-        {/* Textarea area */}
-        <div className="relative">
-          <textarea
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            placeholder={getPlaceholder()}
-            rows={4}
-            className="w-full resize-none bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-sm text-ink-700 placeholder-ink-400 leading-relaxed"
-          />
-          
-          {/* Submit button inside textarea, bottom-right */}
-          <div className="flex items-center justify-end px-3 pb-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={onProcess}
-              disabled={loading || !text.trim()}
-              className={`p-2 rounded-xl transition-all duration-200 ${
-                loading || !text.trim()
-                  ? 'bg-cream-100 text-ink-400 cursor-not-allowed'
-                  : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25'
-              }`}
-            >
-              <AnimatePresence mode="wait">
-                {loading ? (
-                  <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  </motion.span>
-                ) : (
-                  <motion.span key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <ArrowRight className="w-4 h-4" />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
+      {/* Bottom area - input box */}
+      <div className="w-full max-w-2xl mx-auto pb-2">
+        <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
+          {/* Mode tabs at top of input */}
+          <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
+            <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
+          </div>
+
+          {/* Textarea area */}
+          <div className="relative">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={getPlaceholder()}
+              rows={4}
+              className="w-full resize-none bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-sm text-ink-700 placeholder-ink-400 leading-relaxed"
+            />
+            
+            {/* Submit button inside textarea, bottom-right */}
+            <div className="flex items-center justify-end px-3 pb-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onProcess}
+                disabled={loading || !text.trim()}
+                className={`p-2 rounded-xl transition-all duration-200 ${
+                  loading || !text.trim()
+                    ? 'bg-cream-100 text-ink-400 cursor-not-allowed'
+                    : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25'
+                }`}
+              >
+                <AnimatePresence mode="wait">
+                  {loading ? (
+                    <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </motion.span>
+                  ) : (
+                    <motion.span key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <ArrowRight className="w-4 h-4" />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
+            </div>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 

@@ -1098,30 +1098,12 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-cream-50 bg-paper-grain">
-      {step === 'input' && (
-        <header className="bg-cream-100/70 backdrop-blur-md border-b border-bone-200/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
-                  <FrogLogo size={32} />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-display font-bold text-ink-700">{t.title}</h1>
-                  <p className="text-sm text-ink-400">{t.subtitle}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
-
-      <main>
+    <div className="h-screen overflow-hidden bg-cream-50 bg-paper-grain">
+      <main className="h-full">
         {step === 'input' ? (
-          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ height: 'calc(100vh - 72px)' }}>
+          <div className="flex h-full">
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
-            <div className="flex-1 min-w-0 relative h-full">
+            <div className="flex-1 min-w-0 relative h-full px-4 sm:px-6 lg:px-8 py-4">
               {wordListLang ? (
                 <WordListPanel
                   sourceLang={wordListLang}
@@ -1161,7 +1143,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <div ref={learningContainerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: '100vh', overflowY: 'auto' }}>
+          <div ref={learningContainerRef} className="h-full overflow-y-auto px-4 sm:px-6 lg:px-8 py-4">
             <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
