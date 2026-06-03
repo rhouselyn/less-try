@@ -125,25 +125,25 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
               )}
             </div>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
               {learningData.options.map((option, index) => (
                 <motion.button
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.08 }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-4 px-6 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-ember-50 border border-ember-400 text-ember-500') : 'border-bone-200 bg-cream-50 text-ink-800 hover:border-ochre-300'}`}
+                  className={`w-full py-3 px-4 text-left rounded-xl transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-ember-50 border border-ember-400 text-ember-500') : 'border border-bone-200 bg-cream-50 text-ink-800 hover:border-ochre-300 hover:bg-cream-100/50'}`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     {selectedOption === index && (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-5 h-5 rounded-full flex items-center justify-center"
+                        className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
                       >
                         {isCorrect ? (
                           <CheckCircle2 className="w-4 h-4 text-moss-600" />
@@ -152,7 +152,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                         )}
                       </motion.div>
                     )}
-                    <span className="text-lg">{option}</span>
+                    <span className="text-base leading-snug">{option}</span>
                   </div>
                 </motion.button>
               ))}
