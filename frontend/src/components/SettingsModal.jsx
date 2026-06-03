@@ -218,7 +218,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                     <button
                       onClick={goPrev}
                       disabled={isFirst}
-                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                      className={`btn-ghost flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
                         isFirst
                           ? 'text-bone-200 cursor-not-allowed'
                           : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100 active:scale-90'
@@ -291,14 +291,14 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                     {isLast ? (
                       <button
                         onClick={addConfig}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ochre-500 hover:text-ochre-600 hover:bg-ochre-50 border border-ochre-200 transition-all active:scale-90"
+                        className="btn-secondary flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 transition-all active:scale-90"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                     ) : (
                       <button
                         onClick={goNext}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ink-400 hover:text-ink-600 hover:bg-cream-100 transition-all active:scale-90"
+                        className="btn-ghost flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ink-400 hover:text-ink-600 hover:bg-cream-100 transition-all active:scale-90"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -420,7 +420,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                 whileTap={{ scale: 0.99 }}
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full py-2.5 bg-ink-800 hover:bg-ink-700 text-white text-xs font-semibold rounded-2xl disabled:opacity-50 transition-colors flex items-center justify-center gap-2 shadow-warm-sm active:scale-[0.98]"
+                className="btn-primary w-full py-2.5 bg-ink-800 text-white text-xs font-medium rounded-2xl hover:bg-ink-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

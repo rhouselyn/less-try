@@ -809,11 +809,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         )}
 
         <motion.button
-          whileHover={{ scale: 1.03 }}
+          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           onClick={onStartLearning}
           disabled={loading || !!preprocessStatus || vocab.length === 0}
-          className="flex items-center gap-2 shrink-0 px-5 py-2 bg-ink-800 hover:bg-ink-700 text-white text-[13px] font-semibold rounded-full shadow-warm hover:shadow-warm-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+          className="btn-primary flex items-center gap-2 shrink-0"
         >
           {(loading || preprocessStatus) ? (
             <>
