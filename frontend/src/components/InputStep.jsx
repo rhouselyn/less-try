@@ -544,7 +544,9 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
           transition={{ duration: 0.5, delay: 0.2 }}
           className="text-sm text-ink-300 text-center max-w-md"
         >
-          {t.tagline || '输入文本，开始你的语言学习之旅'}
+          {targetLang === 'zh'
+            ? '输入文本，开始你的语言学习之旅'
+            : 'Enter text, start your language learning journey'}
         </motion.p>
       </div>
 
