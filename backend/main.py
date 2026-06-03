@@ -385,6 +385,61 @@ def get_unit_flat_range(plan, target_unit_id):
         accumulated += len(items)
     return None, None
 
+def _is_word_item_learned(item, vocab, learned_words):
+    """判断单元项中的单词是否属于已学集合（仅对 word 类型有效）"""
+    if not learned_words:
+        return False
+    if item.get("type") != "word":
+        return False
+    vocab_idx = item.get("vocab_index")
+    if vocab_idx is None or vocab_idx >= len(vocab):
+        return False
+    word = vocab[vocab_idx].get("word", "").lower()
+    return word in learned_words
+
+def get_filtered_unit_total(items, vocab, learned_words, only_new_words):
+    """根据开关计算单元内需要展示的题目数量"""
+    if not only_new_words or not learned_words:
+        return len(items)
+    count = 0
+    for item in items:
+        if _is_word_item_learned(item, vocab, learned_words):
+            continue
+        count += 1
+    return count
+
+def get_filtered_step_in_unit(items, vocab, learned_words, only_new_words, original_step):
+    """返回原下标在过滤后列表中的位置（0-based），若已被过滤则返回其在过滤后列表中应有的下标"""
+    if not only_new_words or not learned_words:
+        return original_step
+    step = 0
+    for i, item in enumerate(items):
+        if _is_word_item_learned(item, vocab, learned_words):
+            continue
+        if i >= original_step:
+            return step
+        step += 1
+    return step
+
+def find_next_non_learned_position(plan, vocab, learned_words, only_new_words, start_index):
+    """从 start_index 开始寻找下一个需要展示的题目（不包含已学单词的 word 项）。
+    返回 (unit_id, step_in_unit, original_step)；找不到时返回 (None, None, None)。"""
+    if not only_new_words or not learned_words:
+        unit_id, step = find_item_in_plan(plan, start_index)
+        return unit_id, step, step
+    accumulated = 0
+    for unit_id, unit_plan in enumerate(plan):
+        items = unit_plan.get("items", [])
+        for step, item in enumerate(items):
+            flat_index = accumulated + step
+            if flat_index < start_index:
+                continue
+            if _is_word_item_learned(item, vocab, learned_words):
+                continue
+            return unit_id, step, step
+        accumulated += len(items)
+    return None, None, None
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -649,6 +704,17 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         
         all_vocab.sort(key=vocab_sort_key)
         print(f"[DEBUG] 从所有句子中提取词典条目，共 {len(all_vocab)} 个单词: {[word['word'] for word in all_vocab]}")
+        
+        # 句子生成完毕后，复用 find_global_word_cache 找出本文件中已被其它文件学过的单词，
+        # 后续 "只学新词" 开关开启时直接跳过它们
+        learned_words_set = set()
+        for entry in all_vocab:
+            word = entry.get("word", "").lower()
+            if word and storage.find_global_word_cache(word, source_lang):
+                learned_words_set.add(word)
+        if learned_words_set:
+            storage.save_learned_words(file_id, sorted(learned_words_set))
+            print(f"[DEBUG] 已识别 {len(learned_words_set)} 个已学单词: {sorted(learned_words_set)}")
         
         storage.save_pipeline_data(file_id, sentence_translations)
         storage.save_vocab(file_id, all_vocab)
@@ -1466,14 +1532,29 @@ async def get_random_word(file_id: str):
             generate_and_save_learning_plan(file_id, vocab, storage.load_pipeline_data(file_id) or [])
             plan = storage.load_learning_plan(file_id)
         
+        # "只学新词" 开关：根据已学单词集合跳过当前位置上的已学单词
+        app_settings = storage.load_user_preferences()
+        only_new_words = bool(app_settings.get("only_new_words", False))
+        learned_words = storage.load_learned_words(file_id) if only_new_words else set()
+        if only_new_words and current_index is not None:
+            new_unit_id, new_step, _ = find_next_non_learned_position(
+                plan, vocab, learned_words, True, current_index
+            )
+            if new_unit_id is None:
+                return {"type": "all_complete"}
+            new_flat_index = sum(len(plan[i].get("items", [])) for i in range(new_unit_id)) + new_step
+            if new_flat_index != current_index:
+                current_index = new_flat_index
+                storage.save_learning_progress(file_id, current_index)
+        
         unit_id, step_in_unit = find_item_in_plan(plan, current_index)
         
         if unit_id is not None:
             unit_plan = plan[unit_id]
             items = unit_plan.get("items", [])
             unit_start_index, unit_end_index = get_unit_flat_range(plan, unit_id)
-            total_items_in_unit = len(items)
-            listening_count_in_unit = sum(1 for it in items if it.get("type") == "listening_quiz")
+            total_items_in_unit = get_filtered_unit_total(items, vocab, learned_words, only_new_words)
+            listening_count_in_unit = sum(1 for it in items if it.get("type") == "listening_quiz" and not _is_word_item_learned(it, vocab, learned_words))
             
             if step_in_unit < len(items):
                 current_item = items[step_in_unit]
@@ -1494,7 +1575,7 @@ async def get_random_word(file_id: str):
                         "unit_start_index": unit_start_index,
                         "total_items_in_unit": total_items_in_unit,
                         "listening_count_in_unit": listening_count_in_unit,
-                        "step_in_unit": step_in_unit
+                        "step_in_unit": get_filtered_step_in_unit(items, vocab, learned_words, only_new_words, step_in_unit)
                     }
                 
                 if current_item["type"] == "listening_quiz":
@@ -1558,7 +1639,7 @@ async def get_random_word(file_id: str):
                         "unit_start_index": unit_start_index,
                         "total_items_in_unit": total_items_in_unit,
                         "listening_count_in_unit": listening_count_in_unit,
-                        "step_in_unit": step_in_unit
+                        "step_in_unit": get_filtered_step_in_unit(items, vocab, learned_words, only_new_words, step_in_unit)
                     }
                 
                 vocab_idx = current_item["vocab_index"]
@@ -1566,7 +1647,7 @@ async def get_random_word(file_id: str):
                 word = random_word["word"]
             else:
                 return {"type": "unit_complete", "unit_end_index": unit_end_index, "current_index": current_index, "unit_start_index": unit_start_index, "total_items_in_unit": total_items_in_unit,
-                        "listening_count_in_unit": listening_count_in_unit, "step_in_unit": step_in_unit}
+                        "listening_count_in_unit": listening_count_in_unit, "step_in_unit": get_filtered_step_in_unit(items, vocab, learned_words, only_new_words, step_in_unit)}
         else:
             return {"type": "all_complete"}
         
@@ -1640,7 +1721,7 @@ async def get_random_word(file_id: str):
                     "unit_start_index": unit_start_index,
                     "total_items_in_unit": total_items_in_unit,
                         "listening_count_in_unit": listening_count_in_unit,
-                    "step_in_unit": step_in_unit
+                    "step_in_unit": get_filtered_step_in_unit(items, vocab, learned_words, only_new_words, step_in_unit)
                 }
         
         # 无缓存：触发优先生成并等待缓存
@@ -1755,22 +1836,41 @@ async def next_word(file_id: str):
             storage.save_learning_progress(file_id, new_index)
             return {"success": True, "new_index": new_index}
         
-        current_unit_id, current_step = find_item_in_plan(plan, current_index)
+        # "只学新词" 开关：根据已学集合跳过下一个已学单词
+        app_settings = storage.load_user_preferences()
+        only_new_words = bool(app_settings.get("only_new_words", False))
+        learned_words = storage.load_learned_words(file_id) if only_new_words else set()
         
-        if current_unit_id is not None:
-            _, current_unit_end = get_unit_flat_range(plan, current_unit_id)
-            
-            if current_index + 1 >= current_unit_end:
-                storage.save_learning_progress(file_id, current_unit_end)
+        if only_new_words:
+            nxt_unit_id, nxt_step, _ = find_next_non_learned_position(
+                plan, vocab, learned_words, True, current_index + 1
+            )
+            if nxt_unit_id is None:
+                # 全部已学，跳到 plan 末尾
+                total_flat = sum(len(u.get("items", [])) for u in plan)
+                storage.save_learning_progress(file_id, total_flat)
                 return {
                     "success": True,
-                    "type": "unit_complete",
-                    "new_index": current_unit_end,
-                    "unit_end_index": current_unit_end,
-                    "completed_unit_id": current_unit_id
+                    "type": "all_complete",
+                    "new_index": total_flat,
+                    "unit_end_index": total_flat
                 }
+            new_index = sum(len(plan[i].get("items", [])) for i in range(nxt_unit_id)) + nxt_step
+        else:
+            current_unit_id, _ = find_item_in_plan(plan, current_index)
+            if current_unit_id is not None:
+                _, current_unit_end = get_unit_flat_range(plan, current_unit_id)
+                if current_index + 1 >= current_unit_end:
+                    storage.save_learning_progress(file_id, current_unit_end)
+                    return {
+                        "success": True,
+                        "type": "unit_complete",
+                        "new_index": current_unit_end,
+                        "unit_end_index": current_unit_end,
+                        "completed_unit_id": current_unit_id
+                    }
+            new_index = current_index + 1
         
-        new_index = current_index + 1
         storage.save_learning_progress(file_id, new_index)
         
         asyncio.create_task(pre_generate_next_word(file_id, vocab, new_index))
@@ -1798,9 +1898,9 @@ async def next_word(file_id: str):
                             "correct_translation": next_item.get("correct_translation", ""),
                             "correct_tokens": next_item.get("correct_tokens", []),
                             "tokens": tokens,
-                            "step_in_unit": step_in_unit,
-                            "total_items_in_unit": len(items),
-                            "listening_count_in_unit": sum(1 for it in items if it.get("type") == "listening_quiz")
+                            "step_in_unit": get_filtered_step_in_unit(items, vocab, learned_words, only_new_words, step_in_unit),
+                            "total_items_in_unit": get_filtered_unit_total(items, vocab, learned_words, only_new_words),
+                            "listening_count_in_unit": sum(1 for it in items if it.get("type") == "listening_quiz" and not _is_word_item_learned(it, vocab, learned_words))
                         }
                     }
                 
@@ -1863,9 +1963,9 @@ async def next_word(file_id: str):
                             "clean_sentence": re.sub(r'^[A-Za-z\u0410-\u042F\u0430-\u044F]\s*[:：]\s*', '', correct_sentence),
                             "correct_words": sentence_words_display,
                             "options": options,
-                            "step_in_unit": step_in_unit,
-                            "total_items_in_unit": len(items),
-                            "listening_count_in_unit": sum(1 for it in items if it.get("type") == "listening_quiz")
+                            "step_in_unit": get_filtered_step_in_unit(items, vocab, learned_words, only_new_words, step_in_unit),
+                            "total_items_in_unit": get_filtered_unit_total(items, vocab, learned_words, only_new_words),
+                            "listening_count_in_unit": sum(1 for it in items if it.get("type") == "listening_quiz" and not _is_word_item_learned(it, vocab, learned_words))
                         }
                     }
             
@@ -3398,6 +3498,7 @@ class UserPreferencesUpdate(BaseModel):
     skip_listening: Optional[bool] = None
     recent_languages: Optional[List[str]] = None
     page_size: Optional[int] = None
+    only_new_words: Optional[bool] = None
 
 
 @app.post("/api/user-preferences")
@@ -3418,6 +3519,8 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["recent_languages"] = req.recent_languages
         if req.page_size is not None:
             current["page_size"] = req.page_size
+        if req.only_new_words is not None:
+            current["only_new_words"] = req.only_new_words
         storage.save_user_preferences(current)
         return current
     except Exception as e:

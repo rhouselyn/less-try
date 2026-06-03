@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 
 const UNITS_PER_PAGE = 30;
 
@@ -18,6 +18,8 @@ function AllUnitsStep({
   unitStarCounts,
   skipListening,
   onSkipListeningChange,
+  onlyNewWords,
+  onOnlyNewWordsChange,
   generatingUnits,
   fileTitle,
   currentFileId,
@@ -247,6 +249,23 @@ function AllUnitsStep({
         )}
 
         <div className="flex-1 min-w-0" />
+
+        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
+          <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            {t.onlyNewWords || '只学新词'}
+          </span>
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={onlyNewWords || false}
+              onChange={(e) => onOnlyNewWordsChange?.(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-7 h-4 bg-stone-200 peer-focus:outline-none rounded-full peer-checked:bg-amber-400 transition-colors" />
+            <div className="absolute left-[1.5px] top-[1.5px] bg-white w-[13px] h-[13px] rounded-full transition-transform peer-checked:translate-x-3 shadow-sm" />
+          </div>
+        </label>
 
         <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
           <span className="text-[11px] text-stone-400 group-hover:text-stone-600 transition-colors flex items-center gap-1">
