@@ -248,12 +248,12 @@ function AllUnitsStep({
 
         <div className="flex-1 min-w-0" />
 
-        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1 h-5">
+        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
           <span className="text-xs text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             {t.onlyNewWords || '只学新词'}
           </span>
-          <div className="relative">
+          <div className="relative inline-flex items-center">
             <input
               type="checkbox"
               checked={onlyNewWords || false}
@@ -261,16 +261,16 @@ function AllUnitsStep({
               className="sr-only peer"
             />
             <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] top-[2.5px] toggle-warm-dot peer-checked:translate-x-4" />
+            <div className="absolute left-[2px] toggle-warm-dot peer-checked:translate-x-4" style={{ top: '50%', transform: 'translateY(-50%)' }} />
           </div>
         </label>
 
-        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1 h-5">
+        <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
           <span className="text-xs text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
             <Headphones className="w-3 h-3" />
             {t.skipListening || '跳过听力'}
           </span>
-          <div className="relative">
+          <div className="relative inline-flex items-center">
             <input
               type="checkbox"
               checked={skipListening || false}
@@ -278,7 +278,7 @@ function AllUnitsStep({
               className="sr-only peer"
             />
             <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] top-[2.5px] toggle-warm-dot peer-checked:translate-x-4" />
+            <div className="absolute left-[2px] toggle-warm-dot peer-checked:translate-x-4" style={{ top: '50%', transform: 'translateY(-50%)' }} />
           </div>
         </label>
 
