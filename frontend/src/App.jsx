@@ -134,7 +134,11 @@ function App() {
 
   useEffect(() => {
     if (learningContainerRef.current) {
-      learningContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      setTimeout(() => {
+        if (learningContainerRef.current) {
+          learningContainerRef.current.scrollTo({ top: 0, behavior: 'instant' })
+        }
+      }, 50)
     }
   }, [step, currentExerciseData, learningData, quizData, listeningQuizData])
   

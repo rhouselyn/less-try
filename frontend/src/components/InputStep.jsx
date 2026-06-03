@@ -556,7 +556,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
       <div className="relative">
         <div className="absolute -inset-3 bg-gradient-to-b from-ochre-100/20 via-cream-100/10 to-transparent rounded-3xl pointer-events-none" />
 
-        <div className="relative space-y-5 bg-cream-50 border border-bone-200 rounded-3xl shadow-warm p-6">
+        <div className="relative space-y-4 bg-cream-50 border border-bone-200 rounded-3xl shadow-warm p-6">
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -574,14 +574,13 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08, duration: 0.4 }}
           >
-            <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
-              {t.modeLabel}
-            </label>
-            <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
-            <div className="mt-2 min-h-[28px]">
-              <AnimatePresence mode="wait">
-                <ModeDescription mode={inputMode} t={t} />
-              </AnimatePresence>
+            <div className="pb-1">
+              <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
+              <div className="mt-2 min-h-[28px]">
+                <AnimatePresence mode="wait">
+                  <ModeDescription mode={inputMode} t={t} />
+                </AnimatePresence>
+              </div>
             </div>
           </motion.div>
 
@@ -589,14 +588,9 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1, duration: 0.4 }}
-            className="space-y-3"
           >
-            <div>
-              <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
-                {t.learnLang}
-              </label>
-              <LanguageSelector value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
-            </div>
+            <span className="text-[11px] text-ink-400 mb-1 block">{t.learnLang}</span>
+            <LanguageSelector value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
           </motion.div>
 
           <motion.div
@@ -604,9 +598,6 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.4 }}
           >
-            <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
-              {getLabel()}
-            </label>
             <div className="relative group">
               <textarea
                 value={text}
