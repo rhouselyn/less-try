@@ -23,6 +23,12 @@ body {
   font-feature-settings: "tnum" 0;
 }
 
+/* Sentence text with enhanced word spacing */
+.sentence-text {
+  word-spacing: 0.15em;
+  letter-spacing: 0.01em;
+}
+
 /* 温暖奶油设计系统 - 全局组件样式 */
 @layer components {
   /* 卡片基础 */

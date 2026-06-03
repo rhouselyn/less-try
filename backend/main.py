@@ -556,10 +556,17 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 tokens_norm = _norm(''.join(translation_words))
                 missing_words = [] if tokens_norm == sentence_norm else []
             else:
+                # Build a set of individual words from multi-word tokens in translation
+                multiword_components = set()
+                for tw in translation_words:
+                    if ' ' in tw:
+                        for part in tw.split():
+                            multiword_components.add(part.lower())
+                
                 missing_words = []
                 for w in sentence_words:
                     w_clean = strip_edge_punctuation(w).lower()
-                    if w_clean and w_clean not in translation_words and not is_punctuation_only(w):
+                    if w_clean and w_clean not in translation_words and w_clean not in multiword_components and not is_punctuation_only(w):
                         missing_words.append(strip_edge_punctuation(w))
             
             if missing_words:
@@ -3696,4 +3703,4 @@ async def generate_text(request: dict):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, timeout_keep_alive=600)
+    uvicorn.run(app, host=os.environ.get("HOST", "0.0.0.0"), port=int(os.environ.get("PORT", 8000)), timeout_keep_alive=600)

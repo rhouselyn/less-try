@@ -620,10 +620,51 @@ class TextProcessor:
         
         completed_translation = []
         used_existing = set()
+        covered_original_indices = set()
         
-        for orig_word in original_words:
+        # Pre-compute: for multi-word tokens, find which consecutive original words they cover
+        token_to_orig_range = {}  # token_index -> (start_orig_idx, end_orig_idx)
+        for i, token in enumerate(existing_tokens):
+            token_text = token['text']
+            token_words = token_text.split()
+            if len(token_words) > 1:
+                token_lower_words = [w.lower() for w in token_words]
+                for start_idx in range(len(original_words)):
+                    end_idx = start_idx + len(token_words)
+                    if end_idx > len(original_words):
+                        break
+                    orig_slice = [w.lower() for w in original_words[start_idx:end_idx]]
+                    if orig_slice == token_lower_words:
+                        token_to_orig_range[i] = (start_idx, end_idx)
+                        break
+        
+        orig_idx = 0
+        while orig_idx < len(original_words):
+            if orig_idx in covered_original_indices:
+                orig_idx += 1
+                continue
+            
+            orig_word = original_words[orig_idx]
             orig_lower = orig_word.lower()
             found = False
+            
+            # First, try to find a multi-word token that starts at this position
+            for i, (start, end) in token_to_orig_range.items():
+                if i in used_existing:
+                    continue
+                if start == orig_idx:
+                    completed_translation.append(existing_tokens[i])
+                    used_existing.add(i)
+                    for j in range(start, end):
+                        covered_original_indices.add(j)
+                    found = True
+                    orig_idx = end
+                    break
+            
+            if found:
+                continue
+            
+            # Then try single-word exact match
             for i, token in enumerate(existing_tokens):
                 if i in used_existing:
                     continue
@@ -655,6 +696,8 @@ class TextProcessor:
                     'morphology': '',
                     'meaning': ''
                 })
+            
+            orig_idx += 1
         
         translation_result['translation'] = completed_translation
         return translation_result

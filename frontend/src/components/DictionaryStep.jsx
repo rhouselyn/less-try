@@ -608,7 +608,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
     const allWords = [...new Set([...tokenTexts, ...vocabTexts])]
     if (allWords.length === 0) {
-      return <div className="font-medium text-ink-800 mb-1.5">{sentence}</div>
+      return <div className="font-medium text-ink-800 mb-1.5 sentence-text">{sentence}</div>
     }
 
     allWords.sort((a, b) => b.length - a.length)
@@ -618,7 +618,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const parts = sentence.split(pattern)
 
     return (
-      <div className="font-medium text-ink-800 mb-1.5 leading-relaxed">
+      <div className="font-medium text-ink-800 mb-1.5 leading-relaxed sentence-text">
         {parts.map((part, i) => {
           if (!part) return null
           const clickable = findVocabWordBySourceText(part)
@@ -884,7 +884,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               <div className={sentenceDisplayMode === 2 && selectedSentence !== originalIndex ? 'invisible' : ''}>
                                 {renderOriginalSentence(item)}
                               </div>
-                              <div className={`text-ink-600 text-sm ${sentenceDisplayMode === 1 && selectedSentence !== originalIndex ? 'invisible' : ''}`}>
+                              <div className={`text-ink-600 text-sm sentence-text ${sentenceDisplayMode === 1 && selectedSentence !== originalIndex ? 'invisible' : ''}`}>
                                 {item.translation_result?.tokenized_translation || ''}
                               </div>
                             </div>
