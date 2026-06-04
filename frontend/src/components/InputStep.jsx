@@ -271,6 +271,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
   const autoLabel = t.autoDetect || '自动检测'
 
   const currentLabel = isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value
+  const nativeLabel = isAuto ? null : selectedLang ? selectedLang.native : null
 
   return (
     <div ref={containerRef} className="relative">
@@ -284,6 +285,9 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             {isAuto ? <LangIcon langCode="auto" size="md" /> : <LangIcon langCode={value} size="md" />}
           </span>
           <span className="text-ink-800">{currentLabel}</span>
+          {nativeLabel && nativeLabel !== currentLabel && (
+            <span className="text-xs text-ink-400">[{nativeLabel}]</span>
+          )}
           <ChevronDown className={`w-3.5 h-3.5 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
       ) : (

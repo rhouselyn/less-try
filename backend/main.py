@@ -3725,15 +3725,7 @@ async def translate_ui(lang_code: str):
     if lang_code in _ui_translation_cache:
         return _ui_translation_cache[lang_code]
     
-    # For zh and en, return from schema directly
-    if lang_code in ('zh', 'en'):
-        result = {}
-        for key, val in UI_TRANSLATION_SCHEMA.items():
-            result[key] = val.get(lang_code, val.get('en', ''))
-        _ui_translation_cache[lang_code] = result
-        return result
-    
-    # Check file cache
+    # Check file cache (works for zh/en and all other languages)
     UI_TRANSLATIONS_DIR.mkdir(parents=True, exist_ok=True)
     cache_file = UI_TRANSLATIONS_DIR / f"{lang_code}.json"
     if cache_file.exists():
@@ -3744,6 +3736,20 @@ async def translate_ui(lang_code: str):
             return result
         except (json.JSONDecodeError, IOError):
             pass
+    
+    # For zh and en, generate from schema and save to file
+    if lang_code in ('zh', 'en'):
+        result = {}
+        for key, val in UI_TRANSLATION_SCHEMA.items():
+            result[key] = val.get(lang_code, val.get('en', ''))
+        result["_lang_code"] = lang_code
+        _ui_translation_cache[lang_code] = result
+        try:
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+        except IOError:
+            pass
+        return result
     
     # Call LLM to translate
     lang_name = get_lang_name(lang_code)

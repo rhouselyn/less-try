@@ -158,18 +158,14 @@ function App() {
     })
   }
   
-  // 获取当前语言的翻译
-  const baseT = translations[uiLang] || translations.zh;
+  // 获取当前语言的翻译 - 统一从 customTranslations 获取（所有语言都通过 API 加载）
+  const zhBase = customTranslations.zh || translations.zh
   const t = customTranslations[uiLang] 
-    ? { ...translations.zh, ...(translations[uiLang] || {}), ...customTranslations[uiLang] }
-    : baseT;
+    ? { ...zhBase, ...customTranslations[uiLang] }
+    : zhBase;
 
-  // Fetch LLM translations when uiLang changes to a non-zh/en language
+  // Fetch translations when uiLang changes (all languages go through API for consistency)
   useEffect(() => {
-    if (uiLang === 'zh' || uiLang === 'en') {
-      setTranslatingUI(false)
-      return
-    }
     if (loadedLangs.has(uiLang)) return
     
     setLoadedLangs(prev => new Set([...prev, uiLang]))
