@@ -460,6 +460,7 @@ class Storage:
 
     def save_user_preferences(self, prefs: Dict):
         prefs_path = Path("/workspace/config/user_preferences.json")
+        prefs_path.parent.mkdir(parents=True, exist_ok=True)
         with open(prefs_path, 'w', encoding='utf-8') as f:
             json.dump(prefs, f, ensure_ascii=False, indent=2)
 
@@ -480,7 +481,11 @@ class Storage:
                     "source_lang": old_data.get("source_lang", "auto"),
                     "target_lang": old_data.get("target_lang", "zh"),
                     "rpm": old_data.get("rpm", 60),
-                    "skip_listening": old_data.get("skip_listening", False)
+                    "skip_listening": old_data.get("skip_listening", False),
+                    "recent_languages": old_data.get("recent_languages", []),
+                    "page_size": old_data.get("page_size", 5),
+                    "retry_interval": old_data.get("retry_interval", 2.0),
+                    "only_new_words": old_data.get("only_new_words", False)
                 }
                 self.save_user_preferences(migrated)
                 return migrated
@@ -495,10 +500,14 @@ class Storage:
                     "source_lang": old_data.get("source_lang", "auto"),
                     "target_lang": old_data.get("target_lang", "zh"),
                     "rpm": old_data.get("rpm", 60),
-                    "skip_listening": old_data.get("skip_listening", False)
+                    "skip_listening": old_data.get("skip_listening", False),
+                    "recent_languages": old_data.get("recent_languages", []),
+                    "page_size": old_data.get("page_size", 5),
+                    "retry_interval": old_data.get("retry_interval", 2.0),
+                    "only_new_words": old_data.get("only_new_words", False)
                 }
                 self.save_user_preferences(migrated)
                 return migrated
             except (json.JSONDecodeError, IOError):
                 pass
-        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False}
+        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False, "recent_languages": [], "page_size": 5, "retry_interval": 2.0, "only_new_words": False}
