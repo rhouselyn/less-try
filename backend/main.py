@@ -10,7 +10,7 @@ import asyncio
 import time
 import re
 
-from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name
+from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name, call_minimax_with_rotation
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
 from storage import Storage
 from ui_translations import UI_TRANSLATION_SCHEMA, TRANSLATION_PROMPT
@@ -3774,8 +3774,7 @@ async def translate_ui(lang_code: str):
     ]
     
     try:
-        api_instance = NvidiaAPI()
-        result = await api_instance.call_minimax(messages, temperature=0, max_tokens=4096)
+        result = await call_minimax_with_rotation(messages, temperature=0, max_tokens=4096)
         
         if result and result.get("choices"):
             content = result["choices"][0]["message"]["content"]
@@ -3799,10 +3798,12 @@ async def translate_ui(lang_code: str):
     except Exception as e:
         print(f"UI translation error: {e}")
     
-    # Fallback to English
+    # Fallback to English with error indicator
     result = {}
     for key, val in UI_TRANSLATION_SCHEMA.items():
         result[key] = val.get('en', '')
+    result["_lang_code"] = None  # null indicates translation failed
+    result["_error"] = True
     return result
 
 

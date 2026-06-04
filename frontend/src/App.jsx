@@ -158,11 +158,18 @@ function App() {
     })
   }
   
-  // 获取当前语言的翻译 - 统一从 customTranslations 获取（所有语言都通过 API 加载）
+  // 获取当前语言的翻译 - 保持上一个语言作为过渡，不回退到中文
+  const lastValidTRef = useRef(translations.zh)
+  
   const zhBase = customTranslations.zh || translations.zh
-  const t = customTranslations[uiLang] 
-    ? { ...zhBase, ...customTranslations[uiLang] }
-    : zhBase;
+  let t
+  if (customTranslations[uiLang]) {
+    t = { ...zhBase, ...customTranslations[uiLang] }
+    lastValidTRef.current = t
+  } else {
+    // 新语言还没加载完，保持上一个已加载的语言
+    t = lastValidTRef.current
+  }
 
   // Fetch translations when uiLang changes (all languages go through API for consistency)
   useEffect(() => {
@@ -170,12 +177,21 @@ function App() {
     
     setLoadedLangs(prev => new Set([...prev, uiLang]))
     setTranslatingUI(true)
+    
     api.translateUI(uiLang)
       .then(data => {
+        // Check if translation actually succeeded (not English fallback)
+        if (data._error || data._lang_code === null) {
+          // Don't cache failed translations, allow retry
+          setLoadedLangs(prev => { const next = new Set(prev); next.delete(uiLang); return next })
+          setTranslatingUI(false)
+          return
+        }
         setCustomTranslations(prev => ({ ...prev, [uiLang]: data }))
         setTranslatingUI(false)
       })
-      .catch(() => {
+      .catch(err => {
+        console.error('[i18n] Failed to fetch translations for:', uiLang, err)
         setTranslatingUI(false)
         setLoadedLangs(prev => { const next = new Set(prev); next.delete(uiLang); return next })
       })
