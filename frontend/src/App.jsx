@@ -50,7 +50,7 @@ function App() {
   const [uiLang, setUiLang] = useState('zh')
   const [customTranslations, setCustomTranslations] = useState({})
   const [translatingUI, setTranslatingUI] = useState(false)
-  const loadedLangsRef = useRef(new Set())
+  const [loadedLangs, setLoadedLangs] = useState(new Set())
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
@@ -170,9 +170,9 @@ function App() {
       setTranslatingUI(false)
       return
     }
-    if (loadedLangsRef.current.has(uiLang)) return
+    if (loadedLangs.has(uiLang)) return
     
-    loadedLangsRef.current.add(uiLang)
+    setLoadedLangs(prev => new Set([...prev, uiLang]))
     setTranslatingUI(true)
     api.translateUI(uiLang)
       .then(data => {
@@ -181,7 +181,7 @@ function App() {
       })
       .catch(() => {
         setTranslatingUI(false)
-        loadedLangsRef.current.delete(uiLang)
+        setLoadedLangs(prev => { const next = new Set(prev); next.delete(uiLang); return next })
       })
   }, [uiLang])
 
@@ -1157,7 +1157,7 @@ function App() {
                         <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
                         <span className="text-sm text-ink-600">{
                           (customTranslations[uiLang]?.translatingUI)
-                          || (customTranslations[Array.from(loadedLangsRef.current).filter(l => l !== uiLang).pop()]?.translatingUI)
+                          || (customTranslations[Array.from(loadedLangs).filter(l => l !== uiLang).pop()]?.translatingUI)
                           || t.translatingUI
                           || '正在切换界面语言...'
                         }</span>
