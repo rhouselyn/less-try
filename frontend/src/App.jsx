@@ -47,6 +47,7 @@ function App() {
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
+  const [uiLang, setUiLang] = useState('zh')
   const [customTranslations, setCustomTranslations] = useState({})
   const [translatingUI, setTranslatingUI] = useState(false)
   const [loadedLangs, setLoadedLangs] = useState(new Set())
@@ -121,6 +122,8 @@ function App() {
     warmupSpeech()
     api.getUserPreferences().then(prefs => {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
+      if (prefs.ui_lang) setUiLang(prefs.ui_lang)
+      else if (prefs.target_lang) setUiLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.only_new_words !== undefined) setOnlyNewWords(prefs.only_new_words)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
@@ -156,31 +159,31 @@ function App() {
   }
   
   // 获取当前语言的翻译
-  const baseT = translations[targetLang] || translations.zh;
-  const t = customTranslations[targetLang] 
-    ? { ...translations.zh, ...(translations[targetLang] || {}), ...customTranslations[targetLang] }
+  const baseT = translations[uiLang] || translations.zh;
+  const t = customTranslations[uiLang] 
+    ? { ...translations.zh, ...(translations[uiLang] || {}), ...customTranslations[uiLang] }
     : baseT;
 
-  // Fetch LLM translations when targetLang changes to a non-zh/en language
+  // Fetch LLM translations when uiLang changes to a non-zh/en language
   useEffect(() => {
-    if (targetLang === 'zh' || targetLang === 'en') {
+    if (uiLang === 'zh' || uiLang === 'en') {
       setTranslatingUI(false)
       return
     }
-    if (loadedLangs.has(targetLang)) return
+    if (loadedLangs.has(uiLang)) return
     
-    setLoadedLangs(prev => new Set([...prev, targetLang]))
+    setLoadedLangs(prev => new Set([...prev, uiLang]))
     setTranslatingUI(true)
-    api.translateUI(targetLang)
+    api.translateUI(uiLang)
       .then(data => {
-        setCustomTranslations(prev => ({ ...prev, [targetLang]: data }))
+        setCustomTranslations(prev => ({ ...prev, [uiLang]: data }))
         setTranslatingUI(false)
       })
       .catch(() => {
         setTranslatingUI(false)
-        setLoadedLangs(prev => { const next = new Set(prev); next.delete(targetLang); return next })
+        setLoadedLangs(prev => { const next = new Set(prev); next.delete(uiLang); return next })
       })
-  }, [targetLang])
+  }, [uiLang])
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -1153,8 +1156,8 @@ function App() {
                       <div className="flex items-center gap-3 bg-cream-50 border border-bone-200 rounded-2xl px-6 py-4 shadow-warm">
                         <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
                         <span className="text-sm text-ink-600">{
-                          (customTranslations[targetLang]?.translatingUI)
-                          || (customTranslations[Array.from(loadedLangs).filter(l => l !== targetLang).pop()]?.translatingUI)
+                          (customTranslations[uiLang]?.translatingUI)
+                          || (customTranslations[Array.from(loadedLangs).filter(l => l !== uiLang).pop()]?.translatingUI)
                           || t.translatingUI
                           || '正在切换界面语言...'
                         }</span>
@@ -1168,8 +1171,7 @@ function App() {
                       setText={setText}
                       sourceLang={sourceLang}
                       setSourceLang={setSourceLang}
-                      targetLang={targetLang}
-                      setTargetLang={setTargetLang}
+                      uiLang={uiLang}
                       loading={loading}
                       onProcess={handleProcess}
                       t={t}
@@ -1204,7 +1206,6 @@ function App() {
               t={t}
               currentFileId={currentFileId}
               sourceLang={sourceLang}
-              targetLang={targetLang}
               preprocessStatus={preprocessStatus}
               onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }; setStep('input') }}
               fileTitle={fileTitle}
@@ -1481,7 +1482,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} recentLangs={recentLanguages} onRecentLangsChange={setRecentLanguages} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} uiLang={uiLang} onUiLangChange={setUiLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} recentLangs={recentLanguages} onRecentLangsChange={setRecentLanguages} />
       {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}

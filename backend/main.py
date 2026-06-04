@@ -3562,6 +3562,7 @@ async def get_user_preferences():
 class UserPreferencesUpdate(BaseModel):
     source_lang: Optional[str] = None
     target_lang: Optional[str] = None
+    ui_lang: Optional[str] = None
     rpm: Optional[int] = None
     retry_interval: Optional[float] = None
     skip_listening: Optional[bool] = None
@@ -3578,6 +3579,8 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["source_lang"] = req.source_lang
         if req.target_lang is not None:
             current["target_lang"] = req.target_lang
+        if req.ui_lang is not None:
+            current["ui_lang"] = req.ui_lang
         if req.rpm is not None:
             current["rpm"] = req.rpm
         if req.retry_interval is not None:

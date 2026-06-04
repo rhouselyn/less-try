@@ -205,7 +205,7 @@ const FAMILY_ORDER = [
   'other',
 ]
 
-function LanguageSelector({ value, onChange, targetLang, inputMode, recentLanguages, compact, t }) {
+function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages, compact, t }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [collapsed, setCollapsed] = useState({})
@@ -235,7 +235,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
 
   const selectedLang = isAuto ? null : LANGUAGES.find((l) => l.value === value)
 
-  const getLabel = (lang) => targetLang === 'zh' ? lang.zh : lang.en
+  const getLabel = (lang) => uiLang === 'zh' ? lang.zh : lang.en
 
   const getSecondary = (lang) => {
     const primary = getLabel(lang)
@@ -486,7 +486,7 @@ function ModeSelector({ mode, setMode, t }) {
   )
 }
 
-function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
+function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
   const directModeLangRef = useRef('auto')
 
   const handleSourceLangChange = (lang) => {
@@ -517,7 +517,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
     <div className="flex flex-col h-full w-full">
       {/* Top-left: language selector */}
       <div className="flex items-center gap-3 pt-3 px-4">
-        <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} t={t} />
+        <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} uiLang={uiLang} inputMode={inputMode} recentLanguages={recentLanguages} t={t} />
       </div>
 
       {/* Center content - brand logo and tagline */}

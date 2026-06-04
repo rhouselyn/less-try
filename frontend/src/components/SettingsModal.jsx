@@ -129,7 +129,7 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
   )
 }
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSize, onPageSizeChange, t, recentLangs, onRecentLangsChange }) {
+function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPageSizeChange, t, recentLangs, onRecentLangsChange }) {
   const [configs, setConfigs] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -138,7 +138,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
   const [loading, setLoading] = useState(true)
   const [rpm, setRpm] = useState(60)
   const [retryInterval, setRetryInterval] = useState(1)
-  const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
+  const [localUiLang, setLocalUiLang] = useState(uiLang || 'zh')
   const [localPageSize, setLocalPageSize] = useState(50)
 
   useEffect(() => {
@@ -162,7 +162,8 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
         setCurrentIndex(data.active_index || 0)
         if (prefs.rpm) setRpm(prefs.rpm)
         if (prefs.retry_interval !== undefined) setRetryInterval(prefs.retry_interval)
-        if (prefs.target_lang) setLocalTargetLang(prefs.target_lang)
+        if (prefs.ui_lang) setLocalUiLang(prefs.ui_lang)
+        else if (prefs.target_lang) setLocalUiLang(prefs.target_lang)
         if (prefs.page_size) setLocalPageSize(prefs.page_size)
         setLoading(false)
       }).catch(() => {
@@ -252,15 +253,15 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setConfigs(loaded)
       setCurrentIndex(data.active_index ?? currentIndex)
 
-      const updatedRecentLangs = [localTargetLang, ...recentLangs.filter(code => code !== localTargetLang)].slice(0, 5)
-      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize, recent_languages: updatedRecentLangs })
+      const updatedRecentLangs = [localUiLang, ...recentLangs.filter(code => code !== localUiLang)].slice(0, 5)
+      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localUiLang, ui_lang: localUiLang, page_size: localPageSize, recent_languages: updatedRecentLangs })
 
       if (onRecentLangsChange) {
         onRecentLangsChange(updatedRecentLangs)
       }
 
-      if (onTargetLangChange && localTargetLang !== targetLang) {
-        onTargetLangChange(localTargetLang)
+      if (onUiLangChange && localUiLang !== uiLang) {
+        onUiLangChange(localUiLang)
       }
 
       if (onPageSizeChange && localPageSize !== pageSize) {
@@ -517,7 +518,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                   <Languages className="w-3 h-3" />
                   {t.nativeLang || '母语'}
                 </label>
-                <NativeLangSelector value={localTargetLang} onChange={setLocalTargetLang} recentLangs={recentLangs} />
+                <NativeLangSelector value={localUiLang} onChange={setLocalUiLang} recentLangs={recentLangs} />
               </div>
 
               <motion.button
