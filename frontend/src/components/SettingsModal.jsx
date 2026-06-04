@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, Plus, Minus, BookOpen } from 'lucide-react'
+import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, BookOpen } from 'lucide-react'
 import { api } from '../utils/api'
-import { LangIcon } from './InputStep'
+import { LangIcon, LANGUAGES } from './InputStep'
 
 const slideVariants = {
   enter: (dir) => ({ x: dir > 0 ? 200 : -200, opacity: 0 }),
@@ -10,7 +10,126 @@ const slideVariants = {
   exit: (dir) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
 }
 
-function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSize, onPageSizeChange, t }) {
+function NativeLangSelector({ value, onChange, recentLangs = [] }) {
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const containerRef = useRef(null)
+
+  useEffect(() => {
+    const handleClick = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const selectedLang = LANGUAGES.find(l => l.value === value)
+  const filtered = LANGUAGES.filter(l => {
+    if (!search) return true
+    const s = search.toLowerCase()
+    return l.native.toLowerCase().includes(s) || l.en.toLowerCase().includes(s) || l.zh.includes(search) || l.value.toLowerCase().includes(s)
+  })
+
+  const recentFiltered = recentLangs
+    .filter(code => code !== value)
+    .map(code => LANGUAGES.find(l => l.value === code))
+    .filter(Boolean)
+    .filter(l => {
+      if (!search) return true
+      const s = search.toLowerCase()
+      return l.native.toLowerCase().includes(s) || l.en.toLowerCase().includes(s) || l.zh.includes(search)
+    })
+
+  // Group by family, show most common first
+  const commonLangs = ['zh', 'en', 'ja', 'ko', 'fr', 'de', 'es', 'ru', 'pt', 'it', 'ar', 'hi', 'th', 'vi', 'id']
+  const commonFiltered = filtered.filter(l => commonLangs.includes(l.value))
+  const otherFiltered = filtered.filter(l => !commonLangs.includes(l.value))
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-bone-200 bg-cream-50 hover:bg-cream-100 transition-colors text-sm"
+      >
+        <LangIcon langCode={value} size="sm" />
+        <span className="text-ink-800 flex-1 text-left">{selectedLang?.native || value}</span>
+        <ChevronDown className={`w-3.5 h-3.5 text-bone-300 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full bg-cream-50 rounded-xl border border-bone-200 shadow-xl overflow-hidden">
+          <div className="p-2 border-b border-cream-100">
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search..."
+              className="w-full px-2 py-1.5 rounded-lg bg-cream-50 border border-cream-100 text-xs text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300"
+              autoFocus
+            />
+          </div>
+          <div className="max-h-48 overflow-y-auto">
+            {recentFiltered.length > 0 && (
+              <>
+                <div className="px-3 py-1 text-[10px] text-ink-400 font-semibold uppercase">Recent</div>
+                {recentFiltered.map(l => (
+                  <button
+                    key={l.value}
+                    type="button"
+                    onClick={() => { onChange(l.value); setOpen(false); setSearch('') }}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
+                      value === l.value ? 'bg-ochre-50 text-ochre-600' : 'text-ink-600 hover:bg-cream-50'
+                    }`}
+                  >
+                    <LangIcon langCode={l.value} size="sm" />
+                    <span>{l.native}</span>
+                  </button>
+                ))}
+              </>
+            )}
+            {commonFiltered.length > 0 && (
+              <>
+                <div className="px-3 py-1 text-[10px] text-ink-400 font-semibold uppercase">Common</div>
+                {commonFiltered.map(l => (
+                  <button
+                    key={l.value}
+                    type="button"
+                    onClick={() => { onChange(l.value); setOpen(false); setSearch('') }}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
+                      value === l.value ? 'bg-ochre-50 text-ochre-600' : 'text-ink-600 hover:bg-cream-50'
+                    }`}
+                  >
+                    <LangIcon langCode={l.value} size="sm" />
+                    <span>{l.native}</span>
+                  </button>
+                ))}
+              </>
+            )}
+            {otherFiltered.length > 0 && (
+              <>
+                <div className="px-3 py-1 text-[10px] text-ink-400 font-semibold uppercase border-t border-cream-100">All Languages</div>
+                {otherFiltered.map(l => (
+                  <button
+                    key={l.value}
+                    type="button"
+                    onClick={() => { onChange(l.value); setOpen(false); setSearch('') }}
+                    className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
+                      value === l.value ? 'bg-ochre-50 text-ochre-600' : 'text-ink-600 hover:bg-cream-50'
+                    }`}
+                  >
+                    <LangIcon langCode={l.value} size="sm" />
+                    <span>{l.native}</span>
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPageSizeChange, t, recentLangs, onRecentLangsChange }) {
   const [configs, setConfigs] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -19,7 +138,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
   const [loading, setLoading] = useState(true)
   const [rpm, setRpm] = useState(60)
   const [retryInterval, setRetryInterval] = useState(1)
-  const [localTargetLang, setLocalTargetLang] = useState(targetLang || 'zh')
+  const [localUiLang, setLocalUiLang] = useState(uiLang || 'zh')
   const [localPageSize, setLocalPageSize] = useState(50)
 
   useEffect(() => {
@@ -43,7 +162,8 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
         setCurrentIndex(data.active_index || 0)
         if (prefs.rpm) setRpm(prefs.rpm)
         if (prefs.retry_interval !== undefined) setRetryInterval(prefs.retry_interval)
-        if (prefs.target_lang) setLocalTargetLang(prefs.target_lang)
+        if (prefs.ui_lang) setLocalUiLang(prefs.ui_lang)
+        else if (prefs.target_lang) setLocalUiLang(prefs.target_lang)
         if (prefs.page_size) setLocalPageSize(prefs.page_size)
         setLoading(false)
       }).catch(() => {
@@ -133,10 +253,15 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
       setConfigs(loaded)
       setCurrentIndex(data.active_index ?? currentIndex)
 
-      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localTargetLang, page_size: localPageSize })
+      const updatedRecentLangs = [localUiLang, ...recentLangs.filter(code => code !== localUiLang)].slice(0, 5)
+      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localUiLang, ui_lang: localUiLang, page_size: localPageSize, recent_languages: updatedRecentLangs })
 
-      if (onTargetLangChange && localTargetLang !== targetLang) {
-        onTargetLangChange(localTargetLang)
+      if (onRecentLangsChange) {
+        onRecentLangsChange(updatedRecentLangs)
+      }
+
+      if (onUiLangChange && localUiLang !== uiLang) {
+        onUiLangChange(localUiLang)
       }
 
       if (onPageSizeChange && localPageSize !== pageSize) {
@@ -393,26 +518,7 @@ function SettingsModal({ isOpen, onClose, targetLang, onTargetLangChange, pageSi
                   <Languages className="w-3 h-3" />
                   {t.nativeLang || '母语'}
                 </label>
-                <div className="flex gap-2">
-                  {[
-                    { value: 'zh', label: '中文' },
-                    { value: 'en', label: 'English' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setLocalTargetLang(opt.value)}
-                      className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-medium transition-all duration-200 ${
-                        localTargetLang === opt.value
-                          ? 'border-ochre-400/80 bg-ochre-50 text-ochre-700 shadow-[0_0_0_3px_rgba(217,119,6,0.06)]'
-                          : 'border-bone-200/80 bg-cream-50 text-ink-500 hover:border-bone-300 hover:text-ink-700'
-                      }`}
-                    >
-                      <LangIcon langCode={opt.value} size="sm" />
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
+                <NativeLangSelector value={localUiLang} onChange={setLocalUiLang} recentLangs={recentLangs} />
               </div>
 
               <motion.button

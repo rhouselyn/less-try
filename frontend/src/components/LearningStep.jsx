@@ -140,7 +140,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-ember-50 border border-ember-400 text-ember-500') : 'border-bone-200 bg-cream-50 text-ink-800 hover:border-ochre-300'}`}
+                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-ember-50 border border-ember-400 text-ember-500') : 'border border-bone-200 bg-cream-50 text-ink-800 hover:border-ochre-300'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && isCorrect && (

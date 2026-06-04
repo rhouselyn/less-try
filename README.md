@@ -1,100 +1,115 @@
-# 少邻国 (Lesslingo) - 阶段一 MVP
+<div align="center">
 
-纯本地运行的AI外语学习系统，阶段一已完成：文本输入 → 预处理提取 → Tool Call 结构化生成 → 静态渲染字典。
+# 🐸 呱邻国
 
-## 项目结构
+**AI 驱动的沉浸式外语学习平台**
 
-```
-/workspace
-├── backend/           # Python FastAPI 后端
-│   ├── main.py        # 主应用
-│   ├── nvidia_api.py  # NVIDIA API 集成
-│   ├── text_processor.py  # 文本处理
-│   ├── storage.py     # 本地存储
-│   ├── requirements.txt
-│   └── .env
-├── frontend/          # React 前端
-│   ├── src/
-│   │   ├── App.jsx    # 主组件
-│   │   ├── main.jsx
-│   │   └── index.css
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── index.html
-└── data/              # 本地数据存储
-    └── files/
-```
+输入任意文本，AI 自动生成词汇表和多种练习题，配合语音朗读，让每一段文字都变成你的学习材料。
 
-## 快速开始
+[![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://react.dev)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python)](https://python.org)
 
-### 1. 安装后端依赖
+</div>
+
+---
+
+## ✨ 特色功能
+
+### 📝 输入即学习
+
+粘贴一篇文章、一首歌词、一段新闻——任何文本都能变成学习材料。AI 自动检测语言、分句翻译、提取词汇，为你量身定制学习内容。
+
+### 🎯 两种学习阶段
+
+| 阶段 | 内容 | 题型 |
+|------|------|------|
+| **阶段一 · 词汇认知** | 单词卡片 + 句子翻译 | 单词选择（四选一）、句子翻译选择 |
+| **阶段二 · 综合训练** | 听力 + 填空 + 重组 | 听力理解、遮蔽句子填空、翻译重组 |
+
+每个单元 10 道题，完成后获得 ⭐ 星级评价，答错的题自动进入错题回顾。
+
+### 🔊 语音朗读
+
+基于浏览器原生 TTS，支持 120+ 种语言。单词和句子都能朗读，常速/慢速自由切换。
+
+### 🌍 多语言界面
+
+界面语言与学习语言独立设置。选择你的母语，整个界面自动翻译——中英文静态覆盖，其他语言由 AI 实时翻译，三级缓存确保速度。
+
+### 📚 词汇管理
+
+- 全局词汇表：跨文件汇总所有学过的词
+- 字典浏览：音标、释义、词形变体、例句一应俱全
+- 单词详解：AI 生成深度解析，不满意可重新生成
+
+---
+
+## 🚀 快速开始
+
+### 环境要求
+
+- Python 3.10+
+- Node.js 18+
+- 一个 LLM API Key（支持 OpenAI 兼容接口）
+
+### 安装与启动
 
 ```bash
-cd /workspace/backend
+# 1. 安装后端依赖
+cd backend
 pip install -r requirements.txt
-python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
-```
 
-### 2. 启动后端服务
-
-```bash
-cd /workspace/backend
+# 2. 启动后端
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
-```
 
-后端 API 文档：http://localhost:8000/docs
-
-### 3. 安装前端依赖
-
-打开新终端：
-
-```bash
-cd /workspace/frontend
+# 3. 安装前端依赖
+cd ../frontend
 npm install
-```
 
-### 4. 启动前端服务
-
-```bash
+# 4. 启动前端
 npm run dev
 ```
 
-访问：http://localhost:3000
+打开 http://localhost:5173 ，点击右上角 ⚙️ 设置填入你的 API Key，就可以开始学习了。
 
-## 阶段一功能
+---
 
-✅ **文本输入**：支持输入任意文本，选择学习语言和母语  
-✅ **分句翻译**：调用 minimax-m2.7 自动分句并逐句翻译  
-✅ **分词去重**：提取单词、去重，10个词一组批处理  
-✅ **字典生成**：Tool Call 结构化生成（音标、释义、变体、2个例句）  
-✅ **随机排序**：单词表随机排列  
-✅ **字典UI**：左栏单词列表，右栏详细释义卡片  
-✅ **本地存储**：pipeline_data.json 和 vocab.json 自动保存
+## 🛠 技术栈
 
-## 技术栈
+| 层 | 技术 |
+|----|------|
+| 前端 | React 18 · Vite · TailwindCSS · Framer Motion · Web Speech API |
+| 后端 | FastAPI · Uvicorn · SiliconFlow / OpenAI 兼容 LLM API |
+| 存储 | 本地文件系统（零配置，开箱即用） |
 
-**后端**：
-- FastAPI + Uvicorn
-- NVIDIA API (minimax-m2.7)
-- NLTK (分词)
-- 本地文件系统存储
+---
 
-**前端**：
-- React 18 + Vite
-- TailwindCSS
-- Framer Motion (动画)
-- Lucide React (图标)
+## 📖 使用流程
 
-## API 端点
+```
+输入文本 → AI 分句翻译 → 生成词汇表 → 阶段一：学单词 → 阶段二：练句子 → 错题回顾
+```
 
-- `POST /api/process-text` - 处理文本并生成学习资料
-- `GET /api/vocab/{file_id}` - 获取单词表
-- `GET /api/sentences/{file_id}` - 获取句子列表
+1. **输入文本**：直接粘贴、自动翻译、或让 AI 生成
+2. **浏览字典**：查看分句翻译和词汇释义
+3. **阶段一**：逐个学习单词，完成句子翻译选择
+4. **阶段二**：听力测验、填空练习、翻译重组
+5. **错题回顾**：答错的题自动收集，强化练习直到掌握
 
-## 后续阶段规划
+---
 
-**阶段二**：全模态接入（音频/图片OCR）+ TTS 管线  
-**阶段三**：学习阶段二（基础构建引擎 + 动态循环测试）  
-**阶段四**：学习阶段三（大随机强化池 + 听说读写）  
-**阶段五**：UI 包装（Anthropic 简约风格）
+## ⚙️ 配置
+
+所有配置通过界面设置完成，无需编辑配置文件：
+
+- **API Key**：支持多组配置切换
+- **母语**：选择界面显示语言
+- **每页数量**：控制词汇表每页显示的单词数
+- **重试间隔**：API 限速后的等待时间
+
+---
+
+## 📄 许可
+
+MIT License

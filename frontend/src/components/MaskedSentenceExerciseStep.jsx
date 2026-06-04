@@ -120,7 +120,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             </div>
             <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-start content-start">
               {selectedWords.length === 0 && !answerChecked && (
-                <span className="text-bone-300 text-sm pointer-events-none">点击下方选项填入...</span>
+                <span className="text-bone-300 text-sm pointer-events-none">{t.maskedHint || '点击下方选项填入...'}</span>
               )}
               <AnimatePresence mode="popLayout">
                 {selectedWords.map((item, pos) => (

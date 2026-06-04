@@ -4,6 +4,10 @@
 
 # Config files with sensitive data
 config/
+# But keep UI translation files for zh and en
+!config/ui_translations/
+!config/ui_translations/zh.json
+!config/ui_translations/en.json
 
 # Data directory
 data/

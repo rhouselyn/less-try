@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
+from pathlib import Path
 import os
 import json
 import random
@@ -9,11 +10,15 @@ import asyncio
 import time
 import re
 
-from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name
+from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language, get_lang_name, call_minimax_with_rotation
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
 from storage import Storage
+from ui_translations import UI_TRANSLATION_SCHEMA, TRANSLATION_PROMPT
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
+
+_ui_translation_cache = {}
+UI_TRANSLATIONS_DIR = Path("/workspace/config/ui_translations")
 
 import re
 
@@ -469,6 +474,16 @@ async def startup_event():
     settings = get_settings()
     rpm = settings.get("rpm", 20)
     word_gen_rate_limiter = RateLimiter(rpm)
+    
+    # Load existing translation files into cache
+    if UI_TRANSLATIONS_DIR.exists():
+        for cache_file in UI_TRANSLATIONS_DIR.glob("*.json"):
+            lang_code = cache_file.stem
+            try:
+                with open(cache_file, 'r', encoding='utf-8') as f:
+                    _ui_translation_cache[lang_code] = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                pass
 
 @app.get("/api/tts")
 async def tts_endpoint(text: str, lang: str = "en", slow: bool = False):
@@ -556,10 +571,17 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 tokens_norm = _norm(''.join(translation_words))
                 missing_words = [] if tokens_norm == sentence_norm else []
             else:
+                # Build a set of individual words from multi-word tokens in translation
+                multiword_components = set()
+                for tw in translation_words:
+                    if ' ' in tw:
+                        for part in tw.split():
+                            multiword_components.add(part.lower())
+                
                 missing_words = []
                 for w in sentence_words:
                     w_clean = strip_edge_punctuation(w).lower()
-                    if w_clean and w_clean not in translation_words and not is_punctuation_only(w):
+                    if w_clean and w_clean not in translation_words and w_clean not in multiword_components and not is_punctuation_only(w):
                         missing_words.append(strip_edge_punctuation(w))
             
             if missing_words:
@@ -3540,6 +3562,7 @@ async def get_user_preferences():
 class UserPreferencesUpdate(BaseModel):
     source_lang: Optional[str] = None
     target_lang: Optional[str] = None
+    ui_lang: Optional[str] = None
     rpm: Optional[int] = None
     retry_interval: Optional[float] = None
     skip_listening: Optional[bool] = None
@@ -3556,6 +3579,8 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["source_lang"] = req.source_lang
         if req.target_lang is not None:
             current["target_lang"] = req.target_lang
+        if req.ui_lang is not None:
+            current["ui_lang"] = req.ui_lang
         if req.rpm is not None:
             current["rpm"] = req.rpm
         if req.retry_interval is not None:
@@ -3694,6 +3719,114 @@ async def generate_text(request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# UI translation task tracking
+_ui_translation_tasks = {}  # {lang_code: {"status": "pending"|"done"|"error", "result": ...}}
+
+@app.get("/api/translate_ui/{lang_code}")
+async def translate_ui(lang_code: str):
+    # Check in-memory cache first
+    if lang_code in _ui_translation_cache:
+        return _ui_translation_cache[lang_code]
+    
+    # Check file cache (works for zh/en and all other languages)
+    UI_TRANSLATIONS_DIR.mkdir(parents=True, exist_ok=True)
+    cache_file = UI_TRANSLATIONS_DIR / f"{lang_code}.json"
+    if cache_file.exists():
+        try:
+            with open(cache_file, 'r', encoding='utf-8') as f:
+                result = json.load(f)
+            _ui_translation_cache[lang_code] = result
+            return result
+        except (json.JSONDecodeError, IOError):
+            pass
+    
+    # For zh and en, generate from schema and save to file
+    if lang_code in ('zh', 'en'):
+        result = {}
+        for key, val in UI_TRANSLATION_SCHEMA.items():
+            result[key] = val.get(lang_code, val.get('en', ''))
+        result["_lang_code"] = lang_code
+        _ui_translation_cache[lang_code] = result
+        try:
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(result, f, ensure_ascii=False, indent=2)
+        except IOError:
+            pass
+        return result
+    
+    # Check if there's an ongoing task for this language
+    if lang_code in _ui_translation_tasks:
+        task = _ui_translation_tasks[lang_code]
+        if task["status"] == "pending":
+            return {"_status": "pending", "_lang_code": lang_code}
+        elif task["status"] == "done":
+            result = task["result"]
+            del _ui_translation_tasks[lang_code]
+            _ui_translation_cache[lang_code] = result
+            return result
+        elif task["status"] == "error":
+            del _ui_translation_tasks[lang_code]
+            return {"_status": "error", "_lang_code": None, "_error": True}
+    
+    # Start background translation task
+    _ui_translation_tasks[lang_code] = {"status": "pending"}
+    asyncio.create_task(_do_translate_ui(lang_code))
+    return {"_status": "pending", "_lang_code": lang_code}
+
+
+async def _do_translate_ui(lang_code: str):
+    """Background task to translate UI strings via LLM."""
+    cache_file = UI_TRANSLATIONS_DIR / f"{lang_code}.json"
+    
+    lang_name = get_lang_name(lang_code)
+    
+    strings_for_prompt = {}
+    for key, val in UI_TRANSLATION_SCHEMA.items():
+        strings_for_prompt[key] = {
+            "description": val["desc"],
+            "chinese": val["zh"],
+            "english": val["en"]
+        }
+    
+    prompt = TRANSLATION_PROMPT.format(
+        target_lang_name=lang_name,
+        target_lang_code=lang_code,
+        strings_json=json.dumps(strings_for_prompt, ensure_ascii=False, indent=2)
+    )
+    
+    messages = [
+        {"role": "system", "content": "You are a professional UI translator. Always respond with valid JSON only."},
+        {"role": "user", "content": prompt}
+    ]
+    
+    try:
+        result = await call_minimax_with_rotation(messages, temperature=0, max_tokens=4096)
+        
+        if result and result.get("choices"):
+            content = result["choices"][0]["message"]["content"]
+            if "```json" in content:
+                content = content.split("```json")[1].split("```")[0]
+            elif "```" in content:
+                content = content.split("```")[1].split("```")[0]
+            
+            translated = json.loads(content.strip())
+            translated["_lang_code"] = lang_code
+            
+            # Save to file
+            try:
+                with open(cache_file, 'w', encoding='utf-8') as f:
+                    json.dump(translated, f, ensure_ascii=False, indent=2)
+            except IOError as e:
+                print(f"Failed to save UI translation cache: {e}")
+            
+            _ui_translation_tasks[lang_code] = {"status": "done", "result": translated}
+            return
+    except Exception as e:
+        print(f"UI translation error: {e}")
+    
+    _ui_translation_tasks[lang_code] = {"status": "error"}
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, timeout_keep_alive=600)
+    uvicorn.run(app, host=os.environ.get("HOST", "0.0.0.0"), port=int(os.environ.get("PORT", 8000)), timeout_keep_alive=600)

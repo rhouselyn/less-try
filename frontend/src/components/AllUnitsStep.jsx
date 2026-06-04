@@ -102,28 +102,28 @@ function AllUnitsStep({
           isCompleted
             ? 'bg-moss-50 border-moss-200/50 hover:bg-moss-50'
             : isGenerating
-            ? 'bg-ochre-50 border-ochre-200/30 cursor-not-allowed'
+            ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
             : isLocked
             ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
             : isCurrent
             ? 'bg-ochre-50 border-ochre-300/70 shadow-warm-sm'
             : 'bg-ochre-50/40 border-ochre-200/40 hover:border-ochre-300/60'
         }`}
-        style={{ width: '3.75rem', height: '3.75rem' }}
+        style={{ width: '5rem', height: '5rem' }}
       >
         {isGenerating ? (
-          <Loader2 className="w-4 h-4 animate-spin text-ochre-400" />
+          <Loader2 className="w-3.5 h-3.5 animate-spin text-bone-300" />
         ) : isLocked ? (
           <Lock className="w-3.5 h-3.5 text-bone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-[13px] font-semibold text-moss-600">{index + 1}</span>
+            <span className="text-base font-semibold text-moss-600">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
                   <Star
                     key={i}
-                    className={`w-2 h-2 ${
+                    className={`w-3 h-3 ${
                       i < starCount
                         ? 'text-ochre-400 fill-ochre-400'
                         : 'text-bone-300 fill-bone-300'
@@ -135,7 +135,7 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-[13px] font-semibold text-ochre-500`}>{index + 1}</span>
+            <span className={`text-base font-semibold text-ochre-500`}>{index + 1}</span>
             <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-ochre-400' : 'bg-ochre-300/60'}`} />
           </>
         )}
@@ -197,7 +197,7 @@ function AllUnitsStep({
           )}
         </div>
 
-        <div className="w-full h-1 bg-cream-100 rounded-full overflow-hidden mb-5">
+        <div className="w-full h-1.5 bg-cream-100 rounded-full overflow-hidden mb-5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
@@ -208,7 +208,7 @@ function AllUnitsStep({
           />
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2.5">
           {pageUnits.map((unit, pageIdx) => {
             const globalIdx = startIdx + pageIdx;
             return renderUnitCard(
@@ -230,18 +230,18 @@ function AllUnitsStep({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="max-w-2xl mx-auto"
+      className="w-full"
     >
       <div className="flex items-center gap-2 mb-6">
         <button
           onClick={onBack}
-          className="btn-ghost p-1.5"
+          className="btn-ghost p-2"
         >
-          <ArrowLeft className="w-4 h-4" />
+          <ArrowLeft className="w-5 h-5" />
         </button>
 
         {fileTitle && (
-          <span className="text-sm font-medium text-ink-500 truncate max-w-[240px]">
+          <span className="text-base font-medium text-ink-500 truncate max-w-[240px]">
             {fileTitle}
           </span>
         )}
@@ -249,11 +249,11 @@ function AllUnitsStep({
         <div className="flex-1 min-w-0" />
 
         <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
-          <span className="text-[11px] text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
+          <span className="text-xs text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             {t.onlyNewWords || '只学新词'}
           </span>
-          <div className="relative">
+          <div className="relative inline-flex items-center">
             <input
               type="checkbox"
               checked={onlyNewWords || false}
@@ -261,16 +261,16 @@ function AllUnitsStep({
               className="sr-only peer"
             />
             <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] top-[2.5px] toggle-warm-dot peer-checked:translate-x-4" />
+            <div className="absolute left-[2px] top-[3px] toggle-warm-dot peer-checked:translate-x-4" />
           </div>
         </label>
 
         <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
-          <span className="text-[11px] text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
+          <span className="text-xs text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
             <Headphones className="w-3 h-3" />
             {t.skipListening || '跳过听力'}
           </span>
-          <div className="relative">
+          <div className="relative inline-flex items-center">
             <input
               type="checkbox"
               checked={skipListening || false}
@@ -278,84 +278,86 @@ function AllUnitsStep({
               className="sr-only peer"
             />
             <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
-            <div className="absolute left-[2px] top-[2.5px] toggle-warm-dot peer-checked:translate-x-4" />
+            <div className="absolute left-[2px] top-[3px] toggle-warm-dot peer-checked:translate-x-4" />
           </div>
         </label>
 
         <button
           onClick={onHome}
-          className="btn-ghost p-1.5"
+          className="btn-ghost p-2"
           title={t.backToHome || '返回主页'}
         >
-          <Home className="w-4 h-4" />
+          <Home className="w-5 h-5" />
         </button>
       </div>
 
-      <div className="mb-6 text-center">
-        <h2 className="text-lg font-semibold font-display text-ink-800">
-          {t.learningUnits || '学习单元'}
-        </h2>
-        <p className="text-[11px] text-ink-400 mt-1">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
-      </div>
-
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-16 gap-3">
-          <Loader2 className="w-5 h-5 animate-spin text-ochre-400" />
-          <p className="text-xs text-ink-400">{t.loading}</p>
+      <div className="max-w-3xl mx-auto">
+        <div className="mb-6 text-center">
+          <h2 className="text-xl font-semibold font-display text-ink-800">
+            {t.learningUnits || '学习单元'}
+          </h2>
+          <p className="text-xs text-ink-400 mt-1">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
         </div>
-      ) : (
-        <div className="bg-cream-50 rounded-3xl shadow-warm overflow-hidden">
-          <div className="bg-cream-100/70 backdrop-blur-md border-b border-bone-200/60 px-3 pt-2.5">
-            <div className="flex gap-1 relative">
-              <motion.div
-                className="absolute top-0 bottom-0 bg-cream-50 rounded-t-xl shadow-warm-sm"
-                style={{ width: 'calc(50% - 4px)' }}
-                animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
-                transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-              />
-              {tabs.map((tab, i) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === i;
-                return (
-                  <button
-                    key={tab.key}
-                    onClick={() => handleTabChange(i)}
-                    className="relative z-10 flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
-                  >
-                    <div className={`flex items-center gap-1.5 transition-colors duration-300 ${
-                      isActive ? 'text-ink-700' : 'text-ink-400 hover:text-ink-500'
-                    }`}>
-                      <Icon className="w-3.5 h-3.5" />
-                      <span>{tab.label}</span>
-                      {tab.total > 0 && (
-                        <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors duration-300 ${
-                          isActive ? 'bg-cream-100 text-ink-500' : 'text-ink-400'
-                        }`}>
-                          {tab.completed}/{tab.total}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-ochre-400" />
+            <p className="text-xs text-ink-400">{t.loading}</p>
+          </div>
+        ) : (
+          <div className="bg-cream-50 rounded-3xl shadow-warm overflow-hidden">
+            <div className="bg-cream-100/70 backdrop-blur-md border-b border-bone-200/60 px-3 pt-2.5">
+              <div className="flex gap-1 relative">
+                <motion.div
+                  className="absolute top-0 bottom-0 bg-cream-50 rounded-t-xl shadow-warm-sm"
+                  style={{ width: 'calc(50% - 4px)' }}
+                  animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                />
+                {tabs.map((tab, i) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === i;
+                  return (
+                    <button
+                      key={tab.key}
+                      onClick={() => handleTabChange(i)}
+                      className="relative z-10 flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
+                    >
+                      <div className={`flex items-center gap-1.5 transition-colors duration-300 ${
+                        isActive ? 'text-ink-700' : 'text-ink-400 hover:text-ink-500'
+                      }`}>
+                        <Icon className="w-3.5 h-3.5" />
+                        <span>{tab.label}</span>
+                        {tab.total > 0 && (
+                          <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors duration-300 ${
+                            isActive ? 'bg-cream-100 text-ink-500' : 'text-ink-400'
+                          }`}>
+                            {tab.completed}/{tab.total}
+                          </span>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="px-5 pb-5 pt-4">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+                >
+                  {renderPhaseContent(activeTab + 1)}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </div>
-
-          <div className="px-5 pb-5 pt-4">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
-              >
-                {renderPhaseContent(activeTab + 1)}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </motion.div>
   );
 }

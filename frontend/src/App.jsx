@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { BookOpen, ArrowLeft, Settings } from 'lucide-react'
+import { BookOpen, ArrowLeft, Settings, Loader2 } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech } from './utils/speech'
@@ -47,6 +47,10 @@ function App() {
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
+  const [uiLang, setUiLang] = useState('zh')
+  const [customTranslations, setCustomTranslations] = useState({})
+  const [translatingUI, setTranslatingUI] = useState(false)
+  const [loadedLangs, setLoadedLangs] = useState(new Set())
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
@@ -109,6 +113,8 @@ function App() {
   const [fileTitle, setFileTitle] = useState('')
   const learningContainerRef = useRef(null)
   const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
+  const wrongItemsRef = useRef([])
+  const reviewIndexRef = useRef(0)
 
   const learningSteps = ['dictionary', 'all-units', 'learning', 'sentence-quiz', 'listening-quiz', 'progress', 'phase-progress', 'phase-exercise', 'unit-complete']
 
@@ -116,6 +122,8 @@ function App() {
     warmupSpeech()
     api.getUserPreferences().then(prefs => {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
+      if (prefs.ui_lang) setUiLang(prefs.ui_lang)
+      else if (prefs.target_lang) setUiLang(prefs.target_lang)
       if (prefs.skip_listening !== undefined) setSkipListening(prefs.skip_listening)
       if (prefs.only_new_words !== undefined) setOnlyNewWords(prefs.only_new_words)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
@@ -150,8 +158,56 @@ function App() {
     })
   }
   
-  // 获取当前语言的翻译
-  const t = translations[targetLang] || translations.zh;
+  // 获取当前语言的翻译 - 保持上一个语言作为过渡，不回退到中文
+  const lastValidTRef = useRef(translations.zh)
+  
+  const zhBase = customTranslations.zh || translations.zh
+  let t
+  if (customTranslations[uiLang]) {
+    t = { ...zhBase, ...customTranslations[uiLang] }
+    lastValidTRef.current = t
+  } else {
+    // 新语言还没加载完，保持上一个已加载的语言
+    t = lastValidTRef.current
+  }
+
+  // Fetch translations when uiLang changes (all languages go through API for consistency)
+  useEffect(() => {
+    if (loadedLangs.has(uiLang)) return
+    
+    setLoadedLangs(prev => new Set([...prev, uiLang]))
+    setTranslatingUI(true)
+    
+    // Poll for translations (backend may return pending status while LLM is generating)
+    const pollTranslation = async () => {
+      try {
+        const data = await api.translateUI(uiLang)
+        
+        if (data._status === 'pending') {
+          // LLM still generating, poll again in 2 seconds
+          setTimeout(pollTranslation, 2000)
+          return
+        }
+        
+        if (data._error || data._lang_code === null) {
+          // Translation failed, allow retry
+          setLoadedLangs(prev => { const next = new Set(prev); next.delete(uiLang); return next })
+          setTranslatingUI(false)
+          return
+        }
+        
+        // Translation succeeded
+        setCustomTranslations(prev => ({ ...prev, [uiLang]: data }))
+        setTranslatingUI(false)
+      } catch (err) {
+        console.error('[i18n] Failed to fetch translations for:', uiLang, err)
+        setLoadedLangs(prev => { const next = new Set(prev); next.delete(uiLang); return next })
+        setTranslatingUI(false)
+      }
+    }
+    
+    pollTranslation()
+  }, [uiLang])
 
   useEffect(() => {
     if (vocab.length > 0) {
@@ -177,6 +233,15 @@ function App() {
 
     return () => clearInterval(interval)
   }, [generatingUnits, currentFileId])
+
+  // Keep refs in sync with state for use in goToNextReviewItem
+  useEffect(() => {
+    wrongItemsRef.current = wrongItems
+  }, [wrongItems])
+
+  useEffect(() => {
+    reviewIndexRef.current = reviewIndex
+  }, [reviewIndex])
 
   // 轮询处理状态
   useEffect(() => {
@@ -693,7 +758,16 @@ function App() {
       if (isCorrectAnswer) {
         setShowWordCard(true)
         if (reviewMode) {
-          setWrongItems(prev => prev.filter((_, i) => i !== reviewIndex))
+          // After a wrong answer, the item was moved to the end of wrongItems,
+          // so reviewIndex may point to a different item now.
+          // Find the current item by its data to remove the correct one.
+          setWrongItems(prev => {
+            const idx = prev.findIndex(item => item.type === 'word' && item.data === learningData)
+            if (idx !== -1) {
+              return prev.filter((_, i) => i !== idx)
+            }
+            return prev.filter((_, i) => i !== reviewIndex)
+          })
           setReviewIndex(prev => prev)
         }
       }
@@ -807,17 +881,22 @@ function App() {
   }
 
   const goToNextReviewItem = () => {
-    if (wrongItems.length === 0) {
+    // Use refs to avoid stale closure values when this function is called
+    // after state updates that haven't been committed yet
+    const currentWrongItems = wrongItemsRef.current
+    const currentReviewIndex = reviewIndexRef.current
+
+    if (currentWrongItems.length === 0) {
       setReviewMode(false)
       setReviewIndex(0)
       setReviewRound(0)
       setStep('unit-complete')
       return
     }
-    const nextIdx = Math.min(reviewIndex, wrongItems.length - 1)
+    const nextIdx = Math.min(currentReviewIndex, currentWrongItems.length - 1)
     setReviewIndex(nextIdx)
     setReviewRound(prev => prev + 1)
-    const nextItem = wrongItems[nextIdx]
+    const nextItem = currentWrongItems[nextIdx]
     if (nextItem?.type === 'word') {
       setLearningData(nextItem.data)
       setShowWordCard(false)
@@ -1000,7 +1079,6 @@ function App() {
       setCurrentFileId(fileId)
       setFileId(fileId)
       if (title) setFileTitle(title)
-      if (tgtLang) setTargetLang(tgtLang)
       const vocabData = await api.getVocab(fileId)
       const vocabList = vocabData.vocab || []
       setVocab(vocabList)
@@ -1074,30 +1152,12 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-cream-50 bg-paper-grain">
-      {step === 'input' && (
-        <header className="bg-cream-100/70 backdrop-blur-md border-b border-bone-200/60">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
-                  <FrogLogo size={22} />
-                </div>
-                <div>
-                  <h1 className="text-xl font-display font-bold text-ink-700">{t.title}</h1>
-                  <p className="text-sm text-ink-400">{t.subtitle}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
-
-      <main>
+    <div className="h-screen overflow-hidden bg-cream-50 bg-paper-grain">
+      <main className="h-full">
         {step === 'input' ? (
-          <div className="flex max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6" style={{ height: 'calc(100vh - 72px)' }}>
+          <div className="flex h-full">
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
-            <div className="flex-1 min-w-0 relative h-full">
+            <div className="flex-1 min-w-0 relative h-full px-4 sm:px-6 lg:px-8 py-4">
               {wordListLang ? (
                 <WordListPanel
                   sourceLang={wordListLang}
@@ -1111,10 +1171,23 @@ function App() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowSettings(true)}
-                    className="absolute top-0 right-0 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-xl transition-colors z-10"
+                    className="absolute top-3 right-4 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-xl transition-colors z-10"
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>
+                  {translatingUI && (
+                    <div className="absolute inset-0 bg-cream-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
+                      <div className="flex items-center gap-3 bg-cream-50 border border-bone-200 rounded-2xl px-6 py-4 shadow-warm">
+                        <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
+                        <span className="text-sm text-ink-600">{
+                          (customTranslations[uiLang]?.translatingUI)
+                          || (customTranslations[Array.from(loadedLangs).filter(l => l !== uiLang).pop()]?.translatingUI)
+                          || t.translatingUI
+                          || '正在切换界面语言...'
+                        }</span>
+                      </div>
+                    </div>
+                  )}
                   <AnimatePresence mode="wait">
                     <InputStep
                       key="input"
@@ -1122,8 +1195,7 @@ function App() {
                       setText={setText}
                       sourceLang={sourceLang}
                       setSourceLang={setSourceLang}
-                      targetLang={targetLang}
-                      setTargetLang={setTargetLang}
+                      uiLang={uiLang}
                       loading={loading}
                       onProcess={handleProcess}
                       t={t}
@@ -1137,7 +1209,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <div ref={learningContainerRef} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" style={{ height: '100vh', overflowY: 'auto' }}>
+          <div ref={learningContainerRef} className="h-full overflow-y-auto px-4 sm:px-6 lg:px-8 py-4">
             <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep
@@ -1158,7 +1230,6 @@ function App() {
               t={t}
               currentFileId={currentFileId}
               sourceLang={sourceLang}
-              targetLang={targetLang}
               preprocessStatus={preprocessStatus}
               onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }; setStep('input') }}
               fileTitle={fileTitle}
@@ -1435,7 +1506,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} targetLang={targetLang} onTargetLangChange={setTargetLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} uiLang={uiLang} onUiLangChange={setUiLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} recentLangs={recentLanguages} onRecentLangsChange={setRecentLanguages} />
       {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}

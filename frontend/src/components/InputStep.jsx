@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Loader2, Sparkles, Search, X, ChevronDown, ChevronRight, ArrowRight, Globe2, PenLine, Languages, Wand2, Zap } from 'lucide-react'
+import { Loader2, Search, X, ChevronDown, ChevronRight, ArrowRight, PenLine, Languages, Wand2, Zap } from 'lucide-react'
 
 const LANG_COLORS = {
   'en': '#3b82f6', 'fr': '#6366f1', 'pt': '#22c55e', 'de': '#eab308', 'ro': '#2563eb',
@@ -205,7 +205,7 @@ const FAMILY_ORDER = [
   'other',
 ]
 
-function LanguageSelector({ value, onChange, targetLang, inputMode, recentLanguages }) {
+function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages, compact, t }) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [collapsed, setCollapsed] = useState({})
@@ -235,7 +235,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
 
   const selectedLang = isAuto ? null : LANGUAGES.find((l) => l.value === value)
 
-  const getLabel = (lang) => targetLang === 'zh' ? lang.zh : lang.en
+  const getLabel = (lang) => uiLang === 'zh' ? lang.zh : lang.en
 
   const getSecondary = (lang) => {
     const primary = getLabel(lang)
@@ -268,39 +268,59 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
     setSearch('')
   }
 
-  const autoLabel = targetLang === 'zh' ? '自动检测' : 'Auto Detect'
+  const autoLabel = t.autoDetect || '自动检测'
+
+  const currentLabel = isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value
+  const nativeLabel = isAuto ? null : selectedLang ? selectedLang.native : null
 
   return (
     <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
-          open
-            ? 'border-ochre-200 bg-ochre-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-            : 'border-bone-200 bg-cream-100 hover:border-bone-300 hover:shadow-warm-sm'
-        }`}
-      >
-        {isAuto ? (
-          <span className="leading-none"><LangIcon langCode="auto" size="md" /></span>
-        ) : (
-          <span className="leading-none"><LangIcon langCode={value} size="md" /></span>
-        )}
-        <div className="flex-1 min-w-0">
-          <span className="text-sm font-medium text-ink-800">
-            {isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value}
+      {compact ? (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex items-center gap-1.5 text-base font-medium text-ink-700 hover:text-ink-900 transition-colors"
+        >
+          <span className="leading-none">
+            {isAuto ? <LangIcon langCode="auto" size="md" /> : <LangIcon langCode={value} size="md" />}
           </span>
-          {!isAuto && selectedLang && getSecondary(selectedLang) && (
-            <span className="text-xs text-ink-400 ml-2">{getSecondary(selectedLang)}</span>
+          <span className="text-ink-800">{currentLabel}</span>
+          {nativeLabel && nativeLabel !== currentLabel && (
+            <span className="text-xs text-ink-400">[{nativeLabel}]</span>
           )}
-          {isAuto && (
-            <span className="text-xs text-ink-400 ml-2">
-              <Zap className="w-3 h-3 inline -mt-0.5" />
+          <ChevronDown className={`w-3.5 h-3.5 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
+            open
+              ? 'border-ochre-200 bg-ochre-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
+              : 'border-bone-200 bg-cream-100 hover:border-bone-300 hover:shadow-warm-sm'
+          }`}
+        >
+          {isAuto ? (
+            <span className="leading-none"><LangIcon langCode="auto" size="md" /></span>
+          ) : (
+            <span className="leading-none"><LangIcon langCode={value} size="md" /></span>
+          )}
+          <div className="flex-1 min-w-0">
+            <span className="text-sm font-medium text-ink-800">
+              {isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value}
             </span>
-          )}
-        </div>
-        <ChevronDown className={`w-4 h-4 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
-      </button>
+            {!isAuto && selectedLang && getSecondary(selectedLang) && (
+              <span className="text-xs text-ink-400 ml-2">{getSecondary(selectedLang)}</span>
+            )}
+            {isAuto && (
+              <span className="text-xs text-ink-400 ml-2">
+                <Zap className="w-3 h-3 inline -mt-0.5" />
+              </span>
+            )}
+          </div>
+          <ChevronDown className={`w-4 h-4 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+        </button>
+      )}
 
       <AnimatePresence>
         {open && (
@@ -309,7 +329,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className="absolute z-50 w-full mt-2 bg-cream-50 rounded-2xl border border-bone-200 shadow-xl shadow-ink-900/8 overflow-hidden"
+            className={`absolute z-50 mt-2 bg-cream-50 rounded-2xl border border-bone-200 shadow-xl shadow-ink-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
           >
             <div className="p-3 border-b border-cream-100">
               <div className="relative">
@@ -318,7 +338,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
                   ref={searchRef}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder={targetLang === 'zh' ? '搜索语言...' : 'Search languages...'}
+                  placeholder={t.searchLanguages || '搜索语言...'}
                   className="w-full pl-9 pr-8 py-2 rounded-lg bg-cream-50 border border-cream-100 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300 focus:bg-cream-50 transition-colors"
                 />
                 {search && (
@@ -366,7 +386,7 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
 
               {Object.keys(groupedLanguages).length === 0 && (
                 <div className="py-8 text-center text-sm text-ink-400">
-                  {targetLang === 'zh' ? '未找到语言' : 'No languages found'}
+                  {t.noLanguagesFound || '未找到语言'}
                 </div>
               )}
               {FAMILY_ORDER.map((family) => {
@@ -421,6 +441,25 @@ function LanguageSelector({ value, onChange, targetLang, inputMode, recentLangua
   )
 }
 
+function FrogLogo({ size = 40 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
+      <circle cx="34" cy="38" r="16" fill="#4ade80" />
+      <circle cx="66" cy="38" r="16" fill="#4ade80" />
+      <circle cx="34" cy="38" r="13" fill="#fff" />
+      <circle cx="66" cy="38" r="13" fill="#fff" />
+      <circle cx="36" cy="37" r="6" fill="#166534" />
+      <circle cx="68" cy="37" r="6" fill="#166534" />
+      <circle cx="38" cy="35" r="2" fill="#fff" />
+      <circle cx="70" cy="35" r="2" fill="#fff" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
+      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+    </svg>
+  )
+}
+
 const MODES = [
   { key: 'direct', icon: PenLine, color: 'amber' },
   { key: 'translate', icon: Languages, color: 'blue' },
@@ -429,7 +468,7 @@ const MODES = [
 
 function ModeSelector({ mode, setMode, t }) {
   return (
-    <div className="flex gap-1 p-1 bg-cream-100/80 rounded-2xl">
+    <div className="flex gap-0.5">
       {MODES.map(({ key, icon: Icon, color }) => {
         const isActive = mode === key
         const labelMap = { direct: t.modeDirect, translate: t.modeTranslate, generate: t.modeGenerate }
@@ -438,11 +477,11 @@ function ModeSelector({ mode, setMode, t }) {
             key={key}
             type="button"
             onClick={() => setMode(key)}
-            className={`relative flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-              isActive ? 'tab-warm-active' : 'tab-warm-inactive'
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+              isActive ? 'bg-cream-200/80 text-ink-700' : 'text-ink-400 hover:text-ink-500 hover:bg-cream-100'
             }`}
           >
-            <Icon className="w-3.5 h-3.5" />
+            <Icon className="w-3 h-3" />
             <span>{labelMap[key]}</span>
           </button>
         )
@@ -451,28 +490,7 @@ function ModeSelector({ mode, setMode, t }) {
   )
 }
 
-function ModeDescription({ mode, t }) {
-  const descMap = { direct: t.modeDirectDesc, translate: t.modeTranslateDesc, generate: t.modeGenerateDesc }
-  const colorMap = {
-    direct: 'text-ochre-500/70',
-    translate: 'text-blue-600/70',
-    generate: 'text-violet-600/70',
-  }
-  return (
-    <motion.p
-      key={mode}
-      initial={{ opacity: 0, y: -4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -4 }}
-      transition={{ duration: 0.2 }}
-      className={`text-[11px] leading-relaxed ${colorMap[mode]}`}
-    >
-      {descMap[mode]}
-    </motion.p>
-  )
-}
-
-function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTargetLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
+function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
   const directModeLangRef = useRef('auto')
 
   const handleSourceLangChange = (lang) => {
@@ -499,161 +517,89 @@ function InputStep({ text, setText, sourceLang, setSourceLang, targetLang, setTa
     return t.modeDirectPlaceholder
   }
 
-  const getLabel = () => {
-    if (inputMode === 'translate') return t.inputText
-    if (inputMode === 'generate') return t.inputText
-    return t.inputText
-  }
-
-  const getButtonText = () => {
-    if (loading) return t.processing
-    return t.generateMaterials
-  }
-
-  const getAccentColor = () => {
-    if (inputMode === 'translate') return 'blue'
-    if (inputMode === 'generate') return 'violet'
-    return 'amber'
-  }
-
-  const accent = getAccentColor()
-
-  const btnStyles = {
-    amber: {
-      active: 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25',
-      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
-    },
-    blue: {
-      active: 'bg-blue-500 text-white shadow-md shadow-blue-500/20 hover:bg-blue-600 hover:shadow-lg hover:shadow-blue-500/25',
-      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
-    },
-    violet: {
-      active: 'bg-violet-500 text-white shadow-md shadow-violet-500/20 hover:bg-violet-600 hover:shadow-lg hover:shadow-violet-500/25',
-      disabled: 'bg-cream-100 text-ink-400 cursor-not-allowed',
-    },
-  }
-
-  const textareaBorder = {
-    amber: 'focus:border-ochre-400/80 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.06)]',
-    blue: 'focus:border-blue-400/80 focus:shadow-[0_0_0_3px_rgba(59,130,246,0.06)]',
-    violet: 'focus:border-violet-400/80 focus:shadow-[0_0_0_3px_rgba(139,92,246,0.06)]',
-  }
-
-  const iconColor = {
-    amber: 'group-focus-within:text-ochre-300',
-    blue: 'group-focus-within:text-blue-300',
-    violet: 'group-focus-within:text-violet-300',
-  }
-
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] }}
-      className="max-w-lg mx-auto"
-    >
-      <div className="relative">
-        <div className="absolute -inset-3 bg-gradient-to-b from-ochre-100/20 via-cream-100/10 to-transparent rounded-3xl pointer-events-none" />
+    <div className="flex flex-col h-full w-full">
+      {/* Top-left: language selector */}
+      <div className="flex items-center gap-3 pt-3 px-4">
+        <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} uiLang={uiLang} inputMode={inputMode} recentLanguages={recentLanguages} t={t} />
+      </div>
 
-        <div className="relative space-y-5 bg-cream-50 border border-bone-200 rounded-3xl shadow-warm p-6">
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05, duration: 0.4 }}
-            className="flex items-center gap-3"
-          >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-ochre-300 to-ochre-400 flex items-center justify-center shadow-warm-sm shadow-ochre-500/20">
-              <Globe2 className="w-4.5 h-4.5 text-white" />
-            </div>
-            <h2 className="text-lg font-display font-semibold text-ink-800 tracking-tight">{t.startLearning}</h2>
-          </motion.div>
+      {/* Center content - brand logo and tagline */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex items-center gap-3 mb-3"
+        >
+          <div className="w-14 h-14 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
+            <FrogLogo size={32} />
+          </div>
+          <div>
+            <h1 className="text-3xl font-display font-bold text-ink-800 leading-tight">
+              {t.title || '呱邻国'}
+            </h1>
+            <p className="text-sm text-ink-400">{t.subtitle || 'Gualingo'}</p>
+          </div>
+        </motion.div>
+        <motion.p
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="text-sm text-ink-300 text-center max-w-md"
+        >
+          {t.tagline || '输入文本，开始你的语言学习之旅'}
+        </motion.p>
+      </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08, duration: 0.4 }}
-          >
-            <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
-              {t.modeLabel}
-            </label>
+      {/* Bottom area - input box */}
+      <div className="w-full max-w-2xl mx-auto pb-4 px-4">
+        <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
+          {/* Mode tabs at top of input */}
+          <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
-            <div className="mt-2 min-h-[28px]">
-              <AnimatePresence mode="wait">
-                <ModeDescription mode={inputMode} t={t} />
-              </AnimatePresence>
-            </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-            className="space-y-3"
-          >
-            <div>
-              <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
-                {t.learnLang}
-              </label>
-              <LanguageSelector value={sourceLang} onChange={handleSourceLangChange} targetLang={targetLang} inputMode={inputMode} recentLanguages={recentLanguages} />
-            </div>
-          </motion.div>
+          {/* Textarea area */}
+          <div className="relative">
+            <textarea
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={getPlaceholder()}
+              rows={4}
+              className="w-full resize-none bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-sm text-ink-700 placeholder-ink-400 leading-relaxed"
+            />
 
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.4 }}
-          >
-            <label className="label-warm block text-[11px] font-medium text-ink-500 mb-1.5 uppercase tracking-wider">
-              {getLabel()}
-            </label>
-            <div className="relative group">
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={getPlaceholder()}
-                rows={4}
-                className={`w-full input-warm resize-none leading-relaxed transition-all duration-200`}
-              />
-              <div className="absolute top-3 right-3 pointer-events-none">
-                <PenLine className={`w-4 h-4 text-bone-200 ${iconColor[accent]} transition-colors`} />
-              </div>
+            {/* Submit button inside textarea, bottom-right */}
+            <div className="flex items-center justify-end px-3 pb-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onProcess}
+                disabled={loading || !text.trim()}
+                className={`p-2 rounded-xl transition-all duration-200 ${
+                  loading || !text.trim()
+                    ? 'bg-cream-100 text-ink-400 cursor-not-allowed'
+                    : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25'
+                }`}
+              >
+                <AnimatePresence mode="wait">
+                  {loading ? (
+                    <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    </motion.span>
+                  ) : (
+                    <motion.span key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <ArrowRight className="w-4 h-4" />
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </motion.button>
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-          >
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onProcess}
-              disabled={loading || !text.trim()}
-              className={`w-full btn-primary flex items-center justify-center gap-2 transition-all duration-200 ${
-                loading || !text.trim() ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-            >
-              <AnimatePresence mode="wait">
-                {loading ? (
-                  <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    {getButtonText()}
-                  </motion.span>
-                ) : (
-                  <motion.span key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    {getButtonText()}
-                    <ArrowRight className="w-3.5 h-3.5 opacity-70" />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          </motion.div>
+          </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   )
 }
 
