@@ -178,23 +178,35 @@ function App() {
     setLoadedLangs(prev => new Set([...prev, uiLang]))
     setTranslatingUI(true)
     
-    api.translateUI(uiLang)
-      .then(data => {
-        // Check if translation actually succeeded (not English fallback)
+    // Poll for translations (backend may return pending status while LLM is generating)
+    const pollTranslation = async () => {
+      try {
+        const data = await api.translateUI(uiLang)
+        
+        if (data._status === 'pending') {
+          // LLM still generating, poll again in 2 seconds
+          setTimeout(pollTranslation, 2000)
+          return
+        }
+        
         if (data._error || data._lang_code === null) {
-          // Don't cache failed translations, allow retry
+          // Translation failed, allow retry
           setLoadedLangs(prev => { const next = new Set(prev); next.delete(uiLang); return next })
           setTranslatingUI(false)
           return
         }
+        
+        // Translation succeeded
         setCustomTranslations(prev => ({ ...prev, [uiLang]: data }))
         setTranslatingUI(false)
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('[i18n] Failed to fetch translations for:', uiLang, err)
-        setTranslatingUI(false)
         setLoadedLangs(prev => { const next = new Set(prev); next.delete(uiLang); return next })
-      })
+        setTranslatingUI(false)
+      }
+    }
+    
+    pollTranslation()
   }, [uiLang])
 
   useEffect(() => {

@@ -3719,6 +3719,9 @@ async def generate_text(request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# UI translation task tracking
+_ui_translation_tasks = {}  # {lang_code: {"status": "pending"|"done"|"error", "result": ...}}
+
 @app.get("/api/translate_ui/{lang_code}")
 async def translate_ui(lang_code: str):
     # Check in-memory cache first
@@ -3751,7 +3754,30 @@ async def translate_ui(lang_code: str):
             pass
         return result
     
-    # Call LLM to translate
+    # Check if there's an ongoing task for this language
+    if lang_code in _ui_translation_tasks:
+        task = _ui_translation_tasks[lang_code]
+        if task["status"] == "pending":
+            return {"_status": "pending", "_lang_code": lang_code}
+        elif task["status"] == "done":
+            result = task["result"]
+            del _ui_translation_tasks[lang_code]
+            _ui_translation_cache[lang_code] = result
+            return result
+        elif task["status"] == "error":
+            del _ui_translation_tasks[lang_code]
+            return {"_status": "error", "_lang_code": None, "_error": True}
+    
+    # Start background translation task
+    _ui_translation_tasks[lang_code] = {"status": "pending"}
+    asyncio.create_task(_do_translate_ui(lang_code))
+    return {"_status": "pending", "_lang_code": lang_code}
+
+
+async def _do_translate_ui(lang_code: str):
+    """Background task to translate UI strings via LLM."""
+    cache_file = UI_TRANSLATIONS_DIR / f"{lang_code}.json"
+    
     lang_name = get_lang_name(lang_code)
     
     strings_for_prompt = {}
@@ -3785,7 +3811,6 @@ async def translate_ui(lang_code: str):
             
             translated = json.loads(content.strip())
             translated["_lang_code"] = lang_code
-            _ui_translation_cache[lang_code] = translated
             
             # Save to file
             try:
@@ -3794,17 +3819,12 @@ async def translate_ui(lang_code: str):
             except IOError as e:
                 print(f"Failed to save UI translation cache: {e}")
             
-            return translated
+            _ui_translation_tasks[lang_code] = {"status": "done", "result": translated}
+            return
     except Exception as e:
         print(f"UI translation error: {e}")
     
-    # Fallback to English with error indicator
-    result = {}
-    for key, val in UI_TRANSLATION_SCHEMA.items():
-        result[key] = val.get('en', '')
-    result["_lang_code"] = None  # null indicates translation failed
-    result["_error"] = True
-    return result
+    _ui_translation_tasks[lang_code] = {"status": "error"}
 
 
 if __name__ == "__main__":
