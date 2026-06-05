@@ -212,7 +212,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
   const containerRef = useRef(null)
   const searchRef = useRef(null)
 
-  const showAuto = true
+  const showAuto = inputMode === 'direct'
   const isAuto = value === 'auto'
   const recentLimit = showAuto ? 5 : 5
 
@@ -504,11 +504,15 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
     const prevMode = inputMode
     setInputMode(newMode)
     if (newMode === 'direct' && prevMode !== 'direct') {
-      // 切回直接输入模式时，恢复直接输入模式的语言偏好（可能是 auto）
       setSourceLang(directModeLangRef.current)
     }
-    // 切换到其他模式时，保持 sourceLang 不变（不重置为英文）
-    // directModeLangRef 也不重置，保留直接输入模式的偏好
+    if (newMode !== 'direct') {
+      directModeLangRef.current = 'auto'
+      if (sourceLang === 'auto') {
+        const firstRecent = (recentLanguages || []).find(l => l !== 'auto')
+        setSourceLang(firstRecent || 'en')
+      }
+    }
   }
   const getPlaceholder = () => {
     if (inputMode === 'translate') return t.modeTranslatePlaceholder
