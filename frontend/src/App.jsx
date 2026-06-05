@@ -64,6 +64,7 @@ function App() {
   const [processingInfo, setProcessingInfo] = useState(null)
   const [currentFileId, setCurrentFileId] = useState(null)
   const [skipPolling, setSkipPolling] = useState(false)
+  const [pollTrigger, setPollTrigger] = useState(0)
   const [learningData, setLearningData] = useState(null)
   const [showWordCard, setShowWordCard] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
@@ -346,7 +347,7 @@ function App() {
         clearInterval(pollingInterval)
       }
     }
-  }, [currentFileId])
+  }, [currentFileId, skipPolling, pollTrigger])
 
   const sortVocab = () => {
     const sorted = [...vocab].sort((a, b) => {
@@ -1107,6 +1108,7 @@ function App() {
         const status = await api.getStatus(fileId)
         if (status.status === 'processing') {
           setSkipPolling(false)
+          setPollTrigger(t => t + 1)
           setProgress(status.progress || 0)
           if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
             setProcessingInfo({ current: status.current_sentence, total: status.total_sentences })
@@ -1117,10 +1119,18 @@ function App() {
           setProcessingInfo(null)
         }
       } catch (e) {
-        // 如果状态检查失败，默认跳过轮询
-        setSkipPolling(true)
-        setProgress(100)
-        setProcessingInfo(null)
+        // getStatus失败（可能404），检查是否句子数据不完整
+        if (sentenceList.length === 0 && vocabList.length > 0) {
+          // 有词汇但没句子，可能仍在处理中，尝试轮询
+          setSkipPolling(false)
+          setPollTrigger(t => t + 1)
+          setProgress(0)
+          setProcessingInfo(null)
+        } else {
+          setSkipPolling(true)
+          setProgress(100)
+          setProcessingInfo(null)
+        }
       }
 
       api.startWordGen(fileId).catch(() => {})
