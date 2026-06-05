@@ -1079,6 +1079,14 @@ function App() {
 
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang, title) => {
     setLoading(true)
+    // 先清空上一个条目的数据，避免显示旧内容
+    setVocab([])
+    setDisplayVocab([])
+    setSentenceTranslations([])
+    setSelectedSentence(null)
+    setSelectedWord(null)
+    setProgress(0)
+    setProcessingInfo(null)
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)

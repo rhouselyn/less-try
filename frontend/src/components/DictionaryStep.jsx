@@ -897,7 +897,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           onClick={onStartLearning}
-          disabled={loading || !!preprocessStatus || vocab.length === 0}
+          disabled={loading || !!preprocessStatus || vocab.length === 0 || (processingInfo && processingInfo.total > 0 && progress < 100)}
           className="btn-primary flex items-center gap-2 shrink-0"
         >
           {(loading || preprocessStatus) ? (
@@ -1044,7 +1044,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             </div>
             <div className="flex-1 flex min-h-0">
               {((!showGlobalVocab && allLetterIndex.length > 1) || (showGlobalVocab && allGlobalLetterIndex.length > 1)) && (
-                <div className="flex flex-col items-center gap-0.5 py-2 border-r border-bone-200/60 bg-cream-50/40 w-7 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-px py-1 border-r border-bone-200/60 bg-cream-50/40 w-5 shrink-0 overflow-y-auto">
                   {(showGlobalVocab ? allGlobalLetterIndex : allLetterIndex).map(letter => {
                     const currentIdx = showGlobalVocab ? globalLetterIndex : letterIndex
                     const onCurrentPage = currentIdx.includes(letter)
@@ -1052,7 +1052,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                       <button
                         key={letter}
                         onClick={() => scrollToLetter(letter)}
-                        className={`w-5 h-5 flex items-center justify-center text-[9px] font-semibold rounded transition-colors shrink-0 ${
+                        className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
                           onCurrentPage
                             ? 'text-ink-600 hover:text-ochre-500 hover:bg-ochre-50'
                             : 'text-bone-300 hover:text-ochre-500 hover:bg-ochre-50/50'
