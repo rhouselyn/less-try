@@ -491,25 +491,32 @@ function ModeSelector({ mode, setMode, t }) {
 }
 
 function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
-  const directModeLangRef = useRef('en')
+  // 记住直接输入模式的语言选择，默认 auto
+  const directModeLangRef = useRef('auto')
+  // 记住非直接输入模式（翻译/生成）的语言选择
+  const nonDirectModeLangRef = useRef(null)
 
   const handleSourceLangChange = (lang) => {
     setSourceLang(lang)
     if (inputMode === 'direct') {
       directModeLangRef.current = lang
+    } else {
+      nonDirectModeLangRef.current = lang
     }
   }
 
   const handleModeChange = (newMode) => {
     const prevMode = inputMode
     setInputMode(newMode)
-    if (newMode === 'direct' && prevMode !== 'direct') {
+    if (newMode === 'direct') {
+      // 切到直接输入模式：恢复该模式记住的语言（可能是 auto）
       setSourceLang(directModeLangRef.current)
+    } else if (prevMode === 'direct' && directModeLangRef.current === 'auto') {
+      // 从直接输入（auto）切到翻译/生成：恢复之前非直接模式选的语言，或用最近语言
+      const lang = nonDirectModeLangRef.current || (recentLanguages || []).find(l => l !== 'auto') || 'en'
+      setSourceLang(lang)
     }
-    if (newMode !== 'direct' && sourceLang === 'auto') {
-      const firstRecent = (recentLanguages || []).find(l => l !== 'auto')
-      setSourceLang(firstRecent || 'en')
-    }
+    // 其它情况：语言不变（直接输入选了具体语言后切走，或翻译↔生成切换）
   }
   const getPlaceholder = () => {
     if (inputMode === 'translate') return t.modeTranslatePlaceholder

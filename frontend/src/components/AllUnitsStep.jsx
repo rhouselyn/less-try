@@ -84,7 +84,7 @@ function AllUnitsStep({
   const renderUnitCard = (unit, index, onClick, keyPrefix, isUnlocked, phaseNumber) => {
     const isCompleted = unit.completed;
     const isGenerating = phaseNumber === 1 && generatingUnits?.has(index);
-    const isLocked = !isUnlocked && !isCompleted && !isGenerating;
+    const isLocked = !isUnlocked && !isCompleted;
     const isCurrent = (phaseNumber === 1 && index === currentPhase1Unit) || (phaseNumber === 2 && index === currentPhase2Unit);
     const starKey = `${phaseNumber}-${index}`;
     const starCount = unitStarCounts?.[starKey];
@@ -94,15 +94,13 @@ function AllUnitsStep({
         key={`${keyPrefix}-unit-${index}`}
         initial={false}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={!isLocked && !isGenerating ? { y: -2, transition: { duration: 0.15 } } : {}}
-        whileTap={!isLocked && !isGenerating ? { scale: 0.97 } : {}}
-        onClick={isLocked || isGenerating ? undefined : onClick}
-        disabled={isLocked || isGenerating}
+        whileHover={!isLocked ? { y: -2, transition: { duration: 0.15 } } : {}}
+        whileTap={!isLocked ? { scale: 0.97 } : {}}
+        onClick={isLocked ? undefined : onClick}
+        disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
           isCompleted
             ? 'bg-moss-50 border-moss-200/50 hover:bg-moss-50'
-            : isGenerating
-            ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
             : isLocked
             ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
             : isCurrent
@@ -111,9 +109,7 @@ function AllUnitsStep({
         }`}
         style={{ width: '5rem', height: '5rem' }}
       >
-        {isGenerating ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin text-bone-300" />
-        ) : isLocked ? (
+        {isLocked ? (
           <Lock className="w-3.5 h-3.5 text-bone-300" />
         ) : isCompleted ? (
           <>
@@ -136,7 +132,11 @@ function AllUnitsStep({
         ) : (
           <>
             <span className={`text-base font-semibold text-ochre-500`}>{index + 1}</span>
-            <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-ochre-400' : 'bg-ochre-300/60'}`} />
+            {isGenerating ? (
+              <Loader2 className="w-3 h-3 animate-spin text-ochre-300 mt-0.5" />
+            ) : (
+              <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-ochre-400' : 'bg-ochre-300/60'}`} />
+            )}
           </>
         )}
       </motion.button>
