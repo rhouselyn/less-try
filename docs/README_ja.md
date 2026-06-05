@@ -1,4 +1,4 @@
-[中文](README.md) | [English](README_en.md) | **日本語** | [한국어](README_ko.md) | [Español](README_es.md) | [Français](README_fr.md)
+[中文](../README.md) | [English](README_en.md) | **日本語** | [한국어](README_ko.md) | [Español](README_es.md) | [Français](README_fr.md)
 
 <div align="center">
 
@@ -80,16 +80,16 @@
 
 | 問題タイプ | スクリーンショット | 説明 |
 |------|------|------|
-| 単語選択 | ![単語選択](docs/screenshots/vocab.png) | 四択問題、単語を見て意味を選択、音声読み上げと発音記号付き |
-| 文翻訳 | ![文翻訳](docs/screenshots/translate%20t2s.png) | ソース言語の文を見て、母語の単語から翻訳を組み立てる |
-| リスニング理解 | ![リスニング問題](docs/screenshots/listening.png) | 文を聞いて、単語から聞こえた内容を組み立てる。通常速度/スロー速度切り替え対応 |
+| 単語選択 | ![単語選択](screenshots/vocab.png) | 四択問題、単語を見て意味を選択、音声読み上げと発音記号付き |
+| 文翻訳 | ![文翻訳](screenshots/translate%20t2s.png) | ソース言語の文を見て、母語の単語から翻訳を組み立てる |
+| リスニング理解 | ![リスニング問題](screenshots/listening.png) | 文を聞いて、単語から聞こえた内容を組み立てる。通常速度/スロー速度切り替え対応 |
 
 ### フェーズ2・総合訓練
 
 | 問題タイプ | スクリーンショット | 説明 |
 |------|------|------|
-| 穴埋め | ![穴埋め問題](docs/screenshots/mask.png) | 文のキーワードが空白になり、選択肢から正解を選ぶ |
-| 翻訳並べ替え | ![翻訳並べ替え](docs/screenshots/translate%20s2t.png) | 母語の翻訳を見て、ターゲット言語の単語から元の文を復元する |
+| 穴埋め | ![穴埋め問題](screenshots/mask.png) | 文のキーワードが空白になり、選択肢から正解を選ぶ |
+| 翻訳並べ替え | ![翻訳並べ替え](screenshots/translate%20s2t.png) | 母語の翻訳を見て、ターゲット言語の単語から元の文を復元する |
 
 ---
 
@@ -97,7 +97,7 @@
 
 ### ホーム & 入力
 
-![ホーム](docs/screenshots/main.png)
+![ホーム](screenshots/main.png)
 
 3つの入力モードで、すべての学習シーンをカバー：
 - **直接入力** — 外国語テキストを貼り付け、AI が言語を自動検出、文ごとに翻訳、語彙を抽出
@@ -106,17 +106,17 @@
 
 ### 辞書ページ
 
-![辞書ページ](docs/screenshots/contrast.png)
+![辞書ページ](screenshots/contrast.png)
 
 左側に文翻訳、右側に語彙表、下線付きの単語をクリックすると詳細を表示。アルファベット索引で素早く検索、各単語に発音記号、品詞、意味、語形変化、例文付き。
 
-![単語詳細](docs/screenshots/contrast_detail.png)
+![単語詳細](screenshots/contrast_detail.png)
 
 単語詳細は再生成に対応、記憶補助で連想記憶をサポート。
 
 ### 学習ユニット
 
-![学習ユニット](docs/screenshots/units.png)
+![学習ユニット](screenshots/units.png)
 
 2フェーズ学習体系、ユニットが段階的にアンロック、完了後にスター評価を獲得。「新規単語のみ学習」と「リスニングスキップ」スイッチに対応、学習ペースを自由にカスタマイズ。
 

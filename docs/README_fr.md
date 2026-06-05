@@ -1,4 +1,4 @@
-[中文](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [한국어](README_ko.md) | [Español](README_es.md) | **Français**
+[中文](../README.md) | [English](README_en.md) | [日本語](README_ja.md) | [한국어](README_ko.md) | [Español](README_es.md) | **Français**
 
 <div align="center">
 
@@ -80,16 +80,16 @@ Chaque unité comporte 10 questions, à la fin vous obtenez une évaluation ⭐,
 
 | Type d'exercice | Capture d'écran | Description |
 |-----------------|-----------------|-------------|
-| Choix de vocabulaire | ![Choix de vocabulaire](docs/screenshots/vocab.png) | QCM à quatre choix, lisez le mot et choisissez la définition, avec lecture vocale et phonétique |
-| Traduction de phrases | ![Traduction de phrases](docs/screenshots/translate%20t2s.png) | Lisez la phrase en langue source, reconstituez la traduction à partir des mots de votre langue maternelle |
-| Compréhension orale | ![Compréhension orale](docs/screenshots/listening.png) | Écoutez la phrase, reconstituez ce que vous avez entendu à partir des mots, avec changement vitesse normale/lente |
+| Choix de vocabulaire | ![Choix de vocabulaire](screenshots/vocab.png) | QCM à quatre choix, lisez le mot et choisissez la définition, avec lecture vocale et phonétique |
+| Traduction de phrases | ![Traduction de phrases](screenshots/translate%20t2s.png) | Lisez la phrase en langue source, reconstituez la traduction à partir des mots de votre langue maternelle |
+| Compréhension orale | ![Compréhension orale](screenshots/listening.png) | Écoutez la phrase, reconstituez ce que vous avez entendu à partir des mots, avec changement vitesse normale/lente |
 
 ### Phase 2 · Entraînement approfondi
 
 | Type d'exercice | Capture d'écran | Description |
 |-----------------|-----------------|-------------|
-| Texte à trous | ![Texte à trous](docs/screenshots/mask.png) | Un mot-clé est masqué dans la phrase, choisissez la bonne réponse parmi les options |
-| Reconstitution de traduction | ![Reconstitution de traduction](docs/screenshots/translate%20s2t.png) | Lisez la traduction dans votre langue maternelle, reconstituez la phrase originale à partir des mots de la langue cible |
+| Texte à trous | ![Texte à trous](screenshots/mask.png) | Un mot-clé est masqué dans la phrase, choisissez la bonne réponse parmi les options |
+| Reconstitution de traduction | ![Reconstitution de traduction](screenshots/translate%20s2t.png) | Lisez la traduction dans votre langue maternelle, reconstituez la phrase originale à partir des mots de la langue cible |
 
 ---
 
@@ -97,7 +97,7 @@ Chaque unité comporte 10 questions, à la fin vous obtenez une évaluation ⭐,
 
 ### Page d'accueil & Saisie
 
-![Page d'accueil](docs/screenshots/main.png)
+![Page d'accueil](screenshots/main.png)
 
 Trois modes de saisie, couvrant tous les scénarios d'apprentissage :
 - **Saisie directe** — Collez un texte en langue étrangère, l'IA détecte la langue, traduit phrase par phrase et extrait le vocabulaire
@@ -106,17 +106,17 @@ Trois modes de saisie, couvrant tous les scénarios d'apprentissage :
 
 ### Page dictionnaire
 
-![Page dictionnaire](docs/screenshots/contrast.png)
+![Page dictionnaire](screenshots/contrast.png)
 
 Traduction des phrases à gauche, glossaire à droite, cliquez sur un mot souligné pour voir ses détails. Index alphabétique pour une localisation rapide, chaque mot est accompagné de sa phonétique, sa nature grammaticale, sa définition, ses déclinaisons et ses exemples.
 
-![Détail du mot](docs/screenshots/contrast_detail.png)
+![Détail du mot](screenshots/contrast_detail.png)
 
 Les détails du mot supportent la régénération par actualisation, les aides mnémotechniques facilitent la mémoration associative.
 
 ### Unités d'apprentissage
 
-![Unités d'apprentissage](docs/screenshots/units.png)
+![Unités d'apprentissage](screenshots/units.png)
 
 Système d'apprentissage en deux phases, les unités se déverrouillent progressivement, obtenez une évaluation par étoiles après complétion. Options « apprendre uniquement les nouveaux mots » et « passer l'écoute » pour personnaliser votre rythme d'apprentissage selon vos besoins.
 

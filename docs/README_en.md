@@ -1,4 +1,4 @@
-[中文](README.md) | **English** | [日本語](README_ja.md) | [한국어](README_ko.md) | [Español](README_es.md) | [Français](README_fr.md)
+[中文](../README.md) | **English** | [日本語](README_ja.md) | [한국어](README_ko.md) | [Español](README_es.md) | [Français](README_fr.md)
 
 <div align="center">
 
@@ -80,16 +80,16 @@ Each unit has 10 questions. After completion, you receive a ⭐ star rating. Inc
 
 | Exercise Type | Screenshot | Description |
 |------|------|------|
-| Word Selection | ![Word Selection](docs/screenshots/vocab.png) | Multiple choice — see the word, pick the definition, with voice narration and phonetics |
-| Sentence Translation | ![Sentence Translation](docs/screenshots/translate%20t2s.png) | See the source language sentence, assemble the translation from native language words |
-| Listening Comprehension | ![Listening](docs/screenshots/listening.png) | Listen to the sentence, assemble what you heard from words, with normal/slow speed toggle |
+| Word Selection | ![Word Selection](screenshots/vocab.png) | Multiple choice — see the word, pick the definition, with voice narration and phonetics |
+| Sentence Translation | ![Sentence Translation](screenshots/translate%20t2s.png) | See the source language sentence, assemble the translation from native language words |
+| Listening Comprehension | ![Listening](screenshots/listening.png) | Listen to the sentence, assemble what you heard from words, with normal/slow speed toggle |
 
 ### Phase 2 · Comprehensive Training
 
 | Exercise Type | Screenshot | Description |
 |------|------|------|
-| Masked Fill-in-the-blank | ![Fill-in-the-blank](docs/screenshots/mask.png) | Key words are removed from the sentence, choose the correct answer from options |
-| Translation Reassembly | ![Translation Reassembly](docs/screenshots/translate%20s2t.png) | See the native language translation, reconstruct the original sentence from target language words |
+| Masked Fill-in-the-blank | ![Fill-in-the-blank](screenshots/mask.png) | Key words are removed from the sentence, choose the correct answer from options |
+| Translation Reassembly | ![Translation Reassembly](screenshots/translate%20s2t.png) | See the native language translation, reconstruct the original sentence from target language words |
 
 ---
 
@@ -97,7 +97,7 @@ Each unit has 10 questions. After completion, you receive a ⭐ star rating. Inc
 
 ### Home & Input
 
-![Home](docs/screenshots/main.png)
+![Home](screenshots/main.png)
 
 Three input modes covering all learning scenarios:
 - **Direct Input** — Paste foreign language text, AI auto-detects language, translates sentence by sentence, extracts vocabulary
@@ -106,17 +106,17 @@ Three input modes covering all learning scenarios:
 
 ### Dictionary Page
 
-![Dictionary Page](docs/screenshots/contrast.png)
+![Dictionary Page](screenshots/contrast.png)
 
 Sentence translation on the left, vocabulary list on the right. Click an underlined word to view details. Supports alphabetical index for quick navigation. Each word has phonetics, part of speech, definition, inflections, and example sentences.
 
-![Word Details](docs/screenshots/contrast_detail.png)
+![Word Details](screenshots/contrast_detail.png)
 
 Word details support refresh to regenerate. Memory aids help with associative memorization.
 
 ### Learning Units
 
-![Learning Units](docs/screenshots/units.png)
+![Learning Units](screenshots/units.png)
 
 Two-phase learning system with units that unlock progressively. Earn star ratings upon completion. Supports "New words only" and "Skip listening" toggles to customize your learning pace.
 

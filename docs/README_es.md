@@ -1,4 +1,4 @@
-[中文](README.md) | [English](README_en.md) | [日本語](README_ja.md) | [한국어](README_ko.md) | **Español** | [Français](README_fr.md)
+[中文](../README.md) | [English](README_en.md) | [日本語](README_ja.md) | [한국어](README_ko.md) | **Español** | [Français](README_fr.md)
 
 <div align="center">
 
@@ -80,16 +80,16 @@ Cada unidad tiene 10 preguntas; al completarla obtienes una evaluación con ⭐ 
 
 | Tipo de ejercicio | Captura de pantalla | Descripción |
 |------|------|------|
-| Selección de palabras | ![单词选择](docs/screenshots/vocab.png) | Pregunta de opción múltiple con cuatro opciones, lee la palabra y selecciona la definición, con lectura en voz alta y fonética |
-| Traducción de oraciones | ![句子翻译](docs/screenshots/translate%20t2s.png) | Lee la oración en el idioma de origen y forma la traducción con las palabras en tu idioma materno |
-| Comprensión auditiva | ![听力题](docs/screenshots/listening.png) | Escucha la oración y forma el contenido escuchado con las palabras disponibles, soporta cambio entre velocidad normal y lenta |
+| Selección de palabras | ![单词选择](screenshots/vocab.png) | Pregunta de opción múltiple con cuatro opciones, lee la palabra y selecciona la definición, con lectura en voz alta y fonética |
+| Traducción de oraciones | ![句子翻译](screenshots/translate%20t2s.png) | Lee la oración en el idioma de origen y forma la traducción con las palabras en tu idioma materno |
+| Comprensión auditiva | ![听力题](screenshots/listening.png) | Escucha la oración y forma el contenido escuchado con las palabras disponibles, soporta cambio entre velocidad normal y lenta |
 
 ### Fase 2 · Entrenamiento integral
 
 | Tipo de ejercicio | Captura de pantalla | Descripción |
 |------|------|------|
-| Rellenar espacios con palabras ocultas | ![填空题](docs/screenshots/mask.png) | Se ocultan palabras clave en la oración, selecciona la respuesta correcta entre las opciones |
-| Reorganización de traducción | ![翻译重组](docs/screenshots/translate%20s2t.png) | Lee la traducción en tu idioma materno y reconstruye la oración original con las palabras del idioma objetivo |
+| Rellenar espacios con palabras ocultas | ![填空题](screenshots/mask.png) | Se ocultan palabras clave en la oración, selecciona la respuesta correcta entre las opciones |
+| Reorganización de traducción | ![翻译重组](screenshots/translate%20s2t.png) | Lee la traducción en tu idioma materno y reconstruye la oración original con las palabras del idioma objetivo |
 
 ---
 
@@ -97,7 +97,7 @@ Cada unidad tiene 10 preguntas; al completarla obtienes una evaluación con ⭐ 
 
 ### Página principal y entrada
 
-![主页](docs/screenshots/main.png)
+![主页](screenshots/main.png)
 
 Tres modos de entrada que cubren todos los escenarios de aprendizaje:
 - **Entrada directa** — Pega texto en idioma extranjero, la IA detecta automáticamente el idioma, traduce por oraciones y extrae vocabulario
@@ -106,17 +106,17 @@ Tres modos de entrada que cubren todos los escenarios de aprendizaje:
 
 ### Página de diccionario
 
-![字典页](docs/screenshots/contrast.png)
+![字典页](screenshots/contrast.png)
 
 Traducción de oraciones a la izquierda, vocabulario a la derecha; haz clic en las palabras subrayadas para ver los detalles. Soporta índice alfabético para una ubicación rápida; cada palabra tiene fonética, categoría gramatical, definición, variaciones morfológicas y oraciones de ejemplo.
 
-![单词详情](docs/screenshots/contrast_detail.png)
+![单词详情](screenshots/contrast_detail.png)
 
 Los detalles de las palabras permiten regenerar con un refresco; la asistencia mnemotécnica ayuda a la memorización asociativa.
 
 ### Unidades de aprendizaje
 
-![学习单元](docs/screenshots/units.png)
+![学习单元](screenshots/units.png)
 
 Sistema de aprendizaje en dos fases, las unidades se desbloquean progresivamente y obtienes una evaluación con estrellas al completarlas. Soporta los interruptores "solo palabras nuevas" y "omitir comprensión auditiva" para personalizar el ritmo de estudio según tus necesidades.
 
