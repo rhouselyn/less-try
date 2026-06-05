@@ -845,7 +845,8 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                     correct_meaning,
                     context,
                     target_lang,
-                    source_lang
+                    source_lang,
+                    0
                 )
                 
                 placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
@@ -859,7 +860,8 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                         correct_meaning,
                         context,
                         target_lang,
-                        source_lang
+                        source_lang,
+                        0
                     )
                     enriched = options_result.get("enriched_meaning", "")
                     if placeholder_pattern.search(enriched):
@@ -2150,7 +2152,8 @@ async def pre_generate_next_word(file_id: str, vocab: List[Dict], next_index: in
             correct_meaning,
             context,
             target_lang,
-            source_lang
+            source_lang,
+            0
         )
         options_result = fix_llm_options_result(options_result, source_lang, file_id)
         
@@ -2389,7 +2392,8 @@ async def get_unit_words(file_id: str, unit_id: int):
                 correct_meaning,
                 context,
                 target_lang,
-                source_lang
+                source_lang,
+                0
             )
             options_result = fix_llm_options_result(options_result, source_lang, file_id)
             
@@ -3228,7 +3232,7 @@ async def regenerate_word_detail(request: dict):
                 storage.delete_word_cache(file_id, word)
 
         options_result = await nvidia_api.generate_multiple_choice(
-            word, "", "", target_lang, source_lang
+            word, "", "", target_lang, source_lang, 0.7
         )
         file_id = matching[0].get("file_id") if matching else None
         if file_id:
@@ -3284,7 +3288,7 @@ async def get_word_detail(word: str, source_lang: str = "en", target_lang: str =
                 }
         
         options_result = await nvidia_api.generate_multiple_choice(
-            word, "", "", target_lang, source_lang
+            word, "", "", target_lang, source_lang, 0
         )
         options_result = fix_llm_options_result(options_result, source_lang, file_id)
         
