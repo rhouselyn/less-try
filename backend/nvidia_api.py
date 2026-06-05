@@ -408,7 +408,7 @@ class NvidiaAPI:
     async def call_with_rotation(cls, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         return await call_minimax_with_rotation(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
 
-    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str, temperature: float = 0.7):
+    async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str, source_lang: str = "en", temperature: float = 0.7):
         tool_def = {
             "type": "function",
             "function": {
@@ -473,8 +473,14 @@ class NvidiaAPI:
         }
 
         target_lang_name = get_lang_name(target_lang)
+        source_lang_name = get_lang_name(source_lang)
         prompt = f"""
-为单词 '{word}' 生成丰富的信息，使用 {target_lang_name} 输出。
+为 {source_lang_name} 单词 '{word}' 生成丰富的信息，使用 {target_lang_name} 输出。
+
+【极其重要】这个单词属于 {source_lang_name}（学习语言），不是英语！除非 source_lang 就是英语，否则：
+- 词形变化（variants_detail）必须是 {source_lang_name} 的词形变化，不是英语的词形变化
+- 例句（examples）必须使用 {source_lang_name} 编写，不是英语
+- 不要将 {source_lang_name} 单词当作英语单词来生成词形变化和例句
 
 上下文释义：{correct_meaning}
 
@@ -483,15 +489,15 @@ class NvidiaAPI:
 请生成以下信息：
 
 1. enriched_meaning: 单词的完整释义，包含多个常见含义，用分号分隔。每个含义必须是具体的、有意义的翻译，不能是占位符（如"释义1"、"含义1"等）
-2. variants_detail: 词形变化列表，带类型说明。【极其重要】对于派生词（如 previously, prestigious, studying, published），必须列出其词根/原形作为词形变化（如 previously -> {{"form": "previous", "type": "形容词原形"}}, prestigious -> {{"form": "prestige", "type": "名词原形"}}, studying -> {{"form": "study", "type": "动词原形"}}, published -> {{"form": "publish", "type": "动词原形"}}）。对于基础词，列出其常见的屈折变化（如名词的复数、动词的过去式/过去分词/现在分词、形容词的比较级/最高级等）。只包含确实存在的词形变化，如果没有则返回空数组
-3. examples: 两个全新的例句。【极其重要】例句本身必须使用学习语言（即单词所属的语言）编写，翻译必须使用 {target_lang_name}（用户的母语）。绝不能反过来用母语写例句再用学习语言翻译。尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同
+2. variants_detail: {source_lang_name} 词形变化列表，带类型说明。【极其重要】词形变化必须是 {source_lang_name} 的词形变化，不是英语的！对于派生词，必须列出其词根/原形作为词形变化。对于基础词，列出其常见的屈折变化（如名词的复数、动词的变位形式、形容词的比较级/最高级等，必须是 {source_lang_name} 语法规则下的变化）。只包含确实存在的词形变化，如果没有则返回空数组
+3. examples: 两个全新的例句。【极其重要】例句本身必须使用 {source_lang_name}（学习语言）编写，翻译必须使用 {target_lang_name}（用户的母语）。绝不能反过来用母语写例句再用学习语言翻译。绝不能用英语写例句！尽量使用简单常见的词汇组成例句，不需要与原文中的意思相同
 4. memory_hint: 记忆辅助（与用户母语的联想或对比）
 5. multiple_choice: 选择题，包含：
    - options: 4个选项，【极其重要】第一个选项必须是正确答案，其余3个是错误答案
 
 要求：
 - 所有输出必须使用 {target_lang_name}
-- 【极其重要】例句必须使用学习语言编写，翻译使用 {target_lang_name}。绝不能用母语写例句再用学习语言翻译
+- 【极其重要】例句必须使用 {source_lang_name} 编写，翻译使用 {target_lang_name}。绝不能用母语写例句再用学习语言翻译，也绝不能用英语写例句
 - 例句要自然，尽量使用简单常见的词汇，不需要与原文中的意思相同
 - 记忆辅助对语言学习者要有帮助
 - 选择题选项要清晰且合理
@@ -499,7 +505,7 @@ class NvidiaAPI:
 - 【重要】错误答案必须是该单词所没有的意思，而不是非句子中的意思
 - 【重要】选项必须是纯单词或短语，不能是完整句子
 - 【重要】选项必须与单词本身的意思无关，不能包含单词的任何含义
-- 【重要】词形变化必须是确实存在的，不要硬加不存在的词形
+- 【重要】词形变化必须是 {source_lang_name} 中确实存在的，不要硬加不存在的词形，更不要用英语的词形变化
 - 【重要】四个选项的格式和词性必须保持一致：如果正确答案包含两个释义，错误选项也必须各包含两个释义；如果正确答案只有一个释义，错误选项也各只有一个释义。所有选项的词性范围应尽量一致
 - 【极其重要】enriched_meaning 中不能包含占位符文本（如"释义1"、"含义1"、"meaning 1"等），必须全部是具体的、有意义的翻译内容
 - 【输出约束】除了工具调用的JSON输出外，不要添加任何其他文本、解释或说明。直接生成工具调用所需的JSON参数即可。
