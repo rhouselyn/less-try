@@ -55,6 +55,13 @@ def compute_file_progress(file_id: str) -> dict:
                             completed += 1
                     result["phase2"]["completed"] = completed
                     result["phase2"]["total"] = num_units
+                else:
+                    # exercise_order 尚未生成，从 eligible sentences 计算预期单元数
+                    unit_size = 10
+                    total_exercises = expected_length
+                    num_units = max(1, (total_exercises + unit_size - 1) // unit_size)
+                    result["phase2"]["completed"] = 0
+                    result["phase2"]["total"] = num_units
 
         return result
     except Exception:
