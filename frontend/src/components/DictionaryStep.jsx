@@ -49,35 +49,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
   useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
 
-  // 持续追踪滚动位置：每次滚动时更新对应的ref
-  useEffect(() => {
-    const vocabEl = vocabListRef.current
-    const sentEl = sentenceListRef.current
-    if (!vocabEl && !sentEl) return
-
-    const handleVocabScroll = () => {
-      if (showGlobalVocabRef.current) {
-        globalVocabScrollPos.current = vocabEl.scrollTop
-      } else {
-        localVocabScrollPos.current = vocabEl.scrollTop
-      }
-    }
-    const handleSentScroll = () => {
-      if (showOriginalRef.current) {
-        sentenceOriginalScrollPos.current = sentEl.scrollTop
-      } else {
-        sentenceTranslationScrollPos.current = sentEl.scrollTop
-      }
-    }
-
-    if (vocabEl) vocabEl.addEventListener('scroll', handleVocabScroll, { passive: true })
-    if (sentEl) sentEl.addEventListener('scroll', handleSentScroll, { passive: true })
-    return () => {
-      if (vocabEl) vocabEl.removeEventListener('scroll', handleVocabScroll)
-      if (sentEl) sentEl.removeEventListener('scroll', handleSentScroll)
-    }
-  }, [vocab.length, sentenceTranslations.length])
-
   const saveState = () => {
     if (dictStateRef) {
       dictStateRef.current = {
@@ -330,8 +301,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (initialRestoreDone.current) return
     if (!vocab.length && !sentenceTranslations.length) return
     initialRestoreDone.current = true
-    // 多次尝试恢复，确保DOM已完全渲染
-    const tryRestore = (attempt = 0) => {
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (sentenceListRef.current) {
           const sentenceTarget = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
@@ -345,11 +315,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             vocabListRef.current.scrollTop = vocabTarget
           }
         }
-        // 如果还没恢复到位，再试一次
-        if (attempt < 3) tryRestore(attempt + 1)
       })
-    }
-    tryRestore()
+    })
   }, [vocab, sentenceTranslations])
 
   const scrollToLetter = (letter) => {
