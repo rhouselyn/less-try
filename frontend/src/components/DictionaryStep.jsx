@@ -144,8 +144,18 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const poll = async () => {
       try {
         const data = await api.getWordGenProgress(currentFileId)
-        if (!cancelled) setWordGenProgress(data)
+        if (!cancelled) {
+          setWordGenProgress(data)
+          if (data.completed >= data.total && data.total > 0) {
+            if (interval) clearInterval(interval)
+            interval = null
+            return
+          }
+        }
       } catch {}
+      if (!cancelled && !interval) {
+        interval = setInterval(poll, 3000)
+      }
     }
     poll()
     interval = setInterval(poll, 3000)

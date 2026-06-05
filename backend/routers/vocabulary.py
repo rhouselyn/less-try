@@ -119,40 +119,34 @@ async def get_word_details(file_id: str, word: str):
 
             return cached_word
 
-        # 无缓存：触发优先生成并等待
-        print(f"[DEBUG] 单词详情无缓存，触发优先生成: {word}")
+        # 无缓存：直接生成并等待
+        print(f"[DEBUG] 单词详情无缓存，直接生成: {word}")
         from utils.state import word_gen_state
-        from utils.exercise_generators import background_word_gen
+        from utils.exercise_generators import process_single_word_gen
         import asyncio
 
-        state = word_gen_state.get(file_id)
-        if state:
-            state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
-            state["priority_queue"].insert(0, word)
-            if not state.get("running"):
-                state["running"] = True
-                state["task"] = asyncio.create_task(background_word_gen(file_id))
-        else:
-            vocab = storage.load_vocab(file_id)
+        vocab = storage.load_vocab(file_id)
+        if isinstance(vocab, dict) and "vocab" in vocab:
+            vocab = vocab["vocab"]
+
+        if file_id not in word_gen_state:
             word_gen_state[file_id] = {
-                "running": True,
-                "vocab": vocab or [],
-                "priority_queue": [word],
-                "task": asyncio.create_task(background_word_gen(file_id)),
+                "running": False,
+                "vocab": vocab,
+                "priority_queue": [],
+                "task": None,
                 "processing_words": set()
             }
+        state = word_gen_state[file_id]
+        state["vocab"] = vocab
+        if "processing_words" not in state:
+            state["processing_words"] = set()
+        if "plan_position" not in state:
+            state["plan_position"] = 0
 
-        for _ in range(60):
-            await asyncio.sleep(1)
-            cached_word = storage.load_word_cache(file_id, word)
-            if cached_word:
-                mc = cached_word.get("multiple_choice", {})
-                mc_options = []
-                if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-                    mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
-                if mc_options:
-                    break
+        await process_single_word_gen(file_id, word, vocab, source_lang, target_lang)
 
+        cached_word = storage.load_word_cache(file_id, word)
         if cached_word:
             cached_word = fix_llm_options_result(cached_word, source_lang, file_id)
             mc = cached_word.get("multiple_choice", {})
@@ -171,7 +165,7 @@ async def get_word_details(file_id: str, word: str):
                 cached_word["correct_index"] = correct_index
                 return cached_word
 
-        raise HTTPException(status_code=404, detail="Word detail generation timed out")
+        raise HTTPException(status_code=404, detail="Word detail generation failed")
     except HTTPException:
         raise
     except Exception as e:
