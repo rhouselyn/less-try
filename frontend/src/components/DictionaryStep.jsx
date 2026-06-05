@@ -36,6 +36,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const sentenceRefs = useRef({})
   const titleInputRef = useRef(null)
   const pendingScrollWord = useRef(null)
+  const localVocabScrollPos = useRef(saved.vocabScrollPos || 0)
+  const globalVocabScrollPos = useRef(saved.globalVocabScrollPos || 0)
+  const sentenceTranslationScrollPos = useRef(saved.sentenceTranslationScrollPos || 0)
+  const sentenceOriginalScrollPos = useRef(saved.sentenceOriginalScrollPos || 0)
   const filteredVocabRef = useRef([])
   const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
@@ -45,38 +49,24 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
   useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
 
-  // 保存当前滚动位置到dictStateRef
-  const saveScrollPositions = useCallback(() => {
-    if (!dictStateRef) return
-    const vocabScrollTop = vocabListRef.current?.scrollTop || 0
-    const sentenceScrollTop = sentenceListRef.current?.scrollTop || 0
-    const isGlobal = showGlobalVocabRef.current
-    const isOriginal = showOriginalRef.current
-    dictStateRef.current = {
-      ...dictStateRef.current,
-      vocabScrollPos: isGlobal ? (dictStateRef.current.vocabScrollPos || 0) : vocabScrollTop,
-      globalVocabScrollPos: isGlobal ? vocabScrollTop : (dictStateRef.current.globalVocabScrollPos || 0),
-      sentenceTranslationScrollPos: isOriginal ? (dictStateRef.current.sentenceTranslationScrollPos || 0) : sentenceScrollTop,
-      sentenceOriginalScrollPos: isOriginal ? sentenceScrollTop : (dictStateRef.current.sentenceOriginalScrollPos || 0),
-    }
-  }, [dictStateRef])
-
-  const saveState = useCallback(() => {
+  const saveState = () => {
     if (dictStateRef) {
-      saveScrollPositions()
       dictStateRef.current = {
-        ...dictStateRef.current,
         vocabPage, sentencePage, globalVocabPage,
+        vocabScrollPos: localVocabScrollPos.current,
+        sentenceTranslationScrollPos: sentenceTranslationScrollPos.current,
+        sentenceOriginalScrollPos: sentenceOriginalScrollPos.current,
+        globalVocabScrollPos: globalVocabScrollPos.current,
         vocabDisplayMode, sentenceDisplayMode,
         showOriginal, showGlobalVocab,
         vocabSearch, sentenceSearch
       }
     }
-  }, [dictStateRef, vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch])
+  }
 
   useEffect(() => {
     saveState()
-  }, [saveState])
+  }, [vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch])
 
   useEffect(() => {
     if (currentFileId) {
@@ -98,6 +88,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         setShowGlobalVocab(false)
         setVocabSearch('')
         setSentenceSearch('')
+        localVocabScrollPos.current = 0
+        globalVocabScrollPos.current = 0
+        sentenceTranslationScrollPos.current = 0
+        sentenceOriginalScrollPos.current = 0
       } else if (dictStateRef) {
         dictStateRef.current._lastFileId = currentFileId
       }
@@ -260,34 +254,41 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const handleToggleGlobalVocab = useCallback(() => {
     if (vocabListRef.current) {
-      saveScrollPositions()
+      if (showGlobalVocab) {
+        globalVocabScrollPos.current = vocabListRef.current.scrollTop
+      } else {
+        localVocabScrollPos.current = vocabListRef.current.scrollTop
+      }
     }
     setShowGlobalVocab(v => !v)
-  }, [saveScrollPositions])
+  }, [showGlobalVocab])
 
   useEffect(() => {
     if (vocabListRef.current && !globalVocabLoading) {
       if (!showGlobalVocab && pendingScrollWord.current) return
-      const saved = dictStateRef?.current || {}
-      const targetPos = showGlobalVocab ? (saved.globalVocabScrollPos || 0) : (saved.vocabScrollPos || 0)
+      const targetPos = showGlobalVocab ? globalVocabScrollPos.current : localVocabScrollPos.current
       vocabListRef.current.scrollTop = targetPos
     }
   }, [showGlobalVocab, globalVocabLoading])
 
   // 切换句子翻译/显示原文时保存/恢复滚动位置
   const handleToggleShowOriginal = useCallback(() => {
+    // 保存当前模式的滚动位置
     if (sentenceListRef.current) {
-      saveScrollPositions()
+      if (showOriginal) {
+        sentenceOriginalScrollPos.current = sentenceListRef.current.scrollTop
+      } else {
+        sentenceTranslationScrollPos.current = sentenceListRef.current.scrollTop
+      }
     }
     setShowOriginal(v => !v)
-  }, [saveScrollPositions])
+  }, [showOriginal])
 
   // 切换 showOriginal 后恢复滚动位置
   useEffect(() => {
     if (!sentenceListRef.current) return
-    const saved = dictStateRef?.current || {}
-    const targetPos = showOriginal ? (saved.sentenceOriginalScrollPos || 0) : (saved.sentenceTranslationScrollPos || 0)
-    if (targetPos > 0) {
+    const targetPos = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
+    if (typeof targetPos === 'number' && targetPos > 0) {
       requestAnimationFrame(() => {
         if (sentenceListRef.current) sentenceListRef.current.scrollTop = targetPos
       })
@@ -300,23 +301,22 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (initialRestoreDone.current) return
     if (!vocab.length && !sentenceTranslations.length) return
     initialRestoreDone.current = true
-    const saved = dictStateRef?.current || {}
-    // 延迟恢复，等DOM渲染完成
-    const timer = setTimeout(() => {
-      if (sentenceListRef.current) {
-        const sentenceTarget = showOriginal ? (saved.sentenceOriginalScrollPos || 0) : (saved.sentenceTranslationScrollPos || 0)
-        if (sentenceTarget > 0) {
-          sentenceListRef.current.scrollTop = sentenceTarget
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (sentenceListRef.current) {
+          const sentenceTarget = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
+          if (typeof sentenceTarget === 'number' && sentenceTarget > 0) {
+            sentenceListRef.current.scrollTop = sentenceTarget
+          }
         }
-      }
-      if (vocabListRef.current) {
-        const vocabTarget = showGlobalVocab ? (saved.globalVocabScrollPos || 0) : (saved.vocabScrollPos || 0)
-        if (vocabTarget > 0) {
-          vocabListRef.current.scrollTop = vocabTarget
+        if (vocabListRef.current) {
+          const vocabTarget = showGlobalVocab ? globalVocabScrollPos.current : localVocabScrollPos.current
+          if (typeof vocabTarget === 'number' && vocabTarget > 0) {
+            vocabListRef.current.scrollTop = vocabTarget
+          }
         }
-      }
-    }, 100)
-    return () => clearTimeout(timer)
+      })
+    })
   }, [vocab, sentenceTranslations])
 
   const scrollToLetter = (letter) => {
@@ -462,7 +462,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
     if (showGlobalVocab) {
       if (vocabListRef.current) {
-        saveScrollPositions()
+        globalVocabScrollPos.current = vocabListRef.current.scrollTop
       }
       pendingScrollWord.current = wordKey
       if (vocabSearch) setVocabSearch('')
@@ -777,7 +777,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }
 
   useEffect(() => {
-    // 卸载时保存当前滚动位置
+    // 卸载时保存当前滚动位置（不覆盖已有的页码等状态，因为saveState已经保存了）
     return () => {
       if (dictStateRef) {
         const vocabScrollTop = vocabListRef.current?.scrollTop || 0
@@ -786,10 +786,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         const isOriginal = showOriginalRef.current
         dictStateRef.current = {
           ...dictStateRef.current,
-          vocabScrollPos: isGlobal ? (dictStateRef.current.vocabScrollPos || 0) : vocabScrollTop,
-          globalVocabScrollPos: isGlobal ? vocabScrollTop : (dictStateRef.current.globalVocabScrollPos || 0),
-          sentenceTranslationScrollPos: isOriginal ? (dictStateRef.current.sentenceTranslationScrollPos || 0) : sentenceScrollTop,
-          sentenceOriginalScrollPos: isOriginal ? sentenceScrollTop : (dictStateRef.current.sentenceOriginalScrollPos || 0),
+          vocabScrollPos: isGlobal ? dictStateRef.current.vocabScrollPos : vocabScrollTop,
+          globalVocabScrollPos: isGlobal ? vocabScrollTop : dictStateRef.current.globalVocabScrollPos,
+          sentenceTranslationScrollPos: isOriginal ? dictStateRef.current.sentenceTranslationScrollPos : sentenceScrollTop,
+          sentenceOriginalScrollPos: isOriginal ? sentenceScrollTop : dictStateRef.current.sentenceOriginalScrollPos,
         }
       }
     }

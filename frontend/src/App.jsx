@@ -346,7 +346,7 @@ function App() {
         clearInterval(pollingInterval)
       }
     }
-  }, [currentFileId, skipPolling])
+  }, [currentFileId])
 
   const sortVocab = () => {
     const sorted = [...vocab].sort((a, b) => {
