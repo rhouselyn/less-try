@@ -864,7 +864,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
         <div className="flex-1 min-w-0" />
 
-        {currentFileId && (preprocessStatus || (processingInfo && safeProcessingInfo.total > 0 && progress < 100) || (wordGenProgress && wordGenProgress.completed < wordGenProgress.total)) && (
+        {(preprocessStatus || (currentFileId && ((processingInfo && safeProcessingInfo.total > 0 && progress < 100) || (wordGenProgress && wordGenProgress.completed < wordGenProgress.total)))) && (
           <div className="flex items-center gap-2.5 shrink-0">
             {preprocessStatus ? (
               <div className="flex items-center gap-1.5">
