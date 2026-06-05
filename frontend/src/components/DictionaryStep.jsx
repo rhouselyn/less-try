@@ -45,18 +45,22 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const pageSizeRef = useRef(pageSize)
   const showGlobalVocabRef = useRef(showGlobalVocab)
   const showOriginalRef = useRef(showOriginal)
+  const restoreCompleteRef = useRef(false)
 
   useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
   useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
 
   const saveState = () => {
     if (dictStateRef) {
+      const vocabScrollTop = vocabListRef.current?.scrollTop ?? 0
+      const sentenceScrollTop = sentenceListRef.current?.scrollTop ?? 0
       dictStateRef.current = {
+        ...dictStateRef.current,
         vocabPage, sentencePage, globalVocabPage,
-        vocabScrollPos: localVocabScrollPos.current,
-        sentenceTranslationScrollPos: sentenceTranslationScrollPos.current,
-        sentenceOriginalScrollPos: sentenceOriginalScrollPos.current,
-        globalVocabScrollPos: globalVocabScrollPos.current,
+        vocabScrollPos: showGlobalVocab ? (dictStateRef.current.vocabScrollPos ?? 0) : vocabScrollTop,
+        globalVocabScrollPos: showGlobalVocab ? vocabScrollTop : (dictStateRef.current.globalVocabScrollPos ?? 0),
+        sentenceTranslationScrollPos: showOriginal ? (dictStateRef.current.sentenceTranslationScrollPos ?? 0) : sentenceScrollTop,
+        sentenceOriginalScrollPos: showOriginal ? sentenceScrollTop : (dictStateRef.current.sentenceOriginalScrollPos ?? 0),
         vocabDisplayMode, sentenceDisplayMode,
         showOriginal, showGlobalVocab,
         vocabSearch, sentenceSearch
@@ -241,14 +245,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [pageSize])
 
   useEffect(() => {
+    if (!restoreCompleteRef.current) return
     if (vocabPage > vocabTotalPages) setVocabPage(vocabTotalPages)
   }, [vocabPage, vocabTotalPages])
 
   useEffect(() => {
+    if (!restoreCompleteRef.current) return
     if (sentencePage > sentenceTotalPages) setSentencePage(sentenceTotalPages)
   }, [sentencePage, sentenceTotalPages])
 
   useEffect(() => {
+    if (!restoreCompleteRef.current) return
     if (globalVocabPage > globalVocabTotalPages) setGlobalVocabPage(globalVocabTotalPages)
   }, [globalVocabPage, globalVocabTotalPages])
 
@@ -301,6 +308,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     if (initialRestoreDone.current) return
     if (!vocab.length && !sentenceTranslations.length) return
     initialRestoreDone.current = true
+    restoreCompleteRef.current = true
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (sentenceListRef.current) {
@@ -777,19 +785,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }
 
   useEffect(() => {
-    // 卸载时保存当前滚动位置（不覆盖已有的页码等状态，因为saveState已经保存了）
+    // 卸载时保存当前滚动位置（直接从DOM读取，不覆盖已有的页码等状态）
     return () => {
       if (dictStateRef) {
-        const vocabScrollTop = vocabListRef.current?.scrollTop || 0
-        const sentenceScrollTop = sentenceListRef.current?.scrollTop || 0
+        const vocabScrollTop = vocabListRef.current?.scrollTop ?? 0
+        const sentenceScrollTop = sentenceListRef.current?.scrollTop ?? 0
         const isGlobal = showGlobalVocabRef.current
         const isOriginal = showOriginalRef.current
         dictStateRef.current = {
           ...dictStateRef.current,
-          vocabScrollPos: isGlobal ? dictStateRef.current.vocabScrollPos : vocabScrollTop,
-          globalVocabScrollPos: isGlobal ? vocabScrollTop : dictStateRef.current.globalVocabScrollPos,
-          sentenceTranslationScrollPos: isOriginal ? dictStateRef.current.sentenceTranslationScrollPos : sentenceScrollTop,
-          sentenceOriginalScrollPos: isOriginal ? sentenceScrollTop : dictStateRef.current.sentenceOriginalScrollPos,
+          vocabScrollPos: isGlobal ? (dictStateRef.current.vocabScrollPos ?? 0) : vocabScrollTop,
+          globalVocabScrollPos: isGlobal ? vocabScrollTop : (dictStateRef.current.globalVocabScrollPos ?? 0),
+          sentenceTranslationScrollPos: isOriginal ? (dictStateRef.current.sentenceTranslationScrollPos ?? 0) : sentenceScrollTop,
+          sentenceOriginalScrollPos: isOriginal ? sentenceScrollTop : (dictStateRef.current.sentenceOriginalScrollPos ?? 0),
         }
       }
     }
