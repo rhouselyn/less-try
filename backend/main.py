@@ -3249,7 +3249,7 @@ async def regenerate_word_detail(request: dict):
             cache_data["context_sentences"] = []
             cache_data["morphology"] = options_result.get("morphology", "")
             cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
-            storage.save_word_cache(file_id, word, cache_data)
+            storage.save_word_cache(file_id, word, cache_data, overwrite_index=True)
 
         return result
     except Exception as e:

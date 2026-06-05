@@ -491,7 +491,7 @@ function ModeSelector({ mode, setMode, t }) {
 }
 
 function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
-  const directModeLangRef = useRef('en')
+  const directModeLangRef = useRef('auto')
 
   const handleSourceLangChange = (lang) => {
     setSourceLang(lang)
@@ -506,9 +506,12 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
     if (newMode === 'direct' && prevMode !== 'direct') {
       setSourceLang(directModeLangRef.current)
     }
-    if (newMode !== 'direct' && sourceLang === 'auto') {
-      const firstRecent = (recentLanguages || []).find(l => l !== 'auto')
-      setSourceLang(firstRecent || 'en')
+    if (newMode !== 'direct') {
+      directModeLangRef.current = 'auto'
+      if (sourceLang === 'auto') {
+        const firstRecent = (recentLanguages || []).find(l => l !== 'auto')
+        setSourceLang(firstRecent || 'en')
+      }
     }
   }
   const getPlaceholder = () => {

@@ -55,7 +55,7 @@ class Storage:
         with open(text_path, 'w', encoding='utf-8') as f:
             f.write(text)
 
-    def save_word_cache(self, file_id: str, word: str, word_info: Dict):
+    def save_word_cache(self, file_id: str, word: str, word_info: Dict, overwrite_index: bool = False):
         file_dir = self.get_file_dir(file_id)
         cache_dir = file_dir / "word_cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
@@ -66,7 +66,7 @@ class Storage:
         try:
             settings = self.load_language_settings(file_id)
             source_lang = settings.get("source_lang", "en")
-            self.add_word_to_language_index(source_lang, word, file_id)
+            self.add_word_to_language_index(source_lang, word, file_id, overwrite=overwrite_index)
         except Exception:
             pass
 
@@ -99,13 +99,13 @@ class Storage:
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(index, f, ensure_ascii=False, indent=2)
 
-    def add_word_to_language_index(self, source_lang: str, word: str, file_id: str):
-        """将单词加入语言级索引（如果尚未存在）"""
+    def add_word_to_language_index(self, source_lang: str, word: str, file_id: str, overwrite: bool = False):
+        """将单词加入语言级索引。overwrite=True 时强制更新指向新的 file_id"""
         if not word or not source_lang:
             return
         word_lower = word.lower()
         index = self.load_language_word_index(source_lang)
-        if word_lower not in index:
+        if overwrite or word_lower not in index:
             index[word_lower] = file_id
             self.save_language_word_index(source_lang, index)
 
