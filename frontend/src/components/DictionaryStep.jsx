@@ -88,10 +88,17 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         setShowGlobalVocab(false)
         setVocabSearch('')
         setSentenceSearch('')
+        setExpandedWord(null)
+        setWordDetailCache({})
+        setLoadingWords({})
+        setWordDetails({})
+        setMeaningOverrides({})
+        setGlobalVocab([])
         localVocabScrollPos.current = 0
         globalVocabScrollPos.current = 0
         sentenceTranslationScrollPos.current = 0
         sentenceOriginalScrollPos.current = 0
+        initialRestoreDone.current = false
       } else if (dictStateRef) {
         dictStateRef.current._lastFileId = currentFileId
       }
