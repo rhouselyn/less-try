@@ -57,8 +57,10 @@ function AllUnitsStep({
 
   const isPhase1Unlocked = (index) => {
     if (index === 0) return true;
-    // 只要该单元的单词详情已生成好就解锁，不需要前面的单元完成
-    return !generatingUnits?.has(index);
+    for (let i = 0; i < index; i++) {
+      if (!phase1Units[i]?.completed) return false;
+    }
+    return true;
   };
 
   const isPhase2Unlocked = (index) => {
