@@ -16,9 +16,13 @@
 
 ## ✨ 特色功能
 
-### 📝 输入即学习
+### 📝 三种输入模式
 
-粘贴一篇文章、一首歌词、一段新闻——任何文本都能变成学习材料。AI 自动检测语言、分句翻译、提取词汇，为你量身定制学习内容。
+| 模式 | 说明 | 适用场景 |
+|------|------|----------|
+| **直接输入** | 粘贴原文直接学习，AI 自动检测语言 | 已有外语文本：文章、歌词、新闻、台词 |
+| **翻译学习** | 输入母语文本，AI 翻译成目标语言后再学习 | 想用自己熟悉的素材来学外语 |
+| **AI 生成** | 输入主题，AI 生成目标语言文本后再学习 | 没有素材时，让 AI 按需生成学习内容 |
 
 ### 🎯 两种学习阶段
 
@@ -35,7 +39,7 @@
 
 ### 🌍 多语言界面
 
-界面语言与学习语言独立设置。选择你的母语，整个界面自动翻译——中英文静态覆盖，其他语言由 AI 实时翻译，三级缓存确保速度。
+支持任意语言作为母语——选择你的母语后，整个界面自动翻译为该语言，让不同母语的用户都能无障碍使用。
 
 ### 📚 词汇管理
 
@@ -91,7 +95,7 @@ npm run dev
 输入文本 → AI 分句翻译 → 生成词汇表 → 阶段一：学单词 → 阶段二：练句子 → 错题回顾
 ```
 
-1. **输入文本**：直接粘贴、自动翻译、或让 AI 生成
+1. **输入文本**：直接粘贴、翻译成目标语言、或让 AI 生成
 2. **浏览字典**：查看分句翻译和词汇释义
 3. **阶段一**：逐个学习单词，完成句子翻译选择
 4. **阶段二**：听力测验、填空练习、翻译重组
@@ -103,7 +107,7 @@ npm run dev
 
 所有配置通过界面设置完成，无需编辑配置文件：
 
-- **API Key**：支持多组配置切换
+- **API Key**：支持多组配置轮询
 - **母语**：选择界面显示语言
 - **每页数量**：控制词汇表每页显示的单词数
 - **重试间隔**：API 限速后的等待时间
@@ -113,3 +117,11 @@ npm run dev
 ## 📄 许可
 
 MIT License
+
+Copyright (c) 2025 Lesslingo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
