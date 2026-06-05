@@ -10,9 +10,13 @@ from text_processor import is_punctuation_only, strip_edge_punctuation, is_sourc
 
 
 class RateLimiter:
-    def __init__(self, rpm):
-        self.rpm = rpm
-        self.interval = 60.0 / rpm if rpm > 0 else 0
+    def __init__(self, rpm=None, interval=None):
+        if interval is not None:
+            self.interval = interval
+        elif rpm is not None and rpm > 0:
+            self.interval = 60.0 / rpm
+        else:
+            self.interval = 1.0
         self.last_call = 0
         self.lock = asyncio.Lock()
 

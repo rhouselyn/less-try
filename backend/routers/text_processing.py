@@ -32,7 +32,6 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
 
         app_settings = storage.load_user_preferences()
-        rpm = app_settings.get("rpm", 60)
 
         recent_langs = app_settings.get("recent_languages", [])
         if source_lang in recent_langs:
@@ -50,7 +49,7 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         text_preview = text.strip()[:100]
         storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
 
-        background_tasks.add_task(process_text_background, file_id, text, source_lang, target_lang, rpm)
+        background_tasks.add_task(process_text_background, file_id, text, source_lang, target_lang)
 
         t_api_end = time.time()
         print(f"[TIMING] /api/process-text API响应耗时: {t_api_end - t_api_start:.3f}s")

@@ -23,7 +23,9 @@ from utils.helpers import (
 async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str, rpm: int = 20):
     try:
         t_total_start = time.time()
-        print(f"[DEBUG] 开始处理文件 {file_id}, RPM={rpm}")
+        app_prefs = storage.load_user_preferences()
+        retry_interval = app_prefs.get("retry_interval", 1.0)
+        print(f"[DEBUG] 开始处理文件 {file_id}, 请求间隔={retry_interval}s")
         processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0}
 
         storage.save_language_settings(file_id, source_lang, target_lang)
@@ -36,7 +38,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
 
         processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": total_sentences}
 
-        rate_limiter = RateLimiter(rpm)
+        rate_limiter = RateLimiter(interval=retry_interval)
         results_dict = {}
         completed_indices = set()
 
@@ -461,8 +463,8 @@ async def background_word_gen(file_id: str):
     global word_gen_rate_limiter
     if not word_gen_rate_limiter:
         app_settings = storage.load_user_preferences()
-        rpm = app_settings.get("rpm", 60)
-        word_gen_rate_limiter = RateLimiter(rpm)
+        retry_interval = app_settings.get("retry_interval", 1.0)
+        word_gen_rate_limiter = RateLimiter(interval=retry_interval)
 
     while state["running"]:
         word_to_gen = None

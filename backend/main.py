@@ -39,12 +39,12 @@ app.include_router(settings.router)
 @app.on_event("startup")
 async def startup_event():
     global word_gen_rate_limiter
-    from utils.state import word_gen_rate_limiter as _wgrl
+    from utils.state import word_gen_rate_limiter as _wgrl, storage
     import utils.state as _state
 
-    app_settings = get_settings()
-    rpm = app_settings.get("rpm", 20)
-    _state.word_gen_rate_limiter = RateLimiter(rpm)
+    app_settings = storage.load_user_preferences()
+    retry_interval = app_settings.get("retry_interval", 1.0)
+    _state.word_gen_rate_limiter = RateLimiter(interval=retry_interval)
 
     # Load existing translation files into cache
     if UI_TRANSLATIONS_DIR.exists():
