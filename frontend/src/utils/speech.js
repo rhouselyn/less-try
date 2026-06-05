@@ -212,7 +212,7 @@ function speakText(text, sourceLang = 'en', slow = false) {
     } else {
       u.lang = sourceLang + '-' + sourceLang.toUpperCase()
     }
-    u.rate = slow ? 0.6 : 1.15
+    u.rate = slow ? 0.6 : 1
 
     const voice = findBestVoice(u.lang)
     if (voice) {
