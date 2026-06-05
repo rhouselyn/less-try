@@ -8,7 +8,7 @@ import time
 
 from nvidia_api import get_settings, get_lang_name
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
-from utils.state import nvidia_api, text_processor, storage, processing_status, word_gen_state, word_gen_rate_limiter
+from utils.state import nvidia_api, text_processor, storage, processing_status, word_gen_state
 from utils.helpers import (
     RateLimiter, vocab_sort_key, is_speaker_label, is_punctuation_only as _is_punct,
     get_translation_phrases, split_translation_to_phrases, select_key_tokens,
@@ -38,7 +38,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
 
         processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": total_sentences}
 
-        rate_limiter = RateLimiter(interval=retry_interval)
         results_dict = {}
         completed_indices = set()
 
@@ -53,11 +52,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             context_sentences = {"before": before_sentences, "after": after_sentences} if (before_sentences or after_sentences) else None
 
             t_sentence_start = time.time()
-
-            t_rate_start = time.time()
-            await rate_limiter.acquire()
-            t_rate_end = time.time()
-            print(f"[TIMING] 句子 {idx+1} 等待限速: {t_rate_end - t_rate_start:.3f}s")
 
             t_llm_start = time.time()
             print(f"[DEBUG] 正在翻译句子 {idx+1}/{total_sentences}: {repr(sentence)}")
@@ -111,7 +105,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             if missing_words:
                 print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
                 t_missing_start = time.time()
-                await rate_limiter.acquire()
                 remaining_entries = await nvidia_api.process_remaining_words(
                     missing_words, source_lang, target_lang, sentence
                 )
@@ -356,10 +349,6 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                     elif "context_meaning" in word_entry:
                         correct_meaning = word_entry["context_meaning"]
 
-                global word_gen_rate_limiter
-                if word_gen_rate_limiter:
-                    await word_gen_rate_limiter.acquire()
-
                 print(f"[DEBUG] Background word gen: {word_to_gen} (attempt {attempt + 1})")
                 options_result = await nvidia_api.generate_multiple_choice(
                     word_to_gen,
@@ -374,8 +363,6 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                 enriched = options_result.get("enriched_meaning", "")
                 if placeholder_pattern.search(enriched):
                     print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
-                    if word_gen_rate_limiter:
-                        await word_gen_rate_limiter.acquire()
                     options_result = await nvidia_api.generate_multiple_choice(
                         word_to_gen,
                         correct_meaning,
@@ -459,12 +446,6 @@ async def background_word_gen(file_id: str):
         state["plan_position"] = min(state.get("plan_position", 0), first_uncached)
     elif "plan_position" not in state:
         state["plan_position"] = len(plan_word_order)
-
-    global word_gen_rate_limiter
-    if not word_gen_rate_limiter:
-        app_settings = storage.load_user_preferences()
-        retry_interval = app_settings.get("retry_interval", 1.0)
-        word_gen_rate_limiter = RateLimiter(interval=retry_interval)
 
     while state["running"]:
         word_to_gen = None

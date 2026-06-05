@@ -236,7 +236,7 @@ async def regenerate_word_detail(request: dict):
     try:
         word = request.get("word", "")
         source_lang = request.get("source_lang", "en")
-        target_lang = request.get("target_lang", "en")
+        target_lang = request.get("target_lang", "zh")
         if not word:
             raise HTTPException(status_code=400, detail="Word is required")
 
@@ -343,7 +343,7 @@ async def get_file_info(file_id: str):
         settings = storage.load_language_settings(file_id)
         return {
             "source_lang": settings.get("source_lang", "en"),
-            "target_lang": settings.get("target_lang", "en")
+            "target_lang": settings.get("target_lang", "zh")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -253,49 +253,57 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
         from storage import Storage
         storage = Storage()
         prefs = storage.load_user_preferences()
-        retry_interval = prefs.get("retry_interval", 1.0)
+        interval = prefs.get("retry_interval", 1.0)
     except Exception:
-        retry_interval = 1.0
+        interval = 1.0
 
-    start_time = _time.time()
-    max_duration = 600
+    fail_start = None
     last_exception = None
     attempt = 0
     while True:
-        elapsed = _time.time() - start_time
-        if elapsed >= max_duration:
-            if last_exception:
-                raise last_exception
-            raise Exception("API call timed out after 10 minutes")
+        # 持续失败超过10分钟则放弃
+        if fail_start is not None:
+            fail_duration = _time.time() - fail_start
+            if fail_duration >= 600:
+                if last_exception:
+                    raise last_exception
+                raise Exception("API calls failed continuously for 10 minutes")
 
         idx = (active_index + attempt) % num_configs
         config = configs[idx]
         try:
             api = NvidiaAPI(config_index=idx)
             result = await api.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
+            # 成功：重置失败计时器，保存当前 key 为活跃 key
+            fail_start = None
+            last_exception = None
+            attempt = 0
             if idx != active_index:
                 print(f"[ROTATE] Switched from config {active_index} to config {idx} (model={config.get('model', '')})")
                 settings["active_index"] = idx
                 _save_settings(settings)
+            # 等待间隔后再返回，让下一次请求也遵守间隔
+            await asyncio.sleep(interval)
             return result
         except (requests.exceptions.HTTPError, requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
-            is_rate_limit = False
+            # 记录失败开始时间
+            if fail_start is None:
+                fail_start = _time.time()
+            last_exception = e
+
+            status_code = None
             if isinstance(e, requests.exceptions.HTTPError) and e.response is not None:
-                if e.response.status_code in (429, 503, 502):
-                    is_rate_limit = True
-            if is_rate_limit:
-                print(f"[ROTATE] Config {idx} rate-limited ({e.response.status_code if e.response else 'N/A'}), waiting {retry_interval}s then switching to config {(idx + 1) % num_configs}")
-                await asyncio.sleep(retry_interval)
-                attempt += 1
-                last_exception = e
-                continue
+                status_code = e.response.status_code
+
+            if status_code in (429, 502, 503):
+                print(f"[ROTATE] Config {idx} rate-limited ({status_code}), waiting {interval}s then switching to config {(idx + 1) % num_configs}")
             else:
-                if num_configs > 1 and attempt < num_configs - 1:
-                    print(f"[ROTATE] Config {idx} failed: {e}, trying config {(idx + 1) % num_configs}...")
-                    attempt += 1
-                    last_exception = e
-                    continue
-                raise
+                print(f"[ROTATE] Config {idx} failed: {e}, waiting {interval}s then switching to config {(idx + 1) % num_configs}")
+
+            # 等待间隔后切换到下一个 key
+            await asyncio.sleep(interval)
+            attempt += 1
+            continue
 
 
 async def detect_language(text: str) -> str:

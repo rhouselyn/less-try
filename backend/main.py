@@ -9,8 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from nvidia_api import get_settings
 from config import UI_TRANSLATIONS_DIR, FRONTEND_DIST_DIR, HOST, PORT
-from utils.state import _ui_translation_cache, word_gen_rate_limiter
-from utils.helpers import RateLimiter
+from utils.state import _ui_translation_cache
 
 # ── 创建应用 ──────────────────────────────────────────────
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
@@ -38,14 +37,6 @@ app.include_router(settings.router)
 # ── 启动事件 ──────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_event():
-    global word_gen_rate_limiter
-    from utils.state import word_gen_rate_limiter as _wgrl, storage
-    import utils.state as _state
-
-    app_settings = storage.load_user_preferences()
-    retry_interval = app_settings.get("retry_interval", 1.0)
-    _state.word_gen_rate_limiter = RateLimiter(interval=retry_interval)
-
     # Load existing translation files into cache
     if UI_TRANSLATIONS_DIR.exists():
         for cache_file in UI_TRANSLATIONS_DIR.glob("*.json"):
