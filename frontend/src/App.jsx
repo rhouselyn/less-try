@@ -101,6 +101,7 @@ function App() {
   const unitErrorCountRef = useRef(0)
   const isFetchingNextRef = useRef(false)
   const [skipListening, setSkipListening] = useState(false)
+  const [historyRefresh, setHistoryRefresh] = useState(0)
   const [onlyNewWords, setOnlyNewWords] = useState(false)
   const [generatingUnits, setGeneratingUnits] = useState(new Set())
   const [lastActiveTab, setLastActiveTab] = useState(0)
@@ -293,6 +294,7 @@ function App() {
           setProcessingInfo(null)
           setLoading(false)
           setSkipPolling(true)
+          setHistoryRefresh(v => v + 1)
           // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
@@ -388,6 +390,10 @@ function App() {
     setSelectedSentence(null)
     setSelectedOption(null)
     setIsCorrect(null)
+    setCurrentFileId(null)
+    setFileId(null)
+    // 重置字典状态，避免显示上一个条目的残留
+    dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }
     
     if (inputMode === 'translate') {
       setPreprocessStatus('translating')
@@ -1188,7 +1194,7 @@ function App() {
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
-            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
+            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} refreshTrigger={historyRefresh} />
             <div className="flex-1 min-w-0 relative h-full px-4 sm:px-6 lg:px-8 py-4">
               {wordListLang ? (
                 <WordListPanel

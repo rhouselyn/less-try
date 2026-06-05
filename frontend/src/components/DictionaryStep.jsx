@@ -329,6 +329,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
       container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
     } else {
+      // 字母不在当前页，先跳转到对应页面
       const currentList = showGlobalVocab ? filteredGlobalVocab : filteredVocab
       const letterLower = letter.toLowerCase()
       const wordIdx = currentList.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
@@ -336,6 +337,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         const targetPage = Math.floor(wordIdx / pageSize) + 1
         const currentPage = showGlobalVocab ? globalVocabPage : vocabPage
         if (targetPage !== currentPage) {
+          // 设置待跳转字母，页面切换后自动滚动
+          pendingScrollWord.current = `letter-${letter}`
           if (showGlobalVocab) {
             setGlobalVocabPage(targetPage)
           } else {
@@ -345,6 +348,25 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       }
     }
   }
+
+  // 页面切换后滚动到目标字母
+  useEffect(() => {
+    if (pendingScrollWord.current && typeof pendingScrollWord.current === 'string' && pendingScrollWord.current.startsWith('letter-')) {
+      const letter = pendingScrollWord.current.replace('letter-', '')
+      pendingScrollWord.current = null
+      setTimeout(() => {
+        const el = document.getElementById(`dict-group-${letter}`)
+        if (el && vocabListRef.current) {
+          const container = vocabListRef.current
+          const containerRect = container.getBoundingClientRect()
+          const elRect = el.getBoundingClientRect()
+          const stickyOffset = 32
+          const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+          container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+        }
+      }, 200)
+    }
+  }, [vocabPage, globalVocabPage])
 
   const fetchWordDetail = useCallback(async (wordKey) => {
     if (wordDetails[wordKey]) return wordDetails[wordKey]
@@ -1055,7 +1077,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
                           onCurrentPage
                             ? 'text-ink-600 hover:text-ochre-500 hover:bg-ochre-50'
-                            : 'text-bone-300 hover:text-ochre-500 hover:bg-ochre-50/50'
+                            : 'text-bone-300/60 hover:text-ochre-500 hover:bg-ochre-50/50'
                         }`}
                       >
                         {letter}
