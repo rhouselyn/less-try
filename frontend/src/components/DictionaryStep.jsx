@@ -31,22 +31,31 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [wordGenProgress, setWordGenProgress] = useState(null)
   const [meaningOverrides, setMeaningOverrides] = useState({})
   const vocabListRef = useRef(null)
+  const sentenceListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
   const titleInputRef = useRef(null)
   const pendingScrollWord = useRef(null)
   const localVocabScrollPos = useRef(saved.vocabScrollPos || 0)
   const globalVocabScrollPos = useRef(saved.globalVocabScrollPos || 0)
+  const sentenceTranslationScrollPos = useRef(saved.sentenceTranslationScrollPos || 0)
+  const sentenceOriginalScrollPos = useRef(saved.sentenceOriginalScrollPos || 0)
   const filteredVocabRef = useRef([])
   const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
+  const showGlobalVocabRef = useRef(showGlobalVocab)
+  const showOriginalRef = useRef(showOriginal)
+
+  useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
+  useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
 
   const saveState = () => {
     if (dictStateRef) {
       dictStateRef.current = {
         vocabPage, sentencePage, globalVocabPage,
         vocabScrollPos: localVocabScrollPos.current,
-        sentenceScrollPos: 0,
+        sentenceTranslationScrollPos: sentenceTranslationScrollPos.current,
+        sentenceOriginalScrollPos: sentenceOriginalScrollPos.current,
         globalVocabScrollPos: globalVocabScrollPos.current,
         vocabDisplayMode, sentenceDisplayMode,
         showOriginal, showGlobalVocab,
@@ -61,6 +70,31 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   useEffect(() => {
     if (currentFileId) {
+      // 不同条目切换时清空状态
+      if (dictStateRef && dictStateRef.current?._lastFileId && dictStateRef.current._lastFileId !== currentFileId) {
+        dictStateRef.current = {
+          vocabPage: 1, sentencePage: 1, globalVocabPage: 1,
+          vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0,
+          globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0,
+          showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '',
+          _lastFileId: currentFileId
+        }
+        setVocabPage(1)
+        setSentencePage(1)
+        setGlobalVocabPage(1)
+        setVocabDisplayMode(0)
+        setSentenceDisplayMode(0)
+        setShowOriginal(false)
+        setShowGlobalVocab(false)
+        setVocabSearch('')
+        setSentenceSearch('')
+        localVocabScrollPos.current = 0
+        globalVocabScrollPos.current = 0
+        sentenceTranslationScrollPos.current = 0
+        sentenceOriginalScrollPos.current = 0
+      } else if (dictStateRef) {
+        dictStateRef.current._lastFileId = currentFileId
+      }
       fetch(`/api/file/${currentFileId}/info`)
         .then(r => r.json())
         .then(data => {
@@ -237,6 +271,54 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
   }, [showGlobalVocab, globalVocabLoading])
 
+  // 切换句子翻译/显示原文时保存/恢复滚动位置
+  const handleToggleShowOriginal = useCallback(() => {
+    // 保存当前模式的滚动位置
+    if (sentenceListRef.current) {
+      if (showOriginal) {
+        sentenceOriginalScrollPos.current = sentenceListRef.current.scrollTop
+      } else {
+        sentenceTranslationScrollPos.current = sentenceListRef.current.scrollTop
+      }
+    }
+    setShowOriginal(v => !v)
+  }, [showOriginal])
+
+  // 切换 showOriginal 后恢复滚动位置
+  useEffect(() => {
+    if (!sentenceListRef.current) return
+    const targetPos = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
+    if (typeof targetPos === 'number' && targetPos > 0) {
+      requestAnimationFrame(() => {
+        if (sentenceListRef.current) sentenceListRef.current.scrollTop = targetPos
+      })
+    }
+  }, [showOriginal])
+
+  // 初始恢复句子面板和词汇面板滚动位置（内容渲染后）
+  const initialRestoreDone = useRef(false)
+  useEffect(() => {
+    if (initialRestoreDone.current) return
+    if (!vocab.length && !sentenceTranslations.length) return
+    initialRestoreDone.current = true
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (sentenceListRef.current) {
+          const sentenceTarget = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
+          if (typeof sentenceTarget === 'number' && sentenceTarget > 0) {
+            sentenceListRef.current.scrollTop = sentenceTarget
+          }
+        }
+        if (vocabListRef.current) {
+          const vocabTarget = showGlobalVocab ? globalVocabScrollPos.current : localVocabScrollPos.current
+          if (typeof vocabTarget === 'number' && vocabTarget > 0) {
+            vocabListRef.current.scrollTop = vocabTarget
+          }
+        }
+      })
+    })
+  }, [vocab, sentenceTranslations])
+
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
     if (el && vocabListRef.current) {
@@ -247,6 +329,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
       container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
     } else {
+      // 字母不在当前页，先跳转到对应页面
       const currentList = showGlobalVocab ? filteredGlobalVocab : filteredVocab
       const letterLower = letter.toLowerCase()
       const wordIdx = currentList.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
@@ -254,6 +337,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         const targetPage = Math.floor(wordIdx / pageSize) + 1
         const currentPage = showGlobalVocab ? globalVocabPage : vocabPage
         if (targetPage !== currentPage) {
+          // 设置待跳转字母，页面切换后自动滚动
+          pendingScrollWord.current = `letter-${letter}`
           if (showGlobalVocab) {
             setGlobalVocabPage(targetPage)
           } else {
@@ -263,6 +348,25 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       }
     }
   }
+
+  // 页面切换后滚动到目标字母
+  useEffect(() => {
+    if (pendingScrollWord.current && typeof pendingScrollWord.current === 'string' && pendingScrollWord.current.startsWith('letter-')) {
+      const letter = pendingScrollWord.current.replace('letter-', '')
+      pendingScrollWord.current = null
+      setTimeout(() => {
+        const el = document.getElementById(`dict-group-${letter}`)
+        if (el && vocabListRef.current) {
+          const container = vocabListRef.current
+          const containerRect = container.getBoundingClientRect()
+          const elRect = el.getBoundingClientRect()
+          const stickyOffset = 32
+          const scrollOffset = elRect.top - containerRect.top + container.scrollTop - stickyOffset
+          container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+        }
+      }, 200)
+    }
+  }, [vocabPage, globalVocabPage])
 
   const fetchWordDetail = useCallback(async (wordKey) => {
     if (wordDetails[wordKey]) return wordDetails[wordKey]
@@ -695,16 +799,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }
 
   useEffect(() => {
+    // 卸载时保存当前滚动位置（不覆盖已有的页码等状态，因为saveState已经保存了）
     return () => {
       if (dictStateRef) {
+        const vocabScrollTop = vocabListRef.current?.scrollTop || 0
+        const sentenceScrollTop = sentenceListRef.current?.scrollTop || 0
+        const isGlobal = showGlobalVocabRef.current
+        const isOriginal = showOriginalRef.current
         dictStateRef.current = {
           ...dictStateRef.current,
-          vocabScrollPos: localVocabScrollPos.current,
-          globalVocabScrollPos: globalVocabScrollPos.current,
-          vocabPage, sentencePage, globalVocabPage,
-          vocabDisplayMode, sentenceDisplayMode,
-          showOriginal, showGlobalVocab,
-          vocabSearch, sentenceSearch
+          vocabScrollPos: isGlobal ? dictStateRef.current.vocabScrollPos : vocabScrollTop,
+          globalVocabScrollPos: isGlobal ? vocabScrollTop : dictStateRef.current.globalVocabScrollPos,
+          sentenceTranslationScrollPos: isOriginal ? dictStateRef.current.sentenceTranslationScrollPos : sentenceScrollTop,
+          sentenceOriginalScrollPos: isOriginal ? sentenceScrollTop : dictStateRef.current.sentenceOriginalScrollPos,
         }
       }
     }
@@ -757,7 +864,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
         <div className="flex-1 min-w-0" />
 
-        {currentFileId && (preprocessStatus || (processingInfo && safeProcessingInfo.total > 0 && progress < 100) || (wordGenProgress && wordGenProgress.completed < wordGenProgress.total)) && (
+        {(preprocessStatus || (currentFileId && ((processingInfo && safeProcessingInfo.total > 0 && progress < 100) || (wordGenProgress && wordGenProgress.completed < wordGenProgress.total)))) && (
           <div className="flex items-center gap-2.5 shrink-0">
             {preprocessStatus ? (
               <div className="flex items-center gap-1.5">
@@ -812,7 +919,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           onClick={onStartLearning}
-          disabled={loading || !!preprocessStatus || vocab.length === 0}
+          disabled={loading || !!preprocessStatus || vocab.length === 0 || (processingInfo && processingInfo.total > 0 && progress < 100)}
           className="btn-primary flex items-center gap-2 shrink-0"
         >
           {(loading || preprocessStatus) ? (
@@ -837,7 +944,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
                   <Languages className={`w-4 h-4 transition-colors cursor-pointer ${sentenceDisplayMode !== 0 ? 'text-ochre-500' : 'text-ink-500 hover:text-ochre-500'}`} onClick={(e) => { e.stopPropagation(); setSentenceDisplayMode(v => (v + 1) % 3) }} title={sentenceDisplayMode === 0 ? t.showAll : sentenceDisplayMode === 1 ? t.hideTranslation : t.hideOriginal} />
                   <h3 className="text-sm font-semibold text-ink-700 font-display">
-                    <span className="cursor-pointer select-none" onClick={() => setShowOriginal(v => !v)}>
+                    <span className="cursor-pointer select-none" onClick={handleToggleShowOriginal}>
                       <span className={!showOriginal ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.sentTranslation}</span>
                       <span className="text-bone-300 mx-1.5">/</span>
                       <span className={showOriginal ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.showOriginal}</span>
@@ -859,7 +966,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-scroll min-h-0" style={{ scrollbarGutter: 'stable' }}>
+            <div className="flex-1 overflow-y-scroll min-h-0" ref={sentenceListRef} style={{ scrollbarGutter: 'stable' }}>
               {showOriginal ? (
                 <div className="p-4">
                   <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
@@ -877,7 +984,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           className={`p-4 cursor-pointer transition-colors ${
                             selectedSentence === originalIndex ? 'bg-ochre-50/60' : 'hover:bg-ochre-50/30'
                           }`}
-                          onClick={() => onSentenceClick(originalIndex)}
+                          onClick={() => {
+                            const isCollapsing = selectedSentence === originalIndex
+                            onSentenceClick(originalIndex)
+                            if (!isCollapsing) speakText(item.sentence || '', actualSourceLang)
+                          }}
                         >
                           <div className="flex items-start gap-2">
                             <div className="flex-1 min-w-0">
@@ -955,7 +1066,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             </div>
             <div className="flex-1 flex min-h-0">
               {((!showGlobalVocab && allLetterIndex.length > 1) || (showGlobalVocab && allGlobalLetterIndex.length > 1)) && (
-                <div className="flex flex-col items-center gap-0.5 py-2 border-r border-bone-200/60 bg-cream-50/40 w-7 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-px py-1 border-r border-bone-200/60 bg-cream-50/40 w-5 shrink-0 overflow-y-auto">
                   {(showGlobalVocab ? allGlobalLetterIndex : allLetterIndex).map(letter => {
                     const currentIdx = showGlobalVocab ? globalLetterIndex : letterIndex
                     const onCurrentPage = currentIdx.includes(letter)
@@ -963,10 +1074,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                       <button
                         key={letter}
                         onClick={() => scrollToLetter(letter)}
-                        className={`w-5 h-5 flex items-center justify-center text-[9px] font-semibold rounded transition-colors shrink-0 ${
+                        className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
                           onCurrentPage
                             ? 'text-ink-600 hover:text-ochre-500 hover:bg-ochre-50'
-                            : 'text-bone-300 hover:text-ochre-500 hover:bg-ochre-50/50'
+                            : 'text-bone-300/60 hover:text-ochre-500 hover:bg-ochre-50/50'
                         }`}
                       >
                         {letter}

@@ -203,6 +203,10 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     return groupedWords.map(([letter]) => letter)
   }, [groupedWords])
 
+  const allLetterIndex = useMemo(() => {
+    return groupVocab(filteredWords).map(([letter]) => letter)
+  }, [filteredWords])
+
   useEffect(() => {
     setPage(1)
   }, [searchQuery])
@@ -244,10 +248,37 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     }, 50)
   }
 
+  const pendingLetterRef = useRef(null)
+
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`letter-${letter}`)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    } else {
+      // 字母不在当前页，先跳转到对应页面
+      const letterLower = letter.toLowerCase()
+      const wordIdx = filteredWords.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
+      if (wordIdx >= 0) {
+        const targetPage = Math.floor(wordIdx / pageSize) + 1
+        if (targetPage !== page) {
+          pendingLetterRef.current = letter
+          setPage(targetPage)
+        }
+      }
+    }
   }
+
+  // 页面切换后滚动到目标字母
+  useEffect(() => {
+    if (pendingLetterRef.current) {
+      const letter = pendingLetterRef.current
+      pendingLetterRef.current = null
+      setTimeout(() => {
+        const el = document.getElementById(`letter-${letter}`)
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }, 200)
+    }
+  }, [page])
 
   const renderPagination = () => {
     if (totalPages <= 1) return null
@@ -289,17 +320,24 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
     return (
       <div className="flex h-full">
-        {letterIndex.length > 1 && !searchQuery && (
-          <div className="flex flex-col items-center py-2 px-1 border-r border-cream-100 bg-cream-50/50 shrink-0">
-            {letterIndex.map(letter => (
-              <button
-                key={letter}
-                onClick={() => scrollToLetter(letter)}
-                className="text-[9px] font-medium text-ink-400 hover:text-ochre-500 hover:bg-ochre-50 rounded px-1 py-px transition-colors leading-tight"
-              >
-                {letter}
-              </button>
-            ))}
+        {allLetterIndex.length > 1 && !searchQuery && (
+          <div className="flex flex-col items-center gap-px py-1 border-r border-cream-100 bg-cream-50/50 shrink-0 w-5">
+            {allLetterIndex.map(letter => {
+              const onCurrentPage = letterIndex.includes(letter)
+              return (
+                <button
+                  key={letter}
+                  onClick={() => scrollToLetter(letter)}
+                  className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors leading-tight ${
+                    onCurrentPage
+                      ? 'text-ink-600 hover:text-ochre-500 hover:bg-ochre-50'
+                      : 'text-bone-300/60 hover:text-ochre-500 hover:bg-ochre-50/50'
+                  }`}
+                >
+                  {letter}
+                </button>
+              )
+            })}
           </div>
         )}
         <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>

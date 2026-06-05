@@ -80,6 +80,8 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     speakText(text, sourceLang)
   }, [sourceLang])
 
+  const pendingLetterRef = useRef(null)
+
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`vocab-group-${letter}`)
     if (el && listRef.current) {
@@ -89,14 +91,36 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
       const scrollOffset = elRect.top - containerRect.top + container.scrollTop - 32
       container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
     } else {
+      // 字母不在当前页，先跳转到对应页面
       const letterLower = letter.toLowerCase()
       const wordIdx = filteredVocab.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
       if (wordIdx >= 0) {
         const targetPage = Math.floor(wordIdx / pageSize) + 1
-        if (targetPage !== currentPage) setCurrentPage(targetPage)
+        if (targetPage !== currentPage) {
+          pendingLetterRef.current = letter
+          setCurrentPage(targetPage)
+        }
       }
     }
   }
+
+  // 页面切换后滚动到目标字母
+  useEffect(() => {
+    if (pendingLetterRef.current) {
+      const letter = pendingLetterRef.current
+      pendingLetterRef.current = null
+      setTimeout(() => {
+        const el = document.getElementById(`vocab-group-${letter}`)
+        if (el && listRef.current) {
+          const container = listRef.current
+          const containerRect = container.getBoundingClientRect()
+          const elRect = el.getBoundingClientRect()
+          const scrollOffset = elRect.top - containerRect.top + container.scrollTop - 32
+          container.scrollTo({ top: scrollOffset, behavior: 'smooth' })
+        }
+      }, 200)
+    }
+  }, [currentPage])
 
   const getEnriched = (word) => enrichedWords[word] || {}
 
@@ -203,17 +227,17 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
           ) : (
             <>
               {allLetterIndex.length > 1 && (
-                <div className="flex flex-col items-center gap-0.5 py-2 border-r border-bone-200/60 bg-cream-50/40 w-7 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-px py-1 border-r border-bone-200/60 bg-cream-50/40 w-5 shrink-0 overflow-y-auto">
                   {allLetterIndex.map(letter => {
                     const onCurrentPage = letterIndex.includes(letter)
                     return (
                       <button
                         key={letter}
                         onClick={() => scrollToLetter(letter)}
-                        className={`w-5 h-5 flex items-center justify-center text-[9px] font-semibold rounded transition-colors shrink-0 ${
+                        className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
                           onCurrentPage
                             ? 'text-ink-600 hover:text-ochre-500 hover:bg-ochre-50'
-                            : 'text-bone-300 hover:text-ochre-500 hover:bg-ochre-50/50'
+                            : 'text-bone-300/60 hover:text-ochre-500 hover:bg-ochre-50/50'
                         }`}
                       >
                         {letter}

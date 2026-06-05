@@ -1,3 +1,5 @@
+[**中文**](README.md) | [English](docs/README_en.md) | [日本語](docs/README_ja.md) | [한국어](docs/README_ko.md) | [Español](docs/README_es.md) | [Français](docs/README_fr.md)
+
 <div align="center">
 
 # 🐸 呱邻国
@@ -7,9 +9,19 @@
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://react.dev)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python)](https://python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 
 </div>
+
+---
+
+## 呱邻国是什么？
+
+呱邻国是一个 AI 驱动的沉浸式外语学习平台。你提供任何文本，AI 自动生成词汇表、分句翻译和多种练习题，配合语音朗读，把每一段文字都变成你的专属学习材料。
+
+**任何语言 → 任何语言，你的素材你做主。**
+
+**只需一个 API Key，无需数据库，纯 LLM 能力驱动一切。**
 
 ---
 
@@ -21,16 +33,7 @@
 | **做题时想查其它单词** | 学习过程中随时打开单词分表，查看任意单词的释义和详情，不打断学习节奏 |
 | **学了也很难用上** | 你提供什么素材就学什么——歌词、新闻、台词、论文，学到的就是你真正会遇到的 |
 | **小众语种不支持** | 支持任意语言互学，AI 自动检测语种，120+ 种语言 TTS 朗读，不再受限于平台资源 |
-
----
-
-## 呱邻国是什么？
-
-呱邻国是一个 AI 驱动的沉浸式外语学习平台。你提供任何文本，AI 自动生成词汇表、分句翻译和多种练习题，配合语音朗读，把每一段文字都变成你的专属学习材料。
-
-**任何语言 → 任何语言，你的素材你做主。**
-
-**只需一个 API Key，无需数据库，纯 LLM 能力驱动一切。**
+| **无法深入理解一篇文章** | 把文章丢进来，AI 分句翻译、提取全部词汇、生成练习题，从单词到句子到整篇，彻底吃透每篇文章 |
 
 ---
 
@@ -55,6 +58,10 @@
 ### 🌍 "我的母语不是英语/中文" → 任意语言界面
 
 选择你的母语，整个界面自动翻译为该语言。不管你的母语是什么，都能无障碍使用。
+
+### 📖 "中学生阅读理解，想彻底吃透一篇文章" → 文章精读模式
+
+把阅读理解的文章放进去，AI 自动分句翻译、提取所有生词和短语，生成词汇卡片和多种练习题。从逐词理解到整篇把握，帮你彻底搞懂一篇文章的每一个细节。
 
 ---
 
@@ -182,4 +189,4 @@ npm run dev
 
 ## 📄 许可
 
-[MIT License](LICENSE)
+[GNU GPL v3 License](LICENSE)

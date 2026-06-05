@@ -46,7 +46,7 @@ function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
-  const [targetLang, setTargetLang] = useState('zh')
+  const [targetLang, setTargetLang] = useState('en')
   const [uiLang, setUiLang] = useState('zh')
   const [customTranslations, setCustomTranslations] = useState({})
   const [translatingUI, setTranslatingUI] = useState(false)
@@ -101,6 +101,7 @@ function App() {
   const unitErrorCountRef = useRef(0)
   const isFetchingNextRef = useRef(false)
   const [skipListening, setSkipListening] = useState(false)
+  const [historyRefresh, setHistoryRefresh] = useState(0)
   const [onlyNewWords, setOnlyNewWords] = useState(false)
   const [generatingUnits, setGeneratingUnits] = useState(new Set())
   const [lastActiveTab, setLastActiveTab] = useState(0)
@@ -112,7 +113,7 @@ function App() {
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
   const learningContainerRef = useRef(null)
-  const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
+  const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
   const wrongItemsRef = useRef([])
   const reviewIndexRef = useRef(0)
 
@@ -292,6 +293,8 @@ function App() {
           setProgress(100)
           setProcessingInfo(null)
           setLoading(false)
+          setSkipPolling(true)
+          setHistoryRefresh(v => v + 1)
           // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
@@ -300,6 +303,7 @@ function App() {
           console.error('处理错误:', status.error)
           alert(`处理失败: ${status.error}`)
           setLoading(false)
+          setSkipPolling(true)
           // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
@@ -308,6 +312,7 @@ function App() {
           console.error('轮询超时')
           alert('处理超时，请重试')
           setLoading(false)
+          setSkipPolling(true)
           // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
@@ -319,6 +324,7 @@ function App() {
           if (pollCount > 10) {
             console.log('连续404超过10次，停止轮询')
             setLoading(false)
+            setSkipPolling(true)
             if (pollingInterval) {
               clearInterval(pollingInterval)
             }
@@ -328,6 +334,7 @@ function App() {
         } else if (pollCount >= maxPolls) {
           alert('网络错误，请重试')
           setLoading(false)
+          setSkipPolling(true)
           if (pollingInterval) {
             clearInterval(pollingInterval)
           }
@@ -346,7 +353,7 @@ function App() {
         clearInterval(pollingInterval)
       }
     }
-  }, [currentFileId])
+  }, [currentFileId, skipPolling])
 
   const sortVocab = () => {
     const sorted = [...vocab].sort((a, b) => {
@@ -383,6 +390,11 @@ function App() {
     setSelectedSentence(null)
     setSelectedOption(null)
     setIsCorrect(null)
+    setCurrentFileId(null)
+    setFileId(null)
+    setFileTitle('')
+    // 重置字典状态，避免显示上一个条目的残留
+    dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }
     
     if (inputMode === 'translate') {
       setPreprocessStatus('translating')
@@ -1073,8 +1085,15 @@ function App() {
   }
 
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang, title) => {
-    setSkipPolling(true)
     setLoading(true)
+    // 先清空上一个条目的数据，避免显示旧内容
+    setVocab([])
+    setDisplayVocab([])
+    setSentenceTranslations([])
+    setSelectedSentence(null)
+    setSelectedWord(null)
+    setProgress(0)
+    setProcessingInfo(null)
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
@@ -1102,8 +1121,28 @@ function App() {
       } catch (e) {
         console.error('Failed to load phase units:', e)
       }
-      setProgress(100)
-      setProcessingInfo(null)
+
+      // 检查该条目是否仍在生成中，如果是则启用轮询实时更新
+      try {
+        const status = await api.getStatus(fileId)
+        if (status.status === 'processing') {
+          setSkipPolling(false)
+          setProgress(status.progress || 0)
+          if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
+            setProcessingInfo({ current: status.current_sentence, total: status.total_sentences })
+          }
+        } else {
+          setSkipPolling(true)
+          setProgress(100)
+          setProcessingInfo(null)
+        }
+      } catch (e) {
+        // 如果状态检查失败，默认跳过轮询
+        setSkipPolling(true)
+        setProgress(100)
+        setProcessingInfo(null)
+      }
+
       api.startWordGen(fileId).catch(() => {})
       setStep('dictionary')
     } catch (error) {
@@ -1156,7 +1195,7 @@ function App() {
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
-            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} />
+            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} refreshTrigger={historyRefresh} />
             <div className="flex-1 min-w-0 relative h-full px-4 sm:px-6 lg:px-8 py-4">
               {wordListLang ? (
                 <WordListPanel
@@ -1231,7 +1270,7 @@ function App() {
               currentFileId={currentFileId}
               sourceLang={sourceLang}
               preprocessStatus={preprocessStatus}
-              onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }; setStep('input') }}
+              onBack={() => { dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }; setStep('input') }}
               fileTitle={fileTitle}
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}

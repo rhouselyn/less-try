@@ -185,7 +185,7 @@ function RecentItem({ record, onNavigate }) {
   )
 }
 
-function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListLang }) {
+function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListLang, refreshTrigger }) {
   const [expanded, setExpanded] = useState(true)
   const [records, setRecords] = useState([])
   const [menuState, setMenuState] = useState({ open: false, fileId: null, x: 0, y: 0 })
@@ -197,7 +197,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
 
   useEffect(() => {
     loadHistory()
-  }, [])
+  }, [refreshTrigger])
 
   const loadHistory = async () => {
     try {
