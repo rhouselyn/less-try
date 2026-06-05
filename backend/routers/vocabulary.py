@@ -119,53 +119,111 @@ async def get_word_details(file_id: str, word: str):
 
             return cached_word
 
-        # 无缓存：直接生成并等待
-        print(f"[DEBUG] 单词详情无缓存，直接生成: {word}")
+        # 无缓存：判断是否所有单词已生成完
+        print(f"[DEBUG] 单词详情无缓存: {word}")
         from utils.state import word_gen_state
-        from utils.exercise_generators import process_single_word_gen
+        from utils.exercise_generators import process_single_word_gen, background_word_gen
         import asyncio
 
         vocab = storage.load_vocab(file_id)
         if isinstance(vocab, dict) and "vocab" in vocab:
             vocab = vocab["vocab"]
 
-        if file_id not in word_gen_state:
-            word_gen_state[file_id] = {
-                "running": False,
-                "vocab": vocab,
-                "priority_queue": [],
-                "task": None,
-                "processing_words": set()
-            }
-        state = word_gen_state[file_id]
-        state["vocab"] = vocab
-        if "processing_words" not in state:
-            state["processing_words"] = set()
-        if "plan_position" not in state:
-            state["plan_position"] = 0
+        # 检查所有单词是否已生成完
+        all_completed = all(
+            storage.load_word_cache(file_id, w.get("word", ""))
+            for w in vocab if w.get("word")
+        )
 
-        await process_single_word_gen(file_id, word, vocab, source_lang, target_lang)
+        if all_completed:
+            # 所有单词都已生成完，但这个单词缓存无效/被清除了，直接重新生成
+            print(f"[DEBUG] 所有单词已生成完，直接重新生成: {word}")
+            if file_id not in word_gen_state:
+                word_gen_state[file_id] = {
+                    "running": False,
+                    "vocab": vocab,
+                    "priority_queue": [],
+                    "task": None,
+                    "processing_words": set()
+                }
+            state = word_gen_state[file_id]
+            state["vocab"] = vocab
+            if "processing_words" not in state:
+                state["processing_words"] = set()
+            if "plan_position" not in state:
+                state["plan_position"] = 0
 
-        cached_word = storage.load_word_cache(file_id, word)
-        if cached_word:
-            cached_word = fix_llm_options_result(cached_word, source_lang, file_id)
-            mc = cached_word.get("multiple_choice", {})
-            mc_options = []
-            placeholder_check = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
-            if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
-                mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o and not placeholder_check.match(o["text"].strip())]
-            if mc_options:
-                options = []
-                correct_index = 0
-                for i, opt in enumerate(mc_options):
-                    options.append(opt["text"])
-                    if opt.get("is_correct"):
-                        correct_index = i
-                cached_word["options"] = options
-                cached_word["correct_index"] = correct_index
-                return cached_word
+            await process_single_word_gen(file_id, word, vocab, source_lang, target_lang)
 
-        raise HTTPException(status_code=404, detail="Word detail generation failed")
+            cached_word = storage.load_word_cache(file_id, word)
+            if cached_word:
+                cached_word = fix_llm_options_result(cached_word, source_lang, file_id)
+                mc = cached_word.get("multiple_choice", {})
+                mc_options = []
+                placeholder_check = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+                if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                    mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o and not placeholder_check.match(o["text"].strip())]
+                if mc_options:
+                    options = []
+                    correct_index = 0
+                    for i, opt in enumerate(mc_options):
+                        options.append(opt["text"])
+                        if opt.get("is_correct"):
+                            correct_index = i
+                    cached_word["options"] = options
+                    cached_word["correct_index"] = correct_index
+                    return cached_word
+
+            raise HTTPException(status_code=404, detail="Word detail generation failed")
+        else:
+            # 还有单词未生成完，加入优先队列等待后台任务处理
+            print(f"[DEBUG] 单词生成未完成，加入优先队列: {word}")
+            state = word_gen_state.get(file_id)
+            if state:
+                state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
+                state["priority_queue"].insert(0, word)
+                if not state.get("running"):
+                    state["running"] = True
+                    state["task"] = asyncio.create_task(background_word_gen(file_id))
+            else:
+                word_gen_state[file_id] = {
+                    "running": True,
+                    "vocab": vocab,
+                    "priority_queue": [word],
+                    "task": asyncio.create_task(background_word_gen(file_id)),
+                    "processing_words": set()
+                }
+
+            for _ in range(60):
+                await asyncio.sleep(1)
+                cached_word = storage.load_word_cache(file_id, word)
+                if cached_word:
+                    mc = cached_word.get("multiple_choice", {})
+                    mc_options = []
+                    if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                        mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o]
+                    if mc_options:
+                        break
+
+            if cached_word:
+                cached_word = fix_llm_options_result(cached_word, source_lang, file_id)
+                mc = cached_word.get("multiple_choice", {})
+                mc_options = []
+                placeholder_check = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+                if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+                    mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o and not placeholder_check.match(o["text"].strip())]
+                if mc_options:
+                    options = []
+                    correct_index = 0
+                    for i, opt in enumerate(mc_options):
+                        options.append(opt["text"])
+                        if opt.get("is_correct"):
+                            correct_index = i
+                    cached_word["options"] = options
+                    cached_word["correct_index"] = correct_index
+                    return cached_word
+
+            raise HTTPException(status_code=404, detail="Word detail generation timed out")
     except HTTPException:
         raise
     except Exception as e:
