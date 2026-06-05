@@ -46,7 +46,7 @@ function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
-  const [targetLang, setTargetLang] = useState('zh')
+  const [targetLang, setTargetLang] = useState('en')
   const [uiLang, setUiLang] = useState('zh')
   const [customTranslations, setCustomTranslations] = useState({})
   const [translatingUI, setTranslatingUI] = useState(false)
@@ -1073,7 +1073,6 @@ function App() {
   }
 
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang, title) => {
-    setSkipPolling(true)
     setLoading(true)
     try {
       setCurrentFileId(fileId)
@@ -1102,8 +1101,28 @@ function App() {
       } catch (e) {
         console.error('Failed to load phase units:', e)
       }
-      setProgress(100)
-      setProcessingInfo(null)
+
+      // 检查该条目是否仍在生成中，如果是则启用轮询实时更新
+      try {
+        const status = await api.getStatus(fileId)
+        if (status.status === 'processing') {
+          setSkipPolling(false)
+          setProgress(status.progress || 0)
+          if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
+            setProcessingInfo({ current: status.current_sentence, total: status.total_sentences })
+          }
+        } else {
+          setSkipPolling(true)
+          setProgress(100)
+          setProcessingInfo(null)
+        }
+      } catch (e) {
+        // 如果状态检查失败，默认跳过轮询
+        setSkipPolling(true)
+        setProgress(100)
+        setProcessingInfo(null)
+      }
+
       api.startWordGen(fileId).catch(() => {})
       setStep('dictionary')
     } catch (error) {

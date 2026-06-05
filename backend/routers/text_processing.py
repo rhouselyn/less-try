@@ -20,7 +20,7 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         t_api_start = time.time()
         text = request.get("text", "")
         source_lang = request.get("source_language", "en")
-        target_lang = request.get("target_language", "zh")
+        target_lang = request.get("target_language", "en")
 
         if not text:
             raise HTTPException(status_code=400, detail="Text is required")

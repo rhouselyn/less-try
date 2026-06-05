@@ -184,7 +184,7 @@ async def regenerate_word_detail(request: dict):
     try:
         word = request.get("word", "")
         source_lang = request.get("source_lang", "en")
-        target_lang = request.get("target_lang", "zh")
+        target_lang = request.get("target_lang", "en")
         if not word:
             raise HTTPException(status_code=400, detail="Word is required")
 
@@ -230,7 +230,7 @@ async def regenerate_word_detail(request: dict):
 
 
 @router.get("/word-detail")
-async def get_word_detail(word: str, source_lang: str = "en", target_lang: str = "zh"):
+async def get_word_detail(word: str, source_lang: str = "en", target_lang: str = "en"):
     try:
         records = storage.load_history()
         matching = [r for r in records if r.get("source_lang") == source_lang]
@@ -291,7 +291,7 @@ async def get_file_info(file_id: str):
         settings = storage.load_language_settings(file_id)
         return {
             "source_lang": settings.get("source_lang", "en"),
-            "target_lang": settings.get("target_lang", "zh")
+            "target_lang": settings.get("target_lang", "en")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

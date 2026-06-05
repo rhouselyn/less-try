@@ -164,7 +164,7 @@ class Storage:
                 return data
         return {
             "source_lang": "en",
-            "target_lang": "zh"
+            "target_lang": "en"
         }
     
     def save_learning_progress(self, file_id: str, current_index: int):
@@ -478,7 +478,7 @@ class Storage:
                     old_data = json.load(f)
                 migrated = {
                     "source_lang": old_data.get("source_lang", "auto"),
-                    "target_lang": old_data.get("target_lang", "zh"),
+                    "target_lang": old_data.get("target_lang", "en"),
                     "rpm": old_data.get("rpm", 60),
                     "skip_listening": old_data.get("skip_listening", False)
                 }
@@ -493,7 +493,7 @@ class Storage:
                     old_data = json.load(f)
                 migrated = {
                     "source_lang": old_data.get("source_lang", "auto"),
-                    "target_lang": old_data.get("target_lang", "zh"),
+                    "target_lang": old_data.get("target_lang", "en"),
                     "rpm": old_data.get("rpm", 60),
                     "skip_listening": old_data.get("skip_listening", False)
                 }
@@ -501,4 +501,4 @@ class Storage:
                 return migrated
             except (json.JSONDecodeError, IOError):
                 pass
-        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False}
+        return {"source_lang": "auto", "target_lang": "en", "rpm": 60, "skip_listening": False}
