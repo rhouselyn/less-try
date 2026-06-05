@@ -215,6 +215,11 @@ export const api = {
     return response.data
   },
 
+  regenerateWordDetailByFile: async (fileId, word) => {
+    const response = await axios.post(`${baseUrl}/api/word/${fileId}/${word}/regenerate`)
+    return response.data
+  },
+
   translateText: async (text, sourceLang, targetLang) => {
     const response = await axios.post(`${baseUrl}/api/translate-text`, {
       text: text.trim(),

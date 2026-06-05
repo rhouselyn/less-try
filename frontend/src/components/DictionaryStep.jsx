@@ -30,6 +30,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [globalVocabPage, setGlobalVocabPage] = useState(saved.globalVocabPage || 1)
   const [wordGenProgress, setWordGenProgress] = useState(null)
   const [meaningOverrides, setMeaningOverrides] = useState({})
+  const [allOriginalSentences, setAllOriginalSentences] = useState([])
   const vocabListRef = useRef(null)
   const sentenceListRef = useRef(null)
   const wordRefs = useRef({})
@@ -45,6 +46,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const pageSizeRef = useRef(pageSize)
   const showGlobalVocabRef = useRef(showGlobalVocab)
   const showOriginalRef = useRef(showOriginal)
+
+  useEffect(() => {
+    if (!currentFileId) return
+    api.getSentences(currentFileId).then(data => {
+      const sentences = data.sentences || []
+      setAllOriginalSentences(sentences.map(s => s.sentence || '').filter(Boolean))
+    }).catch(() => {})
+  }, [currentFileId])
 
   useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
   useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
@@ -261,6 +270,15 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   useEffect(() => {
     if (globalVocabPage > globalVocabTotalPages) setGlobalVocabPage(globalVocabTotalPages)
   }, [globalVocabPage, globalVocabTotalPages])
+
+  // 切换页数时滚动条置顶
+  useEffect(() => {
+    if (vocabListRef.current) vocabListRef.current.scrollTop = 0
+  }, [vocabPage, globalVocabPage])
+
+  useEffect(() => {
+    if (sentenceListRef.current) sentenceListRef.current.scrollTop = 0
+  }, [sentencePage])
 
   const handleToggleGlobalVocab = useCallback(() => {
     if (vocabListRef.current) {
@@ -621,35 +639,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     })
     setLoadingWords(prev => ({ ...prev, [localKey]: true, [globalKey]: true }))
     try {
-      await api.regenerateWord(currentFileId, wordKey)
-      const waitForDetail = async (retries = 60) => {
-        try {
-          const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-          if (!response.ok) {
-            if (retries > 0) {
-              await new Promise(r => setTimeout(r, 2000))
-              return waitForDetail(retries - 1)
-            }
-            return null
-          }
-          const data = await response.json()
-          if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
-            return data
-          }
-          if (retries > 0) {
-            await new Promise(r => setTimeout(r, 2000))
-            return waitForDetail(retries - 1)
-          }
-          return null
-        } catch {
-          if (retries > 0) {
-            await new Promise(r => setTimeout(r, 2000))
-            return waitForDetail(retries - 1)
-          }
-          return null
-        }
-      }
-      const data = await waitForDetail()
+      const data = await api.regenerateWordDetailByFile(currentFileId, wordKey)
       if (data) {
         setWordDetails(prev => ({ ...prev, [localKey]: data, [globalKey]: data }))
         setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
@@ -979,7 +969,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="flex-1 overflow-y-scroll min-h-0" ref={sentenceListRef} style={{ scrollbarGutter: 'stable' }}>
               {showOriginal ? (
                 <div className="p-4">
-                  <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
+                  <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{(allOriginalSentences.length > 0 ? allOriginalSentences : safeSentenceTranslations.map(item => item.sentence || '')).join('\n')}</pre>
                 </div>
               ) : filteredSentences.length > 0 ? (
                 <div className="divide-y divide-bone-200/60">
@@ -997,7 +987,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           onClick={() => {
                             const isCollapsing = selectedSentence === originalIndex
                             onSentenceClick(originalIndex)
-                            if (!isCollapsing) speakText(item.sentence || '', actualSourceLang)
                           }}
                         >
                           <div className="flex items-start gap-2">

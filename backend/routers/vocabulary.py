@@ -281,6 +281,112 @@ async def regenerate_word_detail(request: dict):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/word/{file_id}/{word}/regenerate")
+async def regenerate_word_detail_by_file(file_id: str, word: str):
+    try:
+        language_settings = storage.load_language_settings(file_id)
+        source_lang = language_settings.get("source_lang", "en")
+        target_lang = language_settings["target_lang"]
+
+        # Delete the existing word cache
+        storage.delete_word_cache(file_id, word)
+
+        # Load vocab to find the word entry
+        vocab = storage.load_vocab(file_id)
+        if isinstance(vocab, dict) and "vocab" in vocab:
+            vocab = vocab["vocab"]
+        word_entry = None
+        for v in vocab:
+            if v.get("word", "").lower() == word.lower():
+                word_entry = v
+                break
+        if not word_entry:
+            raise HTTPException(status_code=404, detail=f"Word '{word}' not found in vocab")
+
+        # Load pipeline data to find context sentences
+        sentences = storage.load_pipeline_data(file_id)
+        context = ""
+        context_sentences = []
+        if sentences:
+            has_cjk = any('\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u309f' or '\u30a0' <= c <= '\u30ff' or '\uac00' <= c <= '\ud7af' for c in word[:10])
+            if has_cjk:
+                word_pattern = re.compile(re.escape(word), re.IGNORECASE)
+            else:
+                word_pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
+            for sent_idx, sentence_data in enumerate(sentences):
+                if "sentence" in sentence_data:
+                    if word_pattern.search(sentence_data["sentence"]):
+                        context = sentence_data["sentence"]
+                        translation = ""
+                        if "translation_result" in sentence_data:
+                            translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                        context_sentences.append({
+                            "sentence": sentence_data["sentence"],
+                            "translation": translation,
+                            "sentence_index": sent_idx
+                        })
+            if not context and sentences:
+                context = sentences[0].get("sentence", "")
+
+        correct_meaning = word_entry.get("meaning", "")
+        if not correct_meaning:
+            if "translation" in word_entry:
+                correct_meaning = word_entry["translation"]
+            elif "context_meaning" in word_entry:
+                correct_meaning = word_entry["context_meaning"]
+
+        # Generate with temperature 0.7
+        options_result = await nvidia_api.generate_multiple_choice(
+            word,
+            correct_meaning,
+            context,
+            target_lang,
+            source_lang,
+            0.7
+        )
+        options_result = fix_llm_options_result(options_result, source_lang, file_id)
+
+        # Save to cache with all the same fields as process_single_word_gen
+        cache_data = dict(options_result)
+        cache_data["word"] = options_result.get("word", word)
+        cache_data["ipa"] = word_entry.get("ipa", "")
+        cache_data["meaning"] = correct_meaning
+        cache_data["examples"] = options_result.get("examples", [])
+        cache_data["context"] = context
+        cache_data["context_sentences"] = context_sentences
+        cache_data["morphology"] = word_entry.get("morphology", "")
+        cache_data["variants_detail"] = options_result.get("variants_detail", [])
+        cache_data["memory_hint"] = options_result.get("memory_hint", "")
+        cache_data["enriched_meaning"] = options_result.get("enriched_meaning", correct_meaning)
+        cache_data["multiple_choice"] = options_result.get("multiple_choice", {})
+        if "context_translations" in cache_data:
+            del cache_data["context_translations"]
+        storage.save_word_cache(file_id, word, cache_data, overwrite_index=True)
+
+        # Compute options and correct_index from multiple_choice
+        mc = options_result.get("multiple_choice", {})
+        mc_options = []
+        placeholder_check = re.compile(r'^(释义|含义|meaning|sense|definition)\s*\d+$', re.IGNORECASE)
+        if isinstance(mc, dict) and "options" in mc and isinstance(mc["options"], list):
+            mc_options = [o for o in mc["options"] if isinstance(o, dict) and "text" in o and not placeholder_check.match(o["text"].strip())]
+
+        options = []
+        correct_index = 0
+        for i, opt in enumerate(mc_options):
+            options.append(opt["text"])
+            if opt.get("is_correct"):
+                correct_index = i
+
+        cache_data["options"] = options
+        cache_data["correct_index"] = correct_index
+        return cache_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"[ERROR] Regenerate word detail by file failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error regenerating word detail: {str(e)}")
+
+
 @router.get("/word-detail")
 async def get_word_detail(word: str, source_lang: str = "en", target_lang: str = "en"):
     try:

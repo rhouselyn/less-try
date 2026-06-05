@@ -298,7 +298,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         }
 
 
-async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang):
+async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang, temperature=0):
     state = word_gen_state.get(file_id)
     if not state:
         return
@@ -356,7 +356,7 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                     context,
                     target_lang,
                     source_lang,
-                    0
+                    temperature
                 )
 
                 placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
@@ -369,7 +369,7 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                         context,
                         target_lang,
                         source_lang,
-                        0
+                        temperature
                     )
                     enriched = options_result.get("enriched_meaning", "")
                     if placeholder_pattern.search(enriched):
