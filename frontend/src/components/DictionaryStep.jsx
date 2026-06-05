@@ -995,9 +995,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                             selectedSentence === originalIndex ? 'bg-ochre-50/60' : 'hover:bg-ochre-50/30'
                           }`}
                           onClick={() => {
-                            const isCollapsing = selectedSentence === originalIndex
                             onSentenceClick(originalIndex)
-                            if (!isCollapsing) speakText(item.sentence || '', actualSourceLang)
                           }}
                         >
                           <div className="flex items-start gap-2">

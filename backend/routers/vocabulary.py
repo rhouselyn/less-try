@@ -182,7 +182,8 @@ async def get_word_details(file_id: str, word: str):
             if state:
                 state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
                 state["priority_queue"].insert(0, word)
-                if not state.get("running"):
+                task = state.get("task")
+                if not state.get("running") or (task and task.done()):
                     state["running"] = True
                     state["task"] = asyncio.create_task(background_word_gen(file_id))
             else:

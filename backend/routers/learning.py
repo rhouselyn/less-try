@@ -49,7 +49,9 @@ async def start_word_gen(file_id: str):
             state["plan_position"] = 0
 
         if state["running"]:
-            return {"status": "already_running"}
+            task = state.get("task")
+            if not task or not task.done():
+                return {"status": "already_running"}
 
         state["running"] = True
         state["task"] = asyncio.create_task(background_word_gen(file_id))
@@ -118,7 +120,8 @@ async def priority_word_gen(file_id: str, request: dict):
         state["priority_queue"] = [w for w in state["priority_queue"] if w.lower() != word.lower()]
         state["priority_queue"].insert(0, word)
 
-        if not state["running"]:
+        task = state.get("task")
+        if not state["running"] or (task and task.done()):
             state["running"] = True
             state["task"] = asyncio.create_task(background_word_gen(file_id))
 
@@ -145,6 +148,9 @@ async def get_word_gen_progress(file_id: str):
 
         state = word_gen_state.get(file_id)
         running = state.get("running", False) if state else False
+        task = state.get("task") if state else None
+        if running and task and task.done():
+            running = False
 
         if not running and completed < total:
             state = word_gen_state.get(file_id)
@@ -402,7 +408,8 @@ async def get_random_word(file_id: str):
         if state:
             state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
             state["priority_queue"].insert(0, word)
-            if not state.get("running"):
+            task = state.get("task")
+            if not state.get("running") or (task and task.done()):
                 state["running"] = True
                 state["task"] = asyncio.create_task(background_word_gen(file_id))
         else:

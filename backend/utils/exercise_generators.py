@@ -151,8 +151,11 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                     break
 
             all_completed_translations = []
-            for si in sorted(results_dict.keys()):
-                all_completed_translations.append(results_dict[si])
+            for i in range(total_sentences):
+                if i in results_dict:
+                    all_completed_translations.append(results_dict[i])
+                else:
+                    all_completed_translations.append({"sentence": sentences[i], "translation_result": {}})
 
             partial_vocab = []
             for si, sd in enumerate(all_completed_translations):
@@ -284,7 +287,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             state["processing_words"] = set()
         if "plan_position" not in state:
             state["plan_position"] = 0
-        if not state["running"]:
+        if not state["running"] or (state.get("task") and state["task"].done()):
             state["running"] = True
             state["task"] = asyncio.create_task(background_word_gen(file_id))
             print(f"[DEBUG] 自动启动单词详情生成")
@@ -447,56 +450,62 @@ async def background_word_gen(file_id: str):
     elif "plan_position" not in state:
         state["plan_position"] = len(plan_word_order)
 
-    while state["running"]:
-        word_to_gen = None
-        if state["priority_queue"]:
-            word_to_gen = state["priority_queue"].pop(0)
-        elif state["plan_position"] < len(plan_word_order):
-            vocab_idx = plan_word_order[state["plan_position"]]
-            state["plan_position"] += 1
-            if vocab_idx < len(vocab):
-                word_to_gen = vocab[vocab_idx].get("word", "")
+    try:
+        while state["running"]:
+            word_to_gen = None
+            if state["priority_queue"]:
+                word_to_gen = state["priority_queue"].pop(0)
+            elif state["plan_position"] < len(plan_word_order):
+                vocab_idx = plan_word_order[state["plan_position"]]
+                state["plan_position"] += 1
+                if vocab_idx < len(vocab):
+                    word_to_gen = vocab[vocab_idx].get("word", "")
 
-        if not word_to_gen:
-            await asyncio.sleep(1)
-            continue
+            if not word_to_gen:
+                await asyncio.sleep(1)
+                continue
 
-        if storage.load_word_cache(file_id, word_to_gen):
-            continue
+            if storage.load_word_cache(file_id, word_to_gen):
+                continue
 
-        existing_cache = storage.find_global_word_cache(word_to_gen, source_lang)
-        if existing_cache:
-            import copy
-            cached = copy.deepcopy(existing_cache)
-            context_sents = []
-            all_sentences = storage.load_pipeline_data(file_id)
-            if all_sentences:
-                word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
-                for sent_idx, sentence_data in enumerate(all_sentences):
-                    if "sentence" in sentence_data:
-                        if word_pattern.search(sentence_data["sentence"]):
-                            translation = ""
-                            if "translation_result" in sentence_data:
-                                translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                            context_sents.append({
-                                "sentence": sentence_data["sentence"],
-                                "translation": translation,
-                                "sentence_index": sent_idx
-                            })
-            if context_sents:
-                cached["context_sentences"] = context_sents
-                cached["context"] = context_sents[0]["sentence"]
-            storage.save_word_cache(file_id, word_to_gen, cached)
-            continue
+            existing_cache = storage.find_global_word_cache(word_to_gen, source_lang)
+            if existing_cache:
+                import copy
+                cached = copy.deepcopy(existing_cache)
+                context_sents = []
+                all_sentences = storage.load_pipeline_data(file_id)
+                if all_sentences:
+                    word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
+                    for sent_idx, sentence_data in enumerate(all_sentences):
+                        if "sentence" in sentence_data:
+                            if word_pattern.search(sentence_data["sentence"]):
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                context_sents.append({
+                                    "sentence": sentence_data["sentence"],
+                                    "translation": translation,
+                                    "sentence_index": sent_idx
+                                })
+                if context_sents:
+                    cached["context_sentences"] = context_sents
+                    cached["context"] = context_sents[0]["sentence"]
+                storage.save_word_cache(file_id, word_to_gen, cached)
+                continue
 
-        processing = state.get("processing_words", set())
-        if word_to_gen.lower() in {w.lower() for w in processing}:
-            continue
+            processing = state.get("processing_words", set())
+            if word_to_gen.lower() in {w.lower() for w in processing}:
+                continue
 
-        asyncio.create_task(process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang))
-        await asyncio.sleep(0.1)
-
-    state["task"] = None
+            asyncio.create_task(process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang))
+            await asyncio.sleep(0.1)
+    except Exception as e:
+        print(f"[ERROR] background_word_gen crashed for {file_id}: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        state["running"] = False
+        state["task"] = None
 
 
 def generate_and_save_learning_plan(file_id: str, vocab, sentences):
