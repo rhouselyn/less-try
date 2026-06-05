@@ -491,7 +491,7 @@ function ModeSelector({ mode, setMode, t }) {
 }
 
 function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
-  const directModeLangRef = useRef('auto')
+  const directModeLangRef = useRef('en')
 
   const handleSourceLangChange = (lang) => {
     setSourceLang(lang)
