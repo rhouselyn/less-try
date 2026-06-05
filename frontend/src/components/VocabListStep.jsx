@@ -51,20 +51,16 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     }
   }, [expandedWord, scrollToWord, currentFileId, enrichedWords])
 
-  const sortedVocab = useMemo(() => {
-    return [...vocab].sort((a, b) => (a.sentence_index ?? 0) - (b.sentence_index ?? 0))
-  }, [vocab])
-
   const filteredVocab = useMemo(() => {
-    if (!searchQuery.trim()) return sortedVocab
+    if (!searchQuery.trim()) return vocab
     const q = searchQuery.toLowerCase()
-    return sortedVocab.filter(w =>
+    return vocab.filter(w =>
       w.word.toLowerCase().includes(q) ||
       (w.meaning && w.meaning.toLowerCase().includes(q)) ||
       (w.context_meaning && w.context_meaning.toLowerCase().includes(q)) ||
       (w.enriched_meaning && w.enriched_meaning.toLowerCase().includes(q))
     )
-  }, [sortedVocab, searchQuery])
+  }, [vocab, searchQuery])
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(filteredVocab.length / pageSize)), [filteredVocab, pageSize])
 
