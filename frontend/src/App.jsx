@@ -292,6 +292,7 @@ function App() {
           setProgress(100)
           setProcessingInfo(null)
           setLoading(false)
+          setSkipPolling(true)
           // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
@@ -300,6 +301,7 @@ function App() {
           console.error('处理错误:', status.error)
           alert(`处理失败: ${status.error}`)
           setLoading(false)
+          setSkipPolling(true)
           // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
@@ -308,6 +310,7 @@ function App() {
           console.error('轮询超时')
           alert('处理超时，请重试')
           setLoading(false)
+          setSkipPolling(true)
           // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
@@ -319,6 +322,7 @@ function App() {
           if (pollCount > 10) {
             console.log('连续404超过10次，停止轮询')
             setLoading(false)
+            setSkipPolling(true)
             if (pollingInterval) {
               clearInterval(pollingInterval)
             }
@@ -328,6 +332,7 @@ function App() {
         } else if (pollCount >= maxPolls) {
           alert('网络错误，请重试')
           setLoading(false)
+          setSkipPolling(true)
           if (pollingInterval) {
             clearInterval(pollingInterval)
           }
@@ -346,7 +351,7 @@ function App() {
         clearInterval(pollingInterval)
       }
     }
-  }, [currentFileId])
+  }, [currentFileId, skipPolling])
 
   const sortVocab = () => {
     const sorted = [...vocab].sort((a, b) => {
