@@ -115,8 +115,8 @@ async def priority_word_gen(file_id: str, request: dict):
         if not force and word.lower() in {w.lower() for w in processing}:
             return {"status": "already_processing"}
 
-        state["priority_queue"] = [w for w in state["priority_queue"] if w.lower() != word.lower()]
-        state["priority_queue"].insert(0, word)
+        state["priority_queue"] = [w for w in state["priority_queue"] if (w.get("word", w) if isinstance(w, dict) else w).lower() != word.lower()]
+        state["priority_queue"].insert(0, {"word": word, "force": force})
 
         if not state["running"]:
             state["running"] = True

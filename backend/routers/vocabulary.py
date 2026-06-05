@@ -180,8 +180,8 @@ async def get_word_details(file_id: str, word: str):
             print(f"[DEBUG] 单词生成未完成，加入优先队列: {word}")
             state = word_gen_state.get(file_id)
             if state:
-                state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
-                state["priority_queue"].insert(0, word)
+                state["priority_queue"] = [w for w in state.get("priority_queue", []) if (w.get("word", w) if isinstance(w, dict) else w).lower() != word.lower()]
+                state["priority_queue"].insert(0, {"word": word, "force": False})
                 if not state.get("running"):
                     state["running"] = True
                     state["task"] = asyncio.create_task(background_word_gen(file_id))
@@ -189,7 +189,7 @@ async def get_word_details(file_id: str, word: str):
                 word_gen_state[file_id] = {
                     "running": True,
                     "vocab": vocab,
-                    "priority_queue": [word],
+                    "priority_queue": [{"word": word, "force": False}],
                     "task": asyncio.create_task(background_word_gen(file_id)),
                     "processing_words": set()
                 }

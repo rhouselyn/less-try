@@ -282,13 +282,40 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
   const renderPagination = () => {
     if (totalPages <= 1) return null
+    const pages = Array.from({ length: totalPages }, (_, i) => i + 1).filter(p => {
+      if (totalPages <= 7) return true
+      if (p === 1 || p === totalPages) return true
+      if (Math.abs(p - page) <= 1) return true
+      return false
+    }).reduce((acc, p, i, arr) => {
+      if (i > 0 && p - arr[i - 1] > 1) acc.push('...')
+      acc.push(p)
+      return acc
+    }, [])
+
     return (
       <div className="flex items-center justify-center gap-1 py-2 border-t border-bone-200/60 bg-cream-50/40">
         <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
           className={`p-1 rounded transition-colors ${page <= 1 ? 'text-bone-200 cursor-not-allowed' : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100'}`}>
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
-        <span className="text-[11px] text-ink-400 px-2">{page} / {totalPages}</span>
+        {pages.map((p, i) =>
+          p === '...' ? (
+            <span key={`dots-${i}`} className="text-[10px] text-bone-300 px-0.5">…</span>
+          ) : (
+            <button
+              key={p}
+              onClick={() => setPage(p)}
+              className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
+                page === p
+                  ? 'bg-ochre-100 text-ochre-500 font-semibold'
+                  : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100'
+              }`}
+            >
+              {p}
+            </button>
+          )
+        )}
         <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
           className={`p-1 rounded transition-colors ${page >= totalPages ? 'text-bone-200 cursor-not-allowed' : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100'}`}>
           <ChevronRight className="w-3.5 h-3.5" />
