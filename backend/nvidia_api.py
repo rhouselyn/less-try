@@ -4,6 +4,7 @@ import requests
 import asyncio
 from typing import List, Dict, Any
 from pathlib import Path
+from config import LLM_SETTINGS_FILE
 
 
 def _repair_truncated_json(json_str):
@@ -45,8 +46,6 @@ def _repair_truncated_json(json_str):
 
     return []
 
-
-LLM_SETTINGS_FILE = Path("/workspace/config/llm_settings.json")
 
 _DEFAULT_CONFIGS = [
     {"api_key": "", "base_url": "https://api.siliconflow.cn/v1", "model": "Qwen/Qwen3.6-27B"},

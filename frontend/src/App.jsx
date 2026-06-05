@@ -45,7 +45,7 @@ function FrogLogo({ size = 40 }) {
 function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
-  const [sourceLang, setSourceLang] = useState('auto')
+  const [sourceLang, setSourceLang] = useState('en')
   const [targetLang, setTargetLang] = useState('zh')
   const [uiLang, setUiLang] = useState('zh')
   const [customTranslations, setCustomTranslations] = useState({})

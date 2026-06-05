@@ -14,11 +14,12 @@ from nvidia_api import NvidiaAPI, get_settings, update_settings, detect_language
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, PUNCTUATION_CHARS, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
 from storage import Storage
 from ui_translations import UI_TRANSLATION_SCHEMA, TRANSLATION_PROMPT
+from config import UI_TRANSLATIONS_DIR, FRONTEND_DIST_DIR, HOST, PORT
 
 app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
 
 _ui_translation_cache = {}
-UI_TRANSLATIONS_DIR = Path("/workspace/config/ui_translations")
+UI_TRANSLATIONS_DIR.mkdir(parents=True, exist_ok=True)
 
 import re
 
@@ -3829,4 +3830,20 @@ async def _do_translate_ui(lang_code: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host=os.environ.get("HOST", "0.0.0.0"), port=int(os.environ.get("PORT", 8000)), timeout_keep_alive=600)
+    uvicorn.run(app, host=HOST, port=PORT, timeout_keep_alive=600)
+
+
+# 生产部署：挂载前端静态文件（必须放在所有 API 路由之后）
+if FRONTEND_DIST_DIR.exists() and (FRONTEND_DIST_DIR / "index.html").exists():
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+
+    # 挂载 assets 静态资源
+    assets_dir = FRONTEND_DIST_DIR / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="static-assets")
+
+    # SPA fallback：所有非 /api 路由返回 index.html
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        return FileResponse(str(FRONTEND_DIST_DIR / "index.html"))
