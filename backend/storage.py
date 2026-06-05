@@ -2,14 +2,15 @@ import os
 import json
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+from config import DATA_DIR, CONFIG_DIR, USER_PREFS_FILE
 
 
 class Storage:
     def __init__(self):
-        self.base_dir = Path("/workspace/data")
+        self.base_dir = DATA_DIR
         self.files_dir = self.base_dir / "files"
         self.languages_dir = self.base_dir / "languages"
-        
+
         self.files_dir.mkdir(parents=True, exist_ok=True)
         self.languages_dir.mkdir(parents=True, exist_ok=True)
 
@@ -459,15 +460,14 @@ class Storage:
         return set()
 
     def save_user_preferences(self, prefs: Dict):
-        prefs_path = Path("/workspace/config/user_preferences.json")
-        with open(prefs_path, 'w', encoding='utf-8') as f:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        with open(USER_PREFS_FILE, 'w', encoding='utf-8') as f:
             json.dump(prefs, f, ensure_ascii=False, indent=2)
 
     def load_user_preferences(self) -> Dict:
-        prefs_path = Path("/workspace/config/user_preferences.json")
-        if prefs_path.exists():
+        if USER_PREFS_FILE.exists():
             try:
-                with open(prefs_path, 'r', encoding='utf-8') as f:
+                with open(USER_PREFS_FILE, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except (json.JSONDecodeError, IOError):
                 pass
