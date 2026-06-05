@@ -43,6 +43,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const filteredVocabRef = useRef([])
   const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
+  const showGlobalVocabRef = useRef(showGlobalVocab)
+  const showOriginalRef = useRef(showOriginal)
+
+  useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
+  useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
 
   const saveState = () => {
     if (dictStateRef) {
@@ -290,16 +295,29 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     }
   }, [showOriginal])
 
-  // 初始恢复句子面板滚动位置
+  // 初始恢复句子面板和词汇面板滚动位置（内容渲染后）
+  const initialRestoreDone = useRef(false)
   useEffect(() => {
-    if (!sentenceListRef.current) return
-    const targetPos = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
-    if (typeof targetPos === 'number' && targetPos > 0) {
+    if (initialRestoreDone.current) return
+    if (!vocab.length && !sentenceTranslations.length) return
+    initialRestoreDone.current = true
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (sentenceListRef.current) sentenceListRef.current.scrollTop = targetPos
+        if (sentenceListRef.current) {
+          const sentenceTarget = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
+          if (typeof sentenceTarget === 'number' && sentenceTarget > 0) {
+            sentenceListRef.current.scrollTop = sentenceTarget
+          }
+        }
+        if (vocabListRef.current) {
+          const vocabTarget = showGlobalVocab ? globalVocabScrollPos.current : localVocabScrollPos.current
+          if (typeof vocabTarget === 'number' && vocabTarget > 0) {
+            vocabListRef.current.scrollTop = vocabTarget
+          }
+        }
       })
-    }
-  }, [])
+    })
+  }, [vocab, sentenceTranslations])
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
@@ -759,18 +777,19 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }
 
   useEffect(() => {
+    // 卸载时保存当前滚动位置（不覆盖已有的页码等状态，因为saveState已经保存了）
     return () => {
       if (dictStateRef) {
+        const vocabScrollTop = vocabListRef.current?.scrollTop || 0
+        const sentenceScrollTop = sentenceListRef.current?.scrollTop || 0
+        const isGlobal = showGlobalVocabRef.current
+        const isOriginal = showOriginalRef.current
         dictStateRef.current = {
           ...dictStateRef.current,
-          vocabScrollPos: localVocabScrollPos.current,
-          globalVocabScrollPos: globalVocabScrollPos.current,
-          sentenceTranslationScrollPos: sentenceTranslationScrollPos.current,
-          sentenceOriginalScrollPos: sentenceOriginalScrollPos.current,
-          vocabPage, sentencePage, globalVocabPage,
-          vocabDisplayMode, sentenceDisplayMode,
-          showOriginal, showGlobalVocab,
-          vocabSearch, sentenceSearch
+          vocabScrollPos: isGlobal ? dictStateRef.current.vocabScrollPos : vocabScrollTop,
+          globalVocabScrollPos: isGlobal ? vocabScrollTop : dictStateRef.current.globalVocabScrollPos,
+          sentenceTranslationScrollPos: isOriginal ? dictStateRef.current.sentenceTranslationScrollPos : sentenceScrollTop,
+          sentenceOriginalScrollPos: isOriginal ? sentenceScrollTop : dictStateRef.current.sentenceOriginalScrollPos,
         }
       }
     }
@@ -943,7 +962,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           className={`p-4 cursor-pointer transition-colors ${
                             selectedSentence === originalIndex ? 'bg-ochre-50/60' : 'hover:bg-ochre-50/30'
                           }`}
-                          onClick={() => { onSentenceClick(originalIndex); speakText(item.sentence || '', actualSourceLang) }}
+                          onClick={() => {
+                            const isCollapsing = selectedSentence === originalIndex
+                            onSentenceClick(originalIndex)
+                            if (!isCollapsing) speakText(item.sentence || '', actualSourceLang)
+                          }}
                         >
                           <div className="flex items-start gap-2">
                             <div className="flex-1 min-w-0">
