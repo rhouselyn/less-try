@@ -392,6 +392,7 @@ function App() {
     setIsCorrect(null)
     setCurrentFileId(null)
     setFileId(null)
+    setFileTitle('')
     // 重置字典状态，避免显示上一个条目的残留
     dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }
     
