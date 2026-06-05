@@ -30,6 +30,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [globalVocabPage, setGlobalVocabPage] = useState(saved.globalVocabPage || 1)
   const [wordGenProgress, setWordGenProgress] = useState(null)
   const [meaningOverrides, setMeaningOverrides] = useState({})
+  const [allOriginalSentences, setAllOriginalSentences] = useState([])
   const vocabListRef = useRef(null)
   const sentenceListRef = useRef(null)
   const wordRefs = useRef({})
@@ -119,6 +120,18 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setActualSourceLang(sourceLang)
     }
   }, [currentFileId, sourceLang])
+
+  useEffect(() => {
+    if (!currentFileId) return
+    // 获取所有原始句子，用于"显示原文"tab
+    fetch(`/api/sentences/${currentFileId}`)
+      .then(r => r.json())
+      .then(data => {
+        const sentences = data.sentences || []
+        setAllOriginalSentences(sentences.map(s => s.sentence || '').filter(Boolean))
+      })
+      .catch(() => {})
+  }, [currentFileId])
 
   useEffect(() => {
     if (!showGlobalVocab) return
@@ -979,7 +992,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="flex-1 overflow-y-scroll min-h-0" ref={sentenceListRef} style={{ scrollbarGutter: 'stable' }}>
               {showOriginal ? (
                 <div className="p-4">
-                  <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
+                  <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{(allOriginalSentences.length > 0 ? allOriginalSentences : safeSentenceTranslations.map(item => item.sentence || '')).join('\n')}</pre>
                 </div>
               ) : filteredSentences.length > 0 ? (
                 <div className="divide-y divide-bone-200/60">
@@ -995,9 +1008,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                             selectedSentence === originalIndex ? 'bg-ochre-50/60' : 'hover:bg-ochre-50/30'
                           }`}
                           onClick={() => {
-                            const isCollapsing = selectedSentence === originalIndex
                             onSentenceClick(originalIndex)
-                            if (!isCollapsing) speakText(item.sentence || '', actualSourceLang)
                           }}
                         >
                           <div className="flex items-start gap-2">

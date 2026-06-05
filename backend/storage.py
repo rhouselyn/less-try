@@ -109,6 +109,16 @@ class Storage:
             index[word_lower] = file_id
             self.save_language_word_index(source_lang, index)
 
+    def remove_word_from_language_index(self, source_lang: str, word: str):
+        """从语言级索引中移除单词"""
+        if not word or not source_lang:
+            return
+        word_lower = word.lower()
+        index = self.load_language_word_index(source_lang)
+        if word_lower in index:
+            del index[word_lower]
+            self.save_language_word_index(source_lang, index)
+
     def find_global_word_cache(self, word: str, source_lang: str) -> Optional[Dict]:
         # 通过语言级索引直接定位单词所在的文件，避免遍历所有文件目录
         word_lower = word.lower()

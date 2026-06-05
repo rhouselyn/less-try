@@ -106,6 +106,10 @@ async def priority_word_gen(file_id: str, request: dict):
 
         if force:
             storage.delete_word_cache(file_id, word)
+            # 同时从语言索引中移除，防止 find_global_word_cache 返回旧缓存
+            language_settings = storage.load_language_settings(file_id)
+            source_lang = language_settings.get("source_lang", "en")
+            storage.remove_word_from_language_index(source_lang, word)
             state["processing_words"] = {w for w in state.get("processing_words", set()) if w.lower() != word.lower()}
 
         if not force and storage.load_word_cache(file_id, word):
@@ -115,8 +119,8 @@ async def priority_word_gen(file_id: str, request: dict):
         if not force and word.lower() in {w.lower() for w in processing}:
             return {"status": "already_processing"}
 
-        state["priority_queue"] = [w for w in state["priority_queue"] if w.lower() != word.lower()]
-        state["priority_queue"].insert(0, word)
+        state["priority_queue"] = [(w, f) for w, f in state.get("priority_queue", []) if w.lower() != word.lower()]
+        state["priority_queue"].insert(0, (word, force))
 
         if not state["running"]:
             state["running"] = True
@@ -400,8 +404,8 @@ async def get_random_word(file_id: str):
         print(f"[DEBUG] 单词无缓存，触发优先生成: {word}")
         state = word_gen_state.get(file_id)
         if state:
-            state["priority_queue"] = [w for w in state.get("priority_queue", []) if w.lower() != word.lower()]
-            state["priority_queue"].insert(0, word)
+            state["priority_queue"] = [(w, f) for w, f in state.get("priority_queue", []) if w.lower() != word.lower()]
+            state["priority_queue"].insert(0, (word, False))
             if not state.get("running"):
                 state["running"] = True
                 state["task"] = asyncio.create_task(background_word_gen(file_id))
@@ -409,7 +413,7 @@ async def get_random_word(file_id: str):
             word_gen_state[file_id] = {
                 "running": True,
                 "vocab": vocab,
-                "priority_queue": [word],
+                "priority_queue": [(word, False)],
                 "task": asyncio.create_task(background_word_gen(file_id)),
                 "processing_words": set()
             }

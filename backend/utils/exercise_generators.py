@@ -449,8 +449,13 @@ async def background_word_gen(file_id: str):
 
     while state["running"]:
         word_to_gen = None
+        force_gen = False
         if state["priority_queue"]:
-            word_to_gen = state["priority_queue"].pop(0)
+            item = state["priority_queue"].pop(0)
+            if isinstance(item, tuple):
+                word_to_gen, force_gen = item
+            else:
+                word_to_gen = item
         elif state["plan_position"] < len(plan_word_order):
             vocab_idx = plan_word_order[state["plan_position"]]
             state["plan_position"] += 1
@@ -461,33 +466,34 @@ async def background_word_gen(file_id: str):
             await asyncio.sleep(1)
             continue
 
-        if storage.load_word_cache(file_id, word_to_gen):
+        if not force_gen and storage.load_word_cache(file_id, word_to_gen):
             continue
 
-        existing_cache = storage.find_global_word_cache(word_to_gen, source_lang)
-        if existing_cache:
-            import copy
-            cached = copy.deepcopy(existing_cache)
-            context_sents = []
-            all_sentences = storage.load_pipeline_data(file_id)
-            if all_sentences:
-                word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
-                for sent_idx, sentence_data in enumerate(all_sentences):
-                    if "sentence" in sentence_data:
-                        if word_pattern.search(sentence_data["sentence"]):
-                            translation = ""
-                            if "translation_result" in sentence_data:
-                                translation = sentence_data["translation_result"].get("tokenized_translation", "")
-                            context_sents.append({
-                                "sentence": sentence_data["sentence"],
-                                "translation": translation,
-                                "sentence_index": sent_idx
-                            })
-            if context_sents:
-                cached["context_sentences"] = context_sents
-                cached["context"] = context_sents[0]["sentence"]
-            storage.save_word_cache(file_id, word_to_gen, cached)
-            continue
+        if not force_gen:
+            existing_cache = storage.find_global_word_cache(word_to_gen, source_lang)
+            if existing_cache:
+                import copy
+                cached = copy.deepcopy(existing_cache)
+                context_sents = []
+                all_sentences = storage.load_pipeline_data(file_id)
+                if all_sentences:
+                    word_pattern = re.compile(r'\b' + re.escape(word_to_gen) + r'\b', re.IGNORECASE)
+                    for sent_idx, sentence_data in enumerate(all_sentences):
+                        if "sentence" in sentence_data:
+                            if word_pattern.search(sentence_data["sentence"]):
+                                translation = ""
+                                if "translation_result" in sentence_data:
+                                    translation = sentence_data["translation_result"].get("tokenized_translation", "")
+                                context_sents.append({
+                                    "sentence": sentence_data["sentence"],
+                                    "translation": translation,
+                                    "sentence_index": sent_idx
+                                })
+                if context_sents:
+                    cached["context_sentences"] = context_sents
+                    cached["context"] = context_sents[0]["sentence"]
+                storage.save_word_cache(file_id, word_to_gen, cached)
+                continue
 
         processing = state.get("processing_words", set())
         if word_to_gen.lower() in {w.lower() for w in processing}:
