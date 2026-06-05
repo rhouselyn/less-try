@@ -216,6 +216,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     return filteredGlobalVocab.slice(start, start + pageSize)
   }, [filteredGlobalVocab, globalVocabPage, pageSize])
 
+  const groupedVocab = useMemo(() => {
+    return groupVocab(pagedFilteredVocab)
+  }, [pagedFilteredVocab])
+
+  const letterIndex = useMemo(() => {
+    return groupedVocab.map(([letter]) => letter)
+  }, [groupedVocab])
+
   const groupedGlobalVocab = useMemo(() => {
     return groupVocab(pagedFilteredGlobalVocab)
   }, [pagedFilteredGlobalVocab])
@@ -223,6 +231,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const globalLetterIndex = useMemo(() => {
     return groupedGlobalVocab.map(([letter]) => letter)
   }, [groupedGlobalVocab])
+
+  const allLetterIndex = useMemo(() => {
+    return groupVocab(filteredVocab).map(([letter]) => letter)
+  }, [filteredVocab])
 
   const allGlobalLetterIndex = useMemo(() => {
     return groupVocab(filteredGlobalVocab).map(([letter]) => letter)
@@ -983,7 +995,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                             selectedSentence === originalIndex ? 'bg-ochre-50/60' : 'hover:bg-ochre-50/30'
                           }`}
                           onClick={() => {
+                            const isCollapsing = selectedSentence === originalIndex
                             onSentenceClick(originalIndex)
+                            if (!isCollapsing) speakText(item.sentence || '', actualSourceLang)
                           }}
                         >
                           <div className="flex items-start gap-2">
@@ -1061,10 +1075,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               </div>
             </div>
             <div className="flex-1 flex min-h-0">
-              {(showGlobalVocab && allGlobalLetterIndex.length > 1) && (
+              {((!showGlobalVocab && allLetterIndex.length > 1) || (showGlobalVocab && allGlobalLetterIndex.length > 1)) && (
                 <div className="flex flex-col items-center gap-px py-1 border-r border-bone-200/60 bg-cream-50/40 w-5 shrink-0 overflow-y-auto">
-                  {allGlobalLetterIndex.map(letter => {
-                    const onCurrentPage = globalLetterIndex.includes(letter)
+                  {(showGlobalVocab ? allGlobalLetterIndex : allLetterIndex).map(letter => {
+                    const currentIdx = showGlobalVocab ? globalLetterIndex : letterIndex
+                    const onCurrentPage = currentIdx.includes(letter)
                     return (
                       <button
                         key={letter}
@@ -1200,103 +1215,117 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 )
               ) : (
               <>
-              {pagedFilteredVocab.length === 0 ? (
+              {groupedVocab.length === 0 ? (
                 <div className="py-16 text-center">
                   <BookOpen className="w-10 h-10 mx-auto mb-3 text-bone-200" />
                   <p className="text-ink-400 text-sm">{loading ? t.loading : (vocabSearch ? (t.noMatchFound || '没有找到匹配的单词') : t.loading)}</p>
                 </div>
               ) : (
-              <div className="space-y-px">
-                {pagedFilteredVocab.map((word, index) => {
-                  const wordKey = word.word
-                  const isExpanded = expandedWord === wordKey
-                  const isLoading = loadingWords[wordKey]
-                  const detail = wordDetails[wordKey]
-
-                  return (
+              <div className="space-y-3">
+                {groupedVocab.map(([letter, words], groupIdx) => (
+                  <div key={letter} id={`dict-group-${letter}`}>
                     <motion.div
-                      key={wordKey}
-                      ref={el => { wordRefs.current[wordKey] = el }}
-                      data-word-key={wordKey}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.015 }}
-                      className="bg-cream-50"
-                      >
-                      <button
-                        onClick={() => handleVocabWordClick(word)}
-                        className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-ochre-50/40 transition-colors group"
-                      >
-                        <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
-                          <span className={`text-[14px] font-semibold text-ink-800 tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
-                            {word.word}
-                          </span>
-                          {word.ipa && (
-                            <span className={`text-[11px] text-ink-400 ipa-font shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
-                              {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
-                            </span>
-                          )}
-                          {word.morphology && (
-                            <span className="text-[10px] px-1.5 py-0.5 bg-cream-100 text-ink-500 rounded font-medium tracking-wide shrink-0">
-                              {word.morphology}
-                            </span>
-                          )}
-                          <span className={`text-[12px] text-ink-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
-                            {meaningOverrides[word.word] || word.meaning || word.context_meaning}
-                          </span>
-                        </div>
-                        {isExpanded && (
-                          <RefreshCw
-                            className="w-3.5 h-3.5 text-bone-300 hover:text-ochre-500 shrink-0 transition-colors"
-                            onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
-                          />
-                        )}
-                        <Volume2
-                          className="w-3.5 h-3.5 text-bone-300 hover:text-ochre-500 shrink-0 transition-colors"
-                          onClick={(e) => speakWord(word.word, e)}
-                        />
-                      </button>
-
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="px-4 pb-3.5 border-t border-cream-100/80">
-                              {isLoading ? (
-                                <div className="pt-4 flex flex-col items-center justify-center gap-3">
-                                  <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
-                                  <p className="text-[12px] text-ink-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
-                                </div>
-                              ) : detail ? (
-                                <div className="pt-3">
-                                  <div className="mb-2">
-                                    <h3 className="label-warm mb-0.5 flex items-center gap-1">
-                                      <Brain className="w-3 h-3 text-ochre-500" />
-                                      {t.definition || '释义'}
-                                    </h3>
-                                    <p className="text-[13px] text-ink-700 leading-relaxed">
-                                      {detail.enriched_meaning || detail.meaning || detail.context_meaning}
-                                    </p>
-                                  </div>
-                                  <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} hideDefinition />
-                                </div>
-                              ) : (
-                                <div className="pt-3 text-center text-ink-400 text-[12px]">
-                                  {t.noDetails || '暂无详情'}
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: groupIdx * 0.04 }}
+                      className="sticky top-0 z-10 backdrop-blur-sm bg-cream-50/80 px-4 py-1.5 border-b border-bone-200/40 mb-1"
+                    >
+                      <span className="text-xs font-bold text-ochre-500/80 tracking-widest">{letter}</span>
                     </motion.div>
-                  )
-                })}
+                    <div className="space-y-px">
+                      {words.map((word, index) => {
+                        const wordKey = word.word
+                        const isExpanded = expandedWord === wordKey
+                        const isLoading = loadingWords[wordKey]
+                        const detail = wordDetails[wordKey]
+
+                        return (
+                          <motion.div
+                            key={wordKey}
+                            ref={el => { wordRefs.current[wordKey] = el }}
+                            data-word-key={wordKey}
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: groupIdx * 0.03 + index * 0.015 }}
+                            className="bg-cream-50"
+                            >
+                              <button
+                                onClick={() => handleVocabWordClick(word)}
+                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-ochre-50/40 transition-colors group"
+                            >
+                              <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
+                                <span className={`text-[14px] font-semibold text-ink-800 tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
+                                  {word.word}
+                                </span>
+                                {word.ipa && (
+                                  <span className={`text-[11px] text-ink-400 ipa-font shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
+                                    {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
+                                  </span>
+                                )}
+                                {word.morphology && (
+                                  <span className="text-[10px] px-1.5 py-0.5 bg-cream-100 text-ink-500 rounded font-medium tracking-wide shrink-0">
+                                    {word.morphology}
+                                  </span>
+                                )}
+                                <span className={`text-[12px] text-ink-500 truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
+                                  {meaningOverrides[word.word] || word.meaning || word.context_meaning}
+                                </span>
+                              </div>
+                              {isExpanded && (
+                                <RefreshCw
+                                  className="w-3.5 h-3.5 text-bone-300 hover:text-ochre-500 shrink-0 transition-colors"
+                                  onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
+                                />
+                              )}
+                              <Volume2
+                                className="w-3.5 h-3.5 text-bone-300 hover:text-ochre-500 shrink-0 transition-colors"
+                                onClick={(e) => speakWord(word.word, e)}
+                              />
+                            </button>
+
+                            <AnimatePresence>
+                              {isExpanded && (
+                                <motion.div
+                                  initial={{ height: 0, opacity: 0 }}
+                                  animate={{ height: 'auto', opacity: 1 }}
+                                  exit={{ height: 0, opacity: 0 }}
+                                  transition={{ duration: 0.2 }}
+                                  className="overflow-hidden"
+                                >
+                                  <div className="px-4 pb-3.5 border-t border-cream-100/80">
+                                    {isLoading ? (
+                                      <div className="pt-4 flex flex-col items-center justify-center gap-3">
+                                        <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
+                                        <p className="text-[12px] text-ink-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
+                                      </div>
+                                    ) : detail ? (
+                                      <div className="pt-3">
+                                        <div className="mb-2">
+                                          <h3 className="label-warm mb-0.5 flex items-center gap-1">
+                                            <Brain className="w-3 h-3 text-ochre-500" />
+                                            {t.definition || '释义'}
+                                          </h3>
+                                          <p className="text-[13px] text-ink-700 leading-relaxed">
+                                            {detail.enriched_meaning || detail.meaning || detail.context_meaning}
+                                          </p>
+                                        </div>
+                                        <WordDetail word={detail} t={t} onSentenceClick={handleSentenceJump} sourceLang={sourceLang} hideDefinition />
+                                      </div>
+                                    ) : (
+                                      <div className="pt-3 text-center text-ink-400 text-[12px]">
+                                        {t.noDetails || '暂无详情'}
+                                      </div>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </motion.div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
               )}
               </>
