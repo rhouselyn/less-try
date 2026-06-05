@@ -51,24 +51,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   const saveState = () => {
     if (dictStateRef) {
-      // 从DOM直接读取滚动位置，比ref更可靠
-      const vocabScrollTop = vocabListRef.current?.scrollTop || 0
-      const sentenceScrollTop = sentenceListRef.current?.scrollTop || 0
-      const isGlobal = showGlobalVocab
-      const isOriginal = showOriginal
-
-      // 更新ref
-      if (isGlobal) {
-        globalVocabScrollPos.current = vocabScrollTop
-      } else {
-        localVocabScrollPos.current = vocabScrollTop
-      }
-      if (isOriginal) {
-        sentenceOriginalScrollPos.current = sentenceScrollTop
-      } else {
-        sentenceTranslationScrollPos.current = sentenceScrollTop
-      }
-
       dictStateRef.current = {
         vocabPage, sentencePage, globalVocabPage,
         vocabScrollPos: localVocabScrollPos.current,
@@ -85,34 +67,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   useEffect(() => {
     saveState()
   }, [vocabPage, sentencePage, globalVocabPage, vocabDisplayMode, sentenceDisplayMode, showOriginal, showGlobalVocab, vocabSearch, sentenceSearch])
-
-  // 滚动时持续保存滚动位置到ref
-  useEffect(() => {
-    const vocabEl = vocabListRef.current
-    const sentenceEl = sentenceListRef.current
-    const saveVocabScroll = () => {
-      if (!vocabEl) return
-      if (showGlobalVocabRef.current) {
-        globalVocabScrollPos.current = vocabEl.scrollTop
-      } else {
-        localVocabScrollPos.current = vocabEl.scrollTop
-      }
-    }
-    const saveSentenceScroll = () => {
-      if (!sentenceEl) return
-      if (showOriginalRef.current) {
-        sentenceOriginalScrollPos.current = sentenceEl.scrollTop
-      } else {
-        sentenceTranslationScrollPos.current = sentenceEl.scrollTop
-      }
-    }
-    vocabEl?.addEventListener('scroll', saveVocabScroll, { passive: true })
-    sentenceEl?.addEventListener('scroll', saveSentenceScroll, { passive: true })
-    return () => {
-      vocabEl?.removeEventListener('scroll', saveVocabScroll)
-      sentenceEl?.removeEventListener('scroll', saveSentenceScroll)
-    }
-  }, [])
 
   useEffect(() => {
     if (currentFileId) {
