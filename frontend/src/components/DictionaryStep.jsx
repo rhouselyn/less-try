@@ -31,12 +31,15 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [wordGenProgress, setWordGenProgress] = useState(null)
   const [meaningOverrides, setMeaningOverrides] = useState({})
   const vocabListRef = useRef(null)
+  const sentenceListRef = useRef(null)
   const wordRefs = useRef({})
   const sentenceRefs = useRef({})
   const titleInputRef = useRef(null)
   const pendingScrollWord = useRef(null)
   const localVocabScrollPos = useRef(saved.vocabScrollPos || 0)
   const globalVocabScrollPos = useRef(saved.globalVocabScrollPos || 0)
+  const sentenceTranslationScrollPos = useRef(saved.sentenceTranslationScrollPos || 0)
+  const sentenceOriginalScrollPos = useRef(saved.sentenceOriginalScrollPos || 0)
   const filteredVocabRef = useRef([])
   const vocabPageRef = useRef(saved.vocabPage || 1)
   const pageSizeRef = useRef(pageSize)
@@ -46,7 +49,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       dictStateRef.current = {
         vocabPage, sentencePage, globalVocabPage,
         vocabScrollPos: localVocabScrollPos.current,
-        sentenceScrollPos: 0,
+        sentenceTranslationScrollPos: sentenceTranslationScrollPos.current,
+        sentenceOriginalScrollPos: sentenceOriginalScrollPos.current,
         globalVocabScrollPos: globalVocabScrollPos.current,
         vocabDisplayMode, sentenceDisplayMode,
         showOriginal, showGlobalVocab,
@@ -61,6 +65,31 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   useEffect(() => {
     if (currentFileId) {
+      // 不同条目切换时清空状态
+      if (dictStateRef && dictStateRef.current?._lastFileId && dictStateRef.current._lastFileId !== currentFileId) {
+        dictStateRef.current = {
+          vocabPage: 1, sentencePage: 1, globalVocabPage: 1,
+          vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0,
+          globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0,
+          showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '',
+          _lastFileId: currentFileId
+        }
+        setVocabPage(1)
+        setSentencePage(1)
+        setGlobalVocabPage(1)
+        setVocabDisplayMode(0)
+        setSentenceDisplayMode(0)
+        setShowOriginal(false)
+        setShowGlobalVocab(false)
+        setVocabSearch('')
+        setSentenceSearch('')
+        localVocabScrollPos.current = 0
+        globalVocabScrollPos.current = 0
+        sentenceTranslationScrollPos.current = 0
+        sentenceOriginalScrollPos.current = 0
+      } else if (dictStateRef) {
+        dictStateRef.current._lastFileId = currentFileId
+      }
       fetch(`/api/file/${currentFileId}/info`)
         .then(r => r.json())
         .then(data => {
@@ -236,6 +265,41 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       vocabListRef.current.scrollTop = targetPos
     }
   }, [showGlobalVocab, globalVocabLoading])
+
+  // 切换句子翻译/显示原文时保存/恢复滚动位置
+  const handleToggleShowOriginal = useCallback(() => {
+    // 保存当前模式的滚动位置
+    if (sentenceListRef.current) {
+      if (showOriginal) {
+        sentenceOriginalScrollPos.current = sentenceListRef.current.scrollTop
+      } else {
+        sentenceTranslationScrollPos.current = sentenceListRef.current.scrollTop
+      }
+    }
+    setShowOriginal(v => !v)
+  }, [showOriginal])
+
+  // 切换 showOriginal 后恢复滚动位置
+  useEffect(() => {
+    if (!sentenceListRef.current) return
+    const targetPos = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
+    if (typeof targetPos === 'number' && targetPos > 0) {
+      requestAnimationFrame(() => {
+        if (sentenceListRef.current) sentenceListRef.current.scrollTop = targetPos
+      })
+    }
+  }, [showOriginal])
+
+  // 初始恢复句子面板滚动位置
+  useEffect(() => {
+    if (!sentenceListRef.current) return
+    const targetPos = showOriginal ? sentenceOriginalScrollPos.current : sentenceTranslationScrollPos.current
+    if (typeof targetPos === 'number' && targetPos > 0) {
+      requestAnimationFrame(() => {
+        if (sentenceListRef.current) sentenceListRef.current.scrollTop = targetPos
+      })
+    }
+  }, [])
 
   const scrollToLetter = (letter) => {
     const el = document.getElementById(`dict-group-${letter}`)
@@ -701,6 +765,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
           ...dictStateRef.current,
           vocabScrollPos: localVocabScrollPos.current,
           globalVocabScrollPos: globalVocabScrollPos.current,
+          sentenceTranslationScrollPos: sentenceTranslationScrollPos.current,
+          sentenceOriginalScrollPos: sentenceOriginalScrollPos.current,
           vocabPage, sentencePage, globalVocabPage,
           vocabDisplayMode, sentenceDisplayMode,
           showOriginal, showGlobalVocab,
@@ -837,7 +903,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
                   <Languages className={`w-4 h-4 transition-colors cursor-pointer ${sentenceDisplayMode !== 0 ? 'text-ochre-500' : 'text-ink-500 hover:text-ochre-500'}`} onClick={(e) => { e.stopPropagation(); setSentenceDisplayMode(v => (v + 1) % 3) }} title={sentenceDisplayMode === 0 ? t.showAll : sentenceDisplayMode === 1 ? t.hideTranslation : t.hideOriginal} />
                   <h3 className="text-sm font-semibold text-ink-700 font-display">
-                    <span className="cursor-pointer select-none" onClick={() => setShowOriginal(v => !v)}>
+                    <span className="cursor-pointer select-none" onClick={handleToggleShowOriginal}>
                       <span className={!showOriginal ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.sentTranslation}</span>
                       <span className="text-bone-300 mx-1.5">/</span>
                       <span className={showOriginal ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.showOriginal}</span>
@@ -859,7 +925,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                 </div>
               </div>
             </div>
-            <div className="flex-1 overflow-y-scroll min-h-0" style={{ scrollbarGutter: 'stable' }}>
+            <div className="flex-1 overflow-y-scroll min-h-0" ref={sentenceListRef} style={{ scrollbarGutter: 'stable' }}>
               {showOriginal ? (
                 <div className="p-4">
                   <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
@@ -877,7 +943,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           className={`p-4 cursor-pointer transition-colors ${
                             selectedSentence === originalIndex ? 'bg-ochre-50/60' : 'hover:bg-ochre-50/30'
                           }`}
-                          onClick={() => onSentenceClick(originalIndex)}
+                          onClick={() => { onSentenceClick(originalIndex); speakText(item.sentence || '', actualSourceLang) }}
                         >
                           <div className="flex items-start gap-2">
                             <div className="flex-1 min-w-0">
