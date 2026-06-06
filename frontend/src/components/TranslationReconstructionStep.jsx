@@ -67,8 +67,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           <motion.button
             onClick={onBack}
             className="flex items-center gap-2 btn-ghost"
-            whileHover={{ scale: 1.05, x: -2 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft className="w-4 h-4" />
             {t.back}
@@ -82,10 +81,9 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             <motion.button
               onClick={onOpenVocabList}
               className="flex items-center gap-2 btn-ghost"
-              whileHover={{ scale: 1.05, x: 2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <BookOpen className="w-4 h-4" />
+              whileTap={{ scale: 0.98 }}
+          >
+            <BookOpen className="w-4 h-4" />
               {t.vocabList || '单词表'}
             </motion.button>
           )}
@@ -156,7 +154,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               </AnimatePresence>
               <motion.button
                 whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
                 className="ml-auto p-2 text-cadmium-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                 title={t.playHint || '播放提示'}
@@ -220,8 +218,8 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         <div className="flex gap-4">
           {!answerChecked ? (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               onClick={checkAnswer}
               disabled={selectedTokens.length === 0}
               className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -230,8 +228,8 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             </motion.button>
           ) : (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               onClick={handleNext}
               disabled={loading}
               className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"

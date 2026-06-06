@@ -46,26 +46,18 @@ body {
     @apply card-warm hover:shadow-impasto hover:border-stone-300 transition-all duration-200;
   }
 
-  /* 主按钮 - 镉黄颜料管渐变 */
+  /* 主按钮 - 简约镉黄 */
   .btn-primary {
-    @apply text-umber-800 font-semibold rounded-2xl
-           px-6 py-3 transition-all duration-200 shadow-impasto-sm
-           hover:shadow-impasto active:translate-y-[2px] active:shadow-impasto-sm disabled:opacity-50 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, #f2d07a 0%, #e8b442 40%, #d4982a 100%);
-  }
-  .btn-primary:hover {
-    background: linear-gradient(135deg, #f2d07a 0%, #e0a830 40%, #c88e22 100%);
+    @apply bg-cadmium-300 hover:bg-cadmium-400 text-umber-800 font-semibold rounded-2xl
+           px-6 py-3 transition-colors duration-200
+           active:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
-  /* 次要按钮 - 钴蓝颜料管渐变 */
+  /* 次要按钮 - 简约钴蓝 */
   .btn-secondary {
-    @apply text-white font-semibold rounded-2xl
-           border border-cerulean-300 px-6 py-3 transition-all duration-200
-           shadow-impasto-sm active:translate-y-[2px] active:shadow-impasto-sm;
-    background: linear-gradient(135deg, #a8c5e1 0%, #6f9fc8 40%, #4a7fad 100%);
-  }
-  .btn-secondary:hover {
-    background: linear-gradient(135deg, #9ab8d8 0%, #6393be 40%, #3f73a0 100%);
+    @apply bg-cerulean-400 hover:bg-cerulean-500 text-white font-semibold rounded-2xl
+           px-6 py-3 transition-colors duration-200
+           active:opacity-90;
   }
 
   /* 幽灵按钮 */

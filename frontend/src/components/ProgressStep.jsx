@@ -52,7 +52,7 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onBack}
             className="btn-primary px-6 py-3"
           >

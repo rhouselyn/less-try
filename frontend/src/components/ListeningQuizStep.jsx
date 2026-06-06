@@ -94,8 +94,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
           <motion.button
             onClick={onBack}
             className="flex items-center gap-2 btn-ghost"
-            whileHover={{ scale: 1.05, x: -2 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft className="w-4 h-4" />
             {t.back}
@@ -109,8 +108,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <motion.button
               onClick={handleSkipListening}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-umber-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-lg transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileTap={{ scale: 0.98 }}
               title={t.skipListening || '跳过听力'}
             >
               <SkipForward className="w-3.5 h-3.5" />
@@ -121,10 +119,9 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             <motion.button
               onClick={onOpenVocabList}
               className="flex items-center gap-2 btn-ghost"
-              whileHover={{ scale: 1.05, x: 2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <BookOpen className="w-4 h-4" />
+              whileTap={{ scale: 0.98 }}
+          >
+            <BookOpen className="w-4 h-4" />
               {t.vocabList || '单词表'}
             </motion.button>
           )}
@@ -145,7 +142,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
           <div className="flex items-center justify-center gap-3">
             <motion.button
               whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang)}
               className="p-3 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
             >
@@ -153,7 +150,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.97 }}
               onClick={() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang, true)}
               className="p-3 text-umber-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
               title={t.slowPlay || '慢速播放'}

@@ -126,8 +126,8 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
         >
           {hasWrongItems ? (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onReview}
               className="btn-primary text-lg flex items-center justify-center gap-2"
             >
@@ -136,8 +136,8 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
             </motion.button>
           ) : (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onContinue}
               className="btn-primary text-lg flex items-center justify-center gap-2"
             >

@@ -1226,8 +1226,7 @@ function App() {
               ) : (
                 <>
                   <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setShowSettings(true)}
                     className="absolute top-3 right-4 p-2 text-umber-400 hover:text-umber-600 hover:bg-canvas-200/60 rounded-xl transition-colors z-10"
                   >

@@ -110,7 +110,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.9 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={(e) => { e.stopPropagation(); speakText(learningData.word, sourceLang) }}
                   className="p-2 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                 >
@@ -176,7 +176,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     whileHover={{ scale: 1.15 }}
-                    whileTap={{ scale: 0.9 }}
+                    whileTap={{ scale: 0.97 }}
                     onClick={(e) => { e.stopPropagation(); speakText(learningData.word, sourceLang) }}
                     className="p-2 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                   >
@@ -226,7 +226,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     </p>
                     <motion.button
                       whileHover={{ scale: 1.15 }}
-                      whileTap={{ scale: 0.9 }}
+                      whileTap={{ scale: 0.97 }}
                       onClick={(e) => { e.stopPropagation(); speakText(learningData.context, sourceLang) }}
                       className="p-1.5 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors shrink-0 mt-1"
                     >
@@ -286,7 +286,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                           <p className="text-umber-800 mb-1 flex-1">{example.sentence}</p>
                           <motion.button
                             whileHover={{ scale: 1.15 }}
-                            whileTap={{ scale: 0.9 }}
+                            whileTap={{ scale: 0.97 }}
                             onClick={(e) => { e.stopPropagation(); speakText(example.sentence, sourceLang) }}
                             className="p-1 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors shrink-0"
                           >
@@ -321,7 +321,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
               whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
+              whileTap={{ scale: 0.98 }}
               onClick={onNextWord}
               disabled={loading}
               className="mt-8 w-full py-4 btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"

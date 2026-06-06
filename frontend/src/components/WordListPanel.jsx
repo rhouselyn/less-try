@@ -467,7 +467,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     <div className="mt-6">
       <motion.button
         whileHover={{ scale: 1.01 }}
-        whileTap={{ scale: 0.99 }}
+        whileTap={{ scale: 0.98 }}
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-200/60 hover:border-cadmium-200/60 transition-all shadow-impasto-sm"
       >

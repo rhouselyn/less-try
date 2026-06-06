@@ -520,8 +520,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
               </div>
 
               <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleSave}
                 disabled={saving}
                 className="btn-primary w-full py-2.5 bg-umber-800 text-white text-xs font-medium rounded-2xl hover:bg-umber-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"

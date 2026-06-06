@@ -584,8 +584,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
             {/* Submit button inside textarea, bottom-right */}
             <div className="flex items-center justify-end px-3 pb-3">
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={onProcess}
                 disabled={loading || !text.trim()}
                 className={`p-2 rounded-xl transition-all duration-200 ${

@@ -88,8 +88,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           <motion.button
             onClick={onBack}
             className="flex items-center gap-2 btn-ghost"
-            whileHover={{ scale: 1.05, x: -2 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.98 }}
           >
             <ArrowLeft className="w-4 h-4" />
             {t.back}
@@ -103,10 +102,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             <motion.button
               onClick={onOpenVocabList}
               className="flex items-center gap-2 btn-ghost"
-              whileHover={{ scale: 1.05, x: 2 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <BookOpen className="w-4 h-4" />
+              whileTap={{ scale: 0.98 }}
+          >
+            <BookOpen className="w-4 h-4" />
               {t.vocabList || '单词表'}
             </motion.button>
           )}
@@ -135,7 +133,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             </motion.p>
             <motion.button
               whileHover={{ scale: 1.15 }}
-              whileTap={{ scale: 0.9 }}
+              whileTap={{ scale: 0.97 }}
               onClick={(e) => { e.stopPropagation(); speakText(quizData.original_sentence, sourceLang) }}
               className="p-2 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
             >
@@ -236,9 +234,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         <div className="flex gap-4">
           {!isChecked && (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
-              onClick={handleCheckAnswer}
+              whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleCheckAnswer}
               disabled={selectedIndices.length === 0}
               className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
@@ -247,9 +245,9 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           )}
           {isChecked && (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
-              onClick={handleNextQuestion}
+              whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleNextQuestion}
               disabled={loading}
               className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
