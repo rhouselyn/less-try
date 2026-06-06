@@ -354,7 +354,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                     tabIndex={0}
                     onClick={() => handleWordClick(word.word)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleWordClick(word.word) }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 bg-canvas-50 hover:bg-canvas-100 transition-colors text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-canvas-50/80 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -443,7 +443,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-9 py-2 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
+              className="input-warm w-full pl-9 pr-9 py-2 text-sm bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
             />
             {searchQuery && (
               <button
@@ -504,7 +504,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-                    className="input-warm w-full pl-9 pr-9 py-2.5 text-sm bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
+                    className="input-warm w-full pl-9 pr-9 py-2.5 text-sm bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
                   />
                   {searchQuery && (
                     <button

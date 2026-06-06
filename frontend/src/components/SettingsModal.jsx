@@ -298,7 +298,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15 }}
-          className="bg-white border border-stone-300 rounded-3xl shadow-impasto-xl w-[340px] overflow-hidden mt-2"
+          className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-xl w-[340px] overflow-hidden mt-2"
           onClick={e => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-canvas-100">
@@ -373,7 +373,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                               value={current?.api_key || ''}
                               onChange={e => updateConfig(currentIndex, 'api_key', e.target.value)}
                               placeholder={current?.masked_key || 'sk-...'}
-                              className="input-warm w-full px-3 py-2 text-xs bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
                             />
                             {current?.has_key && !current?.api_key && (
                               <p className="text-[11px] text-umber-400 mt-1">{t.leaveEmptyKeepKey || '留空则保持当前 Key 不变'}</p>
@@ -390,7 +390,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                               value={current?.base_url || ''}
                               onChange={e => updateConfig(currentIndex, 'base_url', e.target.value)}
                               placeholder="https://api.siliconflow.cn/v1"
-                              className="input-warm w-full px-3 py-2 text-xs bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
                             />
                           </div>
 
@@ -404,7 +404,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                               value={current?.model || ''}
                               onChange={e => updateConfig(currentIndex, 'model', e.target.value)}
                               placeholder="Qwen/Qwen3.6-27B"
-                              className="input-warm w-full px-3 py-2 text-xs bg-white border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
                             />
                           </div>
                         </motion.div>

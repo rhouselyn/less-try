@@ -31,41 +31,37 @@ body {
 
 /* 油画印象派设计系统 - 全局组件样式 */
 @layer components {
-  /* 卡片基础 - 白底，与画布背景拉开差距 */
+  /* 卡片基础 */
   .card-warm {
-    @apply bg-white border border-stone-300 rounded-2xl shadow-impasto-sm;
+    @apply bg-white/85 border border-stone-300 rounded-2xl shadow-impasto-sm;
   }
   .card-warm-hover {
     @apply card-warm hover:shadow-impasto hover:border-stone-400 transition-all duration-200;
   }
 
-  /* 主按钮 - 淡雅赭石，不强推 */
+  /* 主按钮 - 3D立体赭石 */
   .btn-primary {
-    @apply font-semibold rounded-xl
-           px-6 py-3 transition-all duration-200
+    @apply text-white font-bold rounded-lg
+           px-6 py-3 transition-all duration-300 ease-out
+           hover:-translate-y-0.5 active:translate-y-[3px]
            disabled:opacity-50 disabled:cursor-not-allowed;
-    background: #e8ddd0;
-    color: #5a3f2b;
+    background: linear-gradient(135deg, #c0785a 0%, #a86040 100%);
+    box-shadow: #7a3f28 0px 4px 0px, rgba(160, 96, 64, 0.3) 0px 6px 16px;
   }
   .btn-primary:hover {
-    background: #ddd0c0;
+    background: linear-gradient(135deg, #cc8466 0%, #b46c4c 100%);
+    box-shadow: #7a3f28 0px 4px 0px, rgba(160, 96, 64, 0.4) 0px 8px 20px;
   }
   .btn-primary:active {
-    background: #d0c2b0;
+    box-shadow: #7a3f28 0px 1px 0px, rgba(160, 96, 64, 0.2) 0px 2px 8px;
   }
 
-  /* 次要/取消按钮 - 冷灰蓝，显眼可反悔 */
+  /* 次要按钮 - 简约平面 */
   .btn-secondary {
-    @apply font-semibold rounded-xl
-           px-6 py-3 transition-colors duration-200;
-    background: #6b7a8d;
-    color: #fff;
-  }
-  .btn-secondary:hover {
-    background: #5a6a7e;
-  }
-  .btn-secondary:active {
-    background: #4d5c6f;
+    @apply text-umber-600 font-medium rounded-xl
+           px-6 py-3 transition-colors duration-200
+           bg-canvas-100 hover:bg-canvas-200
+           active:bg-canvas-300;
   }
 
   /* 幽灵按钮 */
@@ -76,7 +72,7 @@ body {
 
   /* 输入框 */
   .input-warm {
-    @apply w-full px-4 py-3 rounded-2xl border border-stone-300 bg-white
+    @apply w-full px-4 py-3 rounded-2xl border border-stone-300 bg-white/70
            text-umber-700 placeholder-umber-400/60 focus:outline-none
            focus:border-cadmium-400 focus:shadow-glow-cadmium
            transition-all duration-200 hover:border-stone-400;
@@ -101,10 +97,10 @@ body {
     @apply px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200;
   }
   .tab-warm-active {
-    @apply tab-warm bg-white text-umber-700 shadow-impasto-sm;
+    @apply tab-warm bg-white/80 text-umber-700 shadow-impasto-sm;
   }
   .tab-warm-inactive {
-    @apply tab-warm text-umber-400 hover:text-umber-600 hover:bg-canvas-100;
+    @apply tab-warm text-umber-400 hover:text-umber-600 hover:bg-canvas-100/50;
   }
 
   /* 开关 */

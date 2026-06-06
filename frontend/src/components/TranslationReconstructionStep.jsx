@@ -90,7 +90,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
       </div>
 
-      <div className="bg-white border border-stone-300 rounded-3xl p-8 shadow-impasto-sm">
+      <div className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}

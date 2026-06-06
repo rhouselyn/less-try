@@ -565,7 +565,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
 
       {/* Bottom area - input box */}
       <div className="w-full max-w-2xl mx-auto pb-4 px-4">
-        <div className="relative bg-white border border-stone-300 rounded-2xl shadow-impasto overflow-hidden">
+        <div className="relative bg-white/80 border border-stone-300 rounded-2xl shadow-impasto overflow-hidden">
           {/* Mode tabs at top of input */}
           <div className="border-b border-stone-300 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
@@ -590,7 +590,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
                 className={`p-2 rounded-xl transition-all duration-200 ${
                   loading || !text.trim()
                     ? 'bg-canvas-100 text-umber-400 cursor-not-allowed'
-                    : 'bg-stone-300 hover:bg-stone-400 text-umber-700 shadow-md hover:shadow-lg'
+                    : 'bg-cadmium-500 text-white shadow-md shadow-cadmium-500/20 hover:bg-cadmium-500 hover:shadow-lg hover:shadow-cadmium-500/25'
                 }`}
               >
                 <AnimatePresence mode="wait">
