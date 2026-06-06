@@ -643,10 +643,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       if (data) {
         setWordDetails(prev => ({ ...prev, [localKey]: data, [globalKey]: data }))
         setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
-        const newMeaning = data.enriched_meaning || data.meaning || data.context_meaning
-        if (newMeaning) {
-          setMeaningOverrides(prev => ({ ...prev, [wordKey]: newMeaning }))
-        }
       }
     } catch (e) {
       console.error('Failed to regenerate word:', e)

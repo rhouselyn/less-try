@@ -278,6 +278,22 @@ function App() {
           setProgress(status.progress)
         }
 
+        // 更新预处理状态
+        if (status.preprocess === 'translating') {
+          setPreprocessStatus('translating')
+        } else if (status.preprocess === 'generating') {
+          setPreprocessStatus('generating')
+        } else if (status.preprocess === 'detecting') {
+          setPreprocessStatus('detecting')
+        } else {
+          setPreprocessStatus(null)
+        }
+
+        // 更新标题（后台任务生成后）
+        if (status.title) {
+          setFileTitle(status.title)
+        }
+
         // 更新处理信息
         if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
           setProcessingInfo({
@@ -409,57 +425,8 @@ function App() {
     setStep('dictionary')
     
     try {
-      let finalText = text.trim()
-      let finalSourceLang = sourceLang
-      
-      // 心跳：在长时间操作期间每2秒ping一次后端，防止网关超时
-      let heartbeatInterval = null
-      const startHeartbeat = () => {
-        if (heartbeatInterval) return
-        heartbeatInterval = setInterval(() => {
-          fetch('/api/ping').catch(() => {})
-        }, 2000)
-      }
-      const stopHeartbeat = () => {
-        if (heartbeatInterval) {
-          clearInterval(heartbeatInterval)
-          heartbeatInterval = null
-        }
-      }
-
-      if (inputMode === 'translate') {
-        startHeartbeat()
-        try {
-          const translateResponse = await api.translateText(text.trim(), targetLang, sourceLang)
-          finalText = translateResponse.translated_text
-        } finally {
-          stopHeartbeat()
-        }
-      } else if (inputMode === 'generate') {
-        startHeartbeat()
-        try {
-          const generateResponse = await api.generateText(text.trim(), sourceLang, targetLang)
-          finalText = generateResponse.generated_text
-        } finally {
-          stopHeartbeat()
-        }
-      }
-      
-      if (finalSourceLang === 'auto') {
-        try {
-          const detectResult = await api.detectLanguage(finalText)
-          if (detectResult.detected_language) {
-            finalSourceLang = detectResult.detected_language
-          }
-        } catch (e) {
-          console.error('Language detection failed:', e)
-        }
-        setPreprocessStatus(null)
-      } else {
-        setPreprocessStatus(null)
-      }
-      
-      const response = await api.processText(finalText, finalSourceLang, targetLang)
+      // 所有模式统一调用 processText，翻译/生成/语言检测在后台执行，不会超时
+      const response = await api.processText(text.trim(), sourceLang, targetLang, inputMode)
       
       if (response && response.file_id) {
         const fileId = response.file_id
