@@ -105,18 +105,18 @@ function AllUnitsStep({
         key={`${keyPrefix}-unit-${index}`}
         initial={false}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={!isLocked ? { y: -2, transition: { duration: 0.15 } } : {}}
-        whileTap={!isLocked ? { scale: 0.97 } : {}}
+        whileHover={!isLocked ? { y: -3, transition: { duration: 0.15 } } : {}}
+        whileTap={!isLocked ? { scale: 0.95, y: 0 } : {}}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-2xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-200 border-teal-500 hover:bg-teal-200 shadow-impasto-sm'
+            ? 'bg-teal-200 border-teal-500 hover:bg-teal-200 shadow-impasto-lg'
             : isLocked
-            ? 'bg-canvas-200 border-stone-400 cursor-not-allowed'
+            ? 'bg-canvas-100 border-stone-300 cursor-not-allowed'
             : isCurrent
-            ? 'bg-cadmium-200 border-cadmium-500 shadow-impasto'
-            : 'bg-cadmium-100 border-cadmium-400 hover:border-cadmium-500 shadow-impasto-sm'
+            ? 'bg-cadmium-200 border-cadmium-500 shadow-impasto-xl'
+            : 'bg-cadmium-100 border-cadmium-400 hover:border-cadmium-500 shadow-impasto-md'
         }`}
         style={{ width: '5.5rem', height: '5.5rem' }}
       >
@@ -322,8 +322,8 @@ function AllUnitsStep({
             <div className="bg-canvas-100/70 backdrop-blur-md border-b border-stone-200/60 px-3 pt-2.5">
               <div className="flex gap-1 relative">
                 <motion.div
-                  className="absolute top-0 bottom-0 bg-canvas-50 rounded-t-xl shadow-impasto-sm"
-                  style={{ width: 'calc(50% - 4px)' }}
+                  className="absolute top-0 bottom-0 bg-canvas-50 rounded-t-xl"
+                  style={{ width: 'calc(50% - 4px)', zIndex: 1 }}
                   animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
                 />
@@ -334,7 +334,10 @@ function AllUnitsStep({
                     <button
                       key={tab.key}
                       onClick={() => handleTabChange(i)}
-                      className="relative z-10 flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
+                      className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium rounded-t-xl transition-all duration-200 ${
+                        isActive ? 'shadow-none' : 'hover:bg-canvas-50/50'
+                      }`}
+                      style={{ zIndex: isActive ? 2 : 1 }}
                     >
                       <div className={`flex items-center gap-1.5 transition-colors duration-300 ${
                         isActive ? 'text-umber-700' : 'text-umber-400 hover:text-umber-500'

@@ -118,6 +118,7 @@ export default {
       boxShadow: {
         // 厚涂阴影 - 实色底部 + 模糊扩散
         'impasto-sm': '0 2px 0 #c9bca3, 0 2px 6px rgba(58, 45, 25, 0.10)',
+        'impasto-md': '0 2px 0 #c9bca3, 0 3px 10px rgba(58, 45, 25, 0.12)',
         'impasto':    '0 3px 0 #c9bca3, 0 4px 12px rgba(58, 45, 25, 0.14)',
         'impasto-lg': '0 4px 0 #bfb085, 0 8px 24px rgba(58, 45, 25, 0.18)',
         'impasto-xl': '0 5px 0 #bfb085, 0 12px 40px rgba(58, 45, 25, 0.22)',
