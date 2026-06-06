@@ -8,7 +8,7 @@ import time
 
 from nvidia_api import get_settings, get_lang_name
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
-from utils.state import nvidia_api, text_processor, storage, processing_status, word_gen_state, word_gen_rate_limiter
+from utils.state import nvidia_api, text_processor, storage, processing_status, word_gen_state
 from utils.helpers import (
     RateLimiter, vocab_sort_key, is_speaker_label, is_punctuation_only as _is_punct,
     get_translation_phrases, split_translation_to_phrases, select_key_tokens,
@@ -23,8 +23,11 @@ from utils.helpers import (
 async def process_text_background(file_id: str, text: str, source_lang: str, target_lang: str, rpm: int = 20):
     try:
         t_total_start = time.time()
-        print(f"[DEBUG] 开始处理文件 {file_id}, RPM={rpm}")
-        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0}
+        app_prefs = storage.load_user_preferences()
+        retry_interval = app_prefs.get("retry_interval", 1.0)
+        print(f"[DEBUG] 开始处理文件 {file_id}, 请求间隔={retry_interval}s")
+        _preserve = {k: processing_status[file_id][k] for k in ("original_text", "title") if k in processing_status[file_id]}
+        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, **_preserve}
 
         storage.save_language_settings(file_id, source_lang, target_lang)
 
@@ -34,9 +37,9 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         t_split_end = time.time()
         print(f"[TIMING] 句子分割: {t_split_end - t_split_start:.3f}s, 共 {total_sentences} 个句子")
 
-        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": total_sentences}
+        _preserve2 = {k: processing_status[file_id][k] for k in ("original_text", "title") if k in processing_status[file_id]}
+        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": total_sentences, **_preserve2}
 
-        rate_limiter = RateLimiter(rpm)
         results_dict = {}
         completed_indices = set()
 
@@ -51,11 +54,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             context_sentences = {"before": before_sentences, "after": after_sentences} if (before_sentences or after_sentences) else None
 
             t_sentence_start = time.time()
-
-            t_rate_start = time.time()
-            await rate_limiter.acquire()
-            t_rate_end = time.time()
-            print(f"[TIMING] 句子 {idx+1} 等待限速: {t_rate_end - t_rate_start:.3f}s")
 
             t_llm_start = time.time()
             print(f"[DEBUG] 正在翻译句子 {idx+1}/{total_sentences}: {repr(sentence)}")
@@ -109,7 +107,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             if missing_words:
                 print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
                 t_missing_start = time.time()
-                await rate_limiter.acquire()
                 remaining_entries = await nvidia_api.process_remaining_words(
                     missing_words, source_lang, target_lang, sentence
                 )
@@ -163,7 +160,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             for si, sd in enumerate(all_completed_translations):
                 tr = sd.get("translation_result", {})
                 if isinstance(tr, dict) and "translation" in tr:
-                    for token in tr["translation"]:
+                    for ti, token in enumerate(tr["translation"]):
                         if isinstance(token, dict) and "text" in token:
                             entry = {
                                 "word": token["text"],
@@ -171,7 +168,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                 "meaning": token.get("meaning", "") or token.get("context_meaning", ""),
                                 "tokens": [token["text"]],
                                 "morphology": token.get("morphology", ""),
-                                "sentence_index": si
+                                "sentence_index": si,
+                                "token_index": ti
                             }
                             partial_vocab.append(entry)
 
@@ -185,13 +183,15 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             unique_partial.sort(key=vocab_sort_key)
 
             progress = int(len(completed_indices) / total_sentences * 100)
+            _preserve3 = {k: processing_status[file_id][k] for k in ("original_text", "title") if k in processing_status[file_id]}
             processing_status[file_id] = {
                 "status": "processing",
                 "progress": progress,
                 "current_sentence": len(completed_indices),
                 "total_sentences": total_sentences,
                 "vocab": unique_partial,
-                "sentence_translations": all_completed_translations
+                "sentence_translations": all_completed_translations,
+                **_preserve3
             }
             print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(completed_indices)} 个句子, 词汇 {len(unique_partial)} 个")
 
@@ -201,7 +201,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         for i, sentence_data in enumerate(sentence_translations):
             translation_result = sentence_data.get("translation_result", {})
             if isinstance(translation_result, dict) and "translation" in translation_result:
-                for token in translation_result["translation"]:
+                for ti, token in enumerate(translation_result["translation"]):
                     if isinstance(token, dict) and "text" in token:
                         word = token["text"]
                         if not word or is_punctuation_only(word):
@@ -212,7 +212,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                             "meaning": token.get("meaning", "") or token.get("context_meaning", ""),
                             "tokens": [word],
                             "morphology": token.get("morphology", ""),
-                            "sentence_index": i
+                            "sentence_index": i,
+                            "token_index": ti
                         }
                         all_vocab.append(entry)
 
@@ -264,11 +265,13 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         if all_vocab:
             generate_and_save_learning_plan(file_id, all_vocab, sentence_translations)
 
+        _preserve4 = {k: processing_status[file_id][k] for k in ("original_text", "title") if k in processing_status[file_id]}
         processing_status[file_id] = {
             "status": "completed",
             "progress": 100,
             "vocab": all_vocab,
-            "sentence_translations": sentence_translations
+            "sentence_translations": sentence_translations,
+            **_preserve4
         }
         t_total_end = time.time()
         print(f"[TIMING] ========== 全部处理完成 ==========")
@@ -303,7 +306,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         }
 
 
-async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang):
+async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang, temperature=0):
     state = word_gen_state.get(file_id)
     if not state:
         return
@@ -354,10 +357,6 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                     elif "context_meaning" in word_entry:
                         correct_meaning = word_entry["context_meaning"]
 
-                global word_gen_rate_limiter
-                if word_gen_rate_limiter:
-                    await word_gen_rate_limiter.acquire()
-
                 print(f"[DEBUG] Background word gen: {word_to_gen} (attempt {attempt + 1})")
                 options_result = await nvidia_api.generate_multiple_choice(
                     word_to_gen,
@@ -365,22 +364,20 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                     context,
                     target_lang,
                     source_lang,
-                    0
+                    temperature
                 )
 
                 placeholder_pattern = re.compile(r'(释义|含义|意思|meaning|definition)\s*\d', re.IGNORECASE)
                 enriched = options_result.get("enriched_meaning", "")
                 if placeholder_pattern.search(enriched):
                     print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
-                    if word_gen_rate_limiter:
-                        await word_gen_rate_limiter.acquire()
                     options_result = await nvidia_api.generate_multiple_choice(
                         word_to_gen,
                         correct_meaning,
                         context,
                         target_lang,
                         source_lang,
-                        0
+                        temperature
                     )
                     enriched = options_result.get("enriched_meaning", "")
                     if placeholder_pattern.search(enriched):
@@ -457,12 +454,6 @@ async def background_word_gen(file_id: str):
         state["plan_position"] = min(state.get("plan_position", 0), first_uncached)
     elif "plan_position" not in state:
         state["plan_position"] = len(plan_word_order)
-
-    global word_gen_rate_limiter
-    if not word_gen_rate_limiter:
-        app_settings = storage.load_user_preferences()
-        rpm = app_settings.get("rpm", 60)
-        word_gen_rate_limiter = RateLimiter(rpm)
 
     while state["running"]:
         word_to_gen = None

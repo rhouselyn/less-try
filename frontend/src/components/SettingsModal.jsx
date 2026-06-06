@@ -136,7 +136,6 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [rpm, setRpm] = useState(60)
   const [retryInterval, setRetryInterval] = useState(1)
   const [localUiLang, setLocalUiLang] = useState(uiLang || 'zh')
   const [localPageSize, setLocalPageSize] = useState(50)
@@ -160,7 +159,6 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
           : [{ api_key: '', base_url: '', model: '', has_key: false, masked_key: '' }]
         setConfigs(loaded)
         setCurrentIndex(data.active_index || 0)
-        if (prefs.rpm) setRpm(prefs.rpm)
         if (prefs.retry_interval !== undefined) setRetryInterval(prefs.retry_interval)
         if (prefs.ui_lang) setLocalUiLang(prefs.ui_lang)
         else if (prefs.target_lang) setLocalUiLang(prefs.target_lang)
@@ -254,7 +252,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
       setCurrentIndex(data.active_index ?? currentIndex)
 
       const updatedRecentLangs = [localUiLang, ...recentLangs.filter(code => code !== localUiLang)].slice(0, 5)
-      await api.saveUserPreferences({ rpm, retry_interval: retryInterval, target_lang: localUiLang, ui_lang: localUiLang, page_size: localPageSize, recent_languages: updatedRecentLangs })
+      await api.saveUserPreferences({ retry_interval: retryInterval, target_lang: localUiLang, ui_lang: localUiLang, page_size: localPageSize, recent_languages: updatedRecentLangs })
 
       if (onRecentLangsChange) {
         onRecentLangsChange(updatedRecentLangs)
@@ -454,11 +452,11 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
               <div className="pt-1">
                 <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-ink-400 uppercase tracking-widest mb-1.5">
                   <Gauge className="w-3 h-3" />
-                  {t.retryInterval || '重试间隔'}
+                  {t.retryInterval || '请求间隔'}
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-ink-400">{t.retryIntervalDesc || '限速后重试等待时间'}</span>
+                    <span className="text-[10px] text-ink-400">{t.retryIntervalDesc || '每次API请求之间的等待时间'}</span>
                     <span className="text-[11px] font-semibold text-ochre-500">{retryInterval.toFixed(1)}s</span>
                   </div>
                   <div className="relative">

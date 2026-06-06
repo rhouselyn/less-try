@@ -8,7 +8,7 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef, originalText = '' }) {
   const saved = dictStateRef?.current || {}
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
@@ -144,8 +144,18 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const poll = async () => {
       try {
         const data = await api.getWordGenProgress(currentFileId)
-        if (!cancelled) setWordGenProgress(data)
+        if (!cancelled) {
+          setWordGenProgress(data)
+          if (data.completed >= data.total && data.total > 0) {
+            if (interval) clearInterval(interval)
+            interval = null
+            return
+          }
+        }
       } catch {}
+      if (!cancelled && !interval) {
+        interval = setInterval(poll, 3000)
+      }
     }
     poll()
     interval = setInterval(poll, 3000)
@@ -251,6 +261,15 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   useEffect(() => {
     if (globalVocabPage > globalVocabTotalPages) setGlobalVocabPage(globalVocabTotalPages)
   }, [globalVocabPage, globalVocabTotalPages])
+
+  // 切换页数时滚动条置顶
+  useEffect(() => {
+    if (vocabListRef.current) vocabListRef.current.scrollTop = 0
+  }, [vocabPage, globalVocabPage])
+
+  useEffect(() => {
+    if (sentenceListRef.current) sentenceListRef.current.scrollTop = 0
+  }, [sentencePage])
 
   const handleToggleGlobalVocab = useCallback(() => {
     if (vocabListRef.current) {
@@ -611,42 +630,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     })
     setLoadingWords(prev => ({ ...prev, [localKey]: true, [globalKey]: true }))
     try {
-      await api.regenerateWord(currentFileId, wordKey)
-      const waitForDetail = async (retries = 60) => {
-        try {
-          const response = await fetch(`/api/word/${currentFileId}/${wordKey}`)
-          if (!response.ok) {
-            if (retries > 0) {
-              await new Promise(r => setTimeout(r, 2000))
-              return waitForDetail(retries - 1)
-            }
-            return null
-          }
-          const data = await response.json()
-          if (data && (data.enriched_meaning || data.meaning || data.multiple_choice)) {
-            return data
-          }
-          if (retries > 0) {
-            await new Promise(r => setTimeout(r, 2000))
-            return waitForDetail(retries - 1)
-          }
-          return null
-        } catch {
-          if (retries > 0) {
-            await new Promise(r => setTimeout(r, 2000))
-            return waitForDetail(retries - 1)
-          }
-          return null
-        }
-      }
-      const data = await waitForDetail()
+      const data = await api.regenerateWordDetailByFile(currentFileId, wordKey)
       if (data) {
         setWordDetails(prev => ({ ...prev, [localKey]: data, [globalKey]: data }))
         setWordDetailCache(prev => ({ ...prev, [wordKey]: data }))
-        const newMeaning = data.enriched_meaning || data.meaning || data.context_meaning
-        if (newMeaning) {
-          setMeaningOverrides(prev => ({ ...prev, [wordKey]: newMeaning }))
-        }
       }
     } catch (e) {
       console.error('Failed to regenerate word:', e)
@@ -969,7 +956,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="flex-1 overflow-y-scroll min-h-0" ref={sentenceListRef} style={{ scrollbarGutter: 'stable' }}>
               {showOriginal ? (
                 <div className="p-4">
-                  <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
+                  <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{originalText || safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
                 </div>
               ) : filteredSentences.length > 0 ? (
                 <div className="divide-y divide-bone-200/60">
@@ -987,7 +974,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           onClick={() => {
                             const isCollapsing = selectedSentence === originalIndex
                             onSentenceClick(originalIndex)
-                            if (!isCollapsing) speakText(item.sentence || '', actualSourceLang)
                           }}
                         >
                           <div className="flex items-start gap-2">

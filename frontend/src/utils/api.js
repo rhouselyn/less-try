@@ -10,11 +10,12 @@ export const api = {
   baseUrl: baseUrl,
   
   // 处理文本
-  processText: async (text, sourceLang, targetLang) => {
+  processText: async (text, sourceLang, targetLang, mode = 'direct') => {
     const response = await axios.post(`${baseUrl}/api/process-text`, {
       text: text.trim(),
       source_language: sourceLang,
       target_language: targetLang,
+      mode: mode,
     });
     return response.data;
   },
@@ -212,6 +213,11 @@ export const api = {
 
   regenerateWordDetail: async (word, sourceLang, targetLang) => {
     const response = await axios.post(`${baseUrl}/api/word-detail/regenerate`, { word, source_lang: sourceLang, target_lang: targetLang || 'en' })
+    return response.data
+  },
+
+  regenerateWordDetailByFile: async (fileId, word) => {
+    const response = await axios.post(`${baseUrl}/api/word/${fileId}/${word}/regenerate`)
     return response.data
   },
 

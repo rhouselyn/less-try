@@ -46,7 +46,7 @@ function App() {
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
-  const [targetLang, setTargetLang] = useState('en')
+  const [targetLang, setTargetLang] = useState('zh')
   const [uiLang, setUiLang] = useState('zh')
   const [customTranslations, setCustomTranslations] = useState({})
   const [translatingUI, setTranslatingUI] = useState(false)
@@ -112,6 +112,7 @@ function App() {
   const [preprocessStatus, setPreprocessStatus] = useState(null)
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
+  const [originalText, setOriginalText] = useState('')
   const learningContainerRef = useRef(null)
   const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
   const wrongItemsRef = useRef([])
@@ -278,6 +279,27 @@ function App() {
           setProgress(status.progress)
         }
 
+        // 更新预处理状态
+        if (status.preprocess === 'translating') {
+          setPreprocessStatus('translating')
+        } else if (status.preprocess === 'generating') {
+          setPreprocessStatus('generating')
+        } else if (status.preprocess === 'detecting') {
+          setPreprocessStatus('detecting')
+        } else {
+          setPreprocessStatus(null)
+        }
+
+        // 更新标题（后台任务生成后）
+        if (status.title) {
+          setFileTitle(status.title)
+        }
+
+        // 更新完整原文（LLM翻译/生成后的文本）
+        if (status.original_text) {
+          setOriginalText(status.original_text)
+        }
+
         // 更新处理信息
         if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
           setProcessingInfo({
@@ -393,6 +415,7 @@ function App() {
     setCurrentFileId(null)
     setFileId(null)
     setFileTitle('')
+    setOriginalText('')
     // 重置字典状态，避免显示上一个条目的残留
     dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }
     
@@ -409,38 +432,18 @@ function App() {
     setStep('dictionary')
     
     try {
-      let finalText = text.trim()
-      let finalSourceLang = sourceLang
-      
-      if (inputMode === 'translate') {
-        const translateResponse = await api.translateText(text.trim(), targetLang, sourceLang)
-        finalText = translateResponse.translated_text
-      } else if (inputMode === 'generate') {
-        const generateResponse = await api.generateText(text.trim(), sourceLang, targetLang)
-        finalText = generateResponse.generated_text
-      }
-      
-      if (finalSourceLang === 'auto') {
-        try {
-          const detectResult = await api.detectLanguage(finalText)
-          if (detectResult.detected_language) {
-            finalSourceLang = detectResult.detected_language
-          }
-        } catch (e) {
-          console.error('Language detection failed:', e)
-        }
-        setPreprocessStatus(null)
-      } else {
-        setPreprocessStatus(null)
-      }
-      
-      const response = await api.processText(finalText, finalSourceLang, targetLang)
+      // 所有模式统一调用 processText，翻译/生成/语言检测在后台执行，不会超时
+      const response = await api.processText(text.trim(), sourceLang, targetLang, inputMode)
       
       if (response && response.file_id) {
         const fileId = response.file_id
         setFileId(fileId)
         setCurrentFileId(fileId)
         if (response.title) setFileTitle(response.title)
+        // 直接输入模式：原文就是用户输入的文本，立即设置
+        if (inputMode === 'direct') {
+          setOriginalText(text.trim())
+        }
         api.getUserPreferences().then(prefs => {
           if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
         }).catch(() => {})
@@ -1094,6 +1097,7 @@ function App() {
     setSelectedWord(null)
     setProgress(0)
     setProcessingInfo(null)
+    setOriginalText('')
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
@@ -1104,6 +1108,21 @@ function App() {
       const sentencesData = await api.getSentences(fileId)
       const sentenceList = sentencesData.sentences || []
       setSentenceTranslations(Array.isArray(sentenceList) ? sentenceList : [])
+      // 从后端获取持久化的原文
+      try {
+        const infoResp = await fetch(`/api/file/${fileId}/info`)
+        const infoData = await infoResp.json()
+        if (infoData.original_text) {
+          setOriginalText(infoData.original_text)
+        } else if (Array.isArray(sentenceList) && sentenceList.length > 0) {
+          setOriginalText(sentenceList.map(s => s.sentence || '').filter(Boolean).join('\n'))
+        }
+      } catch (e) {
+        // fallback: 从句子拼接
+        if (Array.isArray(sentenceList) && sentenceList.length > 0) {
+          setOriginalText(sentenceList.map(s => s.sentence || '').filter(Boolean).join('\n'))
+        }
+      }
       try {
         const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
           api.getPhaseUnits(fileId, 1),
@@ -1275,6 +1294,7 @@ function App() {
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
               dictStateRef={dictStateRef}
+              originalText={originalText}
             />
           )}
           

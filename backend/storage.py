@@ -146,14 +146,26 @@ class Storage:
             import shutil
             shutil.rmtree(cache_dir)
     
-    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str):
+    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str, original_text: str = None):
         file_dir = self.get_file_dir(file_id)
         settings_path = file_dir / "language_settings.json"
+        existing = {}
+        if settings_path.exists():
+            try:
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    existing = json.load(f)
+            except:
+                pass
+        data = {
+            "source_lang": source_lang,
+            "target_lang": target_lang
+        }
+        if original_text is not None:
+            data["original_text"] = original_text
+        elif "original_text" in existing:
+            data["original_text"] = existing["original_text"]
         with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump({
-                "source_lang": source_lang,
-                "target_lang": target_lang
-            }, f, ensure_ascii=False, indent=2)
+            json.dump(data, f, ensure_ascii=False, indent=2)
     
     def load_language_settings(self, file_id: str) -> Dict[str, str]:
         file_dir = self.get_file_dir(file_id)
@@ -164,7 +176,7 @@ class Storage:
                 return data
         return {
             "source_lang": "en",
-            "target_lang": "en"
+            "target_lang": "zh"
         }
     
     def save_learning_progress(self, file_id: str, current_index: int):
@@ -478,7 +490,7 @@ class Storage:
                     old_data = json.load(f)
                 migrated = {
                     "source_lang": old_data.get("source_lang", "auto"),
-                    "target_lang": old_data.get("target_lang", "en"),
+                    "target_lang": old_data.get("target_lang", "zh"),
                     "rpm": old_data.get("rpm", 60),
                     "skip_listening": old_data.get("skip_listening", False)
                 }
@@ -493,7 +505,7 @@ class Storage:
                     old_data = json.load(f)
                 migrated = {
                     "source_lang": old_data.get("source_lang", "auto"),
-                    "target_lang": old_data.get("target_lang", "en"),
+                    "target_lang": old_data.get("target_lang", "zh"),
                     "rpm": old_data.get("rpm", 60),
                     "skip_listening": old_data.get("skip_listening", False)
                 }
@@ -501,4 +513,4 @@ class Storage:
                 return migrated
             except (json.JSONDecodeError, IOError):
                 pass
-        return {"source_lang": "auto", "target_lang": "en", "rpm": 60, "skip_listening": False}
+        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False}

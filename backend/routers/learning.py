@@ -7,7 +7,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException
 
 from text_processor import BACKUP_VOCAB_BY_LANG, is_punctuation_only, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
-from utils.state import nvidia_api, storage, word_gen_state, word_gen_rate_limiter
+from utils.state import nvidia_api, storage, word_gen_state
 from utils.helpers import (
     RateLimiter, vocab_sort_key, is_speaker_label,
     fix_llm_options_result, get_fallback_options, get_listening_correct_words,

@@ -14,7 +14,6 @@ storage = Storage()
 # ---- 处理状态 ----
 processing_status = {}
 word_gen_state = {}
-word_gen_rate_limiter = None
 
 # ---- TTS 缓存（已弃用但保留结构） ----
 tts_cache = {}
