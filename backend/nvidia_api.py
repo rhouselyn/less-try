@@ -271,9 +271,18 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
 
         idx = (active_index + attempt) % num_configs
         config = configs[idx]
+        # 提交请求的同时开始计算间隔
+        api = NvidiaAPI(config_index=idx)
+        request_task = asyncio.create_task(api.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens))
+        timer_task = asyncio.ensure_future(asyncio.sleep(interval))
+        # 等待请求和间隔两者都完成
+        done, pending = await asyncio.wait(
+            [request_task, timer_task],
+            return_when=asyncio.ALL_COMPLETED
+        )
+        # 检查请求结果
         try:
-            api = NvidiaAPI(config_index=idx)
-            result = await api.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
+            result = request_task.result()
             # 成功：重置失败计时器，保存当前 key 为活跃 key
             fail_start = None
             last_exception = None
@@ -282,8 +291,6 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
                 print(f"[ROTATE] Switched from config {active_index} to config {idx} (model={config.get('model', '')})")
                 settings["active_index"] = idx
                 _save_settings(settings)
-            # 等待间隔后再返回，让下一次请求也遵守间隔
-            await asyncio.sleep(interval)
             return result
         except (requests.exceptions.HTTPError, requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
             # 记录失败开始时间
@@ -296,12 +303,11 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
                 status_code = e.response.status_code
 
             if status_code in (429, 502, 503):
-                print(f"[ROTATE] Config {idx} rate-limited ({status_code}), waiting {interval}s then switching to config {(idx + 1) % num_configs}")
+                print(f"[ROTATE] Config {idx} rate-limited ({status_code}), interval already elapsed, switching to config {(idx + 1) % num_configs}")
             else:
-                print(f"[ROTATE] Config {idx} failed: {e}, waiting {interval}s then switching to config {(idx + 1) % num_configs}")
+                print(f"[ROTATE] Config {idx} failed: {e}, interval already elapsed, switching to config {(idx + 1) % num_configs}")
 
-            # 等待间隔后切换到下一个 key
-            await asyncio.sleep(interval)
+            # 间隔已经和请求并行等待过了，直接切换到下一个 key
             attempt += 1
             continue
 

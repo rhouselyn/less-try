@@ -30,8 +30,21 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [globalVocabPage, setGlobalVocabPage] = useState(saved.globalVocabPage || 1)
   const [wordGenProgress, setWordGenProgress] = useState(null)
   const [meaningOverrides, setMeaningOverrides] = useState({})
-  const [allOriginalSentences, setAllOriginalSentences] = useState([])
   const vocabListRef = useRef(null)
+  const sentenceListRef = useRef(null)
+  const wordRefs = useRef({})
+  const sentenceRefs = useRef({})
+  const titleInputRef = useRef(null)
+  const pendingScrollWord = useRef(null)
+  const localVocabScrollPos = useRef(saved.vocabScrollPos || 0)
+  const globalVocabScrollPos = useRef(saved.globalVocabScrollPos || 0)
+  const sentenceTranslationScrollPos = useRef(saved.sentenceTranslationScrollPos || 0)
+  const sentenceOriginalScrollPos = useRef(saved.sentenceOriginalScrollPos || 0)
+  const filteredVocabRef = useRef([])
+  const vocabPageRef = useRef(saved.vocabPage || 1)
+  const pageSizeRef = useRef(pageSize)
+  const showGlobalVocabRef = useRef(showGlobalVocab)
+  const showOriginalRef = useRef(showOriginal)
 
   useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
   useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
@@ -943,7 +956,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             <div className="flex-1 overflow-y-scroll min-h-0" ref={sentenceListRef} style={{ scrollbarGutter: 'stable' }}>
               {showOriginal ? (
                 <div className="p-4">
-                  <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{(allOriginalSentences.length > 0 ? allOriginalSentences : safeSentenceTranslations.map(item => item.sentence || '')).join('\n')}</pre>
+                  <pre className="text-sm text-ink-700 leading-relaxed whitespace-pre-wrap font-sans">{originalText || safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
                 </div>
               ) : filteredSentences.length > 0 ? (
                 <div className="divide-y divide-bone-200/60">

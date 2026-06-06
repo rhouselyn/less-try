@@ -293,7 +293,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                 <div className="flex-1 overflow-y-scroll min-h-0" ref={listRef} style={{ scrollbarGutter: 'stable' }}>
                   <div className="space-y-3">
                     {groupedPagedVocab.map(([letter, words], groupIdx) => (
-                      <div key={letter} id={`vocab-group-${letter}`}>
+                      <div key={`group-${groupIdx}-${letter}`} id={`vocab-group-${letter}`}>
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
@@ -303,13 +303,13 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                           <span className="text-xs font-bold text-ochre-500/80 tracking-widest">{letter}</span>
                         </motion.div>
                         <div className="space-y-px">
-                          {words.map((word) => {
+                          {words.map((word, wordIdx) => {
                             const isExpanded = expandedWord === word.word
                             const enriched = getEnriched(word.word)
                             const displayMeaning = word.enriched_meaning || word.meaning || word.context_meaning
                             return (
                               <motion.div
-                                key={word.word}
+                                key={`${word.word}-${wordIdx}`}
                                 ref={el => { wordRefs.current[word.word] = el }}
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
