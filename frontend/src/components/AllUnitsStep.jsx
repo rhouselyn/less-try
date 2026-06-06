@@ -100,12 +100,12 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-50 border-teal-300 hover:bg-teal-50'
+            ? 'bg-teal-100 border-teal-400 hover:bg-teal-100'
             : isLocked
-            ? 'bg-canvas-200 border-stone-300 cursor-not-allowed'
+            ? 'bg-stone-300 border-stone-400 cursor-not-allowed'
             : isCurrent
-            ? 'bg-cadmium-100 border-cadmium-400 shadow-impasto-sm'
-            : 'bg-cadmium-50 border-cadmium-300 hover:border-cadmium-400'
+            ? 'bg-cadmium-200 border-cadmium-500 shadow-impasto'
+            : 'bg-cadmium-100 border-cadmium-400 hover:border-cadmium-500 hover:bg-cadmium-200'
         }`}
         style={{ width: '5rem', height: '5rem' }}
       >
@@ -113,7 +113,7 @@ function AllUnitsStep({
           <Lock className="w-3.5 h-3.5 text-stone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-base font-semibold text-teal-600">{index + 1}</span>
+            <span className="text-base font-semibold text-teal-700">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
@@ -131,7 +131,7 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-base font-semibold text-cadmium-500`}>{index + 1}</span>
+            <span className={`text-base font-semibold text-cadmium-700`}>{index + 1}</span>
             {isGenerating ? (
               <Loader2 className="w-3 h-3 animate-spin text-cadmium-300 mt-0.5" />
             ) : (
@@ -203,7 +203,7 @@ function AllUnitsStep({
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className={`h-full rounded-full ${
-              phaseNumber === 1 ? 'bg-teal-400' : 'bg-blue-400'
+              phaseNumber === 1 ? 'bg-teal-500' : 'bg-cerulean-500'
             }`}
           />
         </div>
@@ -305,11 +305,11 @@ function AllUnitsStep({
             <p className="text-xs text-umber-400">{t.loading}</p>
           </div>
         ) : (
-          <div className="bg-canvas-50 rounded-3xl shadow-impasto overflow-hidden">
-            <div className="bg-canvas-100/70 backdrop-blur-md border-b border-stone-200/60 px-3 pt-2.5">
+          <div className="bg-white/85 border border-stone-300 rounded-3xl shadow-impasto overflow-hidden">
+            <div className="bg-canvas-100 border-b border-stone-300 px-3 pt-2.5">
               <div className="flex gap-1 relative">
                 <motion.div
-                  className="absolute top-0 bottom-0 bg-canvas-50 rounded-t-xl shadow-impasto-sm"
+                  className="absolute top-0 bottom-0 bg-white/90 rounded-t-xl shadow-impasto-sm"
                   style={{ width: 'calc(50% - 4px)' }}
                   animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
