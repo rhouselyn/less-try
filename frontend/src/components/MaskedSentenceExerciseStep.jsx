@@ -140,7 +140,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                                 ? 'bg-teal-50 text-teal-600 border border-teal-400'
                                 : 'bg-vermilion-50 text-vermilion-500 border border-vermilion-400'
                             })()
-                        : 'bg-stone-400 text-white hover:bg-stone-500'
+                        : 'bg-umber-600 text-white hover:bg-umber-700'
                     }`}
                   >
                     {item.word}
@@ -176,8 +176,8 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                     isSelected
                       ? 'pointer-events-none invisible'
                       : answerChecked
-                        ? 'pointer-events-none bg-stone-400 text-white opacity-50'
-                        : 'bg-stone-400 text-white hover:bg-stone-500'
+                        ? 'pointer-events-none bg-umber-600 text-white opacity-50'
+                        : 'bg-umber-600 text-white hover:bg-umber-700'
                   }`}
                 >
                   {word}
@@ -191,11 +191,11 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-teal-50 border-2 border-teal-400' : 'bg-vermilion-50 border-2 border-vermilion-400'}`}
+            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-teal-100 border-2 border-teal-400' : 'bg-vermilion-100 border-2 border-vermilion-400'}`}
           >
             <div className="flex items-center gap-3 mb-2">
               {isCorrect ? <CheckCircle2 className="w-6 h-6 text-teal-600" /> : <XCircle className="w-6 h-6 text-vermilion-500" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-teal-600' : 'text-vermilion-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-teal-700' : 'text-vermilion-700'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
               <p className="text-umber-600 font-medium">

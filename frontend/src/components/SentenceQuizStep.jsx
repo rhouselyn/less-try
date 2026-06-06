@@ -127,7 +127,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="text-lg text-umber-600"
+              className="text-lg font-semibold text-umber-800"
             >
               {quizData.original_sentence}
             </motion.p>
@@ -143,7 +143,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-400 rounded-xl flex flex-wrap gap-2 bg-canvas-50/50 relative">
+          <div className="p-4 border-2 border-dashed border-umber-500 rounded-xl flex flex-wrap gap-2 bg-canvas-50/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {quizData.correct_tokens.map((_, i) => (
                 <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{quizData.correct_tokens[i]}</span>
@@ -173,7 +173,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                             : isTokenCorrect
                               ? 'bg-teal-50 text-teal-600 border border-teal-400'
                               : 'bg-vermilion-50 text-vermilion-500 border border-vermilion-400'
-                          : 'bg-stone-400 text-white hover:bg-stone-500'
+                          : 'bg-umber-600 text-white hover:bg-umber-700'
                       }`}
                     >
                       {displayToken(token)}
@@ -201,8 +201,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                     isSelected
                       ? 'pointer-events-none invisible'
                       : isChecked
-                        ? 'pointer-events-none bg-stone-400 text-white opacity-50'
-                        : 'bg-stone-400 text-white hover:bg-stone-500'
+                        ? 'pointer-events-none bg-umber-600 text-white opacity-50'
+                        : 'bg-umber-600 text-white hover:bg-umber-700'
                   }`}
                 >
                   {displayToken(token)}
@@ -217,11 +217,11 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-teal-50 border-2 border-teal-400' : 'bg-vermilion-50 border-2 border-vermilion-400'}`}
+            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-teal-100 border-2 border-teal-400' : 'bg-vermilion-100 border-2 border-vermilion-400'}`}
           >
             <div className="flex items-center gap-3 mb-2">
               {isCorrect ? <CheckCircle2 className="w-6 h-6 text-teal-600" /> : <XCircle className="w-6 h-6 text-vermilion-500" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-teal-600' : 'text-vermilion-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-teal-700' : 'text-vermilion-700'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
               <p className="text-umber-600 font-medium">

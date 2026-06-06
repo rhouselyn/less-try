@@ -102,7 +102,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 <motion.h2
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-4xl font-semibold font-display text-umber-700"
+                  className="text-5xl font-bold font-display text-umber-800"
                 >
                   {learningData.word}
                 </motion.h2>
@@ -122,7 +122,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.1 }}
-                  className="text-xl text-umber-400 ipa-font"
+                  className="text-xl text-umber-500 ipa-font"
                 >
                   {learningData.ipa.startsWith('/') ? learningData.ipa : `/${learningData.ipa}/`}
                 </motion.p>
@@ -140,7 +140,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-50 border border-teal-500 text-teal-700' : 'bg-vermilion-50 border border-vermilion-400 text-vermilion-600') : 'border border-stone-300 bg-white/60 text-umber-700 hover:bg-white/80'}`}
+                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-100 border-2 border-teal-400 text-teal-700' : 'bg-vermilion-100 border-2 border-vermilion-400 text-vermilion-700') : 'border-2 border-stone-400 bg-white text-umber-800 hover:border-cadmium-400 hover:bg-cadmium-50'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && isCorrect && (
@@ -168,7 +168,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <motion.h2
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-4xl font-semibold font-display text-umber-700"
+                    className="text-5xl font-bold font-display text-umber-800"
                   >
                     {learningData.word}
                   </motion.h2>
@@ -188,7 +188,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.1 }}
-                    className="text-xl text-umber-400 ipa-font"
+                    className="text-xl text-umber-500 ipa-font"
                   >
                     {learningData.ipa.startsWith('/') ? learningData.ipa : `/${learningData.ipa}/`}
                   </motion.p>
@@ -202,13 +202,15 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
               >
-                <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
+                <div className="bg-canvas-50 -mx-2 px-6 py-4 rounded-xl">
                 <p className="text-lg text-umber-600 leading-relaxed">
                   {learningData.enriched_meaning || learningData.correct_meaning}
                 </p>
+                </div>
               </motion.div>
 
               {learningData.context && (
@@ -217,9 +219,10 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.context}
                   </h3>
+                  <div className="bg-cadmium-50/50 -mx-2 px-6 py-4 rounded-xl">
                   <div className="flex items-start gap-2">
                     <p className="text-lg text-umber-600 leading-relaxed italic flex-1">
                       {learningData.context}
@@ -233,6 +236,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                       <Volume2 className="w-4 h-4" />
                     </motion.button>
                   </div>
+                  </div>
                 </motion.div>
               )}
 
@@ -241,7 +245,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
-                  className="bg-cadmium-50 p-4 rounded-lg border border-cadmium-200"
+                  className="bg-cadmium-100 p-4 rounded-xl border border-cadmium-300"
                 >
                   <h4 className="text-sm font-medium text-cadmium-500 mb-2">{t.contextMeaning || '上下文释义'}</h4>
                   <p className="text-umber-600">{learningData.meaning || learningData.context_meaning}</p>
@@ -254,18 +258,20 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
                 >
-                  <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.variants}
                   </h3>
+                  <div className="bg-cerulean-50/30 -mx-2 px-6 py-4 rounded-xl">
                   <div className="space-y-2">
                     {learningData.variants_detail.map((variant, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-canvas-100 text-umber-700 rounded text-sm font-medium">
+                        <span className="px-2 py-1 bg-white/80 text-umber-700 rounded text-sm font-medium">
                           {variant.type}
                         </span>
                         <span className="text-umber-700">{variant.form}</span>
                       </div>
                     ))}
+                  </div>
                   </div>
                 </motion.div>
               )}
@@ -276,12 +282,13 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.examples}
                   </h3>
+                  <div className="bg-teal-50/40 -mx-2 px-6 py-4 rounded-xl">
                   <div className="space-y-4">
                     {learningData.examples.map((example, index) => (
-                      <div key={index} className="border-l-4 border-stone-300 pl-4">
+                      <div key={index} className="border-l-4 border-teal-300 pl-4">
                         <div className="flex items-start gap-2">
                           <p className="text-umber-800 mb-1 flex-1">{example.sentence}</p>
                           <motion.button
@@ -297,6 +304,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                       </div>
                     ))}
                   </div>
+                  </div>
                 </motion.div>
               )}
 
@@ -306,7 +314,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.memoryHint}
                   </h3>
                   <p className="text-lg text-umber-600 leading-relaxed bg-cadmium-50 p-4 rounded-lg border border-cadmium-200">
