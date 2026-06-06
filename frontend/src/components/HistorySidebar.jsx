@@ -149,7 +149,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
 
   return (
     <div
-      className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-canvas-200/60 transition-colors mx-2 bg-canvas-50 border-stone-200"
+      className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-canvas-200/60 transition-colors mx-2 bg-canvas-50 border-stone-300"
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
     >
       <ProgressBadge progress={record.progress} />
@@ -358,7 +358,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                         )}
                       </button>
                     )}
-                    <div className="mx-4 my-2 border-t border-stone-200/60" />
+                    <div className="mx-4 my-2 border-t border-stone-300" />
                   </div>
                 )}
 
@@ -404,7 +404,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 ))}
               </div>
 
-              <div className="px-3 py-2 border-t border-stone-200/60 flex-shrink-0">
+              <div className="px-3 py-2 border-t border-stone-300 flex-shrink-0">
                 <div className="text-[10px] text-stone-300 text-center">
                   {records.length} {t.record || '条记录'}
                 </div>
@@ -428,7 +428,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               <PanelLeftOpen className="w-4.5 h-4.5" />
             </button>
 
-            <div className="w-6 border-t border-stone-200/60 my-1" />
+            <div className="w-6 border-t border-stone-300 my-1" />
 
             {langKeys.map((lang, idx) => (
               <button
@@ -446,7 +446,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
             ))}
 
             {records.length > 0 && langKeys.length > 0 && (
-              <div className="w-6 border-t border-stone-200/60 my-1" />
+              <div className="w-6 border-t border-stone-300 my-1" />
             )}
 
             {langKeys.flatMap(lang =>
@@ -509,7 +509,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               <div className="flex gap-2.5 justify-end">
                 <button
                   onClick={handleDeleteCancel}
-                  className="btn-secondary px-4 py-2 text-[13px] rounded-2xl border border-stone-200 text-umber-600 hover:bg-canvas-100 transition-colors"
+                  className="btn-secondary px-4 py-2 text-[13px]"
                 >
                   {t.cancel || '取消'}
                 </button>

@@ -26,18 +26,18 @@ import SettingsModal from './components/SettingsModal'
 function FrogLogo({ size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#48c9b0" />
-      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#76d7c4" />
-      <circle cx="34" cy="38" r="16" fill="#48c9b0" />
-      <circle cx="66" cy="38" r="16" fill="#48c9b0" />
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#8faa82" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#b8ccb0" />
+      <circle cx="34" cy="38" r="16" fill="#8faa82" />
+      <circle cx="66" cy="38" r="16" fill="#8faa82" />
       <circle cx="34" cy="38" r="13" fill="#fff" />
       <circle cx="66" cy="38" r="13" fill="#fff" />
-      <circle cx="36" cy="37" r="6" fill="#148f77" />
-      <circle cx="68" cy="37" r="6" fill="#148f77" />
+      <circle cx="36" cy="37" r="6" fill="#3f5a35" />
+      <circle cx="68" cy="37" r="6" fill="#3f5a35" />
       <circle cx="38" cy="35" r="2" fill="#fff" />
       <circle cx="70" cy="35" r="2" fill="#fff" />
       <ellipse cx="50" cy="62" rx="18" ry="8" fill="#f2d07a" />
-      <path d="M38 60 Q50 70 62 60" stroke="#148f77" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <path d="M38 60 Q50 70 62 60" stroke="#3f5a35" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   )
 }

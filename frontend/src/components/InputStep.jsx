@@ -297,7 +297,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
           className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
             open
               ? 'border-cadmium-200 bg-cadmium-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-              : 'border-stone-200 bg-canvas-100 hover:border-stone-300 hover:shadow-impasto-sm'
+              : 'border-stone-300 bg-canvas-100 hover:border-stone-300 hover:shadow-impasto-sm'
           }`}
         >
           {isAuto ? (
@@ -329,7 +329,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className={`absolute z-50 mt-2 bg-canvas-50 rounded-2xl border border-stone-200 shadow-xl shadow-umber-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
+            className={`absolute z-50 mt-2 bg-canvas-50 rounded-2xl border border-stone-300 shadow-xl shadow-umber-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
           >
             <div className="p-3 border-b border-canvas-100">
               <div className="relative">
@@ -567,7 +567,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
       <div className="w-full max-w-2xl mx-auto pb-4 px-4">
         <div className="relative bg-white/80 border border-stone-300 rounded-2xl shadow-impasto overflow-hidden">
           {/* Mode tabs at top of input */}
-          <div className="border-b border-stone-200/60 px-3 pt-2 pb-0">
+          <div className="border-b border-stone-300 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
           </div>
 

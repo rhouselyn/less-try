@@ -50,14 +50,14 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-canvas-50 hover:bg-canvas-100 transition-colors text-sm"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-300 bg-canvas-50 hover:bg-canvas-100 transition-colors text-sm"
       >
         <LangIcon langCode={value} size="sm" />
         <span className="text-umber-800 flex-1 text-left">{selectedLang?.native || value}</span>
         <ChevronDown className={`w-3.5 h-3.5 text-stone-300 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-canvas-50 rounded-xl border border-stone-200 shadow-xl overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-canvas-50 rounded-xl border border-stone-300 shadow-xl overflow-hidden">
           <div className="p-2 border-b border-canvas-100">
             <input
               value={search}
@@ -350,7 +350,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                       <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    <div className="flex-1 min-w-0 overflow-hidden rounded-2xl border border-stone-200 bg-canvas-50/50">
+                    <div className="flex-1 min-w-0 overflow-hidden rounded-2xl border border-stone-300 bg-canvas-50/50">
                       <AnimatePresence mode="wait" custom={direction}>
                         <motion.div
                           key={currentIndex}

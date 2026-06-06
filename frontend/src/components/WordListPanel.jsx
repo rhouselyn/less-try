@@ -283,7 +283,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const renderPagination = () => {
     if (totalPages <= 1) return null
     return (
-      <div className="flex items-center justify-center gap-1 py-2 border-t border-stone-200/60 bg-canvas-50/40">
+      <div className="flex items-center justify-center gap-1 py-2 border-t border-stone-300 bg-canvas-100">
         <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
           className={`p-1 rounded transition-colors ${page <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}>
           <ChevronLeft className="w-3.5 h-3.5" />
@@ -417,8 +417,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
   if (onBack) {
     return (
-      <div className="h-full flex flex-col bg-canvas-50 rounded-2xl border border-stone-200/60 shadow-impasto-sm overflow-hidden min-h-0">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-cadmium-50/50 to-canvas-50">
+      <div className="h-full flex flex-col bg-canvas-50 rounded-2xl border border-stone-300 shadow-impasto-sm overflow-hidden min-h-0">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-300 bg-gradient-to-r from-cadmium-50 to-canvas-50">
           <div className="flex items-center gap-2.5">
             <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-cadmium-500' : 'text-cadmium-500 hover:text-cadmium-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
             <span className="text-base font-semibold font-display text-umber-800">{t.vocabOverview || '词汇总览'}</span>
@@ -469,7 +469,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-200/60 hover:border-cadmium-200/60 transition-all shadow-impasto-sm"
+        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-300 hover:border-cadmium-200/60 transition-all shadow-impasto-sm"
       >
         <div className="flex items-center gap-2.5">
           <BookOpen className="w-4 h-4 text-cadmium-500" />
@@ -495,7 +495,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="mt-3 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-200/60 shadow-impasto-sm">
+            <div className="mt-3 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-300 shadow-impasto-sm">
               <div className="p-4 border-b border-canvas-100">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />

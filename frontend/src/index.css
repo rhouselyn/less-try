@@ -31,16 +31,9 @@ body {
 
 /* 油画印象派设计系统 - 全局组件样式 */
 @layer components {
-  /* 卡片基础 - 带笔触纹理，提高与背景对比 */
+  /* 卡片基础 */
   .card-warm {
-    @apply bg-white/80 border border-stone-300 rounded-2xl shadow-impasto-sm;
-    background-image: repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 3px,
-      rgba(139, 123, 104, 0.018) 3px,
-      rgba(139, 123, 104, 0.018) 6px
-    );
+    @apply bg-white/85 border border-stone-300 rounded-2xl shadow-impasto-sm;
   }
   .card-warm-hover {
     @apply card-warm hover:shadow-impasto hover:border-stone-400 transition-all duration-200;
@@ -63,20 +56,12 @@ body {
     box-shadow: #7a3f28 0px 1px 0px, rgba(160, 96, 64, 0.2) 0px 2px 8px;
   }
 
-  /* 次要按钮 - 3D立体钴蓝 */
+  /* 次要按钮 - 简约平面 */
   .btn-secondary {
-    @apply text-white font-bold rounded-lg
-           px-6 py-3 transition-all duration-300 ease-out
-           hover:-translate-y-0.5 active:translate-y-[3px];
-    background: linear-gradient(135deg, #a8c5e1 0%, #6f9fc8 100%);
-    box-shadow: #2a4f73 0px 4px 0px, rgba(74, 127, 173, 0.3) 0px 6px 16px;
-  }
-  .btn-secondary:hover {
-    background: linear-gradient(135deg, #b5d0e8 0%, #7dabd0 100%);
-    box-shadow: #2a4f73 0px 4px 0px, rgba(74, 127, 173, 0.4) 0px 8px 20px;
-  }
-  .btn-secondary:active {
-    box-shadow: #2a4f73 0px 1px 0px, rgba(74, 127, 173, 0.2) 0px 2px 8px;
+    @apply text-umber-600 font-medium rounded-xl
+           px-6 py-3 transition-colors duration-200
+           bg-canvas-100 hover:bg-canvas-200
+           active:bg-canvas-300;
   }
 
   /* 幽灵按钮 */

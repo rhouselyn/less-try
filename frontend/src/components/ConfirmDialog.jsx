@@ -51,7 +51,7 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onCancel}
-                className="btn-secondary flex-1 py-2.5 text-[13px] font-medium text-umber-600 bg-canvas-100 hover:bg-canvas-200 rounded-2xl transition-colors"
+                className="btn-secondary flex-1 py-2.5 text-[13px]"
               >
                 {cancelText || '继续练习'}
               </motion.button>

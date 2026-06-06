@@ -151,7 +151,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     }, [])
 
     return (
-      <div className="flex items-center justify-center gap-0.5 py-1.5 border-t border-stone-200/60 bg-canvas-50/40 shrink-0">
+      <div className="flex items-center justify-center gap-0.5 py-1.5 border-t border-stone-300 bg-canvas-100 shrink-0">
         <button
           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
@@ -190,7 +190,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
       <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
-        <div className="px-5 py-3.5 border-b border-stone-200/80 bg-canvas-50/60">
+        <div className="px-5 py-3.5 border-b border-stone-300 bg-canvas-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-cadmium-500" />
@@ -240,7 +240,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
           ) : (
             <>
               {allLetterIndex.length > 1 && !searchQuery && (
-                <div className="flex flex-col items-center gap-px py-1 border-r border-stone-200/60 bg-canvas-50/40 w-5 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-px py-1 border-r border-stone-300 bg-canvas-100 w-5 shrink-0 overflow-y-auto">
                   {allLetterIndex.map(letter => {
                     const onCurrentPage = letterIndex.includes(letter)
                     return (
@@ -268,7 +268,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: groupIdx * 0.04 }}
-                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
+                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200 mb-1"
                         >
                           <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
                         </motion.div>
