@@ -49,7 +49,7 @@ function PhaseProgressStep({ units, currentUnit, phaseNumber, onUnitClick, onBac
               <button
                 onClick={() => onUnitClick(unit.unit_id)}
                 disabled={!unit.completed && index !== currentUnit}
-                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-teal-100 border-teal-400' : index === currentUnit ? 'bg-cadmium-100 border-2 border-cadmium-400 hover:shadow-impasto' : 'bg-stone-200 border-stone-300 cursor-not-allowed opacity-50'}`}
+                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-teal-50 border-teal-200' : index === currentUnit ? 'bg-cadmium-50 border-cadmium-300 hover:shadow-impasto-sm' : 'bg-canvas-100 border-stone-200 cursor-not-allowed opacity-50'}`}
               >
                 <h3 className="text-xl font-semibold font-display text-umber-800 mb-2">
                   {t.unit} {unit.unit_id + 1}

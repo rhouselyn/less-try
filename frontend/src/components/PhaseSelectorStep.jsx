@@ -45,7 +45,7 @@ function PhaseSelectorStep({ phases, currentFileId, onPhaseSelect, onBack, loadi
             >
               <button
                 onClick={() => onPhaseSelect(phase.phase_number)}
-                className={`w-full p-6 border-2 border-stone-300 bg-white/85 hover:border-cadmium-400 hover:shadow-impasto rounded-3xl transition-all border-l-4 ${phase.phase_number === 1 ? 'border-l-teal-400' : 'border-l-cerulean-500'}`}
+                className="w-full p-6 border border-stone-200 bg-canvas-50 hover:border-umber-400 hover:shadow-impasto-sm rounded-3xl transition-all"
               >
                 <h3 className="text-xl font-semibold font-display text-umber-800 mb-2">
                   {phase.phase_number === 1 ? t.phase1 : t.phase2}
