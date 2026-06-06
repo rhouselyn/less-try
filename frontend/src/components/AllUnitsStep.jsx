@@ -4,14 +4,6 @@ import { ArrowLeft, Lock, Star, Headphones, Loader2, Home, BookOpen, PenTool, Ch
 
 const UNITS_PER_PAGE = 30;
 
-// 油画调色板 - 按索引循环使用不同色系
-const PALETTE = [
-  { bg: 'bg-cadmium-50',  border: 'border-cadmium-300', hover: 'hover:border-cadmium-400', text: 'text-cadmium-600', dot: 'bg-cadmium-300/60', dotActive: 'bg-cadmium-400', ring: '#f2d07a' },
-  { bg: 'bg-cerulean-50', border: 'border-cerulean-300', hover: 'hover:border-cerulean-400', text: 'text-cerulean-600', dot: 'bg-cerulean-300/60', dotActive: 'bg-cerulean-400', ring: '#a8c5e1' },
-  { bg: 'bg-madder-50',   border: 'border-madder-300',   hover: 'hover:border-madder-400',   text: 'text-madder-600',   dot: 'bg-madder-300/60',   dotActive: 'bg-madder-400', ring: '#e0a3ab' },
-  { bg: 'bg-teal-50',     border: 'border-teal-300',     hover: 'hover:border-teal-400',     text: 'text-teal-600',     dot: 'bg-teal-300/60',     dotActive: 'bg-teal-400', ring: '#b8ccb0' },
-];
-
 function AllUnitsStep({
   phase1Units,
   phase2Units,
@@ -97,9 +89,6 @@ function AllUnitsStep({
     const starKey = `${phaseNumber}-${index}`;
     const starCount = unitStarCounts?.[starKey];
 
-    // 当前单元用更强烈的配色
-    const palette = PALETTE[index % PALETTE.length];
-
     return (
       <motion.button
         key={`${keyPrefix}-unit-${index}`}
@@ -109,16 +98,16 @@ function AllUnitsStep({
         whileTap={!isLocked ? { scale: 0.97 } : {}}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
-        className={`relative flex flex-col items-center justify-center rounded-xl border transition-all duration-200 ${
+        className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-50 border-teal-300 hover:bg-teal-100'
+            ? 'bg-teal-50 border-teal-300 hover:bg-teal-50'
             : isLocked
             ? 'bg-canvas-200 border-stone-300 cursor-not-allowed'
             : isCurrent
-            ? `${palette.bg} ${palette.border} shadow-impasto-sm`
-            : `${palette.bg} ${palette.border} ${palette.hover}`
+            ? 'bg-cadmium-100 border-cadmium-400 shadow-impasto-sm'
+            : 'bg-cadmium-50 border-cadmium-300 hover:border-cadmium-400'
         }`}
-        style={{ width: '5rem', height: '5rem', ...(isCurrent && !isCompleted && !isLocked ? { boxShadow: `0 0 0 3px ${palette.ring}, 0 3px 0 #bfb194, 0 4px 12px rgba(58, 45, 25, 0.14)` } : {}) }}
+        style={{ width: '5rem', height: '5rem' }}
       >
         {isLocked ? (
           <Lock className="w-3.5 h-3.5 text-stone-300" />
@@ -142,11 +131,11 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-base font-semibold ${palette.text}`}>{index + 1}</span>
+            <span className={`text-base font-semibold text-cadmium-500`}>{index + 1}</span>
             {isGenerating ? (
               <Loader2 className="w-3 h-3 animate-spin text-cadmium-300 mt-0.5" />
             ) : (
-              <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? palette.dotActive : palette.dot}`} />
+              <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-cadmium-400' : 'bg-cadmium-300/60'}`} />
             )}
           </>
         )}
@@ -316,11 +305,11 @@ function AllUnitsStep({
             <p className="text-xs text-umber-400">{t.loading}</p>
           </div>
         ) : (
-          <div className="bg-white/85 rounded-3xl shadow-impasto overflow-hidden border border-stone-300">
-            <div className="bg-canvas-100 border-b border-stone-300 px-3 pt-2.5">
+          <div className="bg-canvas-50 rounded-3xl shadow-impasto overflow-hidden">
+            <div className="bg-canvas-100/70 backdrop-blur-md border-b border-stone-200/60 px-3 pt-2.5">
               <div className="flex gap-1 relative">
                 <motion.div
-                  className="absolute top-0 bottom-0 bg-white/80 rounded-t-xl shadow-impasto-sm"
+                  className="absolute top-0 bottom-0 bg-canvas-50 rounded-t-xl shadow-impasto-sm"
                   style={{ width: 'calc(50% - 4px)' }}
                   animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
