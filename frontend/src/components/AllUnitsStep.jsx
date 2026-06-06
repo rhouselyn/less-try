@@ -100,7 +100,7 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-2xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-50 border-teal-300 hover:bg-teal-50 shadow-impasto-sm'
+            ? 'bg-teal-100 border-teal-400 hover:bg-teal-100 shadow-impasto-sm'
             : isLocked
             ? 'bg-canvas-200 border-stone-400 cursor-not-allowed'
             : isCurrent
