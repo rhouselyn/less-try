@@ -34,6 +34,11 @@ app.include_router(vocabulary.router)
 app.include_router(history.router)
 app.include_router(settings.router)
 
+# ── 心跳端点 ──────────────────────────────────────────────
+@app.get("/api/ping")
+async def ping():
+    return {"status": "ok"}
+
 # ── 启动事件 ──────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_event():

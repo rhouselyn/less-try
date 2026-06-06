@@ -412,12 +412,37 @@ function App() {
       let finalText = text.trim()
       let finalSourceLang = sourceLang
       
+      // 心跳：在长时间操作期间每2秒ping一次后端，防止网关超时
+      let heartbeatInterval = null
+      const startHeartbeat = () => {
+        if (heartbeatInterval) return
+        heartbeatInterval = setInterval(() => {
+          fetch('/api/ping').catch(() => {})
+        }, 2000)
+      }
+      const stopHeartbeat = () => {
+        if (heartbeatInterval) {
+          clearInterval(heartbeatInterval)
+          heartbeatInterval = null
+        }
+      }
+
       if (inputMode === 'translate') {
-        const translateResponse = await api.translateText(text.trim(), targetLang, sourceLang)
-        finalText = translateResponse.translated_text
+        startHeartbeat()
+        try {
+          const translateResponse = await api.translateText(text.trim(), targetLang, sourceLang)
+          finalText = translateResponse.translated_text
+        } finally {
+          stopHeartbeat()
+        }
       } else if (inputMode === 'generate') {
-        const generateResponse = await api.generateText(text.trim(), sourceLang, targetLang)
-        finalText = generateResponse.generated_text
+        startHeartbeat()
+        try {
+          const generateResponse = await api.generateText(text.trim(), sourceLang, targetLang)
+          finalText = generateResponse.generated_text
+        } finally {
+          stopHeartbeat()
+        }
       }
       
       if (finalSourceLang === 'auto') {
