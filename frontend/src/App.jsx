@@ -1267,7 +1267,7 @@ function App() {
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
               dictStateRef={dictStateRef}
-              originalText={text}
+              originalText={inputMode === 'direct' ? text : ''}
             />
           )}
           
