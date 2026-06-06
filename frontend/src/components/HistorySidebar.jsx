@@ -36,12 +36,12 @@ function getLangLabel(code) {
 
 const SIDEBAR_COLORS = [
   'from-cadmium-400 to-orange-500',
-  'from-moss-400 to-teal-500',
+  'from-teal-400 to-teal-500',
   'from-cadmium-400 to-indigo-500',
   'from-rose-400 to-pink-500',
   'from-violet-400 to-purple-500',
   'from-cyan-400 to-sky-500',
-  'from-lime-400 to-moss-500',
+  'from-lime-400 to-teal-500',
   'from-fuchsia-400 to-pink-500',
 ]
 
@@ -92,7 +92,7 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
       <div className="mx-2.5 my-0.5 border-t border-canvas-100" />
       <button
         onClick={() => { onDelete(); onClose() }}
-        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-sienna-500 hover:bg-sienna-50 transition-colors"
+        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-vermilion-500 hover:bg-vermilion-50 transition-colors"
       >
         <Trash2 className="w-3.5 h-3.5" />
         {t.delete || '删除'}
@@ -111,7 +111,7 @@ function ProgressBadge({ progress }) {
 
   const done = totalCompleted >= totalUnits
   return (
-    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-moss-500' : 'text-sienna-400'}`}>
+    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-teal-500' : 'text-vermilion-400'}`}>
       {totalCompleted}/{totalUnits}
     </span>
   )
@@ -497,8 +497,8 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-sienna-50 flex items-center justify-center flex-shrink-0">
-                  <Trash2 className="w-5 h-5 text-sienna-400" />
+                <div className="w-10 h-10 rounded-full bg-vermilion-50 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-vermilion-400" />
                 </div>
                 <div>
                   <h3 className="font-display text-[15px] font-semibold text-umber-800">{t.confirmDelete || '确认删除'}</h3>
@@ -515,7 +515,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="px-4 py-2 text-[13px] rounded-2xl bg-sienna-400 hover:bg-sienna-400 text-white font-semibold transition-colors"
+                  className="px-4 py-2 text-[13px] rounded-2xl bg-vermilion-400 hover:bg-vermilion-400 text-white font-semibold transition-colors"
                 >
                   {t.confirmDeleteAction || '删除'}
                 </button>

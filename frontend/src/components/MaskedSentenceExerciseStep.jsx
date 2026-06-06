@@ -133,12 +133,12 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                     className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                       answerChecked
                         ? isCorrect
-                          ? 'bg-moss-50 text-moss-600 border border-moss-400'
+                          ? 'bg-teal-50 text-teal-600 border border-teal-400'
                           : (() => {
                               const correctWord = data.answer_words[pos]
                               return correctWord && item.word.toLowerCase() === correctWord.toLowerCase()
-                                ? 'bg-moss-50 text-moss-600 border border-moss-400'
-                                : 'bg-sienna-50 text-sienna-500 border border-sienna-400'
+                                ? 'bg-teal-50 text-teal-600 border border-teal-400'
+                                : 'bg-vermilion-50 text-vermilion-500 border border-vermilion-400'
                             })()
                         : 'bg-umber-800 text-white hover:bg-umber-700'
                     }`}
@@ -191,11 +191,11 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-moss-50 border-2 border-moss-400' : 'bg-sienna-50 border-2 border-sienna-400'}`}
+            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-teal-50 border-2 border-teal-400' : 'bg-vermilion-50 border-2 border-vermilion-400'}`}
           >
             <div className="flex items-center gap-3 mb-2">
-              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-moss-600" /> : <XCircle className="w-6 h-6 text-sienna-500" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-moss-600' : 'text-sienna-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
+              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-teal-600" /> : <XCircle className="w-6 h-6 text-vermilion-500" />}
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-teal-600' : 'text-vermilion-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
               <p className="text-umber-600 font-medium">
@@ -203,7 +203,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
               </p>
             )}
             {isCorrect && isLastExercise && (
-              <p className="font-medium mt-3 text-lg text-moss-600">
+              <p className="font-medium mt-3 text-lg text-teal-600">
                 🎉 {reviewMode ? (t.reviewComplete || '错题已复习完！') : (t.unitStudyComplete || '该单元学习已完成！')}
               </p>
             )}

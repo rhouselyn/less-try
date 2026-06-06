@@ -100,7 +100,7 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-moss-50 border-moss-200/50 hover:bg-moss-50'
+            ? 'bg-teal-50 border-teal-200/50 hover:bg-teal-50'
             : isLocked
             ? 'bg-canvas-100 border-stone-200/30 cursor-not-allowed'
             : isCurrent
@@ -113,7 +113,7 @@ function AllUnitsStep({
           <Lock className="w-3.5 h-3.5 text-stone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-base font-semibold text-moss-600">{index + 1}</span>
+            <span className="text-base font-semibold text-teal-600">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
@@ -203,7 +203,7 @@ function AllUnitsStep({
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className={`h-full rounded-full ${
-              phaseNumber === 1 ? 'bg-moss-400' : 'bg-blue-400'
+              phaseNumber === 1 ? 'bg-teal-400' : 'bg-blue-400'
             }`}
           />
         </div>

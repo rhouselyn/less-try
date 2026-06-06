@@ -328,7 +328,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                   {configs.length > 1 && (
                     <button
                       onClick={() => removeConfig(currentIndex)}
-                      className="flex items-center gap-1 text-[10px] text-umber-400 hover:text-sienna-500 transition-colors"
+                      className="flex items-center gap-1 text-[10px] text-umber-400 hover:text-vermilion-500 transition-colors"
                     >
                       <Minus className="w-3 h-3" />
                       {t.remove || 'Remove'}
@@ -366,7 +366,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                             <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400 uppercase tracking-widest mb-1.5">
                               <Key className="w-3 h-3" />
                               API Key
-                              {current?.has_key && <span className="text-[10px] text-moss-500 normal-case tracking-normal">● {t.configured || '已配置'}</span>}
+                              {current?.has_key && <span className="text-[10px] text-teal-500 normal-case tracking-normal">● {t.configured || '已配置'}</span>}
                             </label>
                             <input
                               type="password"

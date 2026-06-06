@@ -73,13 +73,14 @@ export default {
           600: '#7a2637',
           700: '#5a1c29',
         },
-        // 生褐 - 主文本 (油画深色)
+        // 生褐 - 主文本 (油画深色) - 提高对比度
         umber: {
-          400: '#8a7b68',
-          500: '#6b5d4a',
-          600: '#524635',
-          700: '#3b3225',
-          800: '#2a2319',
+          300: '#7a6b55',
+          400: '#5e5040',
+          500: '#4a3f30',
+          600: '#3a3125',
+          700: '#2c2419',
+          800: '#1e180f',
         },
         // 暖石 - 边框 (与画布协调)
         stone: {
@@ -87,25 +88,27 @@ export default {
           300: '#c9bca3',
           400: '#b0a086',
         },
-        // 苔绿 - 保留用于成功状态
-        moss: {
-          50:  '#eef0e4',
-          100: '#d5dbc0',
-          200: '#b3be94',
-          300: '#8e9c6c',
-          400: '#6f7f52',
-          500: '#54663d',
-          600: '#3f4e2e',
-          700: '#2c3820',
+        // 青绿 - 成功状态
+        teal: {
+          50:  '#e8f8f5',
+          100: '#d1f2eb',
+          200: '#a3e4d7',
+          300: '#76d7c4',
+          400: '#48c9b0',
+          500: '#1abc9c',
+          600: '#17a589',
+          700: '#148f77',
         },
-        // 焦赭 - 错误/危险
-        sienna: {
-          50:  '#f7ede6',
-          100: '#e8c9b4',
-          200: '#d49878',
-          300: '#c06d48',
-          400: '#a8502e',
-          500: '#8b3a1f',
+        // 朱红 - 错误/危险
+        vermilion: {
+          50:  '#fdedec',
+          100: '#fadbd8',
+          200: '#f5b7b1',
+          300: '#f1948a',
+          400: '#e74c3c',
+          500: '#c0392b',
+          600: '#a93226',
+          700: '#922b21',
         },
       },
       borderRadius: {
@@ -118,6 +121,12 @@ export default {
         'impasto':    '0 3px 0 #c9bca3, 0 4px 12px rgba(58, 45, 25, 0.14)',
         'impasto-lg': '0 4px 0 #bfb085, 0 8px 24px rgba(58, 45, 25, 0.18)',
         'impasto-xl': '0 5px 0 #bfb085, 0 12px 40px rgba(58, 45, 25, 0.22)',
+        // 3D按钮阴影 - 镉黄
+        'btn-cadmium': '#b87d1e 0px 4px 0px, rgba(232, 180, 66, 0.3) 0px 6px 16px',
+        'btn-cadmium-hover': '#b87d1e 0px 4px 0px, rgba(232, 180, 66, 0.4) 0px 8px 20px',
+        // 3D按钮阴影 - 钴蓝
+        'btn-cerulean': '#2a4f73 0px 4px 0px, rgba(74, 127, 173, 0.3) 0px 6px 16px',
+        'btn-cerulean-hover': '#2a4f73 0px 4px 0px, rgba(74, 127, 173, 0.4) 0px 8px 20px',
         // 发光效果
         'glow-cadmium': '0 0 0 4px rgba(232, 180, 66, 0.22)',
         'glow-cerulean':  '0 0 0 4px rgba(74, 127, 173, 0.22)',
@@ -130,11 +139,12 @@ export default {
         'brush-strokes': "repeating-linear-gradient(90deg, transparent, transparent 2px, rgba(139, 123, 104, 0.03) 2px, rgba(139, 123, 104, 0.03) 4px)",
         // 暖色径向渐变 - 模拟光线
         'light-radial': 'radial-gradient(ellipse at top, #f9e8b8 0%, #f5f0e1 40%, #ede6d0 100%)',
-        // 颜料管渐变 - 按钮用的渐变
-        'paint-tube-cadmium': 'linear-gradient(135deg, #f2d07a 0%, #e8b442 40%, #d4982a 100%)',
-        'paint-tube-cerulean': 'linear-gradient(135deg, #a8c5e1 0%, #6f9fc8 40%, #4a7fad 100%)',
-        'paint-tube-madder': 'linear-gradient(135deg, #e0a3ab 0%, #cd6f7c 40%, #b84a5b 100%)',
-        'paint-tube-moss': 'linear-gradient(135deg, #b3be94 0%, #8e9c6c 40%, #6f7f52 100%)',
+        // 3D按钮渐变 - 镉黄
+        'btn-gradient-cadmium': 'linear-gradient(135deg, #f2d07a 0%, #e8b442 100%)',
+        'btn-gradient-cadmium-hover': 'linear-gradient(135deg, #f5d88a 0%, #ecbe52 100%)',
+        // 3D按钮渐变 - 钴蓝
+        'btn-gradient-cerulean': 'linear-gradient(135deg, #a8c5e1 0%, #6f9fc8 100%)',
+        'btn-gradient-cerulean-hover': 'linear-gradient(135deg, #b5d0e8 0%, #7dabd0 100%)',
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-out',

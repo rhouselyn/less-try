@@ -140,12 +140,12 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-sienna-50 border border-sienna-400 text-sienna-500') : 'border border-stone-200 bg-canvas-50 text-umber-800 hover:border-cadmium-300'}`}
+                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-50 border border-teal-400 text-teal-600' : 'bg-vermilion-50 border border-vermilion-400 text-vermilion-500') : 'border border-stone-200 bg-canvas-50 text-umber-800 hover:border-cadmium-300'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && isCorrect && (
                       <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-5 h-5 rounded-full flex items-center justify-center">
-                        <CheckCircle2 className="w-4 h-4 text-moss-600" />
+                        <CheckCircle2 className="w-4 h-4 text-teal-600" />
                       </motion.div>
                     )}
                     <span className="text-lg">{option}</span>

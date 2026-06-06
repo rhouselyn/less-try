@@ -11,7 +11,7 @@
 body {
   font-family: 'Playfair Display', 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Georgia, serif;
   background: #f5f0e1;
-  color: #3b3225;
+  color: #2c2419;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -46,18 +46,37 @@ body {
     @apply card-warm hover:shadow-impasto hover:border-stone-300 transition-all duration-200;
   }
 
-  /* 主按钮 - 简约镉黄 */
+  /* 主按钮 - 3D立体镉黄 */
   .btn-primary {
-    @apply bg-cadmium-300 hover:bg-cadmium-400 text-umber-800 font-semibold rounded-2xl
-           px-6 py-3 transition-colors duration-200
-           active:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply text-umber-800 font-bold rounded-lg
+           px-6 py-3 transition-all duration-300 ease-out
+           hover:-translate-y-0.5 active:translate-y-[3px]
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #f2d07a 0%, #e8b442 100%);
+    box-shadow: #b87d1e 0px 4px 0px, rgba(232, 180, 66, 0.3) 0px 6px 16px;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #f5d88a 0%, #ecbe52 100%);
+    box-shadow: #b87d1e 0px 4px 0px, rgba(232, 180, 66, 0.4) 0px 8px 20px;
+  }
+  .btn-primary:active {
+    box-shadow: #b87d1e 0px 1px 0px, rgba(232, 180, 66, 0.2) 0px 2px 8px;
   }
 
-  /* 次要按钮 - 简约钴蓝 */
+  /* 次要按钮 - 3D立体钴蓝 */
   .btn-secondary {
-    @apply bg-cerulean-400 hover:bg-cerulean-500 text-white font-semibold rounded-2xl
-           px-6 py-3 transition-colors duration-200
-           active:opacity-90;
+    @apply text-white font-bold rounded-lg
+           px-6 py-3 transition-all duration-300 ease-out
+           hover:-translate-y-0.5 active:translate-y-[3px];
+    background: linear-gradient(135deg, #a8c5e1 0%, #6f9fc8 100%);
+    box-shadow: #2a4f73 0px 4px 0px, rgba(74, 127, 173, 0.3) 0px 6px 16px;
+  }
+  .btn-secondary:hover {
+    background: linear-gradient(135deg, #b5d0e8 0%, #7dabd0 100%);
+    box-shadow: #2a4f73 0px 4px 0px, rgba(74, 127, 173, 0.4) 0px 8px 20px;
+  }
+  .btn-secondary:active {
+    box-shadow: #2a4f73 0px 1px 0px, rgba(74, 127, 173, 0.2) 0px 2px 8px;
   }
 
   /* 幽灵按钮 */
@@ -135,11 +154,11 @@ body {
   .badge-ochre {
     @apply badge-warm bg-cadmium-50 text-cadmium-600;
   }
-  .badge-moss {
-    @apply badge-warm bg-moss-50 text-moss-600;
+  .badge-teal {
+    @apply badge-warm bg-teal-50 text-teal-600;
   }
   .badge-ember {
-    @apply badge-warm bg-sienna-50 text-sienna-400;
+    @apply badge-warm bg-vermilion-50 text-vermilion-500;
   }
 }
 
@@ -152,7 +171,7 @@ body {
 /* 选中文字颜色 - 镉黄高亮 */
 ::selection {
   background: #f2d07a;
-  color: #2a2319;
+  color: #1e180f;
 }
 
 /* 滚动条 - 画布色调 */

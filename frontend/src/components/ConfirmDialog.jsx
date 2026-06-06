@@ -59,7 +59,7 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onConfirm}
-                className="flex-1 py-2.5 text-[13px] font-semibold text-white bg-sienna-400 hover:bg-sienna-500 rounded-2xl transition-colors"
+                className="flex-1 py-2.5 text-[13px] font-semibold text-white bg-vermilion-400 hover:bg-vermilion-500 rounded-2xl transition-colors"
               >
                 {confirmText || '退出'}
               </motion.button>
