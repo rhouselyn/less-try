@@ -17,14 +17,14 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
       <div className="px-5 pb-4 pt-2 border-t border-canvas-100">
         {detailLoading ? (
           <div className="pt-4 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
+            <Loader2 className="w-5 h-5 animate-spin text-warmorange-500" />
             <p className="text-[12px] text-umber-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
           </div>
         ) : (
           <>
             <div className="mb-2">
-              <h3 className="label-warm text-[10px] font-semibold text-umber-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                <Brain className="w-3 h-3 text-cadmium-500" />
+              <h3 className="label-warm text-[10px] font-semibold text-umber-500  tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                <Brain className="w-3 h-3 text-warmorange-500" />
                 {t.definition || '释义'}
               </h3>
               <p className="text-[13px] text-umber-700 leading-relaxed">
@@ -34,14 +34,14 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
             {word.variants_detail && word.variants_detail.length > 0 && (
               <div className="mb-2">
-                <h3 className="label-warm text-[10px] font-semibold text-umber-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                  <GitBranch className="w-3 h-3 text-cadmium-500" />
+                <h3 className="label-warm text-[10px] font-semibold text-umber-500  tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                  <GitBranch className="w-3 h-3 text-warmorange-500" />
                   {t.variants || '词形变化'}
                 </h3>
                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                   {word.variants_detail.map((variant, index) => (
                     <div key={index} className="flex items-center gap-1.5">
-                      <span className="badge-ochre px-1.5 py-0.5 bg-cadmium-50 text-cadmium-500 rounded text-[11px] font-medium">
+                      <span className="badge-ochre px-1.5 py-0.5 bg-warmorange-50 text-warmorange-500 rounded text-[11px] font-medium">
                         {variant.type}
                       </span>
                       <span className="text-umber-600 text-[13px]">{variant.form}</span>
@@ -53,19 +53,19 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
             {word.examples && word.examples.length > 0 && (
               <div className="mb-2">
-                <h3 className="label-warm text-[10px] font-semibold text-umber-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                  <BookText className="w-3 h-3 text-cadmium-500" />
+                <h3 className="label-warm text-[10px] font-semibold text-umber-500  tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                  <BookText className="w-3 h-3 text-warmorange-500" />
                   {t.examples || '例句'}
                 </h3>
                 <div className="space-y-1">
                   {word.examples.slice(0, 3).map((ex, i) => (
-                    <div key={i} className="border-l-2 border-cadmium-200 pl-2.5">
+                    <div key={i} className="border-l-2 border-warmorange-200 pl-2.5">
                       <div className="flex items-start gap-1.5">
                         <p className="text-umber-700 text-[13px] leading-snug flex-1">{ex.sentence}</p>
                         {ex.sentence && (
                           <button
                             onClick={(e) => { e.stopPropagation(); speakText(ex.sentence, sourceLang) }}
-                            className="p-0.5 text-cadmium-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded transition-colors shrink-0"
+                            className="p-0.5 text-warmorange-400 hover:text-warmorange-500 hover:bg-warmorange-50 rounded transition-colors shrink-0"
                           >
                             <Volume2 className="w-3 h-3" />
                           </button>
@@ -82,11 +82,11 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
 
             {word.memory_hint && (
               <div className="mb-2">
-                <h3 className="label-warm text-[10px] font-semibold text-umber-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                  <Lightbulb className="w-3 h-3 text-cadmium-500" />
+                <h3 className="label-warm text-[10px] font-semibold text-umber-500  tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                  <Lightbulb className="w-3 h-3 text-warmorange-500" />
                   {t.memoryHint || '记忆辅助'}
                 </h3>
-                <p className="text-[13px] text-umber-600 leading-relaxed bg-cadmium-50/70 px-3 py-2 rounded-lg border border-cadmium-100">
+                <p className="text-[13px] text-umber-600 leading-relaxed bg-warmorange-50/70 px-3 py-2 rounded-lg border border-warmorange-100">
                   {word.memory_hint}
                 </p>
               </div>
@@ -283,7 +283,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const renderPagination = () => {
     if (totalPages <= 1) return null
     return (
-      <div className="flex items-center justify-center gap-1 py-2 border-t border-stone-200/60 bg-canvas-50/40">
+      <div className="flex items-center justify-center gap-1 py-2 border-t border-[#e8a87c]/25/60 bg-canvas-50/40">
         <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
           className={`p-1 rounded transition-colors ${page <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}>
           <ChevronLeft className="w-3.5 h-3.5" />
@@ -301,7 +301,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     if (loading) {
       return (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-cadmium-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-warmorange-400" />
           <span className="ml-2 text-sm text-umber-400">{t.loadingVocab || '加载单词表...'}</span>
         </div>
       )
@@ -330,8 +330,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                   onClick={() => scrollToLetter(letter)}
                   className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors leading-tight ${
                     onCurrentPage
-                      ? 'text-umber-600 hover:text-cadmium-500 hover:bg-cadmium-50'
-                      : 'text-stone-300/60 hover:text-cadmium-500 hover:bg-cadmium-50/50'
+                      ? 'text-umber-600 hover:text-warmorange-500 hover:bg-warmorange-50'
+                      : 'text-stone-300/60 hover:text-warmorange-500 hover:bg-warmorange-50/50'
                   }`}
                 >
                   {letter}
@@ -376,11 +376,11 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {expandedWord === word.word && detailLoading[word.word] ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-cadmium-400" />
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-warmorange-400" />
                       ) : expandedWord === word.word ? (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
-                          className="p-1.5 text-stone-300 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
+                          className="p-1.5 text-stone-300 hover:text-warmorange-500 hover:bg-warmorange-50 rounded-lg transition-colors"
                           title={t.regenerate || '重新生成'}
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
@@ -388,7 +388,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                       ) : null}
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
-                        className="p-1.5 text-stone-300 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
+                        className="p-1.5 text-stone-300 hover:text-warmorange-500 hover:bg-warmorange-50 rounded-lg transition-colors"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
@@ -417,13 +417,13 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
   if (onBack) {
     return (
-      <div className="h-full flex flex-col bg-canvas-50 rounded-2xl border border-stone-200/60 shadow-impasto-sm overflow-hidden min-h-0">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-200/60 bg-gradient-to-r from-cadmium-50/50 to-canvas-50">
+      <div className="h-full flex flex-col bg-canvas-50 rounded-lg border border-[#e8a87c]/25/60 shadow-impasto-sm overflow-hidden min-h-0">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#e8a87c]/25/60 bg-gradient-to-r from-warmorange-50/50 to-canvas-50">
           <div className="flex items-center gap-2.5">
-            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-cadmium-500' : 'text-cadmium-500 hover:text-cadmium-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
+            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-warmorange-500' : 'text-warmorange-500 hover:text-warmorange-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
             <span className="text-base font-semibold font-display text-umber-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
-              <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+              <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-lg">{words.length} {t.wordCount || '词'}</span>
             )}
           </div>
           <button
@@ -443,7 +443,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-9 py-2 text-sm bg-canvas-50 border border-stone-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
+              className="input-warm w-full pl-9 pr-9 py-2 text-sm bg-canvas-50 border border-[#e8a87c]/25/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-warmorange-400 focus:border-transparent placeholder-umber-400 transition-all"
             />
             {searchQuery && (
               <button
@@ -469,13 +469,13 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-200/60 hover:border-cadmium-200/60 transition-all shadow-impasto-sm"
+        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-50/80 backdrop-blur-sm rounded-lg border border-[#e8a87c]/25/60 hover:border-warmorange-200/60 transition-all shadow-impasto-sm"
       >
         <div className="flex items-center gap-2.5">
-          <BookOpen className="w-4 h-4 text-cadmium-500" />
+          <BookOpen className="w-4 h-4 text-warmorange-500" />
           <span className="text-sm font-semibold font-display text-umber-700">{t.vocabOverview || '词汇总览'}</span>
           {!isOpen && words.length > 0 && (
-            <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+            <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-lg">{words.length} {t.wordCount || '词'}</span>
           )}
         </div>
         <motion.div
@@ -495,7 +495,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="mt-3 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-200/60 shadow-impasto-sm">
+            <div className="mt-3 bg-canvas-50/80 backdrop-blur-sm rounded-lg border border-[#e8a87c]/25/60 shadow-impasto-sm">
               <div className="p-4 border-b border-canvas-100">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />
@@ -504,7 +504,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-                    className="input-warm w-full pl-9 pr-9 py-2.5 text-sm bg-canvas-50 border border-stone-200/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
+                    className="input-warm w-full pl-9 pr-9 py-2.5 text-sm bg-canvas-50 border border-[#e8a87c]/25/80 rounded-lg focus:outline-none focus:ring-2 focus:ring-warmorange-400 focus:border-transparent placeholder-umber-400 transition-all"
                   />
                   {searchQuery && (
                     <button

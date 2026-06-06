@@ -45,7 +45,7 @@ function PhaseSelectorStep({ phases, currentFileId, onPhaseSelect, onBack, loadi
             >
               <button
                 onClick={() => onPhaseSelect(phase.phase_number)}
-                className="w-full p-6 border border-stone-200 bg-canvas-50 hover:border-umber-400 hover:shadow-impasto-sm rounded-3xl transition-all"
+                className="w-full p-6 border border-[#e8a87c]/25 bg-canvas-50 hover:border-umber-400 hover:shadow-impasto-sm rounded-lg transition-all"
               >
                 <h3 className="text-xl font-semibold font-display text-umber-800 mb-2">
                   {phase.phase_number === 1 ? t.phase1 : t.phase2}
@@ -53,7 +53,7 @@ function PhaseSelectorStep({ phases, currentFileId, onPhaseSelect, onBack, loadi
                 <p className="text-umber-600 mb-2">{phase.units_count} {t.unit}s</p>
                 <div className="text-sm font-medium">
                   {phase.progress.current_unit > 0 ? (
-                    <span className="text-cadmium-500">
+                    <span className="text-warmorange-500">
                       已完成 {phase.progress.current_unit}/{phase.units_count} {t.unit}s
                     </span>
                   ) : (

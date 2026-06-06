@@ -95,7 +95,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-canvas-50 border border-stone-200 rounded-3xl p-8 shadow-impasto-sm"
+            className="bg-canvas-50 border border-[#e8a87c]/25 rounded-lg p-8 shadow-impasto-sm"
           >
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-2">
@@ -112,7 +112,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={(e) => { e.stopPropagation(); speakText(learningData.word, sourceLang) }}
-                  className="p-2 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
+                  className="p-2 text-warmorange-500 hover:text-warmorange-500 hover:bg-warmorange-50 rounded-lg transition-colors"
                 >
                   <Volume2 className="w-6 h-6" />
                 </motion.button>
@@ -140,12 +140,12 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-sienna-50 border border-sienna-400 text-sienna-500') : 'border border-stone-200 bg-canvas-50 text-umber-800 hover:border-cadmium-300'}`}
+                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-50 border border-teal-400 text-teal-600' : 'bg-vermilion-50 border border-vermilion-400 text-vermilion-500') : 'border border-[#e8a87c]/25 bg-canvas-50 text-umber-800 hover:border-warmorange-300'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && isCorrect && (
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-5 h-5 rounded-full flex items-center justify-center">
-                        <CheckCircle2 className="w-4 h-4 text-moss-600" />
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-5 h-5 rounded-lg flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4 text-teal-600" />
                       </motion.div>
                     )}
                     <span className="text-lg">{option}</span>
@@ -160,7 +160,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-canvas-50 border border-stone-200 rounded-3xl p-8 shadow-impasto-sm"
+            className="bg-canvas-50 border border-[#e8a87c]/25 rounded-lg p-8 shadow-impasto-sm"
           >
             <div className="flex items-start justify-between mb-8">
               <div>
@@ -178,7 +178,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     whileHover={{ scale: 1.15 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={(e) => { e.stopPropagation(); speakText(learningData.word, sourceLang) }}
-                    className="p-2 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
+                    className="p-2 text-warmorange-500 hover:text-warmorange-500 hover:bg-warmorange-50 rounded-lg transition-colors"
                   >
                     <Volume2 className="w-6 h-6" />
                   </motion.button>
@@ -202,7 +202,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
               >
-                <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-umber-400  tracking-wider mb-3 flex items-center gap-2">
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
@@ -217,7 +217,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-umber-400  tracking-wider mb-3">
                     {t.context}
                   </h3>
                   <div className="flex items-start gap-2">
@@ -228,7 +228,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                       whileHover={{ scale: 1.15 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={(e) => { e.stopPropagation(); speakText(learningData.context, sourceLang) }}
-                      className="p-1.5 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors shrink-0 mt-1"
+                      className="p-1.5 text-warmorange-500 hover:text-warmorange-500 hover:bg-warmorange-50 rounded-lg transition-colors shrink-0 mt-1"
                     >
                       <Volume2 className="w-4 h-4" />
                     </motion.button>
@@ -241,9 +241,9 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
-                  className="bg-cadmium-50 p-4 rounded-lg border border-cadmium-200"
+                  className="bg-warmorange-50 p-4 rounded-lg border border-warmorange-200"
                 >
-                  <h4 className="text-sm font-medium text-cadmium-500 mb-2">{t.contextMeaning || '上下文释义'}</h4>
+                  <h4 className="text-sm font-medium text-warmorange-500 mb-2">{t.contextMeaning || '上下文释义'}</h4>
                   <p className="text-umber-600">{learningData.meaning || learningData.context_meaning}</p>
                 </motion.div>
               )}
@@ -254,7 +254,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
                 >
-                  <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-umber-400  tracking-wider mb-3">
                     {t.variants}
                   </h3>
                   <div className="space-y-2">
@@ -276,19 +276,19 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-umber-400  tracking-wider mb-3">
                     {t.examples}
                   </h3>
                   <div className="space-y-4">
                     {learningData.examples.map((example, index) => (
-                      <div key={index} className="border-l-4 border-stone-300 pl-4">
+                      <div key={index} className="border-l-4 border-[#e8a87c]/40 pl-4">
                         <div className="flex items-start gap-2">
                           <p className="text-umber-800 mb-1 flex-1">{example.sentence}</p>
                           <motion.button
                             whileHover={{ scale: 1.15 }}
                             whileTap={{ scale: 0.97 }}
                             onClick={(e) => { e.stopPropagation(); speakText(example.sentence, sourceLang) }}
-                            className="p-1 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors shrink-0"
+                            className="p-1 text-warmorange-500 hover:text-warmorange-500 hover:bg-warmorange-50 rounded-lg transition-colors shrink-0"
                           >
                             <Volume2 className="w-3.5 h-3.5" />
                           </motion.button>
@@ -306,10 +306,10 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <h3 className="text-sm font-semibold text-umber-400 uppercase tracking-wider mb-3">
+                  <h3 className="text-sm font-semibold text-umber-400  tracking-wider mb-3">
                     {t.memoryHint}
                   </h3>
-                  <p className="text-lg text-umber-600 leading-relaxed bg-cadmium-50 p-4 rounded-lg border border-cadmium-200">
+                  <p className="text-lg text-umber-600 leading-relaxed bg-warmorange-50 p-4 rounded-lg border border-warmorange-200">
                     {learningData.memory_hint}
                   </p>
                 </motion.div>

@@ -98,14 +98,14 @@ function AllUnitsStep({
         whileTap={!isLocked ? { scale: 0.97 } : {}}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
-        className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
+        className={`relative flex flex-col items-center justify-center rounded-lg transition-all duration-200 ${
           isCompleted
-            ? 'bg-moss-50 border-moss-200/50 hover:bg-moss-50'
+            ? 'bg-teal-50 border-teal-200/50 hover:bg-teal-50'
             : isLocked
-            ? 'bg-canvas-100 border-stone-200/30 cursor-not-allowed'
+            ? 'bg-canvas-100 border-[#e8a87c]/25/30 cursor-not-allowed'
             : isCurrent
-            ? 'bg-cadmium-50 border-cadmium-300/70 shadow-impasto-sm'
-            : 'bg-cadmium-50/40 border-cadmium-200/40 hover:border-cadmium-300/60'
+            ? 'bg-warmorange-50 border-warmorange-300/70 shadow-impasto-sm'
+            : 'bg-warmorange-50/40 border-warmorange-200/40 hover:border-warmorange-300/60'
         }`}
         style={{ width: '5rem', height: '5rem' }}
       >
@@ -113,7 +113,7 @@ function AllUnitsStep({
           <Lock className="w-3.5 h-3.5 text-stone-300" />
         ) : isCompleted ? (
           <>
-            <span className="text-base font-semibold text-moss-600">{index + 1}</span>
+            <span className="text-base font-semibold text-teal-600">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
@@ -121,7 +121,7 @@ function AllUnitsStep({
                     key={i}
                     className={`w-3 h-3 ${
                       i < starCount
-                        ? 'text-cadmium-400 fill-cadmium-400'
+                        ? 'text-warmorange-400 fill-warmorange-400'
                         : 'text-stone-300 fill-stone-300'
                     }`}
                   />
@@ -131,11 +131,11 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-base font-semibold text-cadmium-500`}>{index + 1}</span>
+            <span className={`text-base font-semibold text-warmorange-500`}>{index + 1}</span>
             {isGenerating ? (
-              <Loader2 className="w-3 h-3 animate-spin text-cadmium-300 mt-0.5" />
+              <Loader2 className="w-3 h-3 animate-spin text-warmorange-300 mt-0.5" />
             ) : (
-              <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-cadmium-400' : 'bg-cadmium-300/60'}`} />
+              <div className={`w-4 h-[2px] rounded-lg mt-0.5 ${isCurrent ? 'bg-warmorange-400' : 'bg-warmorange-300/60'}`} />
             )}
           </>
         )}
@@ -197,13 +197,13 @@ function AllUnitsStep({
           )}
         </div>
 
-        <div className="w-full h-1.5 bg-canvas-100 rounded-full overflow-hidden mb-5">
+        <div className="w-full h-1.5 bg-canvas-100 rounded-lg overflow-hidden mb-5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className={`h-full rounded-full ${
-              phaseNumber === 1 ? 'bg-moss-400' : 'bg-blue-400'
+            className={`h-full rounded-lg ${
+              phaseNumber === 1 ? 'bg-teal-400' : 'bg-blue-400'
             }`}
           />
         </div>
@@ -260,7 +260,7 @@ function AllUnitsStep({
               onChange={(e) => onOnlyNewWordsChange?.(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="toggle-warm-off peer-checked:bg-cadmium-400 peer-focus:outline-none" />
+            <div className="toggle-warm-off peer-checked:bg-warmorange-400 peer-focus:outline-none" />
             <div className="absolute left-[2px] top-[3px] toggle-warm-dot peer-checked:translate-x-4" />
           </div>
         </label>
@@ -277,7 +277,7 @@ function AllUnitsStep({
               onChange={(e) => onSkipListeningChange?.(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="toggle-warm-off peer-checked:bg-cadmium-400 peer-focus:outline-none" />
+            <div className="toggle-warm-off peer-checked:bg-warmorange-400 peer-focus:outline-none" />
             <div className="absolute left-[2px] top-[3px] toggle-warm-dot peer-checked:translate-x-4" />
           </div>
         </label>
@@ -301,12 +301,12 @@ function AllUnitsStep({
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-cadmium-400" />
+            <Loader2 className="w-5 h-5 animate-spin text-warmorange-400" />
             <p className="text-xs text-umber-400">{t.loading}</p>
           </div>
         ) : (
-          <div className="bg-canvas-50 rounded-3xl shadow-impasto overflow-hidden">
-            <div className="bg-canvas-100/70 backdrop-blur-md border-b border-stone-200/60 px-3 pt-2.5">
+          <div className="bg-canvas-50 rounded-lg shadow-impasto overflow-hidden">
+            <div className="bg-canvas-100/70 backdrop-blur-md border-b border-[#e8a87c]/25/60 px-3 pt-2.5">
               <div className="flex gap-1 relative">
                 <motion.div
                   className="absolute top-0 bottom-0 bg-canvas-50 rounded-t-xl shadow-impasto-sm"
@@ -329,7 +329,7 @@ function AllUnitsStep({
                         <Icon className="w-3.5 h-3.5" />
                         <span>{tab.label}</span>
                         {tab.total > 0 && (
-                          <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors duration-300 ${
+                          <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-lg transition-colors duration-300 ${
                             isActive ? 'bg-canvas-100 text-umber-500' : 'text-umber-400'
                           }`}>
                             {tab.completed}/{tab.total}

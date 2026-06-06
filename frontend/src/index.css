@@ -9,7 +9,7 @@
 }
 
 body {
-  font-family: 'Playfair Display', 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Georgia, serif;
+  font-family: 'Playfair Display', 'Source Han Serif SC', 'Noto Serif SC', 'Songti SC', 'PingFang SC', 'Microsoft YaHei', Georgia, serif;
   background: #f5f0e1;
   color: #3b3225;
   line-height: 1.6;
@@ -33,7 +33,7 @@ body {
 @layer components {
   /* 卡片基础 - 带笔触纹理 */
   .card-warm {
-    @apply bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-sm;
+    @apply bg-[#f5f0e1] border border-[#e8a87c]/25 rounded-lg shadow-impasto-sm;
     background-image: repeating-linear-gradient(
       90deg,
       transparent,
@@ -43,35 +43,35 @@ body {
     );
   }
   .card-warm-hover {
-    @apply card-warm hover:shadow-impasto hover:border-stone-300 transition-all duration-200;
+    @apply card-warm hover:shadow-impasto hover:border-[#e8a87c]/40 transition-all duration-300 ease-in-out;
   }
 
-  /* 主按钮 - 简约镉黄 */
+  /* 主按钮 - 暖橙简约 */
   .btn-primary {
-    @apply bg-cadmium-300 hover:bg-cadmium-400 text-umber-800 font-semibold rounded-2xl
-           px-6 py-3 transition-colors duration-200
-           active:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-warmorange-300 hover:bg-warmorange-400 text-umber-800 font-serif font-bold rounded-lg
+           px-6 py-3 transition-all duration-300 ease-in-out
+           active:translate-y-[2px] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
-  /* 次要按钮 - 简约钴蓝 */
+  /* 次要按钮 - 深蓝简约 */
   .btn-secondary {
-    @apply bg-cerulean-400 hover:bg-cerulean-500 text-white font-semibold rounded-2xl
-           px-6 py-3 transition-colors duration-200
-           active:opacity-90;
+    @apply bg-deepblue-500 hover:bg-deepblue-600 text-white font-serif font-bold rounded-lg
+           px-6 py-3 transition-all duration-300 ease-in-out
+           active:translate-y-[2px];
   }
 
   /* 幽灵按钮 */
   .btn-ghost {
     @apply text-umber-500 hover:text-umber-700 hover:bg-canvas-200/60
-           rounded-xl px-3 py-2 transition-all duration-200 font-medium;
+           rounded-lg px-3 py-2 transition-all duration-300 ease-in-out font-serif font-medium;
   }
 
   /* 输入框 - 画布质感 */
   .input-warm {
-    @apply w-full px-4 py-3 rounded-2xl border border-stone-200 bg-canvas-50
-           text-umber-700 placeholder-umber-400/60 focus:outline-none
-           focus:border-cadmium-300 focus:shadow-glow-cadmium
-           transition-all duration-200 hover:border-stone-300;
+    @apply w-full px-4 py-3 rounded-lg border-2 border-[#e8a87c]/25 bg-[#f5f0e1]
+           text-umber-700 placeholder-umber-400/60 font-serif
+           focus:outline-none focus:shadow-glow-warm
+           transition-all duration-300 ease-in-out hover:border-[#e8a87c]/40;
     background-image: repeating-linear-gradient(
       0deg,
       transparent,
@@ -83,24 +83,24 @@ body {
 
   /* 标签 */
   .label-warm {
-    @apply block text-[11px] font-semibold text-umber-400 mb-1.5 uppercase tracking-widest;
+    @apply block text-[11px] font-serif font-bold text-umber-400 mb-1.5 tracking-wide;
   }
 
-  /* 进度条 - 颜料渐变 */
+  /* 进度条 - 金光渐变 */
   .progress-warm {
-    @apply h-2 rounded-full bg-canvas-200 overflow-hidden;
+    @apply h-2 rounded-lg bg-canvas-200 overflow-hidden;
   }
   .progress-warm-bar {
-    @apply h-full rounded-full transition-all duration-500 ease-out;
-    background: linear-gradient(90deg, #f2d07a, #e8b442, #d4982a);
+    @apply h-full rounded-lg transition-all duration-500 ease-out;
+    background: linear-gradient(90deg, #f5d88a, #e8c55a, #c9a63e);
   }
 
   /* 标签页 */
   .tab-warm {
-    @apply px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200;
+    @apply px-4 py-2 rounded-lg text-sm font-serif font-bold transition-all duration-300 ease-in-out;
   }
   .tab-warm-active {
-    @apply tab-warm bg-canvas-50 text-umber-700 shadow-impasto-sm;
+    @apply tab-warm bg-[#f5f0e1] text-umber-700 shadow-impasto-sm;
     background-image: repeating-linear-gradient(
       90deg,
       transparent,
@@ -115,31 +115,30 @@ body {
 
   /* 开关 */
   .toggle-warm {
-    @apply relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200;
+    @apply relative inline-flex h-5 w-9 items-center rounded-lg transition-colors duration-300;
   }
   .toggle-warm-on {
-    @apply toggle-warm;
-    background: linear-gradient(135deg, #f2d07a, #e8b442);
+    @apply toggle-warm bg-warmorange-300;
   }
   .toggle-warm-off {
-    @apply toggle-warm bg-stone-300;
+    @apply toggle-warm bg-canvas-300;
   }
   .toggle-warm-dot {
-    @apply inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200;
+    @apply inline-block h-3.5 w-3.5 transform rounded-lg bg-white shadow-sm transition-transform duration-300;
   }
 
   /* 小徽章 */
   .badge-warm {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-serif font-bold;
   }
   .badge-ochre {
-    @apply badge-warm bg-cadmium-50 text-cadmium-600;
+    @apply badge-warm bg-warmorange-50 text-warmorange-600;
   }
   .badge-moss {
-    @apply badge-warm bg-moss-50 text-moss-600;
+    @apply badge-warm bg-teal-50 text-teal-600;
   }
   .badge-ember {
-    @apply badge-warm bg-sienna-50 text-sienna-400;
+    @apply badge-warm bg-vermilion-50 text-vermilion-400;
   }
 }
 
@@ -149,9 +148,9 @@ body {
   }
 }
 
-/* 选中文字颜色 - 镉黄高亮 */
+/* 选中文字颜色 - 金光高亮 */
 ::selection {
-  background: #f2d07a;
+  background: #f5d88a;
   color: #2a2319;
 }
 
@@ -163,9 +162,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c9bca3;
+  background: #d1c49e;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #b0a086;
+  background: #bfb085;
 }

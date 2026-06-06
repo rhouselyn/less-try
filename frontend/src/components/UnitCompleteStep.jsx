@@ -17,20 +17,20 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
           onClick={onSkipReview}
-          className="absolute -top-2 left-0 z-10 flex items-center gap-1.5 btn-ghost text-xs border border-stone-200 hover:border-stone-300 backdrop-blur-sm"
+          className="absolute -top-2 left-0 z-10 flex items-center gap-1.5 btn-ghost text-xs border border-[#e8a87c]/25 hover:border-[#e8a87c]/40 backdrop-blur-sm"
         >
           <X className="w-3 h-3" />
           {t.skipReview || '不想复习了'}
         </motion.button>
       )}
-      <div className="bg-canvas-50 border border-stone-200 rounded-3xl p-12 shadow-impasto text-center">
+      <div className="bg-canvas-50 border border-[#e8a87c]/25 rounded-lg p-12 shadow-impasto text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 300, damping: 15, delay: 0.2 }}
-          className="w-24 h-24 bg-cadmium-50 rounded-full flex items-center justify-center mx-auto mb-8"
+          className="w-24 h-24 bg-warmorange-50 rounded-lg flex items-center justify-center mx-auto mb-8"
         >
-          <Trophy className="w-12 h-12 text-cadmium-500" />
+          <Trophy className="w-12 h-12 text-warmorange-500" />
         </motion.div>
 
         <motion.h2
@@ -78,7 +78,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
               <Star
                 className={`w-8 h-8 transition-colors ${
                   i < starCount
-                    ? 'text-cadmium-400 fill-cadmium-400'
+                    ? 'text-warmorange-400 fill-warmorange-400'
                     : 'text-stone-300 fill-stone-300'
                 }`}
               />
@@ -91,10 +91,10 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="mb-8 p-4 bg-cadmium-50 border border-cadmium-200 rounded-xl"
+            className="mb-8 p-4 bg-warmorange-50 border border-warmorange-200 rounded-lg"
           >
             <div className="flex items-center gap-2 justify-center mb-2">
-              <RotateCcw className="w-4 h-4 text-cadmium-500" />
+              <RotateCcw className="w-4 h-4 text-warmorange-500" />
               <span className="text-umber-700 font-medium">{t.wrongItemReview || '错题复习'}</span>
             </div>
             <p className="text-sm text-umber-500">
@@ -109,13 +109,13 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           transition={{ delay: 0.9 }}
           className="flex items-center justify-center gap-3"
         >
-          <Sparkles className="w-5 h-5 text-cadmium-500" />
+          <Sparkles className="w-5 h-5 text-warmorange-500" />
           <span className="text-umber-500 text-sm">
             {unitNumber + 1 < totalUnits
               ? (t.moreUnitsToGo || '还有 {0} 个单元等你挑战').replace('{0}', totalUnits - unitNumber - 1)
               : (t.congratsAllUnits || '恭喜完成所有单元！')}
           </span>
-          <Sparkles className="w-5 h-5 text-cadmium-500" />
+          <Sparkles className="w-5 h-5 text-warmorange-500" />
         </motion.div>
 
         <motion.div

@@ -50,34 +50,34 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-stone-200 bg-canvas-50 hover:bg-canvas-100 transition-colors text-sm"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-lg border border-[#e8a87c]/25 bg-canvas-50 hover:bg-canvas-100 transition-colors text-sm"
       >
         <LangIcon langCode={value} size="sm" />
         <span className="text-umber-800 flex-1 text-left">{selectedLang?.native || value}</span>
         <ChevronDown className={`w-3.5 h-3.5 text-stone-300 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-canvas-50 rounded-xl border border-stone-200 shadow-xl overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-canvas-50 rounded-lg border border-[#e8a87c]/25 shadow-xl overflow-hidden">
           <div className="p-2 border-b border-canvas-100">
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search..."
-              className="w-full px-2 py-1.5 rounded-lg bg-canvas-50 border border-canvas-100 text-xs text-umber-700 placeholder-umber-400 focus:outline-none focus:border-cadmium-300"
+              className="w-full px-2 py-1.5 rounded-lg bg-canvas-50 border border-canvas-100 text-xs text-umber-700 placeholder-umber-400 focus:outline-none focus:border-warmorange-300"
               autoFocus
             />
           </div>
           <div className="max-h-48 overflow-y-auto">
             {recentFiltered.length > 0 && (
               <>
-                <div className="px-3 py-1 text-[10px] text-umber-400 font-semibold uppercase">Recent</div>
+                <div className="px-3 py-1 text-[10px] text-umber-400 font-semibold ">Recent</div>
                 {recentFiltered.map(l => (
                   <button
                     key={l.value}
                     type="button"
                     onClick={() => { onChange(l.value); setOpen(false); setSearch('') }}
                     className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
-                      value === l.value ? 'bg-cadmium-50 text-cadmium-600' : 'text-umber-600 hover:bg-canvas-50'
+                      value === l.value ? 'bg-warmorange-50 text-warmorange-600' : 'text-umber-600 hover:bg-canvas-50'
                     }`}
                   >
                     <LangIcon langCode={l.value} size="sm" />
@@ -88,14 +88,14 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
             )}
             {commonFiltered.length > 0 && (
               <>
-                <div className="px-3 py-1 text-[10px] text-umber-400 font-semibold uppercase">Common</div>
+                <div className="px-3 py-1 text-[10px] text-umber-400 font-semibold ">Common</div>
                 {commonFiltered.map(l => (
                   <button
                     key={l.value}
                     type="button"
                     onClick={() => { onChange(l.value); setOpen(false); setSearch('') }}
                     className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
-                      value === l.value ? 'bg-cadmium-50 text-cadmium-600' : 'text-umber-600 hover:bg-canvas-50'
+                      value === l.value ? 'bg-warmorange-50 text-warmorange-600' : 'text-umber-600 hover:bg-canvas-50'
                     }`}
                   >
                     <LangIcon langCode={l.value} size="sm" />
@@ -106,14 +106,14 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
             )}
             {otherFiltered.length > 0 && (
               <>
-                <div className="px-3 py-1 text-[10px] text-umber-400 font-semibold uppercase border-t border-canvas-100">All Languages</div>
+                <div className="px-3 py-1 text-[10px] text-umber-400 font-semibold  border-t border-canvas-100">All Languages</div>
                 {otherFiltered.map(l => (
                   <button
                     key={l.value}
                     type="button"
                     onClick={() => { onChange(l.value); setOpen(false); setSearch('') }}
                     className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition-colors ${
-                      value === l.value ? 'bg-cadmium-50 text-cadmium-600' : 'text-umber-600 hover:bg-canvas-50'
+                      value === l.value ? 'bg-warmorange-50 text-warmorange-600' : 'text-umber-600 hover:bg-canvas-50'
                     }`}
                   >
                     <LangIcon langCode={l.value} size="sm" />
@@ -298,7 +298,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15 }}
-          className="bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-xl w-[340px] overflow-hidden mt-2"
+          className="bg-canvas-50 border border-[#e8a87c]/25 rounded-lg shadow-impasto-xl w-[340px] overflow-hidden mt-2"
           onClick={e => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-canvas-100">
@@ -308,7 +308,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
             </div>
             <button
               onClick={onClose}
-              className="btn-ghost p-1 text-umber-400 hover:text-umber-600 rounded-md transition-colors"
+              className="btn-ghost p-1 text-umber-400 hover:text-umber-600 rounded-lg transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -322,13 +322,13 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
             <div className="p-5 space-y-4 overflow-y-auto max-h-[70vh]">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="label-warm text-[10px] font-semibold text-umber-400 uppercase tracking-widest">
+                  <span className="label-warm text-[10px] font-semibold text-umber-400  tracking-widest">
                     {t.apiConfig || 'API 配置'} {currentIndex + 1}/{configs.length}
                   </span>
                   {configs.length > 1 && (
                     <button
                       onClick={() => removeConfig(currentIndex)}
-                      className="flex items-center gap-1 text-[10px] text-umber-400 hover:text-sienna-500 transition-colors"
+                      className="flex items-center gap-1 text-[10px] text-umber-400 hover:text-vermilion-500 transition-colors"
                     >
                       <Minus className="w-3 h-3" />
                       {t.remove || 'Remove'}
@@ -350,7 +350,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                       <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    <div className="flex-1 min-w-0 overflow-hidden rounded-2xl border border-stone-200 bg-canvas-50/50">
+                    <div className="flex-1 min-w-0 overflow-hidden rounded-lg border border-[#e8a87c]/25 bg-canvas-50/50">
                       <AnimatePresence mode="wait" custom={direction}>
                         <motion.div
                           key={currentIndex}
@@ -363,17 +363,17 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                           className="p-3 space-y-3"
                         >
                           <div>
-                            <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400 uppercase tracking-widest mb-1.5">
+                            <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400  tracking-widest mb-1.5">
                               <Key className="w-3 h-3" />
                               API Key
-                              {current?.has_key && <span className="text-[10px] text-moss-500 normal-case tracking-normal">● {t.configured || '已配置'}</span>}
+                              {current?.has_key && <span className="text-[10px] text-teal-500 normal-case tracking-normal">● {t.configured || '已配置'}</span>}
                             </label>
                             <input
                               type="password"
                               value={current?.api_key || ''}
                               onChange={e => updateConfig(currentIndex, 'api_key', e.target.value)}
                               placeholder={current?.masked_key || 'sk-...'}
-                              className="input-warm w-full px-3 py-2 text-xs bg-canvas-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-canvas-50 border border-[#e8a87c]/25 rounded-lg focus:outline-none focus:ring-2 focus:ring-warmorange-200 focus:border-warmorange-300 transition-all placeholder:text-umber-400"
                             />
                             {current?.has_key && !current?.api_key && (
                               <p className="text-[11px] text-umber-400 mt-1">{t.leaveEmptyKeepKey || '留空则保持当前 Key 不变'}</p>
@@ -381,7 +381,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                           </div>
 
                           <div>
-                            <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400 uppercase tracking-widest mb-1.5">
+                            <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400  tracking-widest mb-1.5">
                               <Globe className="w-3 h-3" />
                               Base URL
                             </label>
@@ -390,12 +390,12 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                               value={current?.base_url || ''}
                               onChange={e => updateConfig(currentIndex, 'base_url', e.target.value)}
                               placeholder="https://api.siliconflow.cn/v1"
-                              className="input-warm w-full px-3 py-2 text-xs bg-canvas-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-canvas-50 border border-[#e8a87c]/25 rounded-lg focus:outline-none focus:ring-2 focus:ring-warmorange-200 focus:border-warmorange-300 transition-all placeholder:text-umber-400"
                             />
                           </div>
 
                           <div>
-                            <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400 uppercase tracking-widest mb-1.5">
+                            <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400  tracking-widest mb-1.5">
                               <Cpu className="w-3 h-3" />
                               Model
                             </label>
@@ -404,7 +404,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                               value={current?.model || ''}
                               onChange={e => updateConfig(currentIndex, 'model', e.target.value)}
                               placeholder="Qwen/Qwen3.6-27B"
-                              className="input-warm w-full px-3 py-2 text-xs bg-canvas-50 border border-stone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-200 focus:border-cadmium-300 transition-all placeholder:text-umber-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-canvas-50 border border-[#e8a87c]/25 rounded-lg focus:outline-none focus:ring-2 focus:ring-warmorange-200 focus:border-warmorange-300 transition-all placeholder:text-umber-400"
                             />
                           </div>
                         </motion.div>
@@ -414,7 +414,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                     {isLast ? (
                       <button
                         onClick={addConfig}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 transition-all active:scale-90"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-warmorange-500 hover:text-warmorange-500 hover:bg-warmorange-50 transition-all active:scale-90"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
@@ -437,9 +437,9 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                             setDirection(i > currentIndex ? 1 : -1)
                             setCurrentIndex(i)
                           }}
-                          className={`rounded-full transition-all duration-200 ${
+                          className={`rounded-lg transition-all duration-200 ${
                             i === currentIndex
-                              ? 'w-4 h-1.5 bg-cadmium-400'
+                              ? 'w-4 h-1.5 bg-warmorange-400'
                               : 'w-1.5 h-1.5 bg-stone-300 hover:bg-umber-400'
                           }`}
                         />
@@ -450,14 +450,14 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
               </div>
 
               <div className="pt-1">
-                <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400 uppercase tracking-widest mb-1.5">
+                <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400  tracking-widest mb-1.5">
                   <Gauge className="w-3 h-3" />
                   {t.retryInterval || '请求间隔'}
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-umber-400">{t.retryIntervalDesc || '每次API请求之间的等待时间'}</span>
-                    <span className="text-[11px] font-semibold text-cadmium-500">{retryInterval.toFixed(1)}s</span>
+                    <span className="text-[11px] font-semibold text-warmorange-500">{retryInterval.toFixed(1)}s</span>
                   </div>
                   <div className="relative">
                     <input
@@ -467,7 +467,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                       step={0.1}
                       value={retryInterval}
                       onChange={e => setRetryInterval(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer bg-canvas-100"
+                      className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-canvas-100"
                       style={{
                         background: `linear-gradient(to right, #d97706 0%, #d97706 ${((retryInterval - 0.1) / (20 - 0.1)) * 100}%, #faf8f0 ${((retryInterval - 0.1) / (20 - 0.1)) * 100}%, #faf8f0 100%)`
                       }}
@@ -481,14 +481,14 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
               </div>
 
               <div>
-                <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400 uppercase tracking-widest mb-1.5">
+                <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400  tracking-widest mb-1.5">
                   <BookOpen className="w-3 h-3" />
                   {t.itemsPerPage || '每页数量'}
                 </label>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-umber-400">{t.wordsPerPage || '每页显示单词数'}</span>
-                    <span className="text-[11px] font-semibold text-cadmium-500">{localPageSize}</span>
+                    <span className="text-[11px] font-semibold text-warmorange-500">{localPageSize}</span>
                   </div>
                   <div className="relative">
                     <input
@@ -498,7 +498,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                       step={10}
                       value={localPageSize}
                       onChange={e => setLocalPageSize(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer bg-canvas-100"
+                      className="w-full h-2 rounded-lg appearance-none cursor-pointer bg-canvas-100"
                       style={{
                         background: `linear-gradient(to right, #d97706 0%, #d97706 ${((localPageSize - 10) / (200 - 10)) * 100}%, #faf8f0 ${((localPageSize - 10) / (200 - 10)) * 100}%, #faf8f0 100%)`
                       }}
@@ -512,7 +512,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
               </div>
 
               <div>
-                <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400 uppercase tracking-widest mb-1.5">
+                <label className="label-warm flex items-center gap-1.5 text-[10px] font-semibold text-umber-400  tracking-widest mb-1.5">
                   <Languages className="w-3 h-3" />
                   {t.nativeLang || '母语'}
                 </label>
@@ -523,7 +523,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSave}
                 disabled={saving}
-                className="btn-primary w-full py-2.5 bg-umber-800 text-white text-xs font-medium rounded-2xl hover:bg-umber-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="btn-primary w-full py-2.5 bg-umber-800 text-white text-xs font-medium rounded-lg hover:bg-umber-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

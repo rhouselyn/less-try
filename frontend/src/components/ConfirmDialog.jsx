@@ -24,19 +24,19 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 8 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="relative bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-lg w-full max-w-sm overflow-hidden"
+            className="relative bg-canvas-50 border border-[#e8a87c]/25 rounded-lg shadow-impasto-lg w-full max-w-sm overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <button
               onClick={onCancel}
-              className="absolute top-3.5 right-3.5 p-1 text-umber-400 hover:text-umber-500 rounded-md transition-colors"
+              className="absolute top-3.5 right-3.5 p-1 text-umber-400 hover:text-umber-500 rounded-lg transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div className="px-6 pt-7 pb-2 text-center">
-              <div className="w-11 h-11 rounded-full bg-cadmium-50 border border-cadmium-100/80 flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="w-5 h-5 text-cadmium-500" />
+              <div className="w-11 h-11 rounded-lg bg-warmorange-50 border border-warmorange-100/80 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-5 h-5 text-warmorange-500" />
               </div>
               {title && (
                 <h3 className="font-display text-[15px] font-semibold text-umber-700 mb-1.5">{title}</h3>
@@ -51,7 +51,7 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onCancel}
-                className="btn-secondary flex-1 py-2.5 text-[13px] font-medium text-umber-600 bg-canvas-100 hover:bg-canvas-200 rounded-2xl transition-colors"
+                className="btn-secondary flex-1 py-2.5 text-[13px] font-medium text-umber-600 bg-canvas-100 hover:bg-canvas-200 rounded-lg transition-colors"
               >
                 {cancelText || '继续练习'}
               </motion.button>
@@ -59,7 +59,7 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onConfirm}
-                className="flex-1 py-2.5 text-[13px] font-semibold text-white bg-sienna-400 hover:bg-sienna-500 rounded-2xl transition-colors"
+                className="flex-1 py-2.5 text-[13px] font-semibold text-white bg-vermilion-400 hover:bg-vermilion-500 rounded-lg transition-colors"
               >
                 {confirmText || '退出'}
               </motion.button>
