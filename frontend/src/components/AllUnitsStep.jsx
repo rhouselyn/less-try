@@ -111,7 +111,7 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-2xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-200 border-teal-500 hover:bg-teal-200 shadow-impasto-lg'
+            ? 'bg-teal-200 border-teal-500 hover:bg-teal-200 shadow-impasto-xl'
             : isLocked
             ? 'bg-canvas-100 border-stone-300 cursor-not-allowed'
             : isCurrent
@@ -319,10 +319,10 @@ function AllUnitsStep({
           </div>
         ) : (
           <div className="bg-canvas-50 rounded-3xl shadow-impasto overflow-hidden">
-            <div className="bg-canvas-100/70 backdrop-blur-md border-b border-stone-200/60 px-3 pt-2.5">
+            <div className="bg-canvas-100 border-b border-stone-300 px-3 pt-2.5">
               <div className="flex gap-1 relative">
                 <motion.div
-                  className="absolute top-0 bottom-0 bg-canvas-50 rounded-t-xl"
+                  className="absolute top-0 bottom-0 bg-canvas-50 rounded-t-xl border-x border-t border-stone-300"
                   style={{ width: 'calc(50% - 4px)', zIndex: 1 }}
                   animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
@@ -335,7 +335,7 @@ function AllUnitsStep({
                       key={tab.key}
                       onClick={() => handleTabChange(i)}
                       className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium rounded-t-xl transition-all duration-200 ${
-                        isActive ? 'shadow-none' : 'hover:bg-canvas-50/50'
+                        isActive ? 'shadow-none' : 'hover:bg-canvas-50/30'
                       }`}
                       style={{ zIndex: isActive ? 2 : 1 }}
                     >
