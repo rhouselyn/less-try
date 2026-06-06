@@ -24,7 +24,7 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 8 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="relative bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-lg w-full max-w-sm overflow-hidden"
+            className="relative bg-white border border-stone-300 rounded-3xl shadow-impasto-lg w-full max-w-sm overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <button

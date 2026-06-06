@@ -189,7 +189,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
+      <div className="bg-white border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
         <div className="px-5 py-3.5 border-b border-stone-300 bg-canvas-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -219,7 +219,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1) }}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-3 py-1.5 bg-white/70 border border-stone-300 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-cadmium-200/60 focus:border-cadmium-300/60 transition-all"
+              className="input-warm w-full pl-9 pr-3 py-1.5 bg-white border border-stone-300 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-cadmium-200/60 focus:border-cadmium-300/60 transition-all"
             />
           </div>
         </div>
@@ -287,7 +287,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                               >
                                 <button
                                   onClick={() => handleWordClick(word)}
-                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
+                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-canvas-100 transition-colors group"
                                 >
                                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                     <span className="text-[14px] font-semibold text-umber-800 tracking-tight shrink-0">

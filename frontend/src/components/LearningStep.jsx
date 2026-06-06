@@ -95,7 +95,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm"
+            className="bg-white border border-stone-300 rounded-3xl p-8 shadow-impasto-sm"
           >
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-2">
@@ -160,7 +160,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm"
+            className="bg-white border border-stone-300 rounded-3xl p-8 shadow-impasto-sm"
           >
             <div className="flex items-start justify-between mb-8">
               <div>

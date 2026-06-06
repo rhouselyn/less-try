@@ -80,7 +80,7 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
       exit={{ opacity: 0, scale: 0.95, y: -4 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
       style={{ left: posX, top: posY }}
-      className="fixed z-[9999] bg-white/80 border border-stone-300 rounded-2xl shadow-impasto-lg shadow-black/8 py-1.5 min-w-[160px] overflow-hidden"
+      className="fixed z-[9999] bg-white border border-stone-300 rounded-2xl shadow-impasto-lg shadow-black/8 py-1.5 min-w-[160px] overflow-hidden"
     >
       <button
         onClick={() => { onRename(); onClose() }}
@@ -149,7 +149,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
 
   return (
     <div
-      className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-canvas-200/60 transition-colors mx-2 bg-canvas-50 border-stone-300"
+      className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-canvas-200/60 transition-colors mx-2 bg-canvas-50"
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
     >
       <ProgressBadge progress={record.progress} />
@@ -493,7 +493,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 8 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
+              className="bg-white border border-stone-300 rounded-3xl shadow-impasto-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-3">
