@@ -121,9 +121,12 @@ function AllUnitsStep({
         style={{ width: '5.5rem', height: '5.5rem' }}
       >
         {isLocked ? (
-          <Lock className="w-3.5 h-3.5 text-stone-400" />
+          <div className="flex flex-col items-center justify-center h-full">
+            <Lock className="w-3.5 h-3.5 text-stone-400 mb-1" />
+            <span className="h-[10px]"></span>
+          </div>
         ) : isCompleted ? (
-          <>
+          <div className="flex flex-col items-center justify-center h-full">
             <span className="text-base font-semibold text-teal-700">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
@@ -140,9 +143,9 @@ function AllUnitsStep({
               </div>
             )}
             <span className="text-[10px] text-teal-600 mt-0.5">{totalExercises}</span>
-          </>
+          </div>
         ) : (
-          <>
+          <div className="flex flex-col items-center justify-center h-full">
             <span className={`text-base font-semibold ${isCurrent ? 'text-cadmium-700' : 'text-cadmium-600'}`}>{index + 1}</span>
             {isGenerating ? (
               <Loader2 className="w-3 h-3 animate-spin text-cadmium-300 mt-0.5" />
@@ -150,7 +153,7 @@ function AllUnitsStep({
               <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-cadmium-400' : 'bg-cadmium-400'}`} />
             )}
             <span className={`text-[10px] mt-0.5 ${isCurrent ? 'text-cadmium-700' : 'text-cadmium-600'}`}>{totalExercises}</span>
-          </>
+          </div>
         )}
       </motion.button>
     );
@@ -322,7 +325,7 @@ function AllUnitsStep({
             <div className="bg-canvas-100/70 backdrop-blur-md border-b border-stone-200/60 px-3 pt-2.5">
               <div className="flex gap-1 relative">
                 <motion.div
-                  className="absolute top-0 bottom-0 bg-canvas-50 rounded-t-xl"
+                  className="absolute top-0 bottom-0 bg-cadmium-100 rounded-t-xl border border-stone-300 border-b-0"
                   style={{ width: 'calc(50% - 4px)', zIndex: 1 }}
                   animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
