@@ -30,6 +30,17 @@ function AllUnitsStep({
   const [phase1Page, setPhase1Page] = useState(0);
   const [phase2Page, setPhase2Page] = useState(0);
 
+  const getDisplayCount = (unit, phaseNumber) => {
+    const baseCount = unit.exercises_count || 0;
+    if (phaseNumber === 1 && onlyNewWords) {
+      return unit.word_count || Math.ceil(baseCount * 0.4);
+    }
+    if (phaseNumber === 2 && skipListening) {
+      return Math.ceil(baseCount * 0.8);
+    }
+    return baseCount;
+  };
+
   useEffect(() => {
     if (lastActiveTab !== undefined && lastActiveTab !== null) {
       setActiveTab(lastActiveTab);
@@ -112,7 +123,7 @@ function AllUnitsStep({
         {isLocked ? (
           <Lock className="w-3.5 h-3.5 text-stone-400" />
         ) : isCompleted ? (
-          <>
+          <div className="flex flex-col items-center justify-center h-full">
             <span className="text-base font-semibold text-teal-700">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
@@ -128,16 +139,18 @@ function AllUnitsStep({
                 ))}
               </div>
             )}
-          </>
+            <span className="text-xs text-teal-600 mt-1">{getDisplayCount(unit, phaseNumber)}题</span>
+          </div>
         ) : (
-          <>
+          <div className="flex flex-col items-center justify-center h-full">
             <span className={`text-base font-semibold ${isCurrent ? 'text-cadmium-700' : 'text-cadmium-600'}`}>{index + 1}</span>
             {isGenerating ? (
               <Loader2 className="w-3 h-3 animate-spin text-cadmium-300 mt-0.5" />
             ) : (
               <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-cadmium-400' : 'bg-cadmium-400'}`} />
             )}
-          </>
+            <span className={`text-xs mt-1 ${isCurrent ? 'text-cadmium-700' : 'text-cadmium-600'}`}>{getDisplayCount(unit, phaseNumber)}题</span>
+          </div>
         )}
       </motion.button>
     );
