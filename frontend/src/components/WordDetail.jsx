@@ -13,10 +13,10 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
       {!hideDefinition && (
         <div className="mb-2">
           <h3 className="label-warm mb-0.5 flex items-center gap-1">
-            <Brain className="w-3 h-3 text-ochre-500" />
+            <Brain className="w-3 h-3 text-cadmium-500" />
             {t.definition}
           </h3>
-          <p className="text-[13px] text-ink-700 leading-relaxed">
+          <p className="text-[13px] text-umber-700 leading-relaxed">
             {word.enriched_meaning || word.meaning || word.context_meaning}
           </p>
         </div>
@@ -25,7 +25,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
       {word.variants_detail && word.variants_detail.length > 0 && (
         <div className="mb-2">
           <h3 className="label-warm mb-0.5 flex items-center gap-1">
-            <GitBranch className="w-3 h-3 text-ochre-500" />
+            <GitBranch className="w-3 h-3 text-cadmium-500" />
             {t.variants}
           </h3>
           <div className="flex flex-wrap gap-x-3 gap-y-1">
@@ -34,7 +34,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
                 <span className="badge-ochre">
                   {variant.type}
                 </span>
-                <span className="text-ink-600 text-[13px]">{variant.form}</span>
+                <span className="text-umber-600 text-[13px]">{variant.form}</span>
               </div>
             ))}
           </div>
@@ -44,25 +44,25 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
       {word.examples && word.examples.length > 0 && (
         <div className="mb-2">
           <h3 className="label-warm mb-0.5 flex items-center gap-1">
-            <BookText className="w-3 h-3 text-ochre-500" />
+            <BookText className="w-3 h-3 text-cadmium-500" />
             {t.examples}
           </h3>
           <div className="space-y-1">
             {word.examples.map((example, index) => (
-              <div key={index} className="border-l-2 border-ochre-200 pl-2.5">
+              <div key={index} className="border-l-2 border-cadmium-200 pl-2.5">
                 <div className="flex items-start gap-1.5">
-                  <p className="text-ink-700 text-[13px] leading-snug flex-1">{example.sentence}</p>
+                  <p className="text-umber-700 text-[13px] leading-snug flex-1">{example.sentence}</p>
                   {example.sentence && (
                     <button
                       onClick={(e) => { e.stopPropagation(); speakText(example.sentence, sourceLang) }}
-                      className="p-0.5 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded transition-colors shrink-0"
+                      className="p-0.5 text-cadmium-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded transition-colors shrink-0"
                     >
                       <Volume2 className="w-3 h-3" />
                     </button>
                   )}
                 </div>
                 {example.translation && (
-                  <p className="text-ink-400 text-[11px] leading-snug">{example.translation}</p>
+                  <p className="text-umber-400 text-[11px] leading-snug">{example.translation}</p>
                 )}
               </div>
             ))}
@@ -73,10 +73,10 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
       {word.memory_hint && (
         <div className="mb-2">
           <h3 className="label-warm mb-0.5 flex items-center gap-1">
-            <Lightbulb className="w-3 h-3 text-ochre-500" />
+            <Lightbulb className="w-3 h-3 text-cadmium-500" />
             {t.memoryHint}
           </h3>
-          <p className="text-[13px] text-ink-600 leading-relaxed bg-ochre-50/70 px-3 py-2 rounded-lg border border-ochre-100">
+          <p className="text-[13px] text-umber-600 leading-relaxed bg-cadmium-50/70 px-3 py-2 rounded-lg border border-cadmium-100">
             {word.memory_hint}
           </p>
         </div>
@@ -85,29 +85,29 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
       {!hideContextSentences && word.context_sentences && word.context_sentences.length > 0 && (
         <div className="mb-2">
           <h3 className="label-warm mb-0.5 flex items-center gap-1">
-            <Quote className="w-3 h-3 text-ochre-500" />
+            <Quote className="w-3 h-3 text-cadmium-500" />
             {t.originalSent || '原文例句'}
           </h3>
           <div className="space-y-1">
             {word.context_sentences.map((cs, index) => (
               <div
                 key={index}
-                className={`border-l-2 border-ochre-300 pl-2.5 rounded-r transition-colors ${disableContextSentenceClick ? '' : 'cursor-pointer hover:bg-cream-50'}`}
+                className={`border-l-2 border-cadmium-300 pl-2.5 rounded-r transition-colors ${disableContextSentenceClick ? '' : 'cursor-pointer hover:bg-canvas-50'}`}
                 onClick={() => !disableContextSentenceClick && onSentenceClick && cs.sentence_index !== undefined && onSentenceClick(cs.sentence_index)}
               >
                 <div className="flex items-start gap-1.5">
-                  <p className="text-ink-700 text-[13px] leading-snug flex-1">{cs.sentence}</p>
+                  <p className="text-umber-700 text-[13px] leading-snug flex-1">{cs.sentence}</p>
                   {cs.sentence && (
                     <button
                       onClick={(e) => { e.stopPropagation(); speakText(cs.sentence, sourceLang) }}
-                      className="p-0.5 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded transition-colors shrink-0"
+                      className="p-0.5 text-cadmium-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded transition-colors shrink-0"
                     >
                       <Volume2 className="w-3 h-3" />
                     </button>
                   )}
                 </div>
                 {cs.translation && (
-                  <p className="text-ink-400 text-[11px] leading-snug">{cs.translation}</p>
+                  <p className="text-umber-400 text-[11px] leading-snug">{cs.translation}</p>
                 )}
               </div>
             ))}

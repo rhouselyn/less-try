@@ -26,18 +26,18 @@ import SettingsModal from './components/SettingsModal'
 function FrogLogo({ size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
-      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
-      <circle cx="34" cy="38" r="16" fill="#4ade80" />
-      <circle cx="66" cy="38" r="16" fill="#4ade80" />
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#8e9c6c" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#b3be94" />
+      <circle cx="34" cy="38" r="16" fill="#8e9c6c" />
+      <circle cx="66" cy="38" r="16" fill="#8e9c6c" />
       <circle cx="34" cy="38" r="13" fill="#fff" />
       <circle cx="66" cy="38" r="13" fill="#fff" />
-      <circle cx="36" cy="37" r="6" fill="#166534" />
-      <circle cx="68" cy="37" r="6" fill="#166534" />
+      <circle cx="36" cy="37" r="6" fill="#3f4e2e" />
+      <circle cx="68" cy="37" r="6" fill="#3f4e2e" />
       <circle cx="38" cy="35" r="2" fill="#fff" />
       <circle cx="70" cy="35" r="2" fill="#fff" />
-      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
-      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#f2d07a" />
+      <path d="M38 60 Q50 70 62 60" stroke="#3f4e2e" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   )
 }
@@ -1210,7 +1210,7 @@ function App() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-cream-50 bg-paper-grain">
+    <div className="h-screen overflow-hidden bg-canvas-50 bg-canvas-grain">
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
@@ -1229,15 +1229,15 @@ function App() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowSettings(true)}
-                    className="absolute top-3 right-4 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-xl transition-colors z-10"
+                    className="absolute top-3 right-4 p-2 text-umber-400 hover:text-umber-600 hover:bg-canvas-200/60 rounded-xl transition-colors z-10"
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>
                   {translatingUI && (
-                    <div className="absolute inset-0 bg-cream-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
-                      <div className="flex items-center gap-3 bg-cream-50 border border-bone-200 rounded-2xl px-6 py-4 shadow-warm">
-                        <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
-                        <span className="text-sm text-ink-600">{
+                    <div className="absolute inset-0 bg-canvas-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
+                      <div className="flex items-center gap-3 bg-canvas-50 border border-stone-200 rounded-2xl px-6 py-4 shadow-impasto">
+                        <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
+                        <span className="text-sm text-umber-600">{
                           (customTranslations[uiLang]?.translatingUI)
                           || (customTranslations[Array.from(loadedLangs).filter(l => l !== uiLang).pop()]?.translatingUI)
                           || t.translatingUI

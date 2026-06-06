@@ -24,30 +24,30 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold font-display text-ink-700 mb-4"
+          className="text-3xl font-semibold font-display text-umber-700 mb-4"
         >
           {t.progress}
         </motion.h2>
-        <p className="text-lg text-ink-600">
+        <p className="text-lg text-umber-600">
           {t.selectTokens}
         </p>
       </div>
 
       {loading ? (
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-ink-400" />
-          <p className="text-lg text-ink-600">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-umber-400" />
+          <p className="text-lg text-umber-600">{t.loading}</p>
         </div>
       ) : allUnitsCompleted ? (
         <div className="text-center py-16">
           <motion.h2
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-3xl font-semibold font-display text-ink-700 mb-4"
+            className="text-3xl font-semibold font-display text-umber-700 mb-4"
           >
             🎉 {t.completed}
           </motion.h2>
-          <p className="text-lg text-ink-600 mb-8">{t.allUnitsComplete || '所有单元学习完成！'}</p>
+          <p className="text-lg text-umber-600 mb-8">{t.allUnitsComplete || '所有单元学习完成！'}</p>
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -71,17 +71,17 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
               <button
                 onClick={() => onUnitClick(index)}
                 disabled={!unit.completed && index !== currentUnit}
-                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-moss-50 border-moss-200' : index === currentUnit ? 'bg-ochre-50 border-ochre-300 hover:shadow-warm-sm' : 'bg-cream-100 border-bone-200 cursor-not-allowed opacity-50'}`}
+                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-moss-50 border-moss-200' : index === currentUnit ? 'bg-cadmium-50 border-cadmium-300 hover:shadow-impasto-sm' : 'bg-canvas-100 border-stone-200 cursor-not-allowed opacity-50'}`}
               >
-                <h3 className="text-xl font-semibold font-display text-ink-800 mb-2">{t.unit} {index + 1}</h3>
-                <p className="text-ink-600">{unit.word_count} {t.wordLabel}</p>
+                <h3 className="text-xl font-semibold font-display text-umber-800 mb-2">{t.unit} {index + 1}</h3>
+                <p className="text-umber-600">{unit.word_count} {t.wordLabel}</p>
                 <div className="mt-4 text-sm font-medium">
                   {unit.completed ? (
                     <span className="text-moss-600">{t.completed}</span>
                   ) : index === currentUnit ? (
-                    <span className="text-ochre-500">{t.startLearning}</span>
+                    <span className="text-cadmium-500">{t.startLearning}</span>
                   ) : (
-                    <span className="text-ink-400">{t.notStarted}</span>
+                    <span className="text-umber-400">{t.notStarted}</span>
                   )}
                 </div>
               </button>

@@ -15,7 +15,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
   if (!data) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center py-16">
-        <Loader2 className="w-5 h-5 animate-spin text-ochre-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-cadmium-400" />
       </motion.div>
     )
   }
@@ -72,7 +72,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-ink-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
+            <span className="text-sm text-umber-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
           )}
           {onOpenVocabList && (
             <motion.button
@@ -88,13 +88,13 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         </div>
       </div>
 
-      <div className="bg-cream-50 border border-bone-200 rounded-3xl p-8 shadow-warm-sm">
+      <div className="bg-canvas-50 border border-stone-200 rounded-3xl p-8 shadow-impasto-sm">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-ochre-50 text-ochre-500 rounded-full text-sm font-medium mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-cadmium-50 text-cadmium-500 rounded-full text-sm font-medium mb-4"
           >
             <PenLine className="w-4 h-4" />
             {t.maskedSentenceTitle || '选词填空'}
@@ -103,7 +103,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-lg text-ink-600"
+              className="text-lg text-umber-600"
             >
               {data.masked_sentence}
             </motion.p>
@@ -111,7 +111,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-bone-300 rounded-xl flex flex-wrap gap-2 bg-cream-50/50 relative">
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl flex flex-wrap gap-2 bg-canvas-50/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {data.answer_words.map((_, i) => (
                 <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{data.answer_words[i]}</span>
@@ -120,7 +120,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
             </div>
             <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-start content-start">
               {selectedWords.length === 0 && !answerChecked && (
-                <span className="text-bone-300 text-sm pointer-events-none">{t.maskedHint || '点击下方选项填入...'}</span>
+                <span className="text-stone-300 text-sm pointer-events-none">{t.maskedHint || '点击下方选项填入...'}</span>
               )}
               <AnimatePresence mode="popLayout">
                 {selectedWords.map((item, pos) => (
@@ -140,9 +140,9 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                               const correctWord = data.answer_words[pos]
                               return correctWord && item.word.toLowerCase() === correctWord.toLowerCase()
                                 ? 'bg-moss-50 text-moss-600 border border-moss-400'
-                                : 'bg-ember-50 text-ember-500 border border-ember-400'
+                                : 'bg-sienna-50 text-sienna-500 border border-sienna-400'
                             })()
-                        : 'bg-ink-800 text-white hover:bg-ink-700'
+                        : 'bg-umber-800 text-white hover:bg-umber-700'
                     }`}
                   >
                     {item.word}
@@ -153,7 +153,7 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''), sourceLang)}
-                className="ml-auto p-2 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded-full transition-colors"
+                className="ml-auto p-2 text-cadmium-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                 title={t.playHint || '播放提示'}
               >
                 <Lightbulb className="w-5 h-5" />
@@ -178,8 +178,8 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
                     isSelected
                       ? 'pointer-events-none invisible'
                       : answerChecked
-                        ? 'pointer-events-none bg-ink-800 text-white opacity-50'
-                        : 'bg-ink-800 text-white hover:bg-ink-700'
+                        ? 'pointer-events-none bg-umber-800 text-white opacity-50'
+                        : 'bg-umber-800 text-white hover:bg-umber-700'
                   }`}
                 >
                   {word}
@@ -193,14 +193,14 @@ function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading,
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-moss-50 border-2 border-moss-400' : 'bg-ember-50 border-2 border-ember-400'}`}
+            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-moss-50 border-2 border-moss-400' : 'bg-sienna-50 border-2 border-sienna-400'}`}
           >
             <div className="flex items-center gap-3 mb-2">
-              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-moss-600" /> : <XCircle className="w-6 h-6 text-ember-500" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-moss-600' : 'text-ember-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
+              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-moss-600" /> : <XCircle className="w-6 h-6 text-sienna-500" />}
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-moss-600' : 'text-sienna-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
-              <p className="text-ink-600 font-medium">
+              <p className="text-umber-600 font-medium">
                 {t.correctAnswer || '正确答案'}：{data.answer_words.join(' ')}
               </p>
             )}
