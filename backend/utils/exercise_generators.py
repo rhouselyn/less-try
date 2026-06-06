@@ -32,8 +32,6 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
 
         t_split_start = time.time()
         sentences = text_processor.split_sentences(text)
-        # 立即保存原始句子，让前端可以提前显示原文
-        storage.save_pipeline_data(file_id, [{"sentence": s, "translation_result": None} for s in sentences if s.strip()])
         total_sentences = len(sentences)
         t_split_end = time.time()
         print(f"[TIMING] 句子分割: {t_split_end - t_split_start:.3f}s, 共 {total_sentences} 个句子")

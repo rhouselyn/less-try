@@ -271,24 +271,10 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
 
         idx = (active_index + attempt) % num_configs
         config = configs[idx]
-
-        # 提交请求的同时开始计算间隔
-        request_start = _time.time()
-        api_instance = NvidiaAPI(config_index=idx)
-        request_task = asyncio.create_task(
-            api_instance.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
-        )
-        interval_task = asyncio.ensure_future(asyncio.sleep(interval))
-
         try:
-            result = await request_task
-            # 成功：等待间隔剩余时间
-            elapsed = _time.time() - request_start
-            remaining = interval - elapsed
-            if remaining > 0:
-                await asyncio.sleep(remaining)
-
-            # 重置失败计时器，保存当前 key 为活跃 key
+            api = NvidiaAPI(config_index=idx)
+            result = await api.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
+            # 成功：重置失败计时器，保存当前 key 为活跃 key
             fail_start = None
             last_exception = None
             attempt = 0
@@ -296,23 +282,26 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
                 print(f"[ROTATE] Switched from config {active_index} to config {idx} (model={config.get('model', '')})")
                 settings["active_index"] = idx
                 _save_settings(settings)
+            # 等待间隔后再返回，让下一次请求也遵守间隔
+            await asyncio.sleep(interval)
             return result
-        except Exception as e:
-            # 任何失败都切换到下一个 key
+        except (requests.exceptions.HTTPError, requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+            # 记录失败开始时间
             if fail_start is None:
                 fail_start = _time.time()
             last_exception = e
 
-            # 取消间隔等待
-            interval_task.cancel()
+            status_code = None
+            if isinstance(e, requests.exceptions.HTTPError) and e.response is not None:
+                status_code = e.response.status_code
 
-            # 等待间隔剩余时间
-            elapsed = _time.time() - request_start
-            remaining = interval - elapsed
-            if remaining > 0:
-                await asyncio.sleep(remaining)
+            if status_code in (429, 502, 503):
+                print(f"[ROTATE] Config {idx} rate-limited ({status_code}), waiting {interval}s then switching to config {(idx + 1) % num_configs}")
+            else:
+                print(f"[ROTATE] Config {idx} failed: {e}, waiting {interval}s then switching to config {(idx + 1) % num_configs}")
 
-            print(f"[ROTATE] Config {idx} failed: {e}, switching to config {(idx + 1) % num_configs}")
+            # 等待间隔后切换到下一个 key
+            await asyncio.sleep(interval)
             attempt += 1
             continue
 
