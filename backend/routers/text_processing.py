@@ -17,13 +17,9 @@ router = APIRouter(prefix="/api", tags=["text-processing"])
 async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_lang: str, mode: str, original_text: str):
     """后台任务：先做翻译/生成/语言检测，再执行文本处理。"""
     try:
-        # 直接输入模式：原文就是用户输入的文本，立即设置
-        if mode == "direct":
-            processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "original_text": text}
-
         # 1. 翻译/生成预处理
         if mode == "translate":
-            processing_status[file_id].update({"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "translating"})
+            processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "translating"}
             source_lang_name = get_lang_name(source_lang)
             target_lang_name = get_lang_name(target_lang)
             nvidia_api.reload()
@@ -39,11 +35,8 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
                 translated = response["choices"][0].get("message", {}).get("content", "").strip()
                 if translated:
                     text = translated
-            # 翻译完成后立即设置原文（翻译后的文本）
-            processing_status[file_id]["original_text"] = text
-            processing_status[file_id]["preprocess"] = None
         elif mode == "generate":
-            processing_status[file_id].update({"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "generating"})
+            processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "generating"}
             source_lang_name = get_lang_name(source_lang)
             nvidia_api.reload()
             messages = [
@@ -58,19 +51,15 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
                 generated = response["choices"][0].get("message", {}).get("content", "").strip()
                 if generated:
                     text = generated
-            # 生成完成后立即设置原文（生成的文本）
-            processing_status[file_id]["original_text"] = text
-            processing_status[file_id]["preprocess"] = None
 
         # 2. 语言检测
         if source_lang == "auto":
-            processing_status[file_id].update({"preprocess": "detecting"})
+            processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "detecting"}
             try:
                 source_lang = await detect_language(text)
             except Exception as e:
                 print(f"[WARN] Language detection failed: {e}")
                 source_lang = "en"
-            processing_status[file_id]["preprocess"] = None
 
         # 3. 更新语言设置和历史记录
         storage.save_language_settings(file_id, source_lang, target_lang)
@@ -98,10 +87,10 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
         print(f"[ERROR] 预处理或处理出错: {str(e)}")
         import traceback
         traceback.print_exc()
-        processing_status[file_id].update({
+        processing_status[file_id] = {
             "status": "error",
             "error": str(e)
-        })
+        }
 
 
 @router.post("/process-text")
