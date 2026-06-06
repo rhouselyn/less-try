@@ -130,11 +130,10 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [currentFileId, sourceLang])
 
   useEffect(() => {
-    if (!showGlobalVocab) return
     const lang = actualSourceLang && actualSourceLang !== 'auto' ? actualSourceLang : sourceLang
     if (!lang) return
     let cancelled = false
-    setGlobalVocabLoading(true)
+    if (showGlobalVocab) setGlobalVocabLoading(true)
     api.getWordList(lang).then(data => {
       if (!cancelled) {
         setGlobalVocab(data.words || [])
@@ -144,7 +143,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       if (!cancelled) setGlobalVocabLoading(false)
     })
     return () => { cancelled = true }
-  }, [showGlobalVocab, actualSourceLang, sourceLang])
+  }, [actualSourceLang, sourceLang])
 
   useEffect(() => {
     if (!currentFileId) return
@@ -679,7 +678,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const sourceLower = sourceText.toLowerCase()
     const sourceNoHyphen = sourceLower.replace(/-/g, ' ')
     const sourceStripped = stripEdgePunct(sourceLower)
-    return vocab.some(w => {
+    const check = (w) => {
       const wordLower = w.word.toLowerCase()
       if (wordLower === sourceLower) return true
       if (wordLower === sourceNoHyphen) return true
@@ -688,8 +687,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       if (sourceStripped && sourceStripped !== sourceLower && wordLower === sourceStripped) return true
       if (sourceStripped && sourceStripped !== sourceLower && w.tokens && w.tokens.some(t => t.toLowerCase() === sourceStripped)) return true
       return false
-    })
-  }, [vocab])
+    }
+    return vocab.some(check) || globalVocab.some(check)
+  }, [vocab, globalVocab])
 
   const renderOriginalSentence = (item) => {
     const sentence = item.sentence || ''
