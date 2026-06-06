@@ -31,36 +31,36 @@ body {
 
 /* 油画印象派设计系统 - 全局组件样式 */
 @layer components {
-  /* 卡片基础 - 带笔触纹理 */
+  /* 卡片基础 - 带笔触纹理，提高与背景对比 */
   .card-warm {
-    @apply bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-sm;
+    @apply bg-white/80 border border-stone-300 rounded-2xl shadow-impasto-sm;
     background-image: repeating-linear-gradient(
       90deg,
       transparent,
       transparent 3px,
-      rgba(139, 123, 104, 0.025) 3px,
-      rgba(139, 123, 104, 0.025) 6px
+      rgba(139, 123, 104, 0.018) 3px,
+      rgba(139, 123, 104, 0.018) 6px
     );
   }
   .card-warm-hover {
-    @apply card-warm hover:shadow-impasto hover:border-stone-300 transition-all duration-200;
+    @apply card-warm hover:shadow-impasto hover:border-stone-400 transition-all duration-200;
   }
 
-  /* 主按钮 - 3D立体镉黄 */
+  /* 主按钮 - 3D立体赭石 */
   .btn-primary {
-    @apply text-umber-800 font-bold rounded-lg
+    @apply text-white font-bold rounded-lg
            px-6 py-3 transition-all duration-300 ease-out
            hover:-translate-y-0.5 active:translate-y-[3px]
            disabled:opacity-50 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, #f2d07a 0%, #e8b442 100%);
-    box-shadow: #b87d1e 0px 4px 0px, rgba(232, 180, 66, 0.3) 0px 6px 16px;
+    background: linear-gradient(135deg, #c0785a 0%, #a86040 100%);
+    box-shadow: #7a3f28 0px 4px 0px, rgba(160, 96, 64, 0.3) 0px 6px 16px;
   }
   .btn-primary:hover {
-    background: linear-gradient(135deg, #f5d88a 0%, #ecbe52 100%);
-    box-shadow: #b87d1e 0px 4px 0px, rgba(232, 180, 66, 0.4) 0px 8px 20px;
+    background: linear-gradient(135deg, #cc8466 0%, #b46c4c 100%);
+    box-shadow: #7a3f28 0px 4px 0px, rgba(160, 96, 64, 0.4) 0px 8px 20px;
   }
   .btn-primary:active {
-    box-shadow: #b87d1e 0px 1px 0px, rgba(232, 180, 66, 0.2) 0px 2px 8px;
+    box-shadow: #7a3f28 0px 1px 0px, rgba(160, 96, 64, 0.2) 0px 2px 8px;
   }
 
   /* 次要按钮 - 3D立体钴蓝 */
@@ -85,19 +85,12 @@ body {
            rounded-xl px-3 py-2 transition-all duration-200 font-medium;
   }
 
-  /* 输入框 - 画布质感 */
+  /* 输入框 */
   .input-warm {
-    @apply w-full px-4 py-3 rounded-2xl border border-stone-200 bg-canvas-50
+    @apply w-full px-4 py-3 rounded-2xl border border-stone-300 bg-white/70
            text-umber-700 placeholder-umber-400/60 focus:outline-none
-           focus:border-cadmium-300 focus:shadow-glow-cadmium
-           transition-all duration-200 hover:border-stone-300;
-    background-image: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(139, 123, 104, 0.015) 2px,
-      rgba(139, 123, 104, 0.015) 4px
-    );
+           focus:border-cadmium-400 focus:shadow-glow-cadmium
+           transition-all duration-200 hover:border-stone-400;
   }
 
   /* 标签 */
@@ -105,13 +98,13 @@ body {
     @apply block text-[11px] font-semibold text-umber-400 mb-1.5 uppercase tracking-widest;
   }
 
-  /* 进度条 - 颜料渐变 */
+  /* 进度条 */
   .progress-warm {
-    @apply h-2 rounded-full bg-canvas-200 overflow-hidden;
+    @apply h-2 rounded-full bg-stone-300 overflow-hidden;
   }
   .progress-warm-bar {
     @apply h-full rounded-full transition-all duration-500 ease-out;
-    background: linear-gradient(90deg, #f2d07a, #e8b442, #d4982a);
+    background: linear-gradient(90deg, #c0785a, #a86040);
   }
 
   /* 标签页 */
@@ -119,17 +112,10 @@ body {
     @apply px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200;
   }
   .tab-warm-active {
-    @apply tab-warm bg-canvas-50 text-umber-700 shadow-impasto-sm;
-    background-image: repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 3px,
-      rgba(139, 123, 104, 0.02) 3px,
-      rgba(139, 123, 104, 0.02) 6px
-    );
+    @apply tab-warm bg-white/80 text-umber-700 shadow-impasto-sm;
   }
   .tab-warm-inactive {
-    @apply tab-warm text-umber-400 hover:text-umber-500 hover:bg-canvas-100/50;
+    @apply tab-warm text-umber-400 hover:text-umber-600 hover:bg-canvas-100/50;
   }
 
   /* 开关 */
@@ -138,7 +124,7 @@ body {
   }
   .toggle-warm-on {
     @apply toggle-warm;
-    background: linear-gradient(135deg, #f2d07a, #e8b442);
+    background: #a86040;
   }
   .toggle-warm-off {
     @apply toggle-warm bg-stone-300;
@@ -168,13 +154,13 @@ body {
   }
 }
 
-/* 选中文字颜色 - 镉黄高亮 */
+/* 选中文字颜色 */
 ::selection {
-  background: #f2d07a;
-  color: #1e180f;
+  background: #c0785a;
+  color: #fff;
 }
 
-/* 滚动条 - 画布色调 */
+/* 滚动条 */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -182,9 +168,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c9bca3;
+  background: #b0a086;
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #b0a086;
+  background: #968a74;
 }

@@ -100,12 +100,12 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-50 border-teal-200/50 hover:bg-teal-50'
+            ? 'bg-teal-50 border-teal-300 hover:bg-teal-50'
             : isLocked
-            ? 'bg-canvas-100 border-stone-200/30 cursor-not-allowed'
+            ? 'bg-canvas-200 border-stone-300 cursor-not-allowed'
             : isCurrent
-            ? 'bg-cadmium-50 border-cadmium-300/70 shadow-impasto-sm'
-            : 'bg-cadmium-50/40 border-cadmium-200/40 hover:border-cadmium-300/60'
+            ? 'bg-cadmium-100 border-cadmium-400 shadow-impasto-sm'
+            : 'bg-cadmium-50 border-cadmium-300 hover:border-cadmium-400'
         }`}
         style={{ width: '5rem', height: '5rem' }}
       >

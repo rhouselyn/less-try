@@ -95,7 +95,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-canvas-50 border border-stone-200 rounded-3xl p-8 shadow-impasto-sm"
+            className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm"
           >
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-2">
@@ -140,7 +140,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-50 border border-teal-400 text-teal-600' : 'bg-vermilion-50 border border-vermilion-400 text-vermilion-500') : 'border border-stone-200 bg-canvas-50 text-umber-800 hover:border-cadmium-300'}`}
+                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-50 border border-teal-500 text-teal-700' : 'bg-vermilion-50 border border-vermilion-400 text-vermilion-600') : 'border border-stone-300 bg-white/60 text-umber-700 hover:bg-white/80'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && isCorrect && (
@@ -160,7 +160,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-canvas-50 border border-stone-200 rounded-3xl p-8 shadow-impasto-sm"
+            className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm"
           >
             <div className="flex items-start justify-between mb-8">
               <div>

@@ -80,7 +80,7 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
       exit={{ opacity: 0, scale: 0.95, y: -4 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
       style={{ left: posX, top: posY }}
-      className="fixed z-[9999] bg-canvas-50 border border-stone-200 rounded-2xl shadow-impasto-lg shadow-black/8 py-1.5 min-w-[160px] overflow-hidden"
+      className="fixed z-[9999] bg-white/80 border border-stone-300 rounded-2xl shadow-impasto-lg shadow-black/8 py-1.5 min-w-[160px] overflow-hidden"
     >
       <button
         onClick={() => { onRename(); onClose() }}
@@ -292,7 +292,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               animate={{ width: SIDEBAR_WIDTH, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-              className="h-full overflow-hidden flex flex-col bg-canvas-100/50 border-r border-stone-200/60"
+              className="h-full overflow-hidden flex flex-col bg-canvas-100 border-r border-stone-300"
               style={{ minWidth: 0 }}
             >
               <div className="px-3 pt-4 pb-2 flex items-center justify-between flex-shrink-0">
@@ -417,7 +417,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-canvas-100/50 border-r border-stone-200/60"
+            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-canvas-100 border-r border-stone-300"
             style={{ width: 48 }}
           >
             <button
@@ -493,7 +493,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 8 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
+              className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-3">

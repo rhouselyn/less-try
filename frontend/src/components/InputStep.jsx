@@ -565,7 +565,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
 
       {/* Bottom area - input box */}
       <div className="w-full max-w-2xl mx-auto pb-4 px-4">
-        <div className="relative bg-canvas-50 border border-stone-200 rounded-2xl shadow-impasto overflow-hidden">
+        <div className="relative bg-white/80 border border-stone-300 rounded-2xl shadow-impasto overflow-hidden">
           {/* Mode tabs at top of input */}
           <div className="border-b border-stone-200/60 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />

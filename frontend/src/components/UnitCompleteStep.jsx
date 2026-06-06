@@ -23,7 +23,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           {t.skipReview || '不想复习了'}
         </motion.button>
       )}
-      <div className="bg-canvas-50 border border-stone-200 rounded-3xl p-12 shadow-impasto text-center">
+      <div className="bg-white/80 border border-stone-300 rounded-3xl p-12 shadow-impasto text-center">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}

@@ -128,7 +128,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
       </div>
 
-      <div className="bg-canvas-50 border border-stone-200 rounded-3xl p-8 shadow-impasto-sm">
+      <div className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -187,7 +187,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                           : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
                             ? 'bg-teal-50 text-teal-600 border border-teal-400'
                             : 'bg-vermilion-50 text-vermilion-500 border border-vermilion-400'
-                        : 'bg-umber-800 text-white hover:bg-umber-700'
+                        : 'bg-stone-400 text-white hover:bg-stone-500'
                     }`}
                     onClick={() => handleRemoveWord(pos)}
                   >
@@ -215,8 +215,8 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                     isSelected
                       ? 'pointer-events-none invisible'
                       : isChecked
-                        ? 'pointer-events-none bg-umber-800 text-white opacity-50'
-                        : 'bg-umber-800 text-white hover:bg-umber-700'
+                        ? 'pointer-events-none bg-stone-400 text-white opacity-50'
+                        : 'bg-stone-400 text-white hover:bg-stone-500'
                   }`}
                 >
                   {stripPunct(word)}

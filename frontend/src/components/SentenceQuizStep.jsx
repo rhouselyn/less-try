@@ -111,7 +111,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
       </div>
 
-      <div className="bg-canvas-50 border border-stone-200 rounded-3xl p-8 shadow-impasto-sm">
+      <div className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -143,7 +143,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl flex flex-wrap gap-2 bg-canvas-50/50 relative">
+          <div className="p-4 border-2 border-dashed border-stone-400 rounded-xl flex flex-wrap gap-2 bg-canvas-50/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {quizData.correct_tokens.map((_, i) => (
                 <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{quizData.correct_tokens[i]}</span>
@@ -173,7 +173,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                             : isTokenCorrect
                               ? 'bg-teal-50 text-teal-600 border border-teal-400'
                               : 'bg-vermilion-50 text-vermilion-500 border border-vermilion-400'
-                          : 'bg-umber-800 text-white hover:bg-umber-700'
+                          : 'bg-stone-400 text-white hover:bg-stone-500'
                       }`}
                     >
                       {displayToken(token)}
@@ -201,8 +201,8 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
                     isSelected
                       ? 'pointer-events-none invisible'
                       : isChecked
-                        ? 'pointer-events-none bg-umber-800 text-white opacity-50'
-                        : 'bg-umber-800 text-white hover:bg-umber-700'
+                        ? 'pointer-events-none bg-stone-400 text-white opacity-50'
+                        : 'bg-stone-400 text-white hover:bg-stone-500'
                   }`}
                 >
                   {displayToken(token)}

@@ -925,7 +925,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
       <div className="flex gap-6 flex-1 min-h-0" style={{ overflow: 'hidden' }}>
         <div className="w-1/2 flex flex-col min-h-0" style={{ overflow: 'hidden' }}>
-          <div className="bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
+          <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-canvas-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
@@ -1022,7 +1022,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </div>
 
         <div className="w-1/2 flex flex-col min-h-0" style={{ overflow: 'hidden' }}>
-          <div className="bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
+          <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
             <div className="px-5 py-3.5 border-b border-stone-200/80 bg-canvas-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
