@@ -1,10 +1,29 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, BookOpen, Volume2, Loader2, Brain, ChevronLeft, ChevronRight, ArrowLeft } from 'lucide-react'
+import { Search, X, BookOpen, Volume2, Loader2, Brain, ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
-import { groupVocab } from '../utils/vocab'
 import WordDetail from './WordDetail'
+
+// 按首字母连续分组，保持原始索引顺序（不重新排序）
+function groupByFirstLetter(words) {
+  if (!words.length) return []
+  const groups = []
+  let currentLetter = null
+  let currentGroup = []
+  for (const word of words) {
+    const letter = word.word.charAt(0).toUpperCase()
+    if (letter !== currentLetter) {
+      if (currentGroup.length) groups.push([currentLetter, currentGroup])
+      currentLetter = letter
+      currentGroup = [word]
+    } else {
+      currentGroup.push(word)
+    }
+  }
+  if (currentGroup.length) groups.push([currentLetter, currentGroup])
+  return groups
+}
 
 function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, pageSize = 50 }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -74,15 +93,29 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     return filteredVocab.slice(start, start + pageSize)
   }, [filteredVocab, currentPage, pageSize])
 
-  // 字母索引：全量列表的字母（用于侧栏显示），当前页的字母（用于高亮）
-  const allLetterIndex = useMemo(() => {
-    return groupVocab(filteredVocab).map(([letter]) => letter)
-  }, [filteredVocab])
-
-  const currentPageLetters = useMemo(() => {
-    const letters = new Set(pagedVocab.map(w => w.word.charAt(0).toUpperCase()))
-    return letters
+  // 按首字母连续分组（保持索引顺序）
+  const groupedPagedVocab = useMemo(() => {
+    return groupByFirstLetter(pagedVocab)
   }, [pagedVocab])
+
+  // 当前页的字母列表（用于高亮侧栏）
+  const currentPageLetters = useMemo(() => {
+    return groupedPagedVocab.map(([letter]) => letter)
+  }, [groupedPagedVocab])
+
+  // 全量列表的字母索引（用于侧栏显示）
+  const allLetterIndex = useMemo(() => {
+    const letters = []
+    let prev = null
+    for (const w of filteredVocab) {
+      const l = w.word.charAt(0).toUpperCase()
+      if (l !== prev) {
+        letters.push(l)
+        prev = l
+      }
+    }
+    return letters
+  }, [filteredVocab])
 
   const speakWord = useCallback((text, e) => {
     if (e) e.stopPropagation()
@@ -92,8 +125,8 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
   const pendingLetterRef = useRef(null)
 
   const scrollToLetter = useCallback((letter) => {
-    // 先在当前页找
-    const el = wordRefs.current[pagedVocab.find(w => w.word.charAt(0).toUpperCase() === letter)?.word]
+    // 先在当前页找该字母的分组元素
+    const el = document.getElementById(`vocab-group-${letter}`)
     if (el && listRef.current) {
       const container = listRef.current
       const containerRect = container.getBoundingClientRect()
@@ -112,7 +145,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
         }
       }
     }
-  }, [pagedVocab, filteredVocab, currentPage, pageSize])
+  }, [filteredVocab, currentPage, pageSize])
 
   // 页面切换后滚动到目标字母
   useEffect(() => {
@@ -120,20 +153,17 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
       const letter = pendingLetterRef.current
       pendingLetterRef.current = null
       setTimeout(() => {
-        const word = pagedVocab.find(w => w.word.charAt(0).toUpperCase() === letter)
-        if (word) {
-          const el = wordRefs.current[word.word]
-          if (el && listRef.current) {
-            const container = listRef.current
-            const containerRect = container.getBoundingClientRect()
-            const elRect = el.getBoundingClientRect()
-            const scrollOffset = elRect.top - containerRect.top + container.scrollTop - 32
-            container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
-          }
+        const el = document.getElementById(`vocab-group-${letter}`)
+        if (el && listRef.current) {
+          const container = listRef.current
+          const containerRect = container.getBoundingClientRect()
+          const elRect = el.getBoundingClientRect()
+          const scrollOffset = elRect.top - containerRect.top + container.scrollTop - 32
+          container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
         }
       }, 200)
     }
-  }, [currentPage, pagedVocab])
+  }, [currentPage])
 
   const getEnriched = (word) => enrichedWords[word] || {}
 
@@ -151,7 +181,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     }, [])
 
     return (
-      <div className="flex items-center justify-center gap-0.5 py-2 border-t border-bone-200/60 bg-cream-50/40 shrink-0">
+      <div className="flex items-center justify-center gap-0.5 py-1.5 border-t border-bone-200/60 bg-cream-50/40 shrink-0">
         <button
           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
@@ -239,48 +269,58 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
             </div>
           ) : (
             <>
+              {allLetterIndex.length > 1 && !searchQuery && (
+                <div className="flex flex-col items-center gap-px py-1 border-r border-bone-200/60 bg-cream-50/40 w-5 shrink-0 overflow-y-auto">
+                  {allLetterIndex.map(letter => {
+                    const onCurrentPage = currentPageLetters.includes(letter)
+                    return (
+                      <button
+                        key={letter}
+                        onClick={() => scrollToLetter(letter)}
+                        className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
+                          onCurrentPage
+                            ? 'text-ink-600 hover:text-ochre-500 hover:bg-ochre-50'
+                            : 'text-bone-300/60 hover:text-ochre-500 hover:bg-ochre-50/50'
+                        }`}
+                      >
+                        {letter}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
               <div className="flex-1 min-w-0 flex flex-col">
-                <div className="flex-1 flex min-h-0">
-                  {allLetterIndex.length > 1 && !searchQuery && (
-                    <div className="flex flex-col items-center gap-px py-1 border-r border-bone-200/60 bg-cream-50/40 w-5 shrink-0 overflow-y-auto">
-                      {allLetterIndex.map(letter => {
-                        const onCurrentPage = currentPageLetters.has(letter)
-                        return (
-                          <button
-                            key={letter}
-                            onClick={() => scrollToLetter(letter)}
-                            className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
-                              onCurrentPage
-                                ? 'text-ink-600 hover:text-ochre-500 hover:bg-ochre-50'
-                                : 'text-bone-300/60 hover:text-ochre-500 hover:bg-ochre-50/50'
-                            }`}
-                          >
-                            {letter}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                  <div className="flex-1 overflow-y-scroll min-h-0" ref={listRef} style={{ scrollbarGutter: 'stable' }}>
-                    <div className="space-y-px">
-                      {pagedVocab.map((word) => {
-                      const isExpanded = expandedWord === word.word
-                      const enriched = getEnriched(word.word)
-                      const displayMeaning = word.enriched_meaning || word.meaning || word.context_meaning
-                      return (
+                <div className="flex-1 overflow-y-scroll min-h-0" ref={listRef} style={{ scrollbarGutter: 'stable' }}>
+                  <div className="space-y-3">
+                    {groupedPagedVocab.map(([letter, words], groupIdx) => (
+                      <div key={letter} id={`vocab-group-${letter}`}>
                         <motion.div
-                          key={word.word}
-                          ref={el => { wordRefs.current[word.word] = el }}
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="bg-cream-50"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: groupIdx * 0.04 }}
+                          className="sticky top-0 z-10 backdrop-blur-sm bg-cream-50/80 px-4 py-1.5 border-b border-bone-200/40 mb-1"
                         >
+                          <span className="text-xs font-bold text-ochre-500/80 tracking-widest">{letter}</span>
+                        </motion.div>
+                        <div className="space-y-px">
+                          {words.map((word) => {
+                            const isExpanded = expandedWord === word.word
+                            const enriched = getEnriched(word.word)
+                            const displayMeaning = word.enriched_meaning || word.meaning || word.context_meaning
+                            return (
+                              <motion.div
+                                key={word.word}
+                                ref={el => { wordRefs.current[word.word] = el }}
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-cream-50"
+                              >
                                 <button
                                   onClick={() => handleWordClick(word)}
                                   className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-ochre-50/40 transition-colors group"
                                 >
                                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
-                                    <span className="text-[14px] font-semibold font-display text-ink-800 tracking-tight shrink-0">
+                                    <span className="text-[14px] font-semibold text-ink-800 tracking-tight shrink-0">
                                       {word.word}
                                     </span>
                                     {(enriched.ipa || word.ipa) && (
@@ -289,7 +329,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       </span>
                                     )}
                                     {(enriched.morphology || word.morphology) && (
-                                      <span className="badge-ochre text-[10px] px-1.5 py-0.5 bg-cream-100 text-ink-500 rounded font-medium tracking-wide shrink-0">
+                                      <span className="text-[10px] px-1.5 py-0.5 bg-cream-100 text-ink-500 rounded font-medium tracking-wide shrink-0">
                                         {enriched.morphology || word.morphology}
                                       </span>
                                     )}
@@ -324,7 +364,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                           return hasDetail ? (
                                             <div className="pt-3">
                                               <div className="mb-2">
-                                                <h3 className="label-warm text-[10px] font-semibold text-ink-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
+                                                <h3 className="label-warm mb-0.5 flex items-center gap-1">
                                                   <Brain className="w-3 h-3 text-ochre-500" />
                                                   {t.definition || '释义'}
                                                 </h3>
@@ -347,11 +387,13 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                           })}
                         </div>
                       </div>
-                    </div>
-                    {renderPagination()}
+                    ))}
                   </div>
-                </>
-              )}
+                </div>
+                {renderPagination()}
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
