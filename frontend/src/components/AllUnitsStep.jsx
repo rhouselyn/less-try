@@ -89,6 +89,17 @@ function AllUnitsStep({
     const starKey = `${phaseNumber}-${index}`;
     const starCount = unitStarCounts?.[starKey];
 
+    // 计算题目数量
+    let totalExercises = unit.exercises_count || 0;
+    if (phaseNumber === 1 && onlyNewWords) {
+      totalExercises = unit.word_count || 0;
+    }
+    if (phaseNumber === 2 && skipListening) {
+      // 假设 phase2 听力题占约 1/4，但实际按 exercise_type 统计的话，先简单调整
+      // 暂时保持原数，或者估算
+      totalExercises = Math.max(1, Math.floor(totalExercises * 0.75));
+    }
+
     return (
       <motion.button
         key={`${keyPrefix}-unit-${index}`}
@@ -100,7 +111,7 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-2xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-100 border-teal-400 hover:bg-teal-100 shadow-impasto-sm'
+            ? 'bg-teal-200 border-teal-500 hover:bg-teal-200 shadow-impasto-sm'
             : isLocked
             ? 'bg-canvas-200 border-stone-400 cursor-not-allowed'
             : isCurrent
@@ -128,6 +139,7 @@ function AllUnitsStep({
                 ))}
               </div>
             )}
+            <span className="text-[10px] text-teal-600 mt-0.5">{totalExercises}</span>
           </>
         ) : (
           <>
@@ -137,6 +149,7 @@ function AllUnitsStep({
             ) : (
               <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-cadmium-400' : 'bg-cadmium-400'}`} />
             )}
+            <span className={`text-[10px] mt-0.5 ${isCurrent ? 'text-cadmium-700' : 'text-cadmium-600'}`}>{totalExercises}</span>
           </>
         )}
       </motion.button>
