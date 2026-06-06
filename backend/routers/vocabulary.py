@@ -449,7 +449,8 @@ async def get_file_info(file_id: str):
         settings = storage.load_language_settings(file_id)
         return {
             "source_lang": settings.get("source_lang", "en"),
-            "target_lang": settings.get("target_lang", "zh")
+            "target_lang": settings.get("target_lang", "zh"),
+            "original_text": settings.get("original_text", "")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -440,6 +440,10 @@ function App() {
         setFileId(fileId)
         setCurrentFileId(fileId)
         if (response.title) setFileTitle(response.title)
+        // 直接输入模式：原文就是用户输入的文本，立即设置
+        if (inputMode === 'direct') {
+          setOriginalText(text.trim())
+        }
         api.getUserPreferences().then(prefs => {
           if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
         }).catch(() => {})
@@ -1093,6 +1097,7 @@ function App() {
     setSelectedWord(null)
     setProgress(0)
     setProcessingInfo(null)
+    setOriginalText('')
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
@@ -1103,6 +1108,21 @@ function App() {
       const sentencesData = await api.getSentences(fileId)
       const sentenceList = sentencesData.sentences || []
       setSentenceTranslations(Array.isArray(sentenceList) ? sentenceList : [])
+      // 从后端获取持久化的原文
+      try {
+        const infoResp = await fetch(`/api/file/${fileId}/info`)
+        const infoData = await infoResp.json()
+        if (infoData.original_text) {
+          setOriginalText(infoData.original_text)
+        } else if (Array.isArray(sentenceList) && sentenceList.length > 0) {
+          setOriginalText(sentenceList.map(s => s.sentence || '').filter(Boolean).join('\n'))
+        }
+      } catch (e) {
+        // fallback: 从句子拼接
+        if (Array.isArray(sentenceList) && sentenceList.length > 0) {
+          setOriginalText(sentenceList.map(s => s.sentence || '').filter(Boolean).join('\n'))
+        }
+      }
       try {
         const [phase1UnitsData, phase2UnitsData, starsData] = await Promise.all([
           api.getPhaseUnits(fileId, 1),

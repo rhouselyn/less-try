@@ -146,14 +146,26 @@ class Storage:
             import shutil
             shutil.rmtree(cache_dir)
     
-    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str):
+    def save_language_settings(self, file_id: str, source_lang: str, target_lang: str, original_text: str = None):
         file_dir = self.get_file_dir(file_id)
         settings_path = file_dir / "language_settings.json"
+        existing = {}
+        if settings_path.exists():
+            try:
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    existing = json.load(f)
+            except:
+                pass
+        data = {
+            "source_lang": source_lang,
+            "target_lang": target_lang
+        }
+        if original_text is not None:
+            data["original_text"] = original_text
+        elif "original_text" in existing:
+            data["original_text"] = existing["original_text"]
         with open(settings_path, 'w', encoding='utf-8') as f:
-            json.dump({
-                "source_lang": source_lang,
-                "target_lang": target_lang
-            }, f, ensure_ascii=False, indent=2)
+            json.dump(data, f, ensure_ascii=False, indent=2)
     
     def load_language_settings(self, file_id: str) -> Dict[str, str]:
         file_dir = self.get_file_dir(file_id)
