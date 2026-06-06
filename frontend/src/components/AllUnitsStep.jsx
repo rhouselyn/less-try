@@ -111,17 +111,17 @@ function AllUnitsStep({
         disabled={isLocked}
         className={`relative flex flex-col items-center justify-center rounded-2xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-200 border-teal-500 hover:bg-teal-200 shadow-impasto'
+            ? 'bg-teal-200 border-teal-500 hover:bg-teal-200 shadow-impasto-sm'
             : isLocked
-            ? 'bg-stone-100 border-stone-300 cursor-not-allowed opacity-60'
+            ? 'bg-canvas-200 border-stone-400 cursor-not-allowed'
             : isCurrent
             ? 'bg-cadmium-200 border-cadmium-500 shadow-impasto'
-            : 'bg-cadmium-100 border-cadmium-400 hover:border-cadmium-500 shadow-impasto'
+            : 'bg-cadmium-100 border-cadmium-400 hover:border-cadmium-500 shadow-impasto-sm'
         }`}
         style={{ width: '5.5rem', height: '5.5rem' }}
       >
         {isLocked ? (
-          <Lock className="w-3.5 h-3.5 text-stone-500" />
+          <Lock className="w-3.5 h-3.5 text-stone-400" />
         ) : isCompleted ? (
           <>
             <span className="text-base font-semibold text-teal-700">{index + 1}</span>
