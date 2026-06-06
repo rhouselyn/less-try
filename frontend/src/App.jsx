@@ -112,6 +112,7 @@ function App() {
   const [preprocessStatus, setPreprocessStatus] = useState(null)
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
+  const [preprocessedText, setPreprocessedText] = useState('')
   const learningContainerRef = useRef(null)
   const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
   const wrongItemsRef = useRef([])
@@ -292,6 +293,11 @@ function App() {
         // 更新标题（后台任务生成后）
         if (status.title) {
           setFileTitle(status.title)
+        }
+
+        // 更新预处理文本（翻译/生成模式的LLM输出）
+        if (status.preprocessed_text) {
+          setPreprocessedText(status.preprocessed_text)
         }
 
         // 更新处理信息
@@ -1267,7 +1273,7 @@ function App() {
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
               dictStateRef={dictStateRef}
-              originalText={inputMode === 'direct' ? text : ''}
+              originalText={inputMode === 'direct' ? text : preprocessedText}
             />
           )}
           
