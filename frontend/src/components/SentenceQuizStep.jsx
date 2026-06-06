@@ -223,7 +223,7 @@ function SentenceQuizStep({ quizData, onNextQuestion, onBack, onComplete, loadin
           >
             <div className="flex items-center gap-3 mb-2">
               {isCorrect ? <CheckCircle2 className="w-6 h-6 text-moss-600" /> : <XCircle className="w-6 h-6 text-sienna-500" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-moss-600' : 'text-sienna-500'}`>{isCorrect ? t.correct : t.incorrect}</span>
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-moss-600' : 'text-sienna-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
               <p className="text-umber-600 font-medium">
