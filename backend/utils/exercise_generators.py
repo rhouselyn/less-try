@@ -26,7 +26,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         app_prefs = storage.load_user_preferences()
         retry_interval = app_prefs.get("retry_interval", 1.0)
         print(f"[DEBUG] 开始处理文件 {file_id}, 请求间隔={retry_interval}s")
-        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0}
+        processing_status[file_id].update({"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0})
 
         storage.save_language_settings(file_id, source_lang, target_lang)
 
@@ -36,7 +36,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         t_split_end = time.time()
         print(f"[TIMING] 句子分割: {t_split_end - t_split_start:.3f}s, 共 {total_sentences} 个句子")
 
-        processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": total_sentences}
+        processing_status[file_id].update({"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": total_sentences})
 
         results_dict = {}
         completed_indices = set()
@@ -181,14 +181,14 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             unique_partial.sort(key=vocab_sort_key)
 
             progress = int(len(completed_indices) / total_sentences * 100)
-            processing_status[file_id] = {
+            processing_status[file_id].update({
                 "status": "processing",
                 "progress": progress,
                 "current_sentence": len(completed_indices),
                 "total_sentences": total_sentences,
                 "vocab": unique_partial,
                 "sentence_translations": all_completed_translations
-            }
+            })
             print(f"[DEBUG] 更新状态: 进度 {progress}%, 已处理 {len(completed_indices)} 个句子, 词汇 {len(unique_partial)} 个")
 
         sentence_translations = [results_dict.get(i, {"sentence": sentences[i], "translation_result": {}}) for i in range(total_sentences)]
@@ -261,12 +261,12 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         if all_vocab:
             generate_and_save_learning_plan(file_id, all_vocab, sentence_translations)
 
-        processing_status[file_id] = {
+        processing_status[file_id].update({
             "status": "completed",
             "progress": 100,
             "vocab": all_vocab,
             "sentence_translations": sentence_translations
-        }
+        })
         t_total_end = time.time()
         print(f"[TIMING] ========== 全部处理完成 ==========")
         print(f"[TIMING] 总耗时: {t_total_end - t_total_start:.3f}s")
@@ -294,10 +294,10 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         print(f"[ERROR] 处理出错: {str(e)}")
         import traceback
         traceback.print_exc()
-        processing_status[file_id] = {
+        processing_status[file_id].update({
             "status": "error",
             "error": str(e)
-        }
+        })
 
 
 async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang, temperature=0):
