@@ -158,7 +158,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             for si, sd in enumerate(all_completed_translations):
                 tr = sd.get("translation_result", {})
                 if isinstance(tr, dict) and "translation" in tr:
-                    for token in tr["translation"]:
+                    for ti, token in enumerate(tr["translation"]):
                         if isinstance(token, dict) and "text" in token:
                             entry = {
                                 "word": token["text"],
@@ -166,7 +166,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                                 "meaning": token.get("meaning", "") or token.get("context_meaning", ""),
                                 "tokens": [token["text"]],
                                 "morphology": token.get("morphology", ""),
-                                "sentence_index": si
+                                "sentence_index": si,
+                                "token_index": ti
                             }
                             partial_vocab.append(entry)
 
@@ -196,7 +197,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         for i, sentence_data in enumerate(sentence_translations):
             translation_result = sentence_data.get("translation_result", {})
             if isinstance(translation_result, dict) and "translation" in translation_result:
-                for token in translation_result["translation"]:
+                for ti, token in enumerate(translation_result["translation"]):
                     if isinstance(token, dict) and "text" in token:
                         word = token["text"]
                         if not word or is_punctuation_only(word):
@@ -207,7 +208,8 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                             "meaning": token.get("meaning", "") or token.get("context_meaning", ""),
                             "tokens": [word],
                             "morphology": token.get("morphology", ""),
-                            "sentence_index": i
+                            "sentence_index": i,
+                            "token_index": ti
                         }
                         all_vocab.append(entry)
 

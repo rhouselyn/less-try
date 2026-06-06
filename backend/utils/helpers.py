@@ -43,21 +43,10 @@ def is_speaker_label(text):
 
 
 def vocab_sort_key(entry):
-    word = entry.get("word", "")
-    ipa = entry.get("ipa", "")
-    if word and len(word) > 0:
-        first_char = word[0]
-        if ipa and len(ipa.strip('/')) > 0:
-            return ipa.lstrip('/').strip()[0].lower()
-        normalized = unicodedata.normalize('NFD', first_char)
-        if len(normalized) > 0:
-            base = normalized[0]
-            if base.isalpha():
-                return base.lower()
-        return first_char.lower()
-    if ipa and len(ipa.strip('/')) > 0:
-        return ipa.lstrip('/').strip()[0].lower()
-    return ""
+    """按索引顺序排序：先按 sentence_index，再按 token_index"""
+    si = entry.get("sentence_index", 9999)
+    ti = entry.get("token_index", 9999)
+    return (si, ti)
 
 
 def get_translation_phrases(translation_result, max_phrases=6):

@@ -8,7 +8,7 @@ import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
 import { api } from '../utils/api'
 
-function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef }) {
+function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingInfo, sentenceTranslations, selectedSentence, selectedWord, onSentenceClick, onCloseSentenceDetail, onWordClick, onStartLearning, loading, t, currentFileId, sourceLang, preprocessStatus, onBack, fileTitle, onTitleChange, pageSize = 50, dictStateRef, originalText = '' }) {
   const saved = dictStateRef?.current || {}
   const [expandedWord, setExpandedWord] = useState(null)
   const [wordDetailCache, setWordDetailCache] = useState({})
@@ -32,28 +32,6 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [meaningOverrides, setMeaningOverrides] = useState({})
   const [allOriginalSentences, setAllOriginalSentences] = useState([])
   const vocabListRef = useRef(null)
-  const sentenceListRef = useRef(null)
-  const wordRefs = useRef({})
-  const sentenceRefs = useRef({})
-  const titleInputRef = useRef(null)
-  const pendingScrollWord = useRef(null)
-  const localVocabScrollPos = useRef(saved.vocabScrollPos || 0)
-  const globalVocabScrollPos = useRef(saved.globalVocabScrollPos || 0)
-  const sentenceTranslationScrollPos = useRef(saved.sentenceTranslationScrollPos || 0)
-  const sentenceOriginalScrollPos = useRef(saved.sentenceOriginalScrollPos || 0)
-  const filteredVocabRef = useRef([])
-  const vocabPageRef = useRef(saved.vocabPage || 1)
-  const pageSizeRef = useRef(pageSize)
-  const showGlobalVocabRef = useRef(showGlobalVocab)
-  const showOriginalRef = useRef(showOriginal)
-
-  useEffect(() => {
-    if (!currentFileId) return
-    api.getSentences(currentFileId).then(data => {
-      const sentences = data.sentences || []
-      setAllOriginalSentences(sentences.map(s => s.sentence || '').filter(Boolean))
-    }).catch(() => {})
-  }, [currentFileId])
 
   useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
   useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
