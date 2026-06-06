@@ -55,20 +55,6 @@ class Storage:
         with open(text_path, 'w', encoding='utf-8') as f:
             f.write(text)
 
-    def save_original_text(self, file_id: str, text: str):
-        file_dir = self.get_file_dir(file_id)
-        text_path = file_dir / "original_text.txt"
-        with open(text_path, 'w', encoding='utf-8') as f:
-            f.write(text)
-
-    def load_original_text(self, file_id: str) -> str:
-        file_dir = self.get_file_dir(file_id)
-        text_path = file_dir / "original_text.txt"
-        if text_path.exists():
-            with open(text_path, 'r', encoding='utf-8') as f:
-                return f.read()
-        return ""
-
     def save_word_cache(self, file_id: str, word: str, word_info: Dict, overwrite_index: bool = False):
         file_dir = self.get_file_dir(file_id)
         cache_dir = file_dir / "word_cache"

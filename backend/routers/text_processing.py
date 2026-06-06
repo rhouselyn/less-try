@@ -19,7 +19,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
     try:
         # 1. 翻译/生成预处理
         if mode == "translate":
-            processing_status[file_id].update({"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "translating"})
+            processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "translating"}
             source_lang_name = get_lang_name(source_lang)
             target_lang_name = get_lang_name(target_lang)
             nvidia_api.reload()
@@ -36,7 +36,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
                 if translated:
                     text = translated
         elif mode == "generate":
-            processing_status[file_id].update({"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "generating"})
+            processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "generating"}
             source_lang_name = get_lang_name(source_lang)
             nvidia_api.reload()
             messages = [
@@ -54,7 +54,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
 
         # 2. 语言检测
         if source_lang == "auto":
-            processing_status[file_id].update({"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "detecting"})
+            processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "detecting"}
             try:
                 source_lang = await detect_language(text)
             except Exception as e:
@@ -80,8 +80,6 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
         if file_id in processing_status:
             processing_status[file_id]["title"] = title
             processing_status[file_id]["original_text"] = text
-        # 持久化原文到文件存储
-        storage.save_original_text(file_id, text)
 
         # 5. 执行文本处理
         await process_text_background(file_id, text, source_lang, target_lang)
@@ -89,10 +87,10 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
         print(f"[ERROR] 预处理或处理出错: {str(e)}")
         import traceback
         traceback.print_exc()
-        processing_status[file_id].update({
+        processing_status[file_id] = {
             "status": "error",
             "error": str(e)
-        })
+        }
 
 
 @router.post("/process-text")

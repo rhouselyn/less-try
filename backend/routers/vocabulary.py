@@ -447,11 +447,9 @@ async def get_word_detail(word: str, source_lang: str = "en", target_lang: str =
 async def get_file_info(file_id: str):
     try:
         settings = storage.load_language_settings(file_id)
-        original_text = storage.load_original_text(file_id)
         return {
             "source_lang": settings.get("source_lang", "en"),
-            "target_lang": settings.get("target_lang", "zh"),
-            "original_text": original_text
+            "target_lang": settings.get("target_lang", "zh")
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
