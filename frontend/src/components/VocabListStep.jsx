@@ -3,27 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, BookOpen, Volume2, Loader2, Brain, ChevronLeft, ChevronRight } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
+import { groupVocab } from '../utils/vocab'
 import WordDetail from './WordDetail'
-
-// 按首字母连续分组，保持原始索引顺序（不重新排序）
-function groupByFirstLetter(words) {
-  if (!words.length) return []
-  const groups = []
-  let currentLetter = null
-  let currentGroup = []
-  for (const word of words) {
-    const letter = word.word.charAt(0).toUpperCase()
-    if (letter !== currentLetter) {
-      if (currentGroup.length) groups.push([currentLetter, currentGroup])
-      currentLetter = letter
-      currentGroup = [word]
-    } else {
-      currentGroup.push(word)
-    }
-  }
-  if (currentGroup.length) groups.push([currentLetter, currentGroup])
-  return groups
-}
 
 function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, pageSize = 50 }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -93,28 +74,17 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     return filteredVocab.slice(start, start + pageSize)
   }, [filteredVocab, currentPage, pageSize])
 
-  // 按首字母连续分组（保持索引顺序）
-  const groupedPagedVocab = useMemo(() => {
-    return groupByFirstLetter(pagedVocab)
+  // 完全照搬 DictionaryStep 的分组逻辑
+  const groupedVocab = useMemo(() => {
+    return groupVocab(pagedVocab)
   }, [pagedVocab])
 
-  // 当前页的字母列表（用于高亮侧栏）
-  const currentPageLetters = useMemo(() => {
-    return groupedPagedVocab.map(([letter]) => letter)
-  }, [groupedPagedVocab])
+  const letterIndex = useMemo(() => {
+    return groupedVocab.map(([letter]) => letter)
+  }, [groupedVocab])
 
-  // 全量列表的字母索引（用于侧栏显示）
   const allLetterIndex = useMemo(() => {
-    const letters = []
-    let prev = null
-    for (const w of filteredVocab) {
-      const l = w.word.charAt(0).toUpperCase()
-      if (l !== prev) {
-        letters.push(l)
-        prev = l
-      }
-    }
-    return letters
+    return groupVocab(filteredVocab).map(([letter]) => letter)
   }, [filteredVocab])
 
   const speakWord = useCallback((text, e) => {
@@ -125,7 +95,6 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
   const pendingLetterRef = useRef(null)
 
   const scrollToLetter = useCallback((letter) => {
-    // 先在当前页找该字母的分组元素
     const el = document.getElementById(`vocab-group-${letter}`)
     if (el && listRef.current) {
       const container = listRef.current
@@ -134,9 +103,11 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
       const scrollOffset = elRect.top - containerRect.top + container.scrollTop - 32
       container.scrollTo({ top: Math.max(0, scrollOffset), behavior: 'smooth' })
     } else {
-      // 字母不在当前页，跳转到对应页面
       const letterLower = letter.toLowerCase()
-      const wordIdx = filteredVocab.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
+      const wordIdx = filteredVocab.findIndex(w => {
+        const key = (w.word || '')[0]?.normalize('NFD')[0]?.toUpperCase() || '#'
+        return key === letter || key.toLowerCase() === letterLower
+      })
       if (wordIdx >= 0) {
         const targetPage = Math.floor(wordIdx / pageSize) + 1
         if (targetPage !== currentPage) {
@@ -147,7 +118,6 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     }
   }, [filteredVocab, currentPage, pageSize])
 
-  // 页面切换后滚动到目标字母
   useEffect(() => {
     if (pendingLetterRef.current) {
       const letter = pendingLetterRef.current
@@ -272,7 +242,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               {allLetterIndex.length > 1 && !searchQuery && (
                 <div className="flex flex-col items-center gap-px py-1 border-r border-bone-200/60 bg-cream-50/40 w-5 shrink-0 overflow-y-auto">
                   {allLetterIndex.map(letter => {
-                    const onCurrentPage = currentPageLetters.includes(letter)
+                    const onCurrentPage = letterIndex.includes(letter)
                     return (
                       <button
                         key={letter}
@@ -292,7 +262,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex-1 overflow-y-scroll min-h-0" ref={listRef} style={{ scrollbarGutter: 'stable' }}>
                   <div className="space-y-3">
-                    {groupedPagedVocab.map(([letter, words], groupIdx) => (
+                    {groupedVocab.map(([letter, words], groupIdx) => (
                       <div key={`group-${groupIdx}-${letter}`} id={`vocab-group-${letter}`}>
                         <motion.div
                           initial={{ opacity: 0 }}
