@@ -211,7 +211,7 @@ export const api = {
   },
 
   regenerateWordDetail: async (word, sourceLang, targetLang) => {
-    const response = await axios.post(`${baseUrl}/api/word-detail/regenerate`, { word, source_lang: sourceLang, target_lang: targetLang || 'en' })
+    const response = await axios.post(`${baseUrl}/api/word-detail/regenerate`, { word, source_lang: sourceLang, target_lang: targetLang || 'zh' })
     return response.data
   },
 
