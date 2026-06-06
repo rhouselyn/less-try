@@ -39,16 +39,21 @@ body {
     @apply card-warm hover:shadow-impasto hover:border-stone-400 transition-all duration-200;
   }
 
-  /* 主按钮 - 柔和赭石（前进/确认） */
+  /* 主按钮 - 3D立体赭石（前进/确认） */
   .btn-primary {
-    @apply text-umber-700 font-semibold rounded-lg
-           px-6 py-3 transition-all duration-200
-           hover:brightness-95 active:brightness-90
+    @apply text-white font-bold rounded-lg
+           px-6 py-3 transition-all duration-300 ease-out
+           hover:-translate-y-0.5 active:translate-y-[3px]
            disabled:opacity-50 disabled:cursor-not-allowed;
-    background: #e8d5c4;
+    background: linear-gradient(135deg, #c0785a 0%, #a86040 100%);
+    box-shadow: #7a3f28 0px 4px 0px, rgba(160, 96, 64, 0.3) 0px 6px 16px;
   }
   .btn-primary:hover {
-    background: #dfc9b5;
+    background: linear-gradient(135deg, #cc8466 0%, #b46c4c 100%);
+    box-shadow: #7a3f28 0px 4px 0px, rgba(160, 96, 64, 0.4) 0px 8px 20px;
+  }
+  .btn-primary:active {
+    box-shadow: #7a3f28 0px 1px 0px, rgba(160, 96, 64, 0.2) 0px 2px 8px;
   }
 
   /* 次要按钮 - 醒目暖棕（取消/反悔） */

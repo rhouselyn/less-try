@@ -98,22 +98,22 @@ function AllUnitsStep({
         whileTap={!isLocked ? { scale: 0.97 } : {}}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
-        className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
+        className={`relative flex flex-col items-center justify-center rounded-2xl transition-all duration-200 ${
           isCompleted
-            ? 'bg-teal-50 border-teal-300 hover:bg-teal-50'
+            ? 'bg-teal-100 border-teal-400 hover:bg-teal-100 shadow-impasto-sm'
             : isLocked
-            ? 'bg-canvas-200 border-stone-300 cursor-not-allowed'
+            ? 'bg-canvas-200 border-stone-400 cursor-not-allowed'
             : isCurrent
-            ? 'bg-cadmium-100 border-cadmium-400 shadow-impasto-sm'
-            : 'bg-cadmium-50 border-cadmium-300 hover:border-cadmium-400'
+            ? 'bg-cadmium-200 border-cadmium-500 shadow-impasto'
+            : 'bg-cadmium-100 border-cadmium-400 hover:border-cadmium-500 shadow-impasto-sm'
         }`}
-        style={{ width: '5rem', height: '5rem' }}
+        style={{ width: '5.5rem', height: '5.5rem' }}
       >
         {isLocked ? (
-          <Lock className="w-3.5 h-3.5 text-stone-300" />
+          <Lock className="w-3.5 h-3.5 text-stone-400" />
         ) : isCompleted ? (
           <>
-            <span className="text-base font-semibold text-teal-600">{index + 1}</span>
+            <span className="text-base font-semibold text-teal-700">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
@@ -121,8 +121,8 @@ function AllUnitsStep({
                     key={i}
                     className={`w-3 h-3 ${
                       i < starCount
-                        ? 'text-cadmium-400 fill-cadmium-400'
-                        : 'text-stone-300 fill-stone-300'
+                        ? 'text-cadmium-500 fill-cadmium-500'
+                        : 'text-stone-400 fill-stone-400'
                     }`}
                   />
                 ))}
@@ -131,11 +131,11 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-base font-semibold text-cadmium-500`}>{index + 1}</span>
+            <span className={`text-base font-semibold ${isCurrent ? 'text-cadmium-700' : 'text-cadmium-600'}`}>{index + 1}</span>
             {isGenerating ? (
               <Loader2 className="w-3 h-3 animate-spin text-cadmium-300 mt-0.5" />
             ) : (
-              <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-cadmium-400' : 'bg-cadmium-300/60'}`} />
+              <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-cadmium-400' : 'bg-cadmium-400'}`} />
             )}
           </>
         )}
@@ -197,13 +197,13 @@ function AllUnitsStep({
           )}
         </div>
 
-        <div className="w-full h-1.5 bg-canvas-100 rounded-full overflow-hidden mb-5">
+        <div className="w-full h-2 bg-stone-300 rounded-full overflow-hidden mb-5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
             className={`h-full rounded-full ${
-              phaseNumber === 1 ? 'bg-teal-400' : 'bg-blue-400'
+              phaseNumber === 1 ? 'bg-teal-500' : 'bg-cerulean-400'
             }`}
           />
         </div>

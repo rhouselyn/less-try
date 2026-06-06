@@ -95,7 +95,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm"
+            className="bg-white/90 border border-stone-300 rounded-3xl p-8 shadow-impasto"
           >
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-2">
@@ -160,7 +160,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm"
+            className="bg-white/90 border border-stone-300 rounded-3xl p-8 shadow-impasto"
           >
             <div className="flex items-start justify-between mb-8">
               <div>
@@ -206,7 +206,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
-                <div className="bg-canvas-50 -mx-2 px-6 py-4 rounded-xl">
+                <div className="bg-canvas-100 -mx-3 px-6 py-5 rounded-2xl border border-stone-300">
                 <p className="text-lg text-umber-600 leading-relaxed">
                   {learningData.enriched_meaning || learningData.correct_meaning}
                 </p>
@@ -222,7 +222,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.context}
                   </h3>
-                  <div className="bg-cadmium-50/50 -mx-2 px-6 py-4 rounded-xl">
+                  <div className="bg-cadmium-100 -mx-3 px-6 py-5 rounded-2xl border border-cadmium-300">
                   <div className="flex items-start gap-2">
                     <p className="text-lg text-umber-600 leading-relaxed italic flex-1">
                       {learningData.context}
@@ -245,7 +245,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
-                  className="bg-cadmium-100 p-4 rounded-xl border border-cadmium-300"
+                  className="bg-cadmium-200 p-5 rounded-2xl border border-cadmium-400"
                 >
                   <h4 className="text-sm font-medium text-cadmium-500 mb-2">{t.contextMeaning || '上下文释义'}</h4>
                   <p className="text-umber-600">{learningData.meaning || learningData.context_meaning}</p>
@@ -261,11 +261,11 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.variants}
                   </h3>
-                  <div className="bg-cerulean-50/30 -mx-2 px-6 py-4 rounded-xl">
+                  <div className="bg-cerulean-50 -mx-3 px-6 py-5 rounded-2xl border border-cerulean-200">
                   <div className="space-y-2">
                     {learningData.variants_detail.map((variant, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-white/80 text-umber-700 rounded text-sm font-medium">
+                        <span className="px-2 py-1 bg-cerulean-100 text-umber-700 rounded text-sm font-medium">
                           {variant.type}
                         </span>
                         <span className="text-umber-700">{variant.form}</span>
@@ -285,10 +285,10 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.examples}
                   </h3>
-                  <div className="bg-teal-50/40 -mx-2 px-6 py-4 rounded-xl">
+                  <div className="bg-teal-50 -mx-3 px-6 py-5 rounded-2xl border border-teal-200">
                   <div className="space-y-4">
                     {learningData.examples.map((example, index) => (
-                      <div key={index} className="border-l-4 border-teal-300 pl-4">
+                      <div key={index} className="border-l-4 border-teal-400 pl-4">
                         <div className="flex items-start gap-2">
                           <p className="text-umber-800 mb-1 flex-1">{example.sentence}</p>
                           <motion.button
