@@ -1093,6 +1093,7 @@ function App() {
     setSelectedWord(null)
     setProgress(0)
     setProcessingInfo(null)
+    setOriginalText('')
     try {
       setCurrentFileId(fileId)
       setFileId(fileId)
@@ -1142,6 +1143,14 @@ function App() {
         setProcessingInfo(null)
       }
 
+      fetch(`/api/file/${fileId}/info`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.original_text) {
+            setOriginalText(data.original_text)
+          }
+        })
+        .catch(() => {})
       api.startWordGen(fileId).catch(() => {})
       setStep('dictionary')
     } catch (error) {
