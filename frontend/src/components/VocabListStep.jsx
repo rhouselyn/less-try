@@ -151,7 +151,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     }, [])
 
     return (
-      <div className="flex items-center justify-center gap-0.5 py-1.5 border-t border-[#e8a87c]/25/60 bg-canvas-50/40 shrink-0">
+      <div className="flex items-center justify-center gap-0.5 py-1.5 border-t border-stone-200/60 bg-canvas-50/40 shrink-0">
         <button
           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
@@ -168,7 +168,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               onClick={() => setCurrentPage(p)}
               className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
                 currentPage === p
-                  ? 'bg-warmorange-100 text-warmorange-500 font-semibold'
+                  ? 'bg-cadmium-100 text-cadmium-500 font-semibold'
                   : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'
               }`}
             >
@@ -189,13 +189,13 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-canvas-50 border border-[#e8a87c]/25/80 rounded-lg shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
-        <div className="px-5 py-3.5 border-b border-[#e8a87c]/25/80 bg-canvas-50/60">
+      <div className="bg-canvas-50 border border-stone-200/80 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
+        <div className="px-5 py-3.5 border-b border-stone-200/80 bg-canvas-50/60">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-warmorange-500" />
+              <BookOpen className="w-4 h-4 text-cadmium-500" />
               <h2 className="text-sm font-semibold font-display text-umber-700">{t.vocabList || '单词表'}</h2>
-              <span className="badge-ochre text-xs px-2 py-0.5 rounded-lg bg-warmorange-100 text-warmorange-500">
+              <span className="badge-ochre text-xs px-2 py-0.5 rounded-full bg-cadmium-100 text-cadmium-500">
                 {vocab.length}
               </span>
               {searchQuery && filteredVocab.length !== vocab.length && (
@@ -219,7 +219,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1) }}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-3 py-1.5 bg-canvas-50 border border-[#e8a87c]/25/80 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-warmorange-200/60 focus:border-warmorange-300/60 transition-all"
+              className="input-warm w-full pl-9 pr-3 py-1.5 bg-canvas-50 border border-stone-200/80 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-cadmium-200/60 focus:border-cadmium-300/60 transition-all"
             />
           </div>
         </div>
@@ -227,7 +227,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
         <div className="flex-1 flex min-h-0">
           {loading ? (
             <div className="flex-1 py-16 text-center">
-              <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-warmorange-400" />
+              <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-cadmium-400" />
               <p className="text-umber-400 text-sm">{t.loading}</p>
             </div>
           ) : filteredVocab.length === 0 ? (
@@ -240,7 +240,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
           ) : (
             <>
               {allLetterIndex.length > 1 && !searchQuery && (
-                <div className="flex flex-col items-center gap-px py-1 border-r border-[#e8a87c]/25/60 bg-canvas-50/40 w-5 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-px py-1 border-r border-stone-200/60 bg-canvas-50/40 w-5 shrink-0 overflow-y-auto">
                   {allLetterIndex.map(letter => {
                     const onCurrentPage = letterIndex.includes(letter)
                     return (
@@ -249,8 +249,8 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                         onClick={() => scrollToLetter(letter)}
                         className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
                           onCurrentPage
-                            ? 'text-umber-600 hover:text-warmorange-500 hover:bg-warmorange-50'
-                            : 'text-stone-300/60 hover:text-warmorange-500 hover:bg-warmorange-50/50'
+                            ? 'text-umber-600 hover:text-cadmium-500 hover:bg-cadmium-50'
+                            : 'text-stone-300/60 hover:text-cadmium-500 hover:bg-cadmium-50/50'
                         }`}
                       >
                         {letter}
@@ -268,9 +268,9 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: groupIdx * 0.04 }}
-                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-[#e8a87c]/25/40 mb-1"
+                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
                         >
-                          <span className="text-xs font-bold text-warmorange-500/80 tracking-widest">{letter}</span>
+                          <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
                         </motion.div>
                         <div className="space-y-px">
                           {words.map((word, wordIdx) => {
@@ -287,7 +287,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                               >
                                 <button
                                   onClick={() => handleWordClick(word)}
-                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-warmorange-50/40 transition-colors group"
+                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
                                 >
                                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                     <span className="text-[14px] font-semibold text-umber-800 tracking-tight shrink-0">
@@ -308,7 +308,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                     </span>
                                   </div>
                                   <Volume2
-                                    className="w-3.5 h-3.5 text-stone-300 hover:text-warmorange-500 shrink-0 transition-colors"
+                                    className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}
                                   />
                                 </button>
@@ -325,7 +325,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       <div className="px-4 pb-3.5 border-t border-canvas-100/80">
                                         {loadingWord === word.word ? (
                                           <div className="pt-4 flex flex-col items-center justify-center gap-3">
-                                            <Loader2 className="w-5 h-5 animate-spin text-warmorange-500" />
+                                            <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
                                             <p className="text-[12px] text-umber-400">{t.loadingWordDetails || '正在加载单词详情...'}</p>
                                           </div>
                                         ) : (() => {
@@ -335,7 +335,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                             <div className="pt-3">
                                               <div className="mb-2">
                                                 <h3 className="label-warm mb-0.5 flex items-center gap-1">
-                                                  <Brain className="w-3 h-3 text-warmorange-500" />
+                                                  <Brain className="w-3 h-3 text-cadmium-500" />
                                                   {t.definition || '释义'}
                                                 </h3>
                                                 <p className="text-[13px] text-umber-700 leading-relaxed">

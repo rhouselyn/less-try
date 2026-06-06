@@ -718,7 +718,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               <span
                 key={i}
                 onClick={(e) => { e.stopPropagation(); handleTokenClick(part) }}
-                className="cursor-pointer rounded px-0.5 -mx-0.5 hover:bg-warmorange-100 hover:text-amber-800 transition-colors duration-150 border-b border-warmorange-300/50"
+                className="cursor-pointer rounded px-0.5 -mx-0.5 hover:bg-cadmium-100 hover:text-amber-800 transition-colors duration-150 border-b border-cadmium-300/50"
               >
                 {part}
               </span>
@@ -740,7 +740,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const renderPagination = (currentPage, totalPages, onPageChange) => {
     if (totalPages <= 1) return null
     return (
-      <div className="flex items-center justify-center gap-1 py-1.5 border-t border-[#e8a87c]/25/60 bg-canvas-50/40">
+      <div className="flex items-center justify-center gap-1 py-1.5 border-t border-stone-200/60 bg-canvas-50/40">
         <button
           onClick={() => onPageChange(p => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
@@ -766,7 +766,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               onClick={() => onPageChange(p)}
               className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
                 currentPage === p
-                  ? 'bg-warmorange-100 text-amber-700 font-semibold'
+                  ? 'bg-cadmium-100 text-amber-700 font-semibold'
                   : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'
               }`}
             >
@@ -845,7 +845,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             onChange={e => setTitleInput(e.target.value)}
             onBlur={handleTitleSave}
             onKeyDown={handleTitleKeyDown}
-            className="text-[13px] font-medium text-umber-600 bg-transparent border-b border-[#e8a87c]/40 px-1 py-0.5 max-w-[250px] focus:outline-none focus:border-warmorange-400 transition-colors"
+            className="text-[13px] font-medium text-umber-600 bg-transparent border-b border-stone-300 px-1 py-0.5 max-w-[250px] focus:outline-none focus:border-cadmium-400 transition-colors"
           />
         )}
 
@@ -856,8 +856,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             {preprocessStatus ? (
               <div className="flex items-center gap-1.5">
                 <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-lg bg-blue-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-lg h-1.5 w-1.5 bg-blue-500"></span>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
                 </span>
                 <span className="text-[11px] text-blue-500 font-medium truncate">
                   {preprocessStatus === 'detecting' ? (t.detectingLanguage || '识别语言中...') : 
@@ -883,7 +883,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               </div>
             ) : wordGenProgress && wordGenProgress.completed < wordGenProgress.total ? (
               <div className="flex items-center gap-2">
-                <span className="text-[10px] text-warmorange-500 tabular-nums whitespace-nowrap">
+                <span className="text-[10px] text-cadmium-500 tabular-nums whitespace-nowrap">
                   {wordGenProgress.completed}/{wordGenProgress.total}
                 </span>
                 <div className="progress-warm w-24">
@@ -894,7 +894,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                     className="progress-warm-bar"
                   />
                 </div>
-                <span className="text-[10px] text-warmorange-500 whitespace-nowrap">
+                <span className="text-[10px] text-cadmium-500 whitespace-nowrap">
                   {t.generatingWordDetails || '生成单词详情中...'}
                 </span>
               </div>
@@ -925,11 +925,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
       <div className="flex gap-6 flex-1 min-h-0" style={{ overflow: 'hidden' }}>
         <div className="w-1/2 flex flex-col min-h-0" style={{ overflow: 'hidden' }}>
-          <div className="bg-canvas-50 border border-[#e8a87c]/25 rounded-lg shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
-            <div className="px-5 py-3.5 border-b border-[#e8a87c]/25/80 bg-canvas-50/60">
+          <div className="bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="px-5 py-3.5 border-b border-stone-200/80 bg-canvas-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
-                  <Languages className={`w-4 h-4 transition-colors cursor-pointer ${sentenceDisplayMode !== 0 ? 'text-warmorange-500' : 'text-umber-500 hover:text-warmorange-500'}`} onClick={(e) => { e.stopPropagation(); setSentenceDisplayMode(v => (v + 1) % 3) }} title={sentenceDisplayMode === 0 ? t.showAll : sentenceDisplayMode === 1 ? t.hideTranslation : t.hideOriginal} />
+                  <Languages className={`w-4 h-4 transition-colors cursor-pointer ${sentenceDisplayMode !== 0 ? 'text-cadmium-500' : 'text-umber-500 hover:text-cadmium-500'}`} onClick={(e) => { e.stopPropagation(); setSentenceDisplayMode(v => (v + 1) % 3) }} title={sentenceDisplayMode === 0 ? t.showAll : sentenceDisplayMode === 1 ? t.hideTranslation : t.hideOriginal} />
                   <h3 className="text-sm font-semibold text-umber-700 font-display">
                     <span className="cursor-pointer select-none" onClick={handleToggleShowOriginal}>
                       <span className={!showOriginal ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.sentTranslation}</span>
@@ -969,7 +969,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.02 }}
                           className={`p-4 cursor-pointer transition-colors ${
-                            selectedSentence === originalIndex ? 'bg-warmorange-50/60' : 'hover:bg-warmorange-50/30'
+                            selectedSentence === originalIndex ? 'bg-cadmium-50/60' : 'hover:bg-cadmium-50/30'
                           }`}
                           onClick={() => {
                             const isCollapsing = selectedSentence === originalIndex
@@ -985,7 +985,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                 {item.translation_result?.tokenized_translation || ''}
                               </div>
                             </div>
-                            <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-warmorange-500 shrink-0 mt-1 transition-colors" onClick={(e) => speakWord(item.sentence || '', e)} />
+                            <Volume2 className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 mt-1 transition-colors" onClick={(e) => speakWord(item.sentence || '', e)} />
                           </div>
                         </motion.div>
                         <AnimatePresence>
@@ -997,7 +997,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
                               className="overflow-hidden"
                             >
-                              <div className="border-t border-[#e8a87c]/25/60 p-4 bg-canvas-50/50">
+                              <div className="border-t border-stone-200/60 p-4 bg-canvas-50/50">
                                 <SentenceDetail
                                   sentenceTranslation={safeSentenceTranslations[originalIndex]}
                                   t={t}
@@ -1022,11 +1022,11 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </div>
 
         <div className="w-1/2 flex flex-col min-h-0" style={{ overflow: 'hidden' }}>
-          <div className="bg-canvas-50 border border-[#e8a87c]/25 rounded-lg shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
-            <div className="px-5 py-3.5 border-b border-[#e8a87c]/25/80 bg-canvas-50/60">
+          <div className="bg-canvas-50 border border-stone-200 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="px-5 py-3.5 border-b border-stone-200/80 bg-canvas-50/60">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
-                  <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${vocabDisplayMode !== 0 ? 'text-warmorange-500' : 'text-umber-500 hover:text-warmorange-500'}`} onClick={(e) => { e.stopPropagation(); setVocabDisplayMode(v => (v + 1) % 3) }} title={vocabDisplayMode === 0 ? t.showAll : vocabDisplayMode === 1 ? t.hideMeaning : t.hideWord} />
+                  <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${vocabDisplayMode !== 0 ? 'text-cadmium-500' : 'text-umber-500 hover:text-cadmium-500'}`} onClick={(e) => { e.stopPropagation(); setVocabDisplayMode(v => (v + 1) % 3) }} title={vocabDisplayMode === 0 ? t.showAll : vocabDisplayMode === 1 ? t.hideMeaning : t.hideWord} />
                   <h3 className="text-sm font-semibold text-umber-700 font-display">
                     <span className="cursor-pointer select-none" onClick={handleToggleGlobalVocab}>
                       <span className={!showGlobalVocab ? 'tab-warm-active' : 'tab-warm-inactive'}>{t.vocabList}</span>
@@ -1052,7 +1052,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             </div>
             <div className="flex-1 flex min-h-0">
               {((!showGlobalVocab && allLetterIndex.length > 1) || (showGlobalVocab && allGlobalLetterIndex.length > 1)) && (
-                <div className="flex flex-col items-center gap-px py-1 border-r border-[#e8a87c]/25/60 bg-canvas-50/40 w-5 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-px py-1 border-r border-stone-200/60 bg-canvas-50/40 w-5 shrink-0 overflow-y-auto">
                   {(showGlobalVocab ? allGlobalLetterIndex : allLetterIndex).map(letter => {
                     const currentIdx = showGlobalVocab ? globalLetterIndex : letterIndex
                     const onCurrentPage = currentIdx.includes(letter)
@@ -1062,8 +1062,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         onClick={() => scrollToLetter(letter)}
                         className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
                           onCurrentPage
-                            ? 'text-umber-600 hover:text-warmorange-500 hover:bg-warmorange-50'
-                            : 'text-stone-300/60 hover:text-warmorange-500 hover:bg-warmorange-50/50'
+                            ? 'text-umber-600 hover:text-cadmium-500 hover:bg-cadmium-50'
+                            : 'text-stone-300/60 hover:text-cadmium-500 hover:bg-cadmium-50/50'
                         }`}
                       >
                         {letter}
@@ -1076,7 +1076,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               {showGlobalVocab ? (
                 globalVocabLoading ? (
                   <div className="py-16 text-center">
-                    <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-warmorange-400" />
+                    <Loader2 className="w-8 h-8 mx-auto mb-3 animate-spin text-cadmium-400" />
                     <p className="text-umber-400 text-sm">{t.loading}</p>
                   </div>
                 ) : groupedGlobalVocab.length === 0 ? (
@@ -1092,9 +1092,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: groupIdx * 0.04 }}
-                        className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-[#e8a87c]/25/40 mb-1"
+                        className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
                       >
-                        <span className="text-xs font-bold text-warmorange-500/80 tracking-widest">{letter}</span>
+                        <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
                       </motion.div>
                       <div className="space-y-px">
                         {words.map((word, index) => {
@@ -1113,7 +1113,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                             >
                               <button
                                 onClick={() => handleGlobalVocabWordClick(word)}
-                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-warmorange-50/40 transition-colors group"
+                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
                               >
                                 <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                   <span className={`text-[14px] font-semibold text-umber-800 tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
@@ -1135,12 +1135,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                 </div>
                                 {isExpanded && (
                                   <RefreshCw
-                                    className="w-3.5 h-3.5 text-stone-300 hover:text-warmorange-500 shrink-0 transition-colors"
+                                    className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 transition-colors"
                                     onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
                                   />
                                 )}
                                 <Volume2
-                                  className="w-3.5 h-3.5 text-stone-300 hover:text-warmorange-500 shrink-0 transition-colors"
+                                  className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 transition-colors"
                                   onClick={(e) => speakWord(word.word, e)}
                                 />
                               </button>
@@ -1156,14 +1156,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     <div className="px-4 pb-3.5 border-t border-canvas-100/80">
                                       {isLoading ? (
                                         <div className="pt-4 flex flex-col items-center justify-center gap-3">
-                                          <Loader2 className="w-5 h-5 animate-spin text-warmorange-500" />
+                                          <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
                                           <p className="text-[12px] text-umber-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
                                         </div>
                                       ) : detail ? (
                                         <div className="pt-3">
                                           <div className="mb-2">
                                             <h3 className="label-warm mb-0.5 flex items-center gap-1">
-                                              <Brain className="w-3 h-3 text-warmorange-500" />
+                                              <Brain className="w-3 h-3 text-cadmium-500" />
                                               {t.definition || '释义'}
                                             </h3>
                                             <p className="text-[13px] text-umber-700 leading-relaxed">
@@ -1204,9 +1204,9 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: groupIdx * 0.04 }}
-                      className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-[#e8a87c]/25/40 mb-1"
+                      className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
                     >
-                      <span className="text-xs font-bold text-warmorange-500/80 tracking-widest">{letter}</span>
+                      <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
                     </motion.div>
                     <div className="space-y-px">
                       {words.map((word, index) => {
@@ -1227,7 +1227,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                             >
                               <button
                                 onClick={() => handleVocabWordClick(word)}
-                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-warmorange-50/40 transition-colors group"
+                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
                             >
                               <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                 <span className={`text-[14px] font-semibold text-umber-800 tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
@@ -1249,12 +1249,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               </div>
                               {isExpanded && (
                                 <RefreshCw
-                                  className="w-3.5 h-3.5 text-stone-300 hover:text-warmorange-500 shrink-0 transition-colors"
+                                  className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 transition-colors"
                                   onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
                                 />
                               )}
                               <Volume2
-                                className="w-3.5 h-3.5 text-stone-300 hover:text-warmorange-500 shrink-0 transition-colors"
+                                className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 transition-colors"
                                 onClick={(e) => speakWord(word.word, e)}
                               />
                             </button>
@@ -1271,14 +1271,14 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   <div className="px-4 pb-3.5 border-t border-canvas-100/80">
                                     {isLoading ? (
                                       <div className="pt-4 flex flex-col items-center justify-center gap-3">
-                                        <Loader2 className="w-5 h-5 animate-spin text-warmorange-500" />
+                                        <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
                                         <p className="text-[12px] text-umber-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
                                       </div>
                                     ) : detail ? (
                                       <div className="pt-3">
                                         <div className="mb-2">
                                           <h3 className="label-warm mb-0.5 flex items-center gap-1">
-                                            <Brain className="w-3 h-3 text-warmorange-500" />
+                                            <Brain className="w-3 h-3 text-cadmium-500" />
                                             {t.definition || '释义'}
                                           </h3>
                                           <p className="text-[13px] text-umber-700 leading-relaxed">

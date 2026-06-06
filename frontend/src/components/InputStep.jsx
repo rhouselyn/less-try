@@ -49,7 +49,7 @@ function LangIcon({ langCode, size = 'md' }) {
   const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : size === 'lg' ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-[10px]'
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-lg font-bold text-white leading-none ${sizeClasses}`}
+      className={`inline-flex items-center justify-center rounded-md font-bold text-white leading-none ${sizeClasses}`}
       style={{ backgroundColor: color }}
     >
       {code}
@@ -294,10 +294,10 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg border transition-all duration-200 text-left group ${
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
             open
-              ? 'border-warmorange-200 bg-warmorange-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-              : 'border-[#e8a87c]/25 bg-canvas-100 hover:border-[#e8a87c]/40 hover:shadow-impasto-sm'
+              ? 'border-cadmium-200 bg-cadmium-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
+              : 'border-stone-200 bg-canvas-100 hover:border-stone-300 hover:shadow-impasto-sm'
           }`}
         >
           {isAuto ? (
@@ -329,7 +329,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className={`absolute z-50 mt-2 bg-canvas-50 rounded-lg border border-[#e8a87c]/25 shadow-xl shadow-umber-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
+            className={`absolute z-50 mt-2 bg-canvas-50 rounded-2xl border border-stone-200 shadow-xl shadow-umber-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
           >
             <div className="p-3 border-b border-canvas-100">
               <div className="relative">
@@ -339,7 +339,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t.searchLanguages || '搜索语言...'}
-                  className="w-full pl-9 pr-8 py-2 rounded-lg bg-canvas-50 border border-canvas-100 text-sm text-umber-700 placeholder-umber-400 focus:outline-none focus:border-warmorange-300 focus:bg-canvas-50 transition-colors"
+                  className="w-full pl-9 pr-8 py-2 rounded-lg bg-canvas-50 border border-canvas-100 text-sm text-umber-700 placeholder-umber-400 focus:outline-none focus:border-cadmium-300 focus:bg-canvas-50 transition-colors"
                 />
                 {search && (
                   <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-stone-200 transition-colors">
@@ -357,7 +357,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                       type="button"
                       onClick={() => handleSelect('auto')}
                       className={`w-full flex items-center gap-2.5 px-5 py-2 text-sm transition-colors ${
-                        isAuto ? 'bg-warmorange-50 text-warmorange-500' : 'text-umber-600 hover:bg-canvas-50'
+                        isAuto ? 'bg-cadmium-50 text-cadmium-500' : 'text-umber-600 hover:bg-canvas-50'
                       }`}
                     >
                       <LangIcon langCode="auto" size="sm" />
@@ -373,7 +373,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                       type="button"
                       onClick={() => handleSelect(lang.value)}
                       className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                        value === lang.value ? 'bg-warmorange-50 text-warmorange-500' : 'text-umber-600 hover:bg-canvas-50'
+                        value === lang.value ? 'bg-cadmium-50 text-cadmium-500' : 'text-umber-600 hover:bg-canvas-50'
                       }`}
                     >
                       <LangIcon langCode={lang.value} size="sm" />
@@ -398,7 +398,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                     <button
                       type="button"
                       onClick={() => toggleFamily(family)}
-                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-umber-500  tracking-wider hover:bg-canvas-50 transition-colors"
+                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-umber-500 uppercase tracking-wider hover:bg-canvas-50 transition-colors"
                     >
                       {isCollapsed ? <ChevronRight className="w-3 h-3 flex-shrink-0" /> : <ChevronDown className="w-3 h-3 flex-shrink-0" />}
                       <span>{FAMILIES[family]}</span>
@@ -419,7 +419,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                               type="button"
                               onClick={() => handleSelect(lang.value)}
                               className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                                value === lang.value ? 'bg-warmorange-50 text-warmorange-500' : 'text-umber-600 hover:bg-canvas-50'
+                                value === lang.value ? 'bg-cadmium-50 text-cadmium-500' : 'text-umber-600 hover:bg-canvas-50'
                               }`}
                             >
                               <LangIcon langCode={lang.value} size="sm" />
@@ -543,7 +543,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
           transition={{ duration: 0.5, delay: 0.1 }}
           className="flex items-center gap-3 mb-3"
         >
-          <div className="w-14 h-14 bg-warmorange-400 rounded-lg flex items-center justify-center shadow-impasto-sm">
+          <div className="w-14 h-14 bg-cadmium-400 rounded-2xl flex items-center justify-center shadow-impasto-sm">
             <FrogLogo size={32} />
           </div>
           <div>
@@ -565,9 +565,9 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
 
       {/* Bottom area - input box */}
       <div className="w-full max-w-2xl mx-auto pb-4 px-4">
-        <div className="relative bg-canvas-50 border border-[#e8a87c]/25 rounded-lg shadow-impasto overflow-hidden">
+        <div className="relative bg-canvas-50 border border-stone-200 rounded-2xl shadow-impasto overflow-hidden">
           {/* Mode tabs at top of input */}
-          <div className="border-b border-[#e8a87c]/25/60 px-3 pt-2 pb-0">
+          <div className="border-b border-stone-200/60 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
           </div>
 
@@ -587,10 +587,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
                 whileTap={{ scale: 0.98 }}
                 onClick={onProcess}
                 disabled={loading || !text.trim()}
-                className={`p-2 rounded-lg transition-all duration-200 ${
+                className={`p-2 rounded-xl transition-all duration-200 ${
                   loading || !text.trim()
                     ? 'bg-canvas-100 text-umber-400 cursor-not-allowed'
-                    : 'bg-warmorange-500 text-white shadow-md shadow-warmorange-500/20 hover:bg-warmorange-500 hover:shadow-lg hover:shadow-warmorange-500/25'
+                    : 'bg-cadmium-500 text-white shadow-md shadow-cadmium-500/20 hover:bg-cadmium-500 hover:shadow-lg hover:shadow-cadmium-500/25'
                 }`}
               >
                 <AnimatePresence mode="wait">

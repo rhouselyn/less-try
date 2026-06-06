@@ -71,15 +71,15 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
               <button
                 onClick={() => onUnitClick(index)}
                 disabled={!unit.completed && index !== currentUnit}
-                className={`w-full p-6 border rounded-lg transition-all ${unit.completed ? 'bg-teal-50 border-teal-200' : index === currentUnit ? 'bg-warmorange-50 border-warmorange-300 hover:shadow-impasto-sm' : 'bg-canvas-100 border-[#e8a87c]/25 cursor-not-allowed opacity-50'}`}
+                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-moss-50 border-moss-200' : index === currentUnit ? 'bg-cadmium-50 border-cadmium-300 hover:shadow-impasto-sm' : 'bg-canvas-100 border-stone-200 cursor-not-allowed opacity-50'}`}
               >
                 <h3 className="text-xl font-semibold font-display text-umber-800 mb-2">{t.unit} {index + 1}</h3>
                 <p className="text-umber-600">{unit.word_count} {t.wordLabel}</p>
                 <div className="mt-4 text-sm font-medium">
                   {unit.completed ? (
-                    <span className="text-teal-600">{t.completed}</span>
+                    <span className="text-moss-600">{t.completed}</span>
                   ) : index === currentUnit ? (
-                    <span className="text-warmorange-500">{t.startLearning}</span>
+                    <span className="text-cadmium-500">{t.startLearning}</span>
                   ) : (
                     <span className="text-umber-400">{t.notStarted}</span>
                   )}
