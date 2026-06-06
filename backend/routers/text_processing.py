@@ -76,9 +76,10 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
         title = await generate_title(text, source_lang)
         text_preview = text.strip()[:100]
         storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
-        # 更新 processing_status 中的标题
+        # 更新 processing_status 中的标题和完整原文
         if file_id in processing_status:
             processing_status[file_id]["title"] = title
+            processing_status[file_id]["original_text"] = text
 
         # 5. 执行文本处理
         await process_text_background(file_id, text, source_lang, target_lang)

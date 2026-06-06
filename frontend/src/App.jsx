@@ -112,6 +112,7 @@ function App() {
   const [preprocessStatus, setPreprocessStatus] = useState(null)
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
+  const [originalText, setOriginalText] = useState('')
   const learningContainerRef = useRef(null)
   const dictStateRef = useRef({ vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' })
   const wrongItemsRef = useRef([])
@@ -294,6 +295,11 @@ function App() {
           setFileTitle(status.title)
         }
 
+        // 更新完整原文（LLM翻译/生成后的文本）
+        if (status.original_text) {
+          setOriginalText(status.original_text)
+        }
+
         // 更新处理信息
         if (status.current_sentence !== undefined && status.total_sentences !== undefined) {
           setProcessingInfo({
@@ -409,6 +415,7 @@ function App() {
     setCurrentFileId(null)
     setFileId(null)
     setFileTitle('')
+    setOriginalText('')
     // 重置字典状态，避免显示上一个条目的残留
     dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }
     
@@ -1267,7 +1274,7 @@ function App() {
               onTitleChange={(newTitle) => setFileTitle(newTitle)}
               pageSize={pageSize}
               dictStateRef={dictStateRef}
-              originalText={text}
+              originalText={originalText}
             />
           )}
           
