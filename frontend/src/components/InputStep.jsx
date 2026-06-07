@@ -2,36 +2,37 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Loader2, Search, X, ChevronDown, ChevronRight, ArrowRight, PenLine, Languages, Wand2, Zap } from 'lucide-react'
 
+// 复古风格的语言颜色映射（使用复古色彩）
 const LANG_COLORS = {
-  'en': '#3b82f6', 'fr': '#6366f1', 'pt': '#22c55e', 'de': '#eab308', 'ro': '#2563eb',
-  'sv': '#0ea5e9', 'da': '#dc2626', 'bg': '#16a34a', 'ru': '#1d4ed8', 'cs': '#7c3aed',
-  'el': '#0891b2', 'uk': '#f59e0b', 'es': '#ef4444', 'nl': '#f97316', 'sk': '#0284c7',
-  'hr': '#dc2626', 'pl': '#dc2626', 'lt': '#65a30d', 'nb': '#dc2626', 'nn': '#dc2626',
-  'fa': '#16a34a', 'sl': '#0ea5e9', 'gu': '#f97316', 'lv': '#8b5cf6', 'it': '#16a34a',
-  'oc': '#ef4444', 'ne': '#2563eb', 'mr': '#f97316', 'be': '#dc2626', 'sr': '#7c3aed',
-  'lb': '#0ea5e9', 'vec': '#16a34a', 'as': '#f97316', 'cy': '#16a34a', 'szl': '#dc2626',
-  'ast': '#f97316', 'hne': '#f97316', 'awa': '#f97316', 'mai': '#f97316', 'bho': '#f97316',
-  'sd': '#16a34a', 'ga': '#16a34a', 'fo': '#1d4ed8', 'hi': '#f97316', 'pa': '#f97316',
-  'bn': '#16a34a', 'or': '#f97316', 'tg': '#ef4444', 'yi': '#1d4ed8', 'lmo': '#16a34a',
-  'lij': '#16a34a', 'scn': '#ef4444', 'fur': '#16a34a', 'sc': '#ef4444', 'gl': '#0ea5e9',
-  'ca': '#eab308', 'is': '#1d4ed8', 'sq': '#dc2626', 'li': '#f97316', 'prs': '#16a34a',
-  'af': '#16a34a', 'mk': '#dc2626', 'si': '#7c3aed', 'ur': '#16a34a', 'mag': '#f97316',
-  'bs': '#1d4ed8', 'hy': '#f97316',
-  'zh': '#dc2626', 'zh-TW': '#dc2626', 'yue': '#dc2626', 'my': '#eab308',
-  'ar': '#16a34a', 'ars': '#16a34a', 'apc': '#16a34a', 'arz': '#16a34a', 'ary': '#16a34a',
-  'acm': '#16a34a', 'acq': '#16a34a', 'aeb': '#16a34a',
-  'he': '#2563eb', 'mt': '#dc2626',
-  'id': '#ef4444', 'ms': '#eab308', 'tl': '#2563eb', 'ceb': '#2563eb', 'jv': '#dc2626',
-  'su': '#16a34a', 'min': '#16a34a', 'ban': '#eab308', 'bjn': '#16a34a', 'pag': '#2563eb',
-  'ilo': '#2563eb', 'war': '#2563eb',
-  'ta': '#f97316', 'te': '#16a34a', 'kn': '#dc2626', 'ml': '#dc2626',
-  'tr': '#dc2626', 'az': '#0ea5e9', 'uz': '#0ea5e9', 'kk': '#0ea5e9', 'ba': '#16a34a', 'tt': '#16a34a',
-  'th': '#7c3aed', 'lo': '#dc2626',
-  'fi': '#1d4ed8', 'et': '#1d4ed8', 'hu': '#16a34a',
-  'vi': '#dc2626', 'km': '#2563eb',
-  'ja': '#dc2626', 'ko': '#1d4ed8', 'ka': '#ef4444', 'eu': '#dc2626', 'ht': '#2563eb',
-  'pap': '#f97316', 'kea': '#0ea5e9', 'tpi': '#dc2626', 'sw': '#16a34a',
-  'auto': '#78716c',
+  'en': '#5C4033', 'fr': '#8B6F47', 'pt': '#6B8E23', 'de': '#DAA520', 'ro': '#5C6B73',
+  'sv': '#8F9779', 'da': '#A0522D', 'bg': '#6B8E23', 'ru': '#5C6B73', 'cs': '#8B6F47',
+  'el': '#6B8E6B', 'uk': '#DAA520', 'es': '#A0522D', 'nl': '#CD853F', 'sk': '#5C8B8B',
+  'hr': '#A0522D', 'pl': '#A0522D', 'lt': '#8F9779', 'nb': '#A0522D', 'nn': '#A0522D',
+  'fa': '#6B8E23', 'sl': '#8F9779', 'gu': '#CD853F', 'lv': '#8B6F47', 'it': '#6B8E23',
+  'oc': '#A0522D', 'ne': '#5C6B73', 'mr': '#CD853F', 'be': '#A0522D', 'sr': '#8B6F47',
+  'lb': '#8F9779', 'vec': '#6B8E23', 'as': '#CD853F', 'cy': '#6B8E23', 'szl': '#A0522D',
+  'ast': '#CD853F', 'hne': '#CD853F', 'awa': '#CD853F', 'mai': '#CD853F', 'bho': '#CD853F',
+  'sd': '#6B8E23', 'ga': '#6B8E23', 'fo': '#5C6B73', 'hi': '#CD853F', 'pa': '#CD853F',
+  'bn': '#6B8E23', 'or': '#CD853F', 'tg': '#A0522D', 'yi': '#5C6B73', 'lmo': '#6B8E23',
+  'lij': '#6B8E23', 'scn': '#A0522D', 'fur': '#6B8E23', 'sc': '#A0522D', 'gl': '#8F9779',
+  'ca': '#DAA520', 'is': '#5C6B73', 'sq': '#A0522D', 'li': '#CD853F', 'prs': '#6B8E23',
+  'af': '#6B8E23', 'mk': '#A0522D', 'si': '#8B6F47', 'ur': '#6B8E23', 'mag': '#CD853F',
+  'bs': '#5C6B73', 'hy': '#CD853F',
+  'zh': '#A0522D', 'zh-TW': '#A0522D', 'yue': '#A0522D', 'my': '#DAA520',
+  'ar': '#6B8E23', 'ars': '#6B8E23', 'apc': '#6B8E23', 'arz': '#6B8E23', 'ary': '#6B8E23',
+  'acm': '#6B8E23', 'acq': '#6B8E23', 'aeb': '#6B8E23',
+  'he': '#5C6B73', 'mt': '#A0522D',
+  'id': '#A0522D', 'ms': '#DAA520', 'tl': '#5C6B73', 'ceb': '#5C6B73', 'jv': '#A0522D',
+  'su': '#6B8E23', 'min': '#6B8E23', 'ban': '#DAA520', 'bjn': '#6B8E23', 'pag': '#5C6B73',
+  'ilo': '#5C6B73', 'war': '#5C6B73',
+  'ta': '#CD853F', 'te': '#6B8E23', 'kn': '#A0522D', 'ml': '#A0522D',
+  'tr': '#A0522D', 'az': '#8F9779', 'uz': '#8F9779', 'kk': '#8F9779', 'ba': '#6B8E23', 'tt': '#6B8E23',
+  'th': '#8B6F47', 'lo': '#A0522D',
+  'fi': '#5C6B73', 'et': '#5C6B73', 'hu': '#6B8E23',
+  'vi': '#A0522D', 'km': '#5C6B73',
+  'ja': '#A0522D', 'ko': '#5C6B73', 'ka': '#A0522D', 'eu': '#A0522D', 'ht': '#5C6B73',
+  'pap': '#CD853F', 'kea': '#8F9779', 'tpi': '#A0522D', 'sw': '#6B8E23',
+  'auto': '#8D755C',
 }
 
 function LangIcon({ langCode, size = 'md' }) {
@@ -42,14 +43,14 @@ function LangIcon({ langCode, size = 'md' }) {
       hash = code.charCodeAt(i) + ((hash << 5) - hash)
     }
     const hue = ((hash % 360) + 360) % 360
-    return `hsl(${hue}, 55%, 45%)`
+    return `hsl(${hue}, 35%, 35%)`
   })()
   const isAuto = langCode === 'auto'
   const code = isAuto ? 'AUTO' : langCode === 'zh-TW' ? 'TW' : langCode.substring(0, 2).toUpperCase()
   const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : size === 'lg' ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-[10px]'
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-md font-bold text-white leading-none ${sizeClasses}`}
+      className={`inline-flex items-center justify-center border border-sepia-800 font-bold text-paper-50 leading-none ${sizeClasses}`}
       style={{ backgroundColor: color }}
     >
       {code}
@@ -94,7 +95,7 @@ const LANGUAGES = [
   { value: 'cy', native: 'Cymraeg', en: 'Welsh', zh: '威尔士语', family: 'indo-european', flag: '🇬🇧' },
   { value: 'szl', native: 'Ślōnski', en: 'Silesian', zh: '西里西亚语', family: 'indo-european', flag: '🇵🇱' },
   { value: 'ast', native: 'Asturianu', en: 'Asturian', zh: '阿斯图里亚斯语', family: 'indo-european', flag: '🇪🇸' },
-  { value: 'hne', native: 'छत्तीसगढ़ी', en: 'Chhattisgarhi', zh: '恰蒂斯加尔语', family: 'indo-european', flag: '🇮🇳' },
+  { value: 'hne', native: 'छत్తీసగఢ़ी', en: 'Chhattisgarhi', zh: '恰蒂斯加尔语', family: 'indo-european', flag: '🇮🇳' },
   { value: 'awa', native: 'अवधी', en: 'Awadhi', zh: '阿瓦迪语', family: 'indo-european', flag: '🇮🇳' },
   { value: 'mai', native: 'मैथिली', en: 'Maithili', zh: '迈蒂利语', family: 'indo-european', flag: '🇮🇳' },
   { value: 'bho', native: 'भोजपुरी', en: 'Bhojpuri', zh: '博杰普尔语', family: 'indo-european', flag: '🇮🇳' },
@@ -279,25 +280,25 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 text-base font-medium text-ink-700 hover:text-ink-900 transition-colors"
+          className="flex items-center gap-1.5 text-base font-medium text-sepia-800 hover:text-sepia-900 transition-colors"
         >
           <span className="leading-none">
             {isAuto ? <LangIcon langCode="auto" size="md" /> : <LangIcon langCode={value} size="md" />}
           </span>
-          <span className="text-ink-800">{currentLabel}</span>
+          <span className="text-sepia-800">{currentLabel}</span>
           {nativeLabel && nativeLabel !== currentLabel && (
-            <span className="text-xs text-ink-400">[{nativeLabel}]</span>
+            <span className="text-xs text-sepia-500">[{nativeLabel}]</span>
           )}
-          <ChevronDown className={`w-3.5 h-3.5 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-3.5 h-3.5 text-vintage-border-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
       ) : (
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
+          className={`w-full flex items-center gap-3 px-4 py-3 border-2 transition-all duration-200 text-left group ${
             open
-              ? 'border-ochre-200 bg-ochre-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-              : 'border-bone-200 bg-cream-100 hover:border-bone-300 hover:shadow-warm-sm'
+              ? 'border-amber-400 bg-amber-50 shadow-vintage'
+              : 'border-vintage-border-400 bg-paper-100 hover:border-vintage-border-500 hover:shadow-vintage'
           }`}
         >
           {isAuto ? (
@@ -306,19 +307,19 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             <span className="leading-none"><LangIcon langCode={value} size="md" /></span>
           )}
           <div className="flex-1 min-w-0">
-            <span className="text-sm font-medium text-ink-800">
+            <span className="text-sm font-medium text-sepia-800">
               {isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value}
             </span>
             {!isAuto && selectedLang && getSecondary(selectedLang) && (
-              <span className="text-xs text-ink-400 ml-2">{getSecondary(selectedLang)}</span>
+              <span className="text-xs text-sepia-500 ml-2">{getSecondary(selectedLang)}</span>
             )}
             {isAuto && (
-              <span className="text-xs text-ink-400 ml-2">
+              <span className="text-xs text-sepia-500 ml-2">
                 <Zap className="w-3 h-3 inline -mt-0.5" />
               </span>
             )}
           </div>
-          <ChevronDown className={`w-4 h-4 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-vintage-border-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
       )}
 
@@ -329,21 +330,21 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className={`absolute z-50 mt-2 bg-cream-50 rounded-2xl border border-bone-200 shadow-xl shadow-ink-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
+            className={`absolute z-50 mt-2 bg-paper-50 border-2 border-sepia-600 shadow-vintage-lg overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
           >
-            <div className="p-3 border-b border-cream-100">
+            <div className="p-3 border-b border-vintage-border-400">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-sepia-500" />
                 <input
                   ref={searchRef}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t.searchLanguages || '搜索语言...'}
-                  className="w-full pl-9 pr-8 py-2 rounded-lg bg-cream-50 border border-cream-100 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300 focus:bg-cream-50 transition-colors"
+                  className="w-full pl-9 pr-8 py-2 bg-paper-50 border-2 border-vintage-border-400 text-sm text-sepia-700 placeholder-sepia-400 focus:outline-none focus:border-amber-400 transition-colors"
                 />
                 {search && (
-                  <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-bone-200 transition-colors">
-                    <X className="w-3.5 h-3.5 text-ink-400" />
+                  <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 hover:bg-vintage-border-300 transition-colors">
+                    <X className="w-3.5 h-3.5 text-sepia-500" />
                   </button>
                 )}
               </div>
@@ -351,18 +352,18 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
 
             <div className="max-h-72 overflow-y-auto overscroll-contain">
               {!search && (showAuto || recentLangs.length > 0) && (
-                <div className="border-b border-cream-100">
+                <div className="border-b border-vintage-border-400">
                   {showAuto && (
                     <button
                       type="button"
                       onClick={() => handleSelect('auto')}
                       className={`w-full flex items-center gap-2.5 px-5 py-2 text-sm transition-colors ${
-                        isAuto ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                        isAuto ? 'bg-amber-50 text-amber-700' : 'text-sepia-700 hover:bg-paper-100'
                       }`}
                     >
                       <LangIcon langCode="auto" size="sm" />
                       <span className={isAuto ? 'font-medium' : ''}>{autoLabel}</span>
-                      <span className="text-xs text-ink-400">
+                      <span className="text-xs text-sepia-500">
                         <Zap className="w-3 h-3 inline -mt-0.5" />
                       </span>
                     </button>
@@ -373,19 +374,19 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                       type="button"
                       onClick={() => handleSelect(lang.value)}
                       className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                        value === lang.value ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                        value === lang.value ? 'bg-amber-50 text-amber-700' : 'text-sepia-700 hover:bg-paper-100'
                       }`}
                     >
                       <LangIcon langCode={lang.value} size="sm" />
                       <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
-                      {getSecondary(lang) && <span className="text-xs text-ink-400">{getSecondary(lang)}</span>}
+                      {getSecondary(lang) && <span className="text-xs text-sepia-500">{getSecondary(lang)}</span>}
                     </button>
                   ))}
                 </div>
               )}
 
               {Object.keys(groupedLanguages).length === 0 && (
-                <div className="py-8 text-center text-sm text-ink-400">
+                <div className="py-8 text-center text-sm text-sepia-500">
                   {t.noLanguagesFound || '未找到语言'}
                 </div>
               )}
@@ -398,11 +399,11 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                     <button
                       type="button"
                       onClick={() => toggleFamily(family)}
-                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-ink-500 uppercase tracking-wider hover:bg-cream-50 transition-colors"
+                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-sepia-600 uppercase tracking-wider hover:bg-paper-100 transition-colors"
                     >
                       {isCollapsed ? <ChevronRight className="w-3 h-3 flex-shrink-0" /> : <ChevronDown className="w-3 h-3 flex-shrink-0" />}
                       <span>{FAMILIES[family]}</span>
-                      <span className="text-bone-300 font-normal normal-case tracking-normal">{langs.length}</span>
+                      <span className="text-vintage-border-500 font-normal normal-case tracking-normal">{langs.length}</span>
                     </button>
                     <AnimatePresence initial={false}>
                       {!isCollapsed && (
@@ -419,12 +420,12 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                               type="button"
                               onClick={() => handleSelect(lang.value)}
                               className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                                value === lang.value ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                                value === lang.value ? 'bg-amber-50 text-amber-700' : 'text-sepia-700 hover:bg-paper-100'
                               }`}
                             >
                               <LangIcon langCode={lang.value} size="sm" />
                               <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
-                              {getSecondary(lang) && <span className="text-xs text-ink-400">{getSecondary(lang)}</span>}
+                              {getSecondary(lang) && <span className="text-xs text-sepia-500">{getSecondary(lang)}</span>}
                             </button>
                           ))}
                         </motion.div>
@@ -444,18 +445,19 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
 function FrogLogo({ size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
-      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
-      <circle cx="34" cy="38" r="16" fill="#4ade80" />
-      <circle cx="66" cy="38" r="16" fill="#4ade80" />
-      <circle cx="34" cy="38" r="13" fill="#fff" />
-      <circle cx="66" cy="38" r="13" fill="#fff" />
-      <circle cx="36" cy="37" r="6" fill="#166534" />
-      <circle cx="68" cy="37" r="6" fill="#166534" />
-      <circle cx="38" cy="35" r="2" fill="#fff" />
-      <circle cx="70" cy="35" r="2" fill="#fff" />
-      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
-      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#789068" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#A8B896" />
+      <circle cx="34" cy="38" r="16" fill="#789068" />
+      <circle cx="66" cy="38" r="16" fill="#789068" />
+      <circle cx="34" cy="38" r="13" fill="#F8F5F0" />
+      <circle cx="66" cy="38" r="13" fill="#F8F5F0" />
+      <circle cx="36" cy="37" r="6" fill="#385028" />
+      <circle cx="68" cy="37" r="6" fill="#385028" />
+      <circle cx="38" cy="35" r="2" fill="#F8F5F0" />
+      <circle cx="70" cy="35" r="2" fill="#F8F5F0" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#FDE9C3" />
+      <path d="M38 60 Q50 70 62 60" stroke="#385028" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <rect x="2" y="2" width="96" height="96" stroke="#5C4033" strokeWidth="3" />
     </svg>
   )
 }
@@ -477,8 +479,8 @@ function ModeSelector({ mode, setMode, t }) {
             key={key}
             type="button"
             onClick={() => setMode(key)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-              isActive ? 'bg-cream-200/80 text-ink-700' : 'text-ink-400 hover:text-ink-500 hover:bg-cream-100'
+            className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium transition-all duration-200 border-2 ${
+              isActive ? 'bg-paper-200 text-sepia-800 border-sepia-600' : 'text-sepia-500 hover:text-sepia-700 hover:bg-paper-100 border-transparent'
             }`}
           >
             <Icon className="w-3 h-3" />
@@ -491,9 +493,7 @@ function ModeSelector({ mode, setMode, t }) {
 }
 
 function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, onProcess, t, inputMode, setInputMode, recentLanguages }) {
-  // 记住直接输入模式的语言选择，默认 auto
   const directModeLangRef = useRef('auto')
-  // 记住非直接输入模式（翻译/生成）的语言选择，默认 en
   const nonDirectModeLangRef = useRef('en')
 
   const handleSourceLangChange = (lang) => {
@@ -509,19 +509,16 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
     const prevMode = inputMode
     setInputMode(newMode)
     if (newMode === 'direct') {
-      // 切到直接输入模式：恢复该模式记住的语言（可能是 auto）
       setSourceLang(directModeLangRef.current)
     } else if (prevMode === 'direct' && directModeLangRef.current === 'auto') {
-      // 从直接输入（auto）切到翻译/生成：恢复之前非直接模式选的语言，或用最近语言，默认 en
       const lang = nonDirectModeLangRef.current || (recentLanguages || []).find(l => l !== 'auto') || 'en'
       setSourceLang(lang)
     } else if (prevMode === 'direct') {
-      // 从直接输入（非auto）切到翻译/生成：使用记住的非直接模式语言
       const lang = nonDirectModeLangRef.current || (recentLanguages || []).find(l => l !== 'auto') || 'en'
       setSourceLang(lang)
     }
-    // 翻译↔生成切换：语言不变
   }
+
   const getPlaceholder = () => {
     if (inputMode === 'translate') return t.modeTranslatePlaceholder
     if (inputMode === 'generate') return t.modeGeneratePlaceholder
@@ -530,12 +527,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* Top-left: language selector */}
       <div className="flex items-center gap-3 pt-3 px-4">
         <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} uiLang={uiLang} inputMode={inputMode} recentLanguages={recentLanguages} t={t} />
       </div>
 
-      {/* Center content - brand logo and tagline */}
       <div className="flex-1 flex flex-col items-center justify-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -543,55 +538,51 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
           transition={{ duration: 0.5, delay: 0.1 }}
           className="flex items-center gap-3 mb-3"
         >
-          <div className="w-14 h-14 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
+          <div className="w-14 h-14 bg-amber-500 border-2 border-sepia-800 flex items-center justify-center shadow-vintage">
             <FrogLogo size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-display font-bold text-ink-800 leading-tight">
+            <h1 className="text-3xl font-display font-bold text-sepia-900 leading-tight">
               {t.title || '呱邻国'}
             </h1>
-            <p className="text-sm text-ink-400">{t.subtitle || 'Gualingo'}</p>
+            <p className="text-sm text-sepia-500">{t.subtitle || 'Gualingo'}</p>
           </div>
         </motion.div>
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-sm text-ink-300 text-center max-w-md"
+          className="text-sm text-sepia-400 text-center max-w-md"
         >
           {t.tagline || '输入文本，开始你的语言学习之旅'}
         </motion.p>
       </div>
 
-      {/* Bottom area - input box */}
       <div className="w-full max-w-2xl mx-auto pb-4 px-4">
-        <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
-          {/* Mode tabs at top of input */}
-          <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
+        <div className="relative bg-paper-50 border-2 border-sepia-600 shadow-vintage overflow-hidden">
+          <div className="border-b border-vintage-border-400 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
           </div>
 
-          {/* Textarea area */}
           <div className="relative">
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder={getPlaceholder()}
               rows={4}
-              className="w-full resize-none bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-sm text-ink-700 placeholder-ink-400 leading-relaxed"
+              className="w-full resize-none bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-sm text-sepia-800 placeholder-sepia-400 leading-relaxed"
             />
 
-            {/* Submit button inside textarea, bottom-right */}
             <div className="flex items-center justify-end px-3 pb-3">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onProcess}
                 disabled={loading || !text.trim()}
-                className={`p-2 rounded-xl transition-all duration-200 ${
+                className={`p-2 border-2 transition-all duration-200 ${
                   loading || !text.trim()
-                    ? 'bg-cream-100 text-ink-400 cursor-not-allowed'
-                    : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25'
+                    ? 'bg-paper-200 text-sepia-500 cursor-not-allowed border-vintage-border-400'
+                    : 'bg-amber-500 text-paper-50 border-sepia-800 shadow-vintage hover:shadow-vintage-lg'
                 }`}
               >
                 <AnimatePresence mode="wait">
