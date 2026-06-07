@@ -4,7 +4,7 @@ import axios from 'axios';
 axios.defaults.timeout = 600000;
 
 // base url
-const baseUrl = '';
+const baseUrl = 'http://localhost:8080';
 
 export const api = {
   baseUrl: baseUrl,
