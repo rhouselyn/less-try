@@ -151,25 +151,25 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     }, [])
 
     return (
-      <div className="flex items-center justify-center gap-0.5 py-1.5 border-t border-stone-300 bg-canvas-100 shrink-0">
+      <div className="flex items-center justify-center gap-1 py-3 border-t border-stone-300 bg-canvas-50 shrink-0">
         <button
           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
-          className={`p-1 rounded transition-colors ${currentPage <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}
+          className={`p-1.5 rounded-lg transition-colors ${currentPage <= 1 ? 'text-stone-300 cursor-not-allowed' : 'text-umber-500 hover:text-umber-700 hover:bg-white'}`}
         >
-          <ChevronLeft className="w-3.5 h-3.5" />
+          <ChevronLeft className="w-4 h-4" />
         </button>
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`dots-${i}`} className="text-[10px] text-stone-300 px-0.5">…</span>
+            <span key={`dots-${i}`} className="text-[10px] text-stone-400 px-0.5">…</span>
           ) : (
             <button
               key={p}
               onClick={() => setCurrentPage(p)}
-              className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
+              className={`min-w-[26px] h-[26px] flex items-center justify-center text-[11px] rounded-lg transition-colors font-medium ${
                 currentPage === p
-                  ? 'bg-cadmium-100 text-cadmium-500 font-semibold'
-                  : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'
+                  ? 'bg-cadmium-200 text-cadmium-700 border border-cadmium-300'
+                  : 'text-umber-500 hover:text-umber-700 hover:bg-white'
               }`}
             >
               {p}
@@ -179,9 +179,9 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
         <button
           onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
           disabled={currentPage >= totalPages}
-          className={`p-1 rounded transition-colors ${currentPage >= totalPages ? 'text-stone-200 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}
+          className={`p-1.5 rounded-lg transition-colors ${currentPage >= totalPages ? 'text-stone-300 cursor-not-allowed' : 'text-umber-500 hover:text-umber-700 hover:bg-white'}`}
         >
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-4 h-4" />
         </button>
       </div>
     )
@@ -189,37 +189,37 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
-        <div className="px-5 py-3.5 border-b border-stone-300 bg-canvas-100">
+      <div className="bg-white border border-stone-400 rounded-3xl shadow-impasto overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
+        <div className="px-5 py-4 border-b border-stone-300 bg-gradient-to-r from-cadmium-100 to-canvas-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-cadmium-500" />
-              <h2 className="text-sm font-semibold font-display text-umber-700">{t.vocabList || '单词表'}</h2>
-              <span className="badge-ochre text-xs px-2 py-0.5 rounded-full bg-cadmium-100 text-cadmium-500">
+              <BookOpen className="w-5 h-5 text-cadmium-600" />
+              <h2 className="text-base font-semibold font-display text-umber-800">{t.vocabList || '单词表'}</h2>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-cadmium-200 text-cadmium-700 font-medium">
                 {vocab.length}
               </span>
               {searchQuery && filteredVocab.length !== vocab.length && (
-                <span className="text-xs text-umber-400">· {t.matched || '匹配'} {filteredVocab.length}</span>
+                <span className="text-xs text-umber-500">· {t.matched || '匹配'} {filteredVocab.length}</span>
               )}
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-umber-400 hover:text-umber-700 hover:bg-canvas-100 rounded-lg transition-colors"
+              className="p-2 text-umber-500 hover:text-umber-800 hover:bg-white rounded-lg transition-colors"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
-        <div className="px-4 py-2 border-b border-canvas-100">
+        <div className="px-4 py-3 border-b border-stone-200 bg-canvas-50">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1) }}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-3 py-1.5 bg-white/70 border border-stone-300 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-cadmium-200/60 focus:border-cadmium-300/60 transition-all"
+              className="w-full pl-9 pr-3 py-2 bg-white border border-stone-300 rounded-xl text-[13px] text-umber-800 placeholder:text-umber-400 focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-cadmium-400 transition-all"
             />
           </div>
         </div>
@@ -261,18 +261,18 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               )}
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex-1 overflow-y-scroll min-h-0" ref={listRef} style={{ scrollbarGutter: 'stable' }}>
-                  <div className="space-y-3">
+                  <div>
                     {groupedVocab.map(([letter, words], groupIdx) => (
                       <div key={`group-${groupIdx}-${letter}`} id={`vocab-group-${letter}`}>
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: groupIdx * 0.04 }}
-                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200 mb-1"
+                          className="sticky top-0 z-10 backdrop-blur-sm bg-cadmium-50 px-4 py-2 border-b border-cadmium-200"
                         >
-                          <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
+                          <span className="text-xs font-bold text-cadmium-600 tracking-widest">{letter}</span>
                         </motion.div>
-                        <div className="space-y-px">
+                        <div>
                           {words.map((word, wordIdx) => {
                             const isExpanded = expandedWord === word.word
                             const enriched = getEnriched(word.word)
@@ -283,11 +283,11 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                 ref={el => { wordRefs.current[word.word] = el }}
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-canvas-50"
+                                className={wordIdx % 2 === 0 ? 'bg-white' : 'bg-canvas-50'}
                               >
                                 <button
                                   onClick={() => handleWordClick(word)}
-                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
+                                  className="w-full text-left px-4 py-3 flex items-center gap-2 hover:bg-cadmium-100/60 transition-colors group"
                                 >
                                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                     <span className="text-[14px] font-semibold text-umber-800 tracking-tight shrink-0">
@@ -299,16 +299,16 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       </span>
                                     )}
                                     {(enriched.morphology || word.morphology) && (
-                                      <span className="text-[10px] px-1.5 py-0.5 bg-canvas-100 text-umber-500 rounded font-medium tracking-wide shrink-0">
+                                      <span className="text-[10px] px-1.5 py-0.5 bg-cadmium-100 text-cadmium-700 rounded font-medium tracking-wide shrink-0">
                                         {enriched.morphology || word.morphology}
                                       </span>
                                     )}
-                                    <span className="text-[12px] text-umber-500 truncate">
+                                    <span className="text-[12px] text-umber-600 truncate">
                                       {displayMeaning}
                                     </span>
                                   </div>
                                   <Volume2
-                                    className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 transition-colors"
+                                    className="w-3.5 h-3.5 text-umber-400 hover:text-cadmium-600 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}
                                   />
                                 </button>

@@ -14,37 +14,37 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
       transition={{ duration: 0.25, ease: 'easeInOut' }}
       className="overflow-hidden"
     >
-      <div className="px-5 pb-4 pt-2 border-t border-canvas-100">
+      <div className="px-5 pb-5 pt-3 border-t border-stone-200 bg-canvas-50">
         {detailLoading ? (
           <div className="pt-4 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
-            <p className="text-[12px] text-umber-400">{t.generatingWordDetails || '正在生成单词详解...'}</p>
+            <Loader2 className="w-6 h-6 animate-spin text-cadmium-500" />
+            <p className="text-[13px] text-umber-500">{t.generatingWordDetails || '正在生成单词详解...'}</p>
           </div>
         ) : (
           <>
-            <div className="mb-2">
-              <h3 className="label-warm text-[10px] font-semibold text-umber-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                <Brain className="w-3 h-3 text-cadmium-500" />
+            <div className="mb-3">
+              <h3 className="text-[11px] font-semibold text-cadmium-700 uppercase tracking-[0.12em] mb-1.5 flex items-center gap-1.5">
+                <Brain className="w-3.5 h-3.5 text-cadmium-600" />
                 {t.definition || '释义'}
               </h3>
-              <p className="text-[13px] text-umber-700 leading-relaxed">
+              <p className="text-[14px] text-umber-700 leading-relaxed">
                 {word.enriched_meaning || word.meaning}
               </p>
             </div>
 
             {word.variants_detail && word.variants_detail.length > 0 && (
-              <div className="mb-2">
-                <h3 className="label-warm text-[10px] font-semibold text-umber-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                  <GitBranch className="w-3 h-3 text-cadmium-500" />
+              <div className="mb-3">
+                <h3 className="text-[11px] font-semibold text-cadmium-700 uppercase tracking-[0.12em] mb-1.5 flex items-center gap-1.5">
+                  <GitBranch className="w-3.5 h-3.5 text-cadmium-600" />
                   {t.variants || '词形变化'}
                 </h3>
-                <div className="flex flex-wrap gap-x-3 gap-y-1">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
                   {word.variants_detail.map((variant, index) => (
-                    <div key={index} className="flex items-center gap-1.5">
-                      <span className="badge-ochre px-1.5 py-0.5 bg-cadmium-50 text-cadmium-500 rounded text-[11px] font-medium">
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="px-2 py-1 bg-cadmium-100 text-cadmium-700 rounded text-[12px] font-medium">
                         {variant.type}
                       </span>
-                      <span className="text-umber-600 text-[13px]">{variant.form}</span>
+                      <span className="text-umber-700 text-[14px]">{variant.form}</span>
                     </div>
                   ))}
                 </div>
@@ -52,27 +52,27 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
             )}
 
             {word.examples && word.examples.length > 0 && (
-              <div className="mb-2">
-                <h3 className="label-warm text-[10px] font-semibold text-umber-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                  <BookText className="w-3 h-3 text-cadmium-500" />
+              <div className="mb-3">
+                <h3 className="text-[11px] font-semibold text-cadmium-700 uppercase tracking-[0.12em] mb-1.5 flex items-center gap-1.5">
+                  <BookText className="w-3.5 h-3.5 text-cadmium-600" />
                   {t.examples || '例句'}
                 </h3>
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {word.examples.slice(0, 3).map((ex, i) => (
-                    <div key={i} className="border-l-2 border-cadmium-200 pl-2.5">
-                      <div className="flex items-start gap-1.5">
-                        <p className="text-umber-700 text-[13px] leading-snug flex-1">{ex.sentence}</p>
+                    <div key={i} className="border-l-3 border-cadmium-300 pl-3 py-1">
+                      <div className="flex items-start gap-2">
+                        <p className="text-umber-800 text-[14px] leading-snug flex-1">{ex.sentence}</p>
                         {ex.sentence && (
                           <button
                             onClick={(e) => { e.stopPropagation(); speakText(ex.sentence, sourceLang) }}
-                            className="p-0.5 text-cadmium-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded transition-colors shrink-0"
+                            className="p-1 text-cadmium-500 hover:text-cadmium-700 hover:bg-cadmium-100 rounded transition-colors shrink-0"
                           >
-                            <Volume2 className="w-3 h-3" />
+                            <Volume2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
                       {ex.translation && (
-                        <p className="text-umber-400 text-[11px] leading-snug">{ex.translation}</p>
+                        <p className="text-umber-600 text-[13px] leading-snug mt-0.5">{ex.translation}</p>
                       )}
                     </div>
                   ))}
@@ -81,12 +81,12 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
             )}
 
             {word.memory_hint && (
-              <div className="mb-2">
-                <h3 className="label-warm text-[10px] font-semibold text-umber-500 uppercase tracking-[0.12em] mb-0.5 flex items-center gap-1">
-                  <Lightbulb className="w-3 h-3 text-cadmium-500" />
+              <div className="mb-1">
+                <h3 className="text-[11px] font-semibold text-cadmium-700 uppercase tracking-[0.12em] mb-1.5 flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-cadmium-600" />
                   {t.memoryHint || '记忆辅助'}
                 </h3>
-                <p className="text-[13px] text-umber-600 leading-relaxed bg-cadmium-50/70 px-3 py-2 rounded-lg border border-cadmium-100">
+                <p className="text-[14px] text-umber-700 leading-relaxed bg-cadmium-100/70 px-4 py-3 rounded-xl border border-cadmium-200">
                   {word.memory_hint}
                 </p>
               </div>
@@ -301,8 +301,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     if (loading) {
       return (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-cadmium-400" />
-          <span className="ml-2 text-sm text-umber-400">{t.loadingVocab || '加载单词表...'}</span>
+          <Loader2 className="w-6 h-6 animate-spin text-cadmium-500" />
+          <span className="ml-2 text-sm text-umber-500">{t.loadingVocab || '加载单词表...'}</span>
         </div>
       )
     }
@@ -310,8 +310,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     if (filteredWords.length === 0) {
       return (
         <div className="py-16 text-center">
-          <BookOpen className="w-8 h-8 text-stone-200 mx-auto mb-2" />
-          <p className="text-sm text-umber-400">
+          <BookOpen className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+          <p className="text-sm text-umber-500">
             {searchQuery ? (t.noMatchFound || '未找到匹配的单词') : (t.noWordsYetHint || '暂无单词，开始学习后将自动收录')}
           </p>
         </div>
@@ -321,17 +321,17 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     return (
       <div className="flex h-full">
         {allLetterIndex.length > 1 && !searchQuery && (
-          <div className="flex flex-col items-center gap-px py-1 border-r border-canvas-100 bg-canvas-50/50 shrink-0 w-5">
+          <div className="flex flex-col items-center gap-px py-1 border-r border-stone-200 bg-canvas-50 shrink-0 w-6">
             {allLetterIndex.map(letter => {
               const onCurrentPage = letterIndex.includes(letter)
               return (
                 <button
                   key={letter}
                   onClick={() => scrollToLetter(letter)}
-                  className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors leading-tight ${
+                  className={`w-5 h-5 flex items-center justify-center text-[8px] font-semibold rounded transition-colors leading-tight ${
                     onCurrentPage
-                      ? 'text-umber-600 hover:text-cadmium-500 hover:bg-cadmium-50'
-                      : 'text-stone-300/60 hover:text-cadmium-500 hover:bg-cadmium-50/50'
+                      ? 'text-umber-700 hover:text-cadmium-600 hover:bg-cadmium-100'
+                      : 'text-stone-400 hover:text-cadmium-600 hover:bg-cadmium-50'
                   }`}
                 >
                   {letter}
@@ -341,56 +341,56 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
           </div>
         )}
         <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>
-          {groupedWords.map(([letter, groupWords]) => (
+          {groupedWords.map(([letter, groupWords], groupIdx) => (
             <div key={letter} id={`letter-${letter}`}>
-              <div className="sticky top-0 z-10 px-5 py-1.5 bg-canvas-50/90 backdrop-blur-sm border-b border-canvas-100">
-                <span className="label-warm text-xs font-bold text-umber-400 tracking-wider">{letter}</span>
-                <span className="text-[10px] text-stone-300 ml-1.5">{groupWords.length}</span>
+              <div className="sticky top-0 z-10 px-5 py-2 bg-cadmium-50 backdrop-blur-sm border-b border-cadmium-200">
+                <span className="text-xs font-bold text-cadmium-700 tracking-wider">{letter}</span>
+                <span className="text-[10px] text-cadmium-500 ml-1.5">{groupWords.length}</span>
               </div>
-              {groupWords.map((word) => (
-                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="border-b border-canvas-50 last:border-b-0">
+              {groupWords.map((word, wordIdx) => (
+                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className={wordIdx % 2 === 0 ? 'bg-white' : 'bg-canvas-50'}>
                   <div
                     role="button"
                     tabIndex={0}
                     onClick={() => handleWordClick(word.word)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleWordClick(word.word) }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-canvas-50/80 transition-colors text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 px-5 py-3 hover:bg-cadmium-100/50 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <span className={`text-sm font-semibold font-display text-umber-800 ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.word}</span>
                         {word.ipa && (
-                          <span className={`text-xs text-umber-400 ipa-font ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>
+                          <span className={`text-xs text-umber-500 ipa-font ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>
                             {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
                           </span>
                         )}
                         {word.part_of_speech && (
-                          <span className="badge-ochre text-[10px] px-1.5 py-0.5 bg-canvas-100 text-umber-500 rounded font-medium">
+                          <span className="text-[10px] px-1.5 py-0.5 bg-cadmium-100 text-cadmium-700 rounded font-medium">
                             {word.part_of_speech}
                           </span>
                         )}
                       </div>
                       {word.meaning && (
-                        <p className={`text-xs text-umber-500 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.meaning}</p>
+                        <p className={`text-sm text-umber-600 mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.meaning}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       {expandedWord === word.word && detailLoading[word.word] ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin text-cadmium-400" />
+                        <Loader2 className="w-4 h-4 animate-spin text-cadmium-500" />
                       ) : expandedWord === word.word ? (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
-                          className="p-1.5 text-stone-300 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
+                          className="p-1.5 text-umber-400 hover:text-cadmium-600 hover:bg-cadmium-100 rounded-full transition-colors"
                           title={t.regenerate || '重新生成'}
                         >
-                          <RefreshCw className="w-3.5 h-3.5" />
+                          <RefreshCw className="w-4 h-4" />
                         </button>
                       ) : null}
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
-                        className="p-1.5 text-stone-300 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
+                        className="p-1.5 text-umber-400 hover:text-cadmium-600 hover:bg-cadmium-100 rounded-full transition-colors"
                       >
-                        <Volume2 className="w-3.5 h-3.5" />
+                        <Volume2 className="w-4 h-4" />
                       </button>
                     </div>
                   </div>
@@ -417,25 +417,25 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
   if (onBack) {
     return (
-      <div className="h-full flex flex-col bg-canvas-50 rounded-2xl border border-stone-300 shadow-impasto-sm overflow-hidden min-h-0">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-300 bg-gradient-to-r from-cadmium-50 to-canvas-50">
+      <div className="h-full flex flex-col bg-white rounded-2xl border border-stone-400 shadow-impasto overflow-hidden min-h-0">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-stone-300 bg-gradient-to-r from-cadmium-100 to-canvas-100">
           <div className="flex items-center gap-2.5">
-            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-cadmium-500' : 'text-cadmium-500 hover:text-cadmium-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
-            <span className="text-base font-semibold font-display text-umber-800">{t.vocabOverview || '词汇总览'}</span>
+            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-cadmium-600' : 'text-cadmium-600 hover:text-cadmium-700'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
+            <span className="text-lg font-semibold font-display text-umber-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
-              <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+              <span className="text-xs text-cadmium-700 bg-cadmium-200 px-2 py-0.5 rounded-full font-medium">{words.length} {t.wordCount || '词'}</span>
             )}
           </div>
           <button
             onClick={onBack}
-            className="btn-ghost flex items-center gap-1.5 px-3 py-1.5 text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-umber-600 hover:text-umber-800 hover:bg-white rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             {t.back || '返回'}
           </button>
         </div>
 
-        <div className="px-4 py-3 border-b border-canvas-100">
+        <div className="px-4 py-3 border-b border-stone-200 bg-canvas-50">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />
             <input
@@ -443,14 +443,14 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-9 py-2 text-sm bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
+              className="w-full pl-9 pr-9 py-2.5 text-sm bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-cadmium-400 placeholder:text-umber-400 transition-all"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-umber-400 hover:text-umber-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-umber-400 hover:text-umber-700 transition-colors"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
@@ -469,20 +469,20 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-300 hover:border-cadmium-200/60 transition-all shadow-impasto-sm"
+        className="w-full flex items-center justify-between px-5 py-4 bg-white rounded-2xl border border-stone-400 hover:border-cadmium-300 transition-all shadow-impasto"
       >
         <div className="flex items-center gap-2.5">
-          <BookOpen className="w-4 h-4 text-cadmium-500" />
-          <span className="text-sm font-semibold font-display text-umber-700">{t.vocabOverview || '词汇总览'}</span>
+          <BookOpen className="w-5 h-5 text-cadmium-600" />
+          <span className="text-base font-semibold font-display text-umber-800">{t.vocabOverview || '词汇总览'}</span>
           {!isOpen && words.length > 0 && (
-            <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+            <span className="text-xs text-cadmium-700 bg-cadmium-200 px-2 py-0.5 rounded-full font-medium">{words.length} {t.wordCount || '词'}</span>
           )}
         </div>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
         >
-          <ChevronDown className="w-4 h-4 text-umber-400" />
+          <ChevronDown className="w-5 h-5 text-umber-500" />
         </motion.div>
       </motion.button>
 
@@ -495,8 +495,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="mt-3 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-300 shadow-impasto-sm">
-              <div className="p-4 border-b border-canvas-100">
+            <div className="mt-3 bg-white rounded-2xl border border-stone-400 shadow-impasto">
+              <div className="p-4 border-b border-stone-200 bg-canvas-50">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />
                   <input
@@ -504,19 +504,19 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-                    className="input-warm w-full pl-9 pr-9 py-2.5 text-sm bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
+                    className="w-full pl-9 pr-9 py-2.5 text-sm bg-white border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-cadmium-400 placeholder:text-umber-400 transition-all"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 p-0.5 text-umber-400 hover:text-umber-600 transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-umber-400 hover:text-umber-700 transition-colors"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                 </div>
-                <div className="flex items-center justify-between mt-2.5">
-                  <span className="text-xs text-umber-400">
+                <div className="flex items-center justify-between mt-3">
+                  <span className="text-xs text-umber-500">
                     {loading ? (t.loading || '加载中...') : (t.totalWordCount || '共 {0} 个单词').replace('{0}', filteredWords.length)}
                   </span>
                 </div>
