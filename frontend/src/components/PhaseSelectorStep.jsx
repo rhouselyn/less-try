@@ -24,7 +24,7 @@ function PhaseSelectorStep({ phases, currentFileId, onPhaseSelect, onBack, loadi
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold font-display text-ink-700 mb-4"
+          className="text-3xl font-bold font-display text-ink-700 mb-4"
         >
           {t.selectPhase}
         </motion.h2>
@@ -45,15 +45,15 @@ function PhaseSelectorStep({ phases, currentFileId, onPhaseSelect, onBack, loadi
             >
               <button
                 onClick={() => onPhaseSelect(phase.phase_number)}
-                className="w-full p-6 border border-bone-200 bg-cream-50 hover:border-ink-400 hover:shadow-warm-sm rounded-3xl transition-all"
+                className="w-full p-6 border-2 border-aged-200 bg-parchment-50 hover:border-ink-400 hover:shadow-retro-sm rounded-md transition-all"
               >
-                <h3 className="text-xl font-semibold font-display text-ink-800 mb-2">
+                <h3 className="text-xl font-bold font-display text-ink-800 mb-2">
                   {phase.phase_number === 1 ? t.phase1 : t.phase2}
                 </h3>
                 <p className="text-ink-600 mb-2">{phase.units_count} {t.unit}s</p>
-                <div className="text-sm font-medium">
+                <div className="text-sm font-bold">
                   {phase.progress.current_unit > 0 ? (
-                    <span className="text-ochre-500">
+                    <span className="text-amber-500">
                       已完成 {phase.progress.current_unit}/{phase.units_count} {t.unit}s
                     </span>
                   ) : (
