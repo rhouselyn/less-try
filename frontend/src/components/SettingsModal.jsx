@@ -233,7 +233,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         })),
         active_index: currentIndex,
       }
-      const res = await fetch('/api/settings', {
+      const res = await fetch(`${api.baseUrl}/api/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
