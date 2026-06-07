@@ -342,21 +342,19 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         )}
         <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>
           {groupedWords.map(([letter, groupWords]) => (
-            <div key={letter} id={`letter-${letter}`} className="border-b border-stone-200 last:border-b-0">
-              <div className="sticky top-0 z-10 px-5 py-1.5 bg-cadmium-100 backdrop-blur-sm">
-                <span className="label-warm text-xs font-bold text-cadmium-700 tracking-wider">{letter}</span>
-                <span className="text-[10px] text-cadmium-500 ml-1.5">{groupWords.length}</span>
+            <div key={letter} id={`letter-${letter}`}>
+              <div className="sticky top-0 z-10 px-5 py-1.5 bg-canvas-50/90 backdrop-blur-sm border-b border-canvas-100">
+                <span className="label-warm text-xs font-bold text-umber-400 tracking-wider">{letter}</span>
+                <span className="text-[10px] text-stone-300 ml-1.5">{groupWords.length}</span>
               </div>
-              {groupWords.map((word, idx) => {
-                const isEven = idx % 2 === 0
-                return (
-                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="last:border-b-0">
+              {groupWords.map((word) => (
+                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="border-b border-canvas-50 last:border-b-0">
                   <div
                     role="button"
                     tabIndex={0}
                     onClick={() => handleWordClick(word.word)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleWordClick(word.word) }}
-                    className={`w-full flex items-center gap-3 px-5 py-2.5 hover:bg-cadmium-100/50 transition-colors text-left cursor-pointer ${isEven ? 'bg-canvas-50' : 'bg-cadmium-50/30'}`}
+                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-canvas-50/80 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -390,7 +388,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                       ) : null}
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
-                        className="p-1.5 text-umber-400 hover:text-cadmium-500 hover:bg-cadmium-100 rounded-full transition-colors"
+                        className="p-1.5 text-stone-300 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
@@ -420,12 +418,12 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   if (onBack) {
     return (
       <div className="h-full flex flex-col bg-canvas-50 rounded-2xl border border-stone-300 shadow-impasto-sm overflow-hidden min-h-0">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-300 bg-cadmium-100">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-300 bg-gradient-to-r from-cadmium-50 to-canvas-50">
           <div className="flex items-center gap-2.5">
-            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-cadmium-700' : 'text-cadmium-700 hover:text-cadmium-700'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
-            <span className="text-base font-semibold font-display text-cadmium-800">{t.vocabOverview || '词汇总览'}</span>
+            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-cadmium-500' : 'text-cadmium-500 hover:text-cadmium-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
+            <span className="text-base font-semibold font-display text-umber-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
-              <span className="badge-ochre text-xs text-cadmium-700 bg-cadmium-200 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+              <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
             )}
           </div>
           <button

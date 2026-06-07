@@ -261,34 +261,33 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               )}
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex-1 overflow-y-scroll min-h-0" ref={listRef} style={{ scrollbarGutter: 'stable' }}>
-                  <div className="space-y-0">
-                    {groupedVocab.map(([letter, words, groupIdx]) => (
-                      <div key={`group-${groupIdx}-${letter}`} id={`vocab-group-${letter}`} className="border-b border-stone-200 last:border-b-0">
+                  <div className="space-y-3">
+                    {groupedVocab.map(([letter, words], groupIdx) => (
+                      <div key={`group-${groupIdx}-${letter}`} id={`vocab-group-${letter}`}>
                         <motion.div
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: groupIdx * 0.04 }}
-                          className="sticky top-0 z-10 backdrop-blur-sm bg-cadmium-100 px-4 py-1.5"
+                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200 mb-1"
                         >
-                          <span className="text-xs font-bold text-cadmium-700 tracking-widest">{letter}</span>
+                          <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
                         </motion.div>
-                        <div className="space-y-0">
+                        <div className="space-y-px">
                           {words.map((word, wordIdx) => {
                             const isExpanded = expandedWord === word.word
                             const enriched = getEnriched(word.word)
                             const displayMeaning = word.enriched_meaning || word.meaning || word.context_meaning
-                            const isEven = wordIdx % 2 === 0
                             return (
                               <motion.div
                                 key={`${word.word}-${wordIdx}`}
                                 ref={el => { wordRefs.current[word.word] = el }}
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className={isEven ? 'bg-canvas-50' : 'bg-cadmium-50/30'}
+                                className="bg-canvas-50"
                               >
                                 <button
                                   onClick={() => handleWordClick(word)}
-                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-100/50 transition-colors group"
+                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
                                 >
                                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                     <span className="text-[14px] font-semibold text-umber-800 tracking-tight shrink-0">
@@ -300,16 +299,16 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       </span>
                                     )}
                                     {(enriched.morphology || word.morphology) && (
-                                      <span className="text-[10px] px-1.5 py-0.5 bg-cadmium-100 text-cadmium-700 rounded font-medium tracking-wide shrink-0">
+                                      <span className="text-[10px] px-1.5 py-0.5 bg-canvas-100 text-umber-500 rounded font-medium tracking-wide shrink-0">
                                         {enriched.morphology || word.morphology}
                                       </span>
                                     )}
-                                    <span className="text-[12px] text-umber-600 truncate">
+                                    <span className="text-[12px] text-umber-500 truncate">
                                       {displayMeaning}
                                     </span>
                                   </div>
                                   <Volume2
-                                    className="w-3.5 h-3.5 text-umber-400 hover:text-cadmium-500 shrink-0 transition-colors"
+                                    className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}
                                   />
                                 </button>
