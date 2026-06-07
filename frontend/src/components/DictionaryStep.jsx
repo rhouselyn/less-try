@@ -718,7 +718,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
               <span
                 key={i}
                 onClick={(e) => { e.stopPropagation(); handleTokenClick(part) }}
-                className="cursor-pointer rounded px-0.5 -mx-0.5 hover:bg-cadmium-100 hover:text-amber-800 transition-colors duration-150 border-b border-cadmium-300/50"
+                className="cursor-pointer rounded px-0.5 -mx-0.5 hover:bg-cadmium-200 hover:text-amber-800 transition-colors duration-150 border-b border-cadmium-400"
               >
                 {part}
               </span>
@@ -740,7 +740,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const renderPagination = (currentPage, totalPages, onPageChange) => {
     if (totalPages <= 1) return null
     return (
-      <div className="flex items-center justify-center gap-1 py-1.5 border-t border-stone-200/60 bg-canvas-50/40">
+      <div className="flex items-center justify-center gap-1 py-1.5 border-t border-stone-300 bg-canvas-100">
         <button
           onClick={() => onPageChange(p => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
@@ -925,8 +925,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
       <div className="flex gap-6 flex-1 min-h-0" style={{ overflow: 'hidden' }}>
         <div className="w-1/2 flex flex-col min-h-0" style={{ overflow: 'hidden' }}>
-          <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
-            <div className="px-5 py-3.5 border-b border-stone-200/80 bg-canvas-50/60">
+          <div className="bg-white/90 border border-stone-300 rounded-3xl shadow-impasto overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="px-5 py-3.5 border-b border-stone-300 bg-cadmium-50">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
                   <Languages className={`w-4 h-4 transition-colors cursor-pointer ${sentenceDisplayMode !== 0 ? 'text-cadmium-500' : 'text-umber-500 hover:text-cadmium-500'}`} onClick={(e) => { e.stopPropagation(); setSentenceDisplayMode(v => (v + 1) % 3) }} title={sentenceDisplayMode === 0 ? t.showAll : sentenceDisplayMode === 1 ? t.hideTranslation : t.hideOriginal} />
@@ -959,7 +959,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                   <pre className="text-sm text-umber-700 leading-relaxed whitespace-pre-wrap font-sans">{originalText || safeSentenceTranslations.map(item => item.sentence || '').join('\n')}</pre>
                 </div>
               ) : filteredSentences.length > 0 ? (
-                <div className="divide-y divide-stone-200/60">
+                <div className="divide-y divide-stone-300">
                   {pagedFilteredSentences.map((item, index) => {
                     const originalIndex = safeSentenceTranslations.indexOf(item)
                     return (
@@ -969,7 +969,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.02 }}
                           className={`p-4 cursor-pointer transition-colors ${
-                            selectedSentence === originalIndex ? 'bg-cadmium-50/60' : 'hover:bg-cadmium-50/30'
+                            selectedSentence === originalIndex ? 'bg-cadmium-100' : 'hover:bg-cadmium-50'
                           }`}
                           onClick={() => {
                             const isCollapsing = selectedSentence === originalIndex
@@ -997,7 +997,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
                               className="overflow-hidden"
                             >
-                              <div className="border-t border-stone-200/60 p-4 bg-canvas-50/50">
+                              <div className="border-t border-stone-300 p-4 bg-canvas-100">
                                 <SentenceDetail
                                   sentenceTranslation={safeSentenceTranslations[originalIndex]}
                                   t={t}
@@ -1022,8 +1022,8 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
         </div>
 
         <div className="w-1/2 flex flex-col min-h-0" style={{ overflow: 'hidden' }}>
-          <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col flex-1 min-h-0">
-            <div className="px-5 py-3.5 border-b border-stone-200/80 bg-canvas-50/60">
+          <div className="bg-white/90 border border-stone-300 rounded-3xl shadow-impasto overflow-hidden flex flex-col flex-1 min-h-0">
+            <div className="px-5 py-3.5 border-b border-stone-300 bg-cerulean-50">
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 shrink-0" style={{ minWidth: '140px' }}>
                   <BookOpen className={`w-4 h-4 transition-colors cursor-pointer ${vocabDisplayMode !== 0 ? 'text-cadmium-500' : 'text-umber-500 hover:text-cadmium-500'}`} onClick={(e) => { e.stopPropagation(); setVocabDisplayMode(v => (v + 1) % 3) }} title={vocabDisplayMode === 0 ? t.showAll : vocabDisplayMode === 1 ? t.hideMeaning : t.hideWord} />
@@ -1052,7 +1052,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
             </div>
             <div className="flex-1 flex min-h-0">
               {((!showGlobalVocab && allLetterIndex.length > 1) || (showGlobalVocab && allGlobalLetterIndex.length > 1)) && (
-                <div className="flex flex-col items-center gap-px py-1 border-r border-stone-200/60 bg-canvas-50/40 w-5 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-px py-1 border-r border-stone-300 bg-canvas-100 w-5 shrink-0 overflow-y-auto">
                   {(showGlobalVocab ? allGlobalLetterIndex : allLetterIndex).map(letter => {
                     const currentIdx = showGlobalVocab ? globalLetterIndex : letterIndex
                     const onCurrentPage = currentIdx.includes(letter)
@@ -1092,7 +1092,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: groupIdx * 0.04 }}
-                        className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
+                        className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-100 px-4 py-1.5 border-b border-stone-300 mb-1"
                       >
                         <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
                       </motion.div>
@@ -1113,7 +1113,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                             >
                               <button
                                 onClick={() => handleGlobalVocabWordClick(word)}
-                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
+                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50 transition-colors group"
                               >
                                 <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                   <span className={`text-[14px] font-semibold text-umber-800 tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
@@ -1153,7 +1153,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     transition={{ duration: 0.2 }}
                                     className="overflow-hidden"
                                   >
-                                    <div className="px-4 pb-3.5 border-t border-canvas-100/80">
+                                    <div className="px-4 pb-3.5 border-t border-stone-300">
                                       {isLoading ? (
                                         <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                           <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
@@ -1204,7 +1204,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: groupIdx * 0.04 }}
-                      className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200/40 mb-1"
+                      className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-100 px-4 py-1.5 border-b border-stone-300 mb-1"
                     >
                       <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
                     </motion.div>
@@ -1227,7 +1227,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                             >
                               <button
                                 onClick={() => handleVocabWordClick(word)}
-                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
+                                className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50 transition-colors group"
                             >
                               <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                 <span className={`text-[14px] font-semibold text-umber-800 tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
@@ -1268,7 +1268,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   transition={{ duration: 0.2 }}
                                   className="overflow-hidden"
                                 >
-                                  <div className="px-4 pb-3.5 border-t border-canvas-100/80">
+                                  <div className="px-4 pb-3.5 border-t border-stone-300">
                                     {isLoading ? (
                                       <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                         <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />

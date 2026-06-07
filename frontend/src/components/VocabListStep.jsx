@@ -168,7 +168,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               onClick={() => setCurrentPage(p)}
               className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
                 currentPage === p
-                  ? 'bg-cadmium-100 text-cadmium-500 font-semibold'
+                  ? 'bg-cerulean-100 text-cerulean-600 font-semibold'
                   : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'
               }`}
             >
@@ -189,8 +189,8 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
-        <div className="px-5 py-3.5 border-b border-stone-300 bg-canvas-100">
+      <div className="bg-white/90 border border-stone-300 rounded-3xl shadow-impasto overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
+        <div className="px-5 py-3.5 border-b border-stone-300 bg-cerulean-50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-cadmium-500" />
@@ -211,7 +211,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
           </div>
         </div>
 
-        <div className="px-4 py-2 border-b border-canvas-100">
+        <div className="px-4 py-2 border-b border-stone-300">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
             <input
@@ -219,7 +219,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1) }}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-3 py-1.5 bg-white/70 border border-stone-300 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-cadmium-200/60 focus:border-cadmium-300/60 transition-all"
+              className="input-warm w-full pl-9 pr-3 py-1.5 bg-white/80 border border-stone-300 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-cadmium-200/60 focus:border-cadmium-300/60 transition-all"
             />
           </div>
         </div>
@@ -268,9 +268,9 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: groupIdx * 0.04 }}
-                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200 mb-1"
+                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-100 px-4 py-1.5 border-b border-stone-300 mb-1"
                         >
-                          <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
+                          <span className="text-xs font-bold text-cadmium-600 tracking-widest">{letter}</span>
                         </motion.div>
                         <div className="space-y-px">
                           {words.map((word, wordIdx) => {
@@ -287,7 +287,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                               >
                                 <button
                                   onClick={() => handleWordClick(word)}
-                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
+                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50 transition-colors group"
                                 >
                                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                     <span className="text-[14px] font-semibold text-umber-800 tracking-tight shrink-0">
@@ -322,7 +322,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       transition={{ duration: 0.2 }}
                                       className="overflow-hidden"
                                     >
-                                      <div className="px-4 pb-3.5 border-t border-canvas-100/80">
+                                      <div className="px-4 pb-3.5 border-t border-stone-300">
                                         {loadingWord === word.word ? (
                                           <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                             <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
