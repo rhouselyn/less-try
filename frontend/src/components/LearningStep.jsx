@@ -112,7 +112,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileHover={{ scale: 1.15 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={(e) => { e.stopPropagation(); speakText(learningData.word, sourceLang) }}
-                  className="p-2 text-cadmium-600 hover:text-cadmium-600 hover:bg-cadmium-100 rounded-full transition-colors"
+                  className="p-2 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                 >
                   <Volume2 className="w-6 h-6" />
                 </motion.button>
@@ -140,7 +140,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-100 border-2 border-teal-500 text-teal-800' : 'bg-vermilion-100 border-2 border-vermilion-500 text-vermilion-800') : 'border-2 border-stone-400 bg-white text-umber-800 hover:border-cadmium-400 hover:bg-cadmium-50'}`}
+                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-100 border-2 border-teal-400 text-teal-700' : 'bg-vermilion-100 border-2 border-vermilion-400 text-vermilion-700') : 'border-2 border-stone-400 bg-white text-umber-800 hover:border-cadmium-400 hover:bg-cadmium-50'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && isCorrect && (
@@ -178,7 +178,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     whileHover={{ scale: 1.15 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={(e) => { e.stopPropagation(); speakText(learningData.word, sourceLang) }}
-                    className="p-2 text-cadmium-600 hover:text-cadmium-600 hover:bg-cadmium-100 rounded-full transition-colors"
+                    className="p-2 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                   >
                     <Volume2 className="w-6 h-6" />
                   </motion.button>
@@ -231,7 +231,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                       whileHover={{ scale: 1.15 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={(e) => { e.stopPropagation(); speakText(learningData.context, sourceLang) }}
-                      className="p-1.5 text-cadmium-600 hover:text-cadmium-600 hover:bg-cadmium-100 rounded-full transition-colors shrink-0 mt-1"
+                      className="p-1.5 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors shrink-0 mt-1"
                     >
                       <Volume2 className="w-4 h-4" />
                     </motion.button>
@@ -295,7 +295,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                             whileHover={{ scale: 1.15 }}
                             whileTap={{ scale: 0.97 }}
                             onClick={(e) => { e.stopPropagation(); speakText(example.sentence, sourceLang) }}
-                            className="p-1 text-cadmium-600 hover:text-cadmium-600 hover:bg-cadmium-100 rounded-full transition-colors shrink-0"
+                            className="p-1 text-cadmium-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors shrink-0"
                           >
                             <Volume2 className="w-3.5 h-3.5" />
                           </motion.button>
@@ -317,7 +317,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.memoryHint}
                   </h3>
-                  <p className="text-lg text-umber-600 leading-relaxed bg-cadmium-100 p-4 rounded-lg border border-cadmium-200">
+                  <p className="text-lg text-umber-600 leading-relaxed bg-cadmium-50 p-4 rounded-lg border border-cadmium-200">
                     {learningData.memory_hint}
                   </p>
                 </motion.div>

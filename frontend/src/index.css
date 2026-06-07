@@ -33,7 +33,7 @@ body {
 @layer components {
   /* 卡片基础 */
   .card-warm {
-    @apply bg-white/90 border border-stone-300 rounded-2xl shadow-impasto;
+    @apply bg-white/85 border border-stone-300 rounded-2xl shadow-impasto-sm;
   }
   .card-warm-hover {
     @apply card-warm hover:shadow-impasto hover:border-stone-400 transition-all duration-200;
@@ -69,13 +69,13 @@ body {
 
   /* 幽灵按钮 */
   .btn-ghost {
-    @apply text-umber-500 hover:text-umber-700 hover:bg-canvas-200
+    @apply text-umber-500 hover:text-umber-700 hover:bg-canvas-200/60
            rounded-xl px-3 py-2 transition-all duration-200 font-medium;
   }
 
   /* 输入框 */
   .input-warm {
-    @apply w-full px-4 py-3 rounded-2xl border border-stone-300 bg-white/80
+    @apply w-full px-4 py-3 rounded-2xl border border-stone-300 bg-white/70
            text-umber-700 placeholder-umber-400/60 focus:outline-none
            focus:border-cadmium-400 focus:shadow-glow-cadmium
            transition-all duration-200 hover:border-stone-400;
@@ -100,10 +100,10 @@ body {
     @apply px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200;
   }
   .tab-warm-active {
-    @apply tab-warm bg-white text-umber-700 shadow-impasto-sm;
+    @apply tab-warm bg-white/80 text-umber-700 shadow-impasto-sm;
   }
   .tab-warm-inactive {
-    @apply tab-warm text-umber-400 hover:text-umber-600 hover:bg-canvas-100;
+    @apply tab-warm text-umber-400 hover:text-umber-600 hover:bg-canvas-100/50;
   }
 
   /* 开关 */

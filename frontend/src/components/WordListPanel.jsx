@@ -14,7 +14,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
       transition={{ duration: 0.25, ease: 'easeInOut' }}
       className="overflow-hidden"
     >
-      <div className="px-5 pb-4 pt-2 border-t border-stone-300">
+      <div className="px-5 pb-4 pt-2 border-t border-canvas-100">
         {detailLoading ? (
           <div className="pt-4 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
@@ -41,7 +41,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                   {word.variants_detail.map((variant, index) => (
                     <div key={index} className="flex items-center gap-1.5">
-                      <span className="badge-ochre px-1.5 py-0.5 bg-cadmium-100 text-cadmium-600 rounded text-[11px] font-medium">
+                      <span className="badge-ochre px-1.5 py-0.5 bg-cadmium-50 text-cadmium-500 rounded text-[11px] font-medium">
                         {variant.type}
                       </span>
                       <span className="text-umber-600 text-[13px]">{variant.form}</span>
@@ -59,13 +59,13 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                 </h3>
                 <div className="space-y-1">
                   {word.examples.slice(0, 3).map((ex, i) => (
-                    <div key={i} className="border-l-2 border-cadmium-300 pl-2.5">
+                    <div key={i} className="border-l-2 border-cadmium-200 pl-2.5">
                       <div className="flex items-start gap-1.5">
                         <p className="text-umber-700 text-[13px] leading-snug flex-1">{ex.sentence}</p>
                         {ex.sentence && (
                           <button
                             onClick={(e) => { e.stopPropagation(); speakText(ex.sentence, sourceLang) }}
-                            className="p-0.5 text-cadmium-500 hover:text-cadmium-600 hover:bg-cadmium-100 rounded transition-colors shrink-0"
+                            className="p-0.5 text-cadmium-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded transition-colors shrink-0"
                           >
                             <Volume2 className="w-3 h-3" />
                           </button>
@@ -86,7 +86,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                   <Lightbulb className="w-3 h-3 text-cadmium-500" />
                   {t.memoryHint || '记忆辅助'}
                 </h3>
-                <p className="text-[13px] text-umber-600 leading-relaxed bg-cadmium-100 px-3 py-2 rounded-lg border border-cadmium-200">
+                <p className="text-[13px] text-umber-600 leading-relaxed bg-cadmium-50/70 px-3 py-2 rounded-lg border border-cadmium-100">
                   {word.memory_hint}
                 </p>
               </div>
@@ -321,7 +321,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     return (
       <div className="flex h-full">
         {allLetterIndex.length > 1 && !searchQuery && (
-          <div className="flex flex-col items-center gap-px py-1 border-r border-stone-300 bg-canvas-100 shrink-0 w-5">
+          <div className="flex flex-col items-center gap-px py-1 border-r border-canvas-100 bg-canvas-50/50 shrink-0 w-5">
             {allLetterIndex.map(letter => {
               const onCurrentPage = letterIndex.includes(letter)
               return (
@@ -343,7 +343,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>
           {groupedWords.map(([letter, groupWords]) => (
             <div key={letter} id={`letter-${letter}`}>
-              <div className="sticky top-0 z-10 px-5 py-1.5 bg-canvas-100 backdrop-blur-sm border-b border-stone-300">
+              <div className="sticky top-0 z-10 px-5 py-1.5 bg-canvas-50/90 backdrop-blur-sm border-b border-canvas-100">
                 <span className="label-warm text-xs font-bold text-umber-400 tracking-wider">{letter}</span>
                 <span className="text-[10px] text-stone-300 ml-1.5">{groupWords.length}</span>
               </div>
@@ -354,7 +354,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                     tabIndex={0}
                     onClick={() => handleWordClick(word.word)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleWordClick(word.word) }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-cadmium-50 transition-colors text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-canvas-50/80 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -417,13 +417,13 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
 
   if (onBack) {
     return (
-      <div className="h-full flex flex-col bg-canvas-50 rounded-2xl border border-stone-300 shadow-impasto overflow-hidden min-h-0">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-300 bg-cerulean-50">
+      <div className="h-full flex flex-col bg-canvas-50 rounded-2xl border border-stone-300 shadow-impasto-sm overflow-hidden min-h-0">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-300 bg-gradient-to-r from-cadmium-50 to-canvas-50">
           <div className="flex items-center gap-2.5">
             <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-cadmium-500' : 'text-cadmium-500 hover:text-cadmium-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
             <span className="text-base font-semibold font-display text-umber-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
-              <span className="badge-ochre text-xs text-cerulean-600 bg-cerulean-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+              <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
             )}
           </div>
           <button
@@ -435,7 +435,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
           </button>
         </div>
 
-        <div className="px-4 py-3 border-b border-stone-300">
+        <div className="px-4 py-3 border-b border-canvas-100">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />
             <input
@@ -469,13 +469,13 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-100 rounded-2xl border border-stone-300 hover:border-cadmium-200/60 transition-all shadow-impasto"
+        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-300 hover:border-cadmium-200/60 transition-all shadow-impasto-sm"
       >
         <div className="flex items-center gap-2.5">
           <BookOpen className="w-4 h-4 text-cadmium-500" />
           <span className="text-sm font-semibold font-display text-umber-700">{t.vocabOverview || '词汇总览'}</span>
           {!isOpen && words.length > 0 && (
-            <span className="badge-ochre text-xs text-cerulean-600 bg-cerulean-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+            <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
           )}
         </div>
         <motion.div
@@ -495,8 +495,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="mt-3 bg-canvas-100 rounded-2xl border border-stone-300 shadow-impasto">
-              <div className="p-4 border-b border-stone-300">
+            <div className="mt-3 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-300 shadow-impasto-sm">
+              <div className="p-4 border-b border-canvas-100">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />
                   <input
