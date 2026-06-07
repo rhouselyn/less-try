@@ -83,7 +83,7 @@ body {
 
   /* 标签 */
   .label-warm {
-    @apply block text-[11px] font-semibold text-umber-400 mb-1.5 uppercase tracking-widest;
+    @apply block text-[11px] font-bold text-cadmium-700 mb-1.5 uppercase tracking-widest;
   }
 
   /* 进度条 */
