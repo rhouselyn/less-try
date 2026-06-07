@@ -151,24 +151,24 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     }, [])
 
     return (
-      <div className="flex items-center justify-center gap-0.5 py-1.5 border-t border-stone-300 bg-canvas-200 shrink-0">
+      <div className="flex items-center justify-center gap-0.5 py-1.5 border-t border-stone-300 bg-canvas-100 shrink-0">
         <button
           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
-          className={`p-1 rounded transition-colors ${currentPage <= 1 ? 'text-stone-300 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}
+          className={`p-1 rounded transition-colors ${currentPage <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}
         >
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
         {pages.map((p, i) =>
           p === '...' ? (
-            <span key={`dots-${i}`} className="text-[10px] text-stone-400 px-0.5">…</span>
+            <span key={`dots-${i}`} className="text-[10px] text-stone-300 px-0.5">…</span>
           ) : (
             <button
               key={p}
               onClick={() => setCurrentPage(p)}
               className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
                 currentPage === p
-                  ? 'bg-cadmium-200 text-cadmium-700 font-semibold'
+                  ? 'bg-cadmium-100 text-cadmium-500 font-semibold'
                   : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'
               }`}
             >
@@ -179,7 +179,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
         <button
           onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
           disabled={currentPage >= totalPages}
-          className={`p-1 rounded transition-colors ${currentPage >= totalPages ? 'text-stone-300 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}
+          className={`p-1 rounded transition-colors ${currentPage >= totalPages ? 'text-stone-200 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}
         >
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -189,13 +189,13 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-white/90 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
-        <div className="px-5 py-3.5 border-b border-stone-300 bg-canvas-200">
+      <div className="bg-white/80 border border-stone-300 rounded-3xl shadow-impasto-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
+        <div className="px-5 py-3.5 border-b border-stone-300 bg-canvas-100">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-cadmium-500" />
               <h2 className="text-sm font-semibold font-display text-umber-700">{t.vocabList || '单词表'}</h2>
-              <span className="badge-ochre text-xs px-2 py-0.5 rounded-full bg-cadmium-200 text-cadmium-700">
+              <span className="badge-ochre text-xs px-2 py-0.5 rounded-full bg-cadmium-100 text-cadmium-500">
                 {vocab.length}
               </span>
               {searchQuery && filteredVocab.length !== vocab.length && (
@@ -211,15 +211,15 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
           </div>
         </div>
 
-        <div className="px-4 py-2 border-b border-stone-200">
+        <div className="px-4 py-2 border-b border-canvas-100">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-300" />
             <input
               type="text"
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1) }}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-3 py-1.5 bg-white/80 border border-stone-300 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-cadmium-300/60 focus:border-cadmium-400 transition-all"
+              className="input-warm w-full pl-9 pr-3 py-1.5 bg-white/70 border border-stone-300 rounded-lg text-[13px] text-umber-700 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-cadmium-200/60 focus:border-cadmium-300/60 transition-all"
             />
           </div>
         </div>
@@ -232,7 +232,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
             </div>
           ) : filteredVocab.length === 0 ? (
             <div className="flex-1 py-16 text-center">
-              <BookOpen className="w-10 h-10 mx-auto mb-3 text-stone-300" />
+              <BookOpen className="w-10 h-10 mx-auto mb-3 text-stone-200" />
               <p className="text-umber-400 text-sm">
                 {searchQuery ? (t.noMatchFound || '没有找到匹配的单词') : (t.noWordsYet || '暂无单词')}
               </p>
@@ -240,7 +240,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
           ) : (
             <>
               {allLetterIndex.length > 1 && !searchQuery && (
-                <div className="flex flex-col items-center gap-px py-1 border-r border-stone-300 bg-canvas-200 w-5 shrink-0 overflow-y-auto">
+                <div className="flex flex-col items-center gap-px py-1 border-r border-stone-300 bg-canvas-100 w-5 shrink-0 overflow-y-auto">
                   {allLetterIndex.map(letter => {
                     const onCurrentPage = letterIndex.includes(letter)
                     return (
@@ -250,7 +250,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                         className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
                           onCurrentPage
                             ? 'text-umber-600 hover:text-cadmium-500 hover:bg-cadmium-50'
-                            : 'text-stone-400 hover:text-cadmium-500 hover:bg-cadmium-50/50'
+                            : 'text-stone-300/60 hover:text-cadmium-500 hover:bg-cadmium-50/50'
                         }`}
                       >
                         {letter}
@@ -268,9 +268,9 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: groupIdx * 0.04 }}
-                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-200 px-4 py-1.5 border-b border-stone-300 mb-1"
+                          className="sticky top-0 z-10 backdrop-blur-sm bg-canvas-50/80 px-4 py-1.5 border-b border-stone-200 mb-1"
                         >
-                          <span className="text-xs font-bold text-cadmium-700 tracking-widest">{letter}</span>
+                          <span className="text-xs font-bold text-cadmium-500/80 tracking-widest">{letter}</span>
                         </motion.div>
                         <div className="space-y-px">
                           {words.map((word, wordIdx) => {
@@ -283,11 +283,11 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                 ref={el => { wordRefs.current[word.word] = el }}
                                 initial={{ opacity: 0, y: 6 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="bg-white"
+                                className="bg-canvas-50"
                               >
                                 <button
                                   onClick={() => handleWordClick(word)}
-                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50 transition-colors group"
+                                  className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-cadmium-50/40 transition-colors group"
                                 >
                                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
                                     <span className="text-[14px] font-semibold text-umber-800 tracking-tight shrink-0">
@@ -299,7 +299,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       </span>
                                     )}
                                     {(enriched.morphology || word.morphology) && (
-                                      <span className="text-[10px] px-1.5 py-0.5 bg-canvas-200 text-umber-600 rounded font-medium tracking-wide shrink-0">
+                                      <span className="text-[10px] px-1.5 py-0.5 bg-canvas-100 text-umber-500 rounded font-medium tracking-wide shrink-0">
                                         {enriched.morphology || word.morphology}
                                       </span>
                                     )}
@@ -308,7 +308,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                     </span>
                                   </div>
                                   <Volume2
-                                    className="w-3.5 h-3.5 text-stone-400 hover:text-cadmium-500 shrink-0 transition-colors"
+                                    className="w-3.5 h-3.5 text-stone-300 hover:text-cadmium-500 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}
                                   />
                                 </button>
@@ -322,7 +322,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       transition={{ duration: 0.2 }}
                                       className="overflow-hidden"
                                     >
-                                      <div className="px-4 pb-3.5 border-t border-stone-200">
+                                      <div className="px-4 pb-3.5 border-t border-canvas-100/80">
                                         {loadingWord === word.word ? (
                                           <div className="pt-4 flex flex-col items-center justify-center gap-3">
                                             <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />

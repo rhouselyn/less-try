@@ -33,7 +33,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         className="max-w-3xl mx-auto"
       >
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-umber-500" />
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-umber-400" />
           <p className="text-lg text-umber-600">{t.loading}</p>
         </div>
       </motion.div>
@@ -107,7 +107,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
           {!isChecked && !isSkipped && (
             <motion.button
               onClick={handleSkipListening}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-umber-500 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-umber-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-lg transition-colors"
               whileTap={{ scale: 0.98 }}
               title={t.skipListening || '跳过听力'}
             >
@@ -128,13 +128,13 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
       </div>
 
-      <div className="bg-white/90 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm">
+      <div className="bg-white/80 border border-stone-300 rounded-3xl p-8 shadow-impasto-sm">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-cadmium-100 text-cadmium-700 rounded-full text-sm font-medium mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-cadmium-50 text-cadmium-500 rounded-full text-sm font-medium mb-4"
           >
             <Headphones className="w-4 h-4" />
             {t.listeningQuizTitle || '听力题'}
@@ -161,7 +161,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-umber-300 rounded-xl flex flex-wrap gap-2 bg-canvas-100 relative">
+          <div className="p-4 border-2 border-dashed border-stone-300 rounded-xl flex flex-wrap gap-2 bg-canvas-50/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {correctWords.map((_, i) => (
                 <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{correctWords[i]}</span>
@@ -183,10 +183,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                     className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
                       isChecked
                         ? isCorrect
-                          ? 'bg-teal-100 text-teal-700 border border-teal-500'
+                          ? 'bg-teal-50 text-teal-600 border border-teal-400'
                           : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
-                            ? 'bg-teal-100 text-teal-700 border border-teal-500'
-                            : 'bg-vermilion-100 text-vermilion-600 border border-vermilion-500'
+                            ? 'bg-teal-50 text-teal-600 border border-teal-400'
+                            : 'bg-vermilion-50 text-vermilion-500 border border-vermilion-400'
                         : 'bg-umber-600 text-white hover:bg-umber-700'
                     }`}
                     onClick={() => handleRemoveWord(pos)}
@@ -230,10 +230,10 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-teal-100 border-2 border-teal-500' : 'bg-vermilion-100 border-2 border-vermilion-500'}`}
+            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-teal-100 border-2 border-teal-400' : 'bg-vermilion-100 border-2 border-vermilion-400'}`}
           >
             <div className="flex items-center gap-3 mb-2">
-              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-teal-700" /> : <XCircle className="w-6 h-6 text-vermilion-600" />}
+              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-teal-600" /> : <XCircle className="w-6 h-6 text-vermilion-500" />}
               <span className={`font-semibold text-lg ${isCorrect ? 'text-teal-700' : 'text-vermilion-700'}`}>
                 {isSkipped ? (t.skipped || '已跳过') : isCorrect ? t.correct : t.incorrect}
               </span>
