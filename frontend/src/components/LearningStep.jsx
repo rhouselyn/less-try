@@ -140,7 +140,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-100 border-2 border-teal-400 text-teal-700' : 'bg-vermilion-100 border-2 border-vermilion-400 text-vermilion-700') : 'border-2 border-stone-400 bg-white text-umber-800 hover:border-cadmium-400 hover:bg-cadmium-50'}`}
+                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-teal-100 border-2 border-teal-400 text-teal-700' : 'bg-vermilion-100 border-2 border-vermilion-400 text-vermilion-700') : 'border-2 border-stone-300 bg-white text-umber-800 hover:border-cadmium-400 hover:bg-cadmium-50'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && isCorrect && (
@@ -206,7 +206,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
-                <div className="bg-canvas-100 -mx-3 px-6 py-5 rounded-2xl border border-stone-300">
+                <div className="bg-canvas-200 -mx-3 px-6 py-5 rounded-2xl border border-stone-300">
                 <p className="text-lg text-umber-600 leading-relaxed">
                   {learningData.enriched_meaning || learningData.correct_meaning}
                 </p>
@@ -222,7 +222,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.context}
                   </h3>
-                  <div className="bg-cadmium-100 -mx-3 px-6 py-5 rounded-2xl border border-cadmium-300">
+                  <div className="bg-cadmium-50 -mx-3 px-6 py-5 rounded-2xl border border-cadmium-300">
                   <div className="flex items-start gap-2">
                     <p className="text-lg text-umber-600 leading-relaxed italic flex-1">
                       {learningData.context}
@@ -245,7 +245,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
-                  className="bg-cadmium-200 p-5 rounded-2xl border border-cadmium-400"
+                  className="bg-cadmium-100 p-5 rounded-2xl border border-cadmium-300"
                 >
                   <h4 className="text-sm font-medium text-cadmium-500 mb-2">{t.contextMeaning || '上下文释义'}</h4>
                   <p className="text-umber-600">{learningData.meaning || learningData.context_meaning}</p>
@@ -285,10 +285,10 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.examples}
                   </h3>
-                  <div className="bg-teal-50 -mx-3 px-6 py-5 rounded-2xl border border-teal-200">
+                  <div className="bg-teal-50 -mx-3 px-6 py-5 rounded-2xl border border-teal-300">
                   <div className="space-y-4">
                     {learningData.examples.map((example, index) => (
-                      <div key={index} className="border-l-4 border-teal-400 pl-4">
+                      <div key={index} className="border-l-4 border-teal-500 pl-4">
                         <div className="flex items-start gap-2">
                           <p className="text-umber-800 mb-1 flex-1">{example.sentence}</p>
                           <motion.button
@@ -317,7 +317,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-bold text-umber-600 uppercase tracking-wider mb-3">
                     {t.memoryHint}
                   </h3>
-                  <p className="text-lg text-umber-600 leading-relaxed bg-cadmium-50 p-4 rounded-lg border border-cadmium-200">
+                  <p className="text-lg text-umber-600 leading-relaxed bg-cadmium-100 p-4 rounded-lg border border-cadmium-300">
                     {learningData.memory_hint}
                   </p>
                 </motion.div>

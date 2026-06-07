@@ -14,7 +14,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
       transition={{ duration: 0.25, ease: 'easeInOut' }}
       className="overflow-hidden"
     >
-      <div className="px-5 pb-4 pt-2 border-t border-canvas-100">
+      <div className="px-5 pb-4 pt-2 border-t border-stone-200">
         {detailLoading ? (
           <div className="pt-4 flex flex-col items-center justify-center gap-3">
             <Loader2 className="w-5 h-5 animate-spin text-cadmium-500" />
@@ -41,7 +41,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                 <div className="flex flex-wrap gap-x-3 gap-y-1">
                   {word.variants_detail.map((variant, index) => (
                     <div key={index} className="flex items-center gap-1.5">
-                      <span className="badge-ochre px-1.5 py-0.5 bg-cadmium-50 text-cadmium-500 rounded text-[11px] font-medium">
+                      <span className="badge-ochre px-1.5 py-0.5 bg-cadmium-200 text-cadmium-700 rounded text-[11px] font-medium">
                         {variant.type}
                       </span>
                       <span className="text-umber-600 text-[13px]">{variant.form}</span>
@@ -283,14 +283,14 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const renderPagination = () => {
     if (totalPages <= 1) return null
     return (
-      <div className="flex items-center justify-center gap-1 py-2 border-t border-stone-300 bg-canvas-100">
+      <div className="flex items-center justify-center gap-1 py-2 border-t border-stone-300 bg-canvas-200">
         <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1}
-          className={`p-1 rounded transition-colors ${page <= 1 ? 'text-stone-200 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}>
+          className={`p-1 rounded transition-colors ${page <= 1 ? 'text-stone-300 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}>
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
         <span className="text-[11px] text-umber-400 px-2">{page} / {totalPages}</span>
         <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
-          className={`p-1 rounded transition-colors ${page >= totalPages ? 'text-stone-200 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}>
+          className={`p-1 rounded transition-colors ${page >= totalPages ? 'text-stone-300 cursor-not-allowed' : 'text-umber-400 hover:text-umber-600 hover:bg-canvas-100'}`}>
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
       </div>
@@ -310,7 +310,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     if (filteredWords.length === 0) {
       return (
         <div className="py-16 text-center">
-          <BookOpen className="w-8 h-8 text-stone-200 mx-auto mb-2" />
+          <BookOpen className="w-8 h-8 text-stone-300 mx-auto mb-2" />
           <p className="text-sm text-umber-400">
             {searchQuery ? (t.noMatchFound || '未找到匹配的单词') : (t.noWordsYetHint || '暂无单词，开始学习后将自动收录')}
           </p>
@@ -321,7 +321,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     return (
       <div className="flex h-full">
         {allLetterIndex.length > 1 && !searchQuery && (
-          <div className="flex flex-col items-center gap-px py-1 border-r border-canvas-100 bg-canvas-50/50 shrink-0 w-5">
+          <div className="flex flex-col items-center gap-px py-1 border-r border-stone-300 bg-canvas-200 shrink-0 w-5">
             {allLetterIndex.map(letter => {
               const onCurrentPage = letterIndex.includes(letter)
               return (
@@ -331,7 +331,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                   className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors leading-tight ${
                     onCurrentPage
                       ? 'text-umber-600 hover:text-cadmium-500 hover:bg-cadmium-50'
-                      : 'text-stone-300/60 hover:text-cadmium-500 hover:bg-cadmium-50/50'
+                      : 'text-stone-400 hover:text-cadmium-500 hover:bg-cadmium-50/50'
                   }`}
                 >
                   {letter}
@@ -343,18 +343,18 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>
           {groupedWords.map(([letter, groupWords]) => (
             <div key={letter} id={`letter-${letter}`}>
-              <div className="sticky top-0 z-10 px-5 py-1.5 bg-canvas-50/90 backdrop-blur-sm border-b border-canvas-100">
-                <span className="label-warm text-xs font-bold text-umber-400 tracking-wider">{letter}</span>
-                <span className="text-[10px] text-stone-300 ml-1.5">{groupWords.length}</span>
+              <div className="sticky top-0 z-10 px-5 py-1.5 bg-canvas-200 backdrop-blur-sm border-b border-stone-300">
+                <span className="label-warm text-xs font-bold text-cadmium-700 tracking-wider">{letter}</span>
+                <span className="text-[10px] text-stone-400 ml-1.5">{groupWords.length}</span>
               </div>
               {groupWords.map((word) => (
-                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="border-b border-canvas-50 last:border-b-0">
+                <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="border-b border-stone-200 last:border-b-0">
                   <div
                     role="button"
                     tabIndex={0}
                     onClick={() => handleWordClick(word.word)}
                     onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleWordClick(word.word) }}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-canvas-50/80 transition-colors text-left cursor-pointer"
+                    className="w-full flex items-center gap-3 px-5 py-2.5 hover:bg-cadmium-50 transition-colors text-left cursor-pointer"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
@@ -365,7 +365,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                           </span>
                         )}
                         {word.part_of_speech && (
-                          <span className="badge-ochre text-[10px] px-1.5 py-0.5 bg-canvas-100 text-umber-500 rounded font-medium">
+                          <span className="badge-ochre text-[10px] px-1.5 py-0.5 bg-canvas-200 text-umber-600 rounded font-medium">
                             {word.part_of_speech}
                           </span>
                         )}
@@ -380,7 +380,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                       ) : expandedWord === word.word ? (
                         <button
                           onClick={(e) => { e.stopPropagation(); handleRegenerateWord(word.word) }}
-                          className="p-1.5 text-stone-300 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
+                          className="p-1.5 text-stone-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                           title={t.regenerate || '重新生成'}
                         >
                           <RefreshCw className="w-3.5 h-3.5" />
@@ -388,7 +388,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                       ) : null}
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
-                        className="p-1.5 text-stone-300 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
+                        className="p-1.5 text-stone-400 hover:text-cadmium-500 hover:bg-cadmium-50 rounded-full transition-colors"
                       >
                         <Volume2 className="w-3.5 h-3.5" />
                       </button>
@@ -418,12 +418,12 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   if (onBack) {
     return (
       <div className="h-full flex flex-col bg-canvas-50 rounded-2xl border border-stone-300 shadow-impasto-sm overflow-hidden min-h-0">
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-300 bg-gradient-to-r from-cadmium-50 to-canvas-50">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-300 bg-canvas-200">
           <div className="flex items-center gap-2.5">
             <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-cadmium-500' : 'text-cadmium-500 hover:text-cadmium-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
             <span className="text-base font-semibold font-display text-umber-800">{t.vocabOverview || '词汇总览'}</span>
             {!loading && words.length > 0 && (
-              <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+              <span className="badge-ochre text-xs text-umber-600 bg-canvas-200 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
             )}
           </div>
           <button
@@ -435,15 +435,15 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
           </button>
         </div>
 
-        <div className="px-4 py-3 border-b border-canvas-100">
+        <div className="px-4 py-3 border-b border-stone-200">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-9 py-2 text-sm bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
+              className="input-warm w-full pl-9 pr-9 py-2 text-sm bg-white/80 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-300 focus:border-transparent placeholder-stone-400 transition-all"
             />
             {searchQuery && (
               <button
@@ -469,13 +469,13 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         whileHover={{ scale: 1.01 }}
         whileTap={{ scale: 0.98 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-300 hover:border-cadmium-200/60 transition-all shadow-impasto-sm"
+        className="w-full flex items-center justify-between px-5 py-3.5 bg-canvas-100 backdrop-blur-sm rounded-2xl border border-stone-300 hover:border-cadmium-200/60 transition-all shadow-impasto-sm"
       >
         <div className="flex items-center gap-2.5">
           <BookOpen className="w-4 h-4 text-cadmium-500" />
           <span className="text-sm font-semibold font-display text-umber-700">{t.vocabOverview || '词汇总览'}</span>
           {!isOpen && words.length > 0 && (
-            <span className="badge-ochre text-xs text-umber-400 bg-canvas-100 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
+            <span className="badge-ochre text-xs text-umber-600 bg-canvas-200 px-2 py-0.5 rounded-full">{words.length} {t.wordCount || '词'}</span>
           )}
         </div>
         <motion.div
@@ -495,16 +495,16 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="mt-3 bg-canvas-50/80 backdrop-blur-sm rounded-2xl border border-stone-300 shadow-impasto-sm">
-              <div className="p-4 border-b border-canvas-100">
+            <div className="mt-3 bg-canvas-100 backdrop-blur-sm rounded-2xl border border-stone-300 shadow-impasto-sm">
+              <div className="p-4 border-b border-stone-200">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-umber-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-                    className="input-warm w-full pl-9 pr-9 py-2.5 text-sm bg-white/70 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-400 focus:border-transparent placeholder-umber-400 transition-all"
+                    className="input-warm w-full pl-9 pr-9 py-2.5 text-sm bg-white/80 border border-stone-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-cadmium-300 focus:border-transparent placeholder-stone-400 transition-all"
                   />
                   {searchQuery && (
                     <button
