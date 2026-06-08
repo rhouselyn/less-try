@@ -92,13 +92,13 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
       </div>
 
-      <div className="bg-cream-50 border border-bone-200 rounded-3xl p-8 shadow-warm-sm">
+      <div className="bg-cream-50 border border-bone-200 rounded-none p-8 shadow-warm-sm">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-ochre-50 text-ochre-500 rounded-full text-sm font-medium mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-ochre-50 text-ochre-500 rounded-none text-sm font-medium mb-4"
           >
             <Languages className="w-4 h-4" />
             {t.translationReconstructionTitle || '翻译还原'}
@@ -115,10 +115,10 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-bone-300 rounded-xl flex flex-wrap gap-2 bg-cream-50/50 relative">
+          <div className="p-4 border-2 border-dashed border-bone-300 rounded-none flex flex-wrap gap-2 bg-cream-50/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {data.original_tokens.map((_, i) => (
-                <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{data.original_tokens[i]}</span>
+                <span key={`ph-${i}`} className="px-4 py-2 rounded-none text-sm font-medium">{data.original_tokens[i]}</span>
               ))}
               <span className="ml-auto p-2"><Lightbulb className="w-5 h-5" /></span>
             </div>
@@ -139,7 +139,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                       exit={{ opacity: 0, scale: 0 }}
                       transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                       onClick={() => handleSelectedClick(idx)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                      className={`px-4 py-2 rounded-none text-sm font-medium cursor-pointer select-none ${
                         answerChecked
                           ? isCorrect
                             ? 'bg-moss-50 text-moss-600 border border-moss-400'
@@ -158,7 +158,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
-                className="ml-auto p-2 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded-full transition-colors"
+                className="ml-auto p-2 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded-none transition-colors"
                 title={t.playHint || '播放提示'}
               >
                 <Lightbulb className="w-5 h-5" />
@@ -179,7 +179,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                   transition={{ duration: 0.15 }}
                   onClick={() => handleTokenSelect(token, idx)}
                   disabled={isSelected || answerChecked}
-                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                  className={`px-4 py-2 rounded-none text-sm font-medium select-none ${
                     isSelected
                       ? 'pointer-events-none invisible'
                       : answerChecked
@@ -198,7 +198,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-moss-50 border-2 border-moss-400' : 'bg-ember-50 border-2 border-ember-400'}`}
+            className={`p-5 rounded-none mb-6 ${isCorrect ? 'bg-moss-50 border-2 border-moss-400' : 'bg-ember-50 border-2 border-ember-400'}`}
           >
             <div className="flex items-center gap-3 mb-2">
               {isCorrect ? <CheckCircle2 className="w-6 h-6 text-moss-600" /> : <XCircle className="w-6 h-6 text-ember-500" />}
@@ -224,7 +224,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={checkAnswer}
               disabled={selectedTokens.length === 0}
-              className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 btn-primary text-lg rounded-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}
             </motion.button>
@@ -234,7 +234,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={handleNext}
               disabled={loading}
-              className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 btn-primary text-lg rounded-none disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

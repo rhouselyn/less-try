@@ -55,7 +55,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
                   {example.sentence && (
                     <button
                       onClick={(e) => { e.stopPropagation(); speakText(example.sentence, sourceLang) }}
-                      className="p-0.5 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded transition-colors shrink-0"
+                      className="p-0.5 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded-none transition-colors shrink-0"
                     >
                       <Volume2 className="w-3 h-3" />
                     </button>
@@ -76,7 +76,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
             <Lightbulb className="w-3 h-3 text-ochre-500" />
             {t.memoryHint}
           </h3>
-          <p className="text-[13px] text-ink-600 leading-relaxed bg-ochre-50/70 px-3 py-2 rounded-lg border border-ochre-100">
+          <p className="text-[13px] text-ink-600 leading-relaxed bg-ochre-50/70 px-3 py-2 rounded-none border-2 border-ochre-400">
             {word.memory_hint}
           </p>
         </div>
@@ -92,7 +92,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
             {word.context_sentences.map((cs, index) => (
               <div
                 key={index}
-                className={`border-l-2 border-ochre-300 pl-2.5 rounded-r transition-colors ${disableContextSentenceClick ? '' : 'cursor-pointer hover:bg-cream-50'}`}
+                className={`border-l-2 border-ochre-300 pl-2.5 rounded-none transition-colors ${disableContextSentenceClick ? '' : 'cursor-pointer hover:bg-cream-50'}`}
                 onClick={() => !disableContextSentenceClick && onSentenceClick && cs.sentence_index !== undefined && onSentenceClick(cs.sentence_index)}
               >
                 <div className="flex items-start gap-1.5">
@@ -100,7 +100,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
                   {cs.sentence && (
                     <button
                       onClick={(e) => { e.stopPropagation(); speakText(cs.sentence, sourceLang) }}
-                      className="p-0.5 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded transition-colors shrink-0"
+                      className="p-0.5 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded-none transition-colors shrink-0"
                     >
                       <Volume2 className="w-3 h-3" />
                     </button>

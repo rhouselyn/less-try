@@ -49,7 +49,7 @@ function LangIcon({ langCode, size = 'md' }) {
   const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : size === 'lg' ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-[10px]'
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-md font-bold text-white leading-none ${sizeClasses}`}
+      className={`inline-flex items-center justify-center rounded-none font-bold text-white leading-none ${sizeClasses}`}
       style={{ backgroundColor: color }}
     >
       {code}
@@ -294,7 +294,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-none border transition-all duration-200 text-left group ${
             open
               ? 'border-ochre-200 bg-ochre-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
               : 'border-bone-200 bg-cream-100 hover:border-bone-300 hover:shadow-warm-sm'
@@ -329,7 +329,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className={`absolute z-50 mt-2 bg-cream-50 rounded-2xl border border-bone-200 shadow-xl shadow-ink-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
+            className={`absolute z-50 mt-2 bg-cream-50 rounded-none border border-bone-200 shadow-warm-xl shadow-ink-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
           >
             <div className="p-3 border-b border-cream-100">
               <div className="relative">
@@ -339,7 +339,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t.searchLanguages || '搜索语言...'}
-                  className="w-full pl-9 pr-8 py-2 rounded-lg bg-cream-50 border border-cream-100 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300 focus:bg-cream-50 transition-colors"
+                  className="w-full pl-9 pr-8 py-2 rounded-none bg-transparent border-2 border-ochre-400 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:bg-ochre-400/5 transition-colors"
                 />
                 {search && (
                   <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-bone-200 transition-colors">
@@ -477,7 +477,7 @@ function ModeSelector({ mode, setMode, t }) {
             key={key}
             type="button"
             onClick={() => setMode(key)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-none text-xs font-medium transition-all duration-200 ${
               isActive ? 'bg-cream-200/80 text-ink-700' : 'text-ink-400 hover:text-ink-500 hover:bg-cream-100'
             }`}
           >
@@ -543,11 +543,11 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
           transition={{ duration: 0.5, delay: 0.1 }}
           className="flex items-center gap-3 mb-3"
         >
-          <div className="w-14 h-14 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
+          <div className="w-14 h-14 bg-ochre-400 rounded-none flex items-center justify-center shadow-warm-sm">
             <FrogLogo size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-display font-bold text-ink-800 leading-tight">
+            <h1 className="text-3xl font-serif font-bold text-ink-800 leading-tight">
               {t.title || '呱邻国'}
             </h1>
             <p className="text-sm text-ink-400">{t.subtitle || 'Gualingo'}</p>
@@ -565,7 +565,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
 
       {/* Bottom area - input box */}
       <div className="w-full max-w-2xl mx-auto pb-4 px-4">
-        <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
+        <div className="relative bg-cream-50 border-2 border-ochre-400 rounded-none shadow-warm overflow-hidden">
           {/* Mode tabs at top of input */}
           <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
@@ -588,10 +588,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
                 whileTap={{ scale: 0.95 }}
                 onClick={onProcess}
                 disabled={loading || !text.trim()}
-                className={`p-2 rounded-xl transition-all duration-200 ${
+                className={`p-2 rounded-none transition-all duration-200 ${
                   loading || !text.trim()
                     ? 'bg-cream-100 text-ink-400 cursor-not-allowed'
-                    : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25'
+                    : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-warm-lg hover:shadow-ochre-500/25'
                 }`}
               >
                 <AnimatePresence mode="wait">

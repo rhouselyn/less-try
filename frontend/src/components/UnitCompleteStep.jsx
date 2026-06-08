@@ -17,13 +17,13 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
           onClick={onSkipReview}
-          className="absolute -top-2 left-0 z-10 flex items-center gap-1.5 btn-ghost text-xs border border-bone-200 hover:border-bone-300 backdrop-blur-sm"
+          className="absolute -top-2 left-0 z-10 flex items-center gap-1.5 btn-ghost text-xs border border-bone-200 hover:border-bone-300"
         >
           <X className="w-3 h-3" />
           {t.skipReview || '不想复习了'}
         </motion.button>
       )}
-      <div className="bg-cream-50 border border-bone-200 rounded-3xl p-12 shadow-warm text-center">
+      <div className="bg-cream-50 border-2 border-ochre-400 rounded-none p-12 shadow-warm text-center font-serif">
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -37,7 +37,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="text-3xl font-bold font-display text-ink-800 mb-4"
+          className="text-3xl font-bold font-serif text-ink-800 mb-4"
         >
           🎉 {t.unitComplete || '单元完成！'}
         </motion.h2>
@@ -91,7 +91,7 @@ function UnitCompleteStep({ unitNumber, totalUnits, phase, onContinue, onReview,
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}
-            className="mb-8 p-4 bg-ochre-50 border border-ochre-200 rounded-xl"
+            className="mb-8 p-4 bg-ochre-50 border-2 border-ochre-400 rounded-none"
           >
             <div className="flex items-center gap-2 justify-center mb-2">
               <RotateCcw className="w-4 h-4 text-ochre-500" />

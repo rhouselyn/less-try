@@ -24,7 +24,7 @@ function PhaseProgressStep({ units, currentUnit, phaseNumber, onUnitClick, onBac
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold font-display text-ink-700 mb-4"
+          className="text-3xl font-semibold font-serif text-ink-700 mb-4"
         >
           {phaseNumber === 1 ? t.phase1 : t.phase2}
         </motion.h2>
@@ -49,9 +49,9 @@ function PhaseProgressStep({ units, currentUnit, phaseNumber, onUnitClick, onBac
               <button
                 onClick={() => onUnitClick(unit.unit_id)}
                 disabled={!unit.completed && index !== currentUnit}
-                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-moss-50 border-moss-200' : index === currentUnit ? 'bg-ochre-50 border-ochre-300 hover:shadow-warm-sm' : 'bg-cream-100 border-bone-200 cursor-not-allowed opacity-50'}`}
+                className={`w-full p-6 border-2 rounded-none transition-all ${unit.completed ? 'bg-moss-50 border-moss-200' : index === currentUnit ? 'bg-ochre-50 border-ochre-300 hover:shadow-warm-sm' : 'bg-cream-100 border-bone-200 cursor-not-allowed opacity-50'}`}
               >
-                <h3 className="text-xl font-semibold font-display text-ink-800 mb-2">
+                <h3 className="text-xl font-semibold font-serif text-ink-800 mb-2">
                   {t.unit} {unit.unit_id + 1}
                 </h3>
                 <p className="text-ink-600">{unit.sentences_count} sentences</p>

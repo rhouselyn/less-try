@@ -95,14 +95,14 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-cream-50 border border-bone-200 rounded-3xl p-8 shadow-warm-sm"
+            className="bg-cream-50 border border-bone-200 rounded-none p-8 shadow-warm-sm"
           >
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <motion.h2
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-4xl font-semibold font-display text-ink-700"
+                  className="text-4xl font-semibold font-serif text-ink-700"
                 >
                   {learningData.word}
                 </motion.h2>
@@ -140,7 +140,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   whileTap={{ scale: 0.98 }}
                   onClick={() => onOptionSelect(index)}
                   disabled={selectedOption !== null && isCorrect}
-                  className={`w-full py-3 px-4 text-left rounded-lg transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-ember-50 border border-ember-400 text-ember-500') : 'border border-bone-200 bg-cream-50 text-ink-800 hover:border-ochre-300'}`}
+                  className={`w-full py-3 px-4 text-left rounded-none transition-all ${selectedOption === index ? (isCorrect ? 'bg-moss-50 border border-moss-400 text-moss-600' : 'bg-ember-50 border border-ember-400 text-ember-500') : 'border border-bone-200 bg-cream-50 text-ink-800 hover:border-ochre-300'}`}
                 >
                   <div className="flex items-center gap-3">
                     {selectedOption === index && isCorrect && (
@@ -160,7 +160,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="bg-cream-50 border border-bone-200 rounded-3xl p-8 shadow-warm-sm"
+            className="bg-cream-50 border border-bone-200 rounded-none p-8 shadow-warm-sm"
           >
             <div className="flex items-start justify-between mb-8">
               <div>
@@ -168,7 +168,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <motion.h2
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-4xl font-semibold font-display text-ink-700"
+                    className="text-4xl font-semibold font-serif text-ink-700"
                   >
                     {learningData.word}
                   </motion.h2>
@@ -241,7 +241,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
-                  className="bg-ochre-50 p-4 rounded-lg border border-ochre-200"
+                  className="bg-ochre-50 p-4 rounded-none border border-ochre-200"
                 >
                   <h4 className="text-sm font-medium text-ochre-500 mb-2">{t.contextMeaning || '上下文释义'}</h4>
                   <p className="text-ink-600">{learningData.meaning || learningData.context_meaning}</p>
@@ -260,7 +260,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <div className="space-y-2">
                     {learningData.variants_detail.map((variant, index) => (
                       <div key={index} className="flex items-center gap-2">
-                        <span className="px-2 py-1 bg-cream-100 text-ink-700 rounded text-sm font-medium">
+                        <span className="px-2 py-1 bg-cream-100 text-ink-700 rounded-none text-sm font-medium">
                           {variant.type}
                         </span>
                         <span className="text-ink-700">{variant.form}</span>
@@ -309,7 +309,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-semibold text-ink-400 uppercase tracking-wider mb-3">
                     {t.memoryHint}
                   </h3>
-                  <p className="text-lg text-ink-600 leading-relaxed bg-ochre-50 p-4 rounded-lg border border-ochre-200">
+                  <p className="text-lg text-ink-600 leading-relaxed bg-ochre-50 p-4 rounded-none border border-ochre-200">
                     {learningData.memory_hint}
                   </p>
                 </motion.div>

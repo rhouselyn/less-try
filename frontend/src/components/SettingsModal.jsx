@@ -50,20 +50,20 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl border border-bone-200 bg-cream-50 hover:bg-cream-100 transition-colors text-sm"
+        className="w-full flex items-center gap-2 px-3 py-2 rounded-none border border-bone-200 bg-cream-50 hover:bg-cream-100 transition-colors text-sm"
       >
         <LangIcon langCode={value} size="sm" />
         <span className="text-ink-800 flex-1 text-left">{selectedLang?.native || value}</span>
         <ChevronDown className={`w-3.5 h-3.5 text-bone-300 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-cream-50 rounded-xl border border-bone-200 shadow-xl overflow-hidden">
+        <div className="absolute z-50 mt-1 w-full bg-cream-50 rounded-none border border-bone-200 shadow-warm-xl overflow-hidden">
           <div className="p-2 border-b border-cream-100">
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search..."
-              className="w-full px-2 py-1.5 rounded-lg bg-cream-50 border border-cream-100 text-xs text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300"
+              className="w-full px-2 py-1.5 rounded-none bg-cream-50 border border-cream-100 text-xs text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300"
               autoFocus
             />
           </div>
@@ -290,7 +290,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-start justify-end p-6 bg-ink-800/40 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-start justify-end p-6 bg-ink-800/40"
         onClick={onClose}
       >
         <motion.div
@@ -298,17 +298,17 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15 }}
-          className="bg-cream-50 border border-bone-200 rounded-3xl shadow-warm-xl w-[340px] overflow-hidden mt-2"
+          className="bg-cream-50 border border-bone-200 rounded-none shadow-warm-xl w-[340px] overflow-hidden mt-2"
           onClick={e => e.stopPropagation()}
         >
           <div className="flex items-center justify-between px-5 py-4 border-b border-cream-100">
             <div className="flex items-center gap-2.5">
               <Settings className="w-4 h-4 text-ink-500" />
-              <h2 className="font-display text-xs font-semibold text-ink-800">{t.settings || '设置'}</h2>
+              <h2 className="font-serif text-xs font-semibold text-ink-800">{t.settings || '设置'}</h2>
             </div>
             <button
               onClick={onClose}
-              className="btn-ghost p-1 text-ink-400 hover:text-ink-600 rounded-md transition-colors"
+              className="btn-ghost p-1 text-ink-400 hover:text-ink-600 rounded-none transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -341,7 +341,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                     <button
                       onClick={goPrev}
                       disabled={isFirst}
-                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg transition-all ${
+                      className={`flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-none transition-all ${
                         isFirst
                           ? 'text-bone-200 cursor-not-allowed'
                           : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100 active:scale-90'
@@ -350,7 +350,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                       <ChevronLeft className="w-4 h-4" />
                     </button>
 
-                    <div className="flex-1 min-w-0 overflow-hidden rounded-2xl border border-bone-200 bg-cream-50/50">
+                    <div className="flex-1 min-w-0 overflow-hidden rounded-none border border-bone-200 bg-cream-50/50">
                       <AnimatePresence mode="wait" custom={direction}>
                         <motion.div
                           key={currentIndex}
@@ -373,7 +373,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                               value={current?.api_key || ''}
                               onChange={e => updateConfig(currentIndex, 'api_key', e.target.value)}
                               placeholder={current?.masked_key || 'sk-...'}
-                              className="input-warm w-full px-3 py-2 text-xs bg-cream-50 border border-bone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ochre-200 focus:border-ochre-300 transition-all placeholder:text-ink-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-cream-50 border border-bone-200 rounded-none focus:outline-none focus:ring-2 focus:ring-ochre-200 focus:border-ochre-300 transition-all placeholder:text-ink-400"
                             />
                             {current?.has_key && !current?.api_key && (
                               <p className="text-[11px] text-ink-400 mt-1">{t.leaveEmptyKeepKey || '留空则保持当前 Key 不变'}</p>
@@ -390,7 +390,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                               value={current?.base_url || ''}
                               onChange={e => updateConfig(currentIndex, 'base_url', e.target.value)}
                               placeholder="https://api.siliconflow.cn/v1"
-                              className="input-warm w-full px-3 py-2 text-xs bg-cream-50 border border-bone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ochre-200 focus:border-ochre-300 transition-all placeholder:text-ink-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-cream-50 border border-bone-200 rounded-none focus:outline-none focus:ring-2 focus:ring-ochre-200 focus:border-ochre-300 transition-all placeholder:text-ink-400"
                             />
                           </div>
 
@@ -404,7 +404,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                               value={current?.model || ''}
                               onChange={e => updateConfig(currentIndex, 'model', e.target.value)}
                               placeholder="Qwen/Qwen3.6-27B"
-                              className="input-warm w-full px-3 py-2 text-xs bg-cream-50 border border-bone-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ochre-200 focus:border-ochre-300 transition-all placeholder:text-ink-400"
+                              className="input-warm w-full px-3 py-2 text-xs bg-cream-50 border border-bone-200 rounded-none focus:outline-none focus:ring-2 focus:ring-ochre-200 focus:border-ochre-300 transition-all placeholder:text-ink-400"
                             />
                           </div>
                         </motion.div>
@@ -414,14 +414,14 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                     {isLast ? (
                       <button
                         onClick={addConfig}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 transition-all active:scale-90"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-none text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 transition-all active:scale-90"
                       >
                         <Plus className="w-4 h-4" />
                       </button>
                     ) : (
                       <button
                         onClick={goNext}
-                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-lg text-ink-400 hover:text-ink-600 hover:bg-cream-100 transition-all active:scale-90"
+                        className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-none text-ink-400 hover:text-ink-600 hover:bg-cream-100 transition-all active:scale-90"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -524,7 +524,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                 whileTap={{ scale: 0.99 }}
                 onClick={handleSave}
                 disabled={saving}
-                className="btn-primary w-full py-2.5 bg-ink-800 text-white text-xs font-medium rounded-2xl hover:bg-ink-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
+                className="btn-primary w-full py-2.5 bg-ink-800 text-white text-xs font-medium rounded-none hover:bg-ink-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-2"
               >
                 {saving ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

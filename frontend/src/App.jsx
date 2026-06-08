@@ -1229,13 +1229,13 @@ function App() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowSettings(true)}
-                    className="absolute top-3 right-4 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-xl transition-colors z-10"
+                    className="absolute top-3 right-4 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-none transition-colors z-10"
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>
                   {translatingUI && (
-                    <div className="absolute inset-0 bg-cream-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
-                      <div className="flex items-center gap-3 bg-cream-50 border border-bone-200 rounded-2xl px-6 py-4 shadow-warm">
+                    <div className="absolute inset-0 bg-cream-50/80 z-20 flex items-center justify-center">
+                      <div className="flex items-center gap-3 bg-cream-50 border-2 border-ochre-400 rounded-none px-6 py-4 shadow-warm">
                         <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
                         <span className="text-sm text-ink-600">{
                           (customTranslations[uiLang]?.translatingUI)

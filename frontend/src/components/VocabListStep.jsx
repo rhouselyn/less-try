@@ -155,7 +155,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
         <button
           onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
           disabled={currentPage <= 1}
-          className={`p-1 rounded transition-colors ${currentPage <= 1 ? 'text-bone-200 cursor-not-allowed' : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100'}`}
+          className={`p-1 rounded-none transition-colors ${currentPage <= 1 ? 'text-bone-200 cursor-not-allowed' : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100'}`}
         >
           <ChevronLeft className="w-3.5 h-3.5" />
         </button>
@@ -166,7 +166,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
             <button
               key={p}
               onClick={() => setCurrentPage(p)}
-              className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded transition-colors ${
+              className={`min-w-[22px] h-[22px] flex items-center justify-center text-[10px] rounded-none transition-colors ${
                 currentPage === p
                   ? 'bg-ochre-100 text-ochre-500 font-semibold'
                   : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100'
@@ -179,7 +179,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
         <button
           onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
           disabled={currentPage >= totalPages}
-          className={`p-1 rounded transition-colors ${currentPage >= totalPages ? 'text-bone-200 cursor-not-allowed' : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100'}`}
+          className={`p-1 rounded-none transition-colors ${currentPage >= totalPages ? 'text-bone-200 cursor-not-allowed' : 'text-ink-400 hover:text-ink-600 hover:bg-cream-100'}`}
         >
           <ChevronRight className="w-3.5 h-3.5" />
         </button>
@@ -189,13 +189,13 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="bg-cream-50 border border-bone-200/80 rounded-3xl shadow-warm-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full">
+      <div className="bg-cream-50 border-2 border-ochre-400 rounded-none shadow-warm-sm overflow-hidden flex flex-col max-w-2xl max-h-[85vh] w-full font-serif">
         <div className="px-5 py-3.5 border-b border-bone-200/80 bg-cream-50/60">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-ochre-500" />
-              <h2 className="text-sm font-semibold font-display text-ink-700">{t.vocabList || '单词表'}</h2>
-              <span className="badge-ochre text-xs px-2 py-0.5 rounded-full bg-ochre-100 text-ochre-500">
+              <h2 className="text-sm font-semibold font-serif text-ink-700">{t.vocabList || '单词表'}</h2>
+              <span className="badge-ochre text-xs px-2 py-0.5 rounded-none bg-ochre-100 text-ochre-500">
                 {vocab.length}
               </span>
               {searchQuery && filteredVocab.length !== vocab.length && (
@@ -204,7 +204,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-ink-400 hover:text-ink-700 hover:bg-cream-100 rounded-lg transition-colors"
+              className="p-1.5 text-ink-400 hover:text-ink-700 hover:bg-cream-100 rounded-none transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -219,7 +219,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
               value={searchQuery}
               onChange={e => { setSearchQuery(e.target.value); setCurrentPage(1) }}
               placeholder={t.searchWordOrMeaning || '搜索单词或释义...'}
-              className="input-warm w-full pl-9 pr-3 py-1.5 bg-cream-50 border border-bone-200/80 rounded-lg text-[13px] text-ink-700 placeholder:text-bone-300 focus:outline-none focus:ring-2 focus:ring-ochre-200/60 focus:border-ochre-300/60 transition-all"
+              className="input-warm w-full pl-9 pr-3 py-1.5 bg-transparent border-2 border-ochre-400 rounded-none text-[13px] text-ink-700 font-serif placeholder:text-bone-300 focus:outline-none focus:bg-ochre-400/5 transition-colors duration-200"
             />
           </div>
         </div>
@@ -247,7 +247,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                       <button
                         key={letter}
                         onClick={() => scrollToLetter(letter)}
-                        className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded transition-colors shrink-0 ${
+                        className={`w-4 h-4 flex items-center justify-center text-[8px] font-semibold rounded-none transition-colors shrink-0 ${
                           onCurrentPage
                             ? 'text-ink-600 hover:text-ochre-500 hover:bg-ochre-50'
                             : 'text-bone-300/60 hover:text-ochre-500 hover:bg-ochre-50/50'
@@ -268,7 +268,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ delay: groupIdx * 0.04 }}
-                          className="sticky top-0 z-10 backdrop-blur-sm bg-cream-50/80 px-4 py-1.5 border-b border-bone-200/40 mb-1"
+                          className="sticky top-0 z-10 bg-cream-50/80 px-4 py-1.5 border-b border-bone-200/40 mb-1"
                         >
                           <span className="text-xs font-bold text-ochre-500/80 tracking-widest">{letter}</span>
                         </motion.div>
@@ -299,7 +299,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       </span>
                                     )}
                                     {(enriched.morphology || word.morphology) && (
-                                      <span className="text-[10px] px-1.5 py-0.5 bg-cream-100 text-ink-500 rounded font-medium tracking-wide shrink-0">
+                                      <span className="text-[10px] px-1.5 py-0.5 bg-cream-100 text-ink-500 rounded-none font-medium tracking-wide shrink-0">
                                         {enriched.morphology || word.morphology}
                                       </span>
                                     )}

@@ -98,7 +98,7 @@ function AllUnitsStep({
         whileTap={!isLocked ? { scale: 0.97 } : {}}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
-        className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
+        className={`relative flex flex-col items-center justify-center rounded-none transition-all duration-200 ${
           isCompleted
             ? 'bg-moss-50 border-moss-200/50 hover:bg-moss-50'
             : isLocked
@@ -135,7 +135,7 @@ function AllUnitsStep({
             {isGenerating ? (
               <Loader2 className="w-3 h-3 animate-spin text-ochre-300 mt-0.5" />
             ) : (
-              <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-ochre-400' : 'bg-ochre-300/60'}`} />
+              <div className={`w-4 h-[2px] rounded-none mt-0.5 ${isCurrent ? 'bg-ochre-400' : 'bg-ochre-300/60'}`} />
             )}
           </>
         )}
@@ -197,12 +197,12 @@ function AllUnitsStep({
           )}
         </div>
 
-        <div className="w-full h-1.5 bg-cream-100 rounded-full overflow-hidden mb-5">
+        <div className="w-full h-1.5 bg-cream-100 rounded-none overflow-hidden mb-5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className={`h-full rounded-full ${
+            className={`h-full rounded-none ${
               phaseNumber === 1 ? 'bg-moss-400' : 'bg-blue-400'
             }`}
           />
@@ -293,7 +293,7 @@ function AllUnitsStep({
 
       <div className="max-w-3xl mx-auto">
         <div className="mb-6 text-center">
-          <h2 className="text-xl font-semibold font-display text-ink-800">
+          <h2 className="text-xl font-semibold font-serif text-ink-800">
             {t.learningUnits || '学习单元'}
           </h2>
           <p className="text-xs text-ink-400 mt-1">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
@@ -305,11 +305,11 @@ function AllUnitsStep({
             <p className="text-xs text-ink-400">{t.loading}</p>
           </div>
         ) : (
-          <div className="bg-cream-50 rounded-3xl shadow-warm overflow-hidden">
-            <div className="bg-cream-100/70 backdrop-blur-md border-b border-bone-200/60 px-3 pt-2.5">
+          <div className="bg-cream-50 rounded-none shadow-warm overflow-hidden">
+            <div className="bg-cream-100/70 border-b border-bone-200/60 px-3 pt-2.5">
               <div className="flex gap-1 relative">
                 <motion.div
-                  className="absolute top-0 bottom-0 bg-cream-50 rounded-t-xl shadow-warm-sm"
+                  className="absolute top-0 bottom-0 bg-cream-50 rounded-t-none shadow-warm-sm"
                   style={{ width: 'calc(50% - 4px)' }}
                   animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
@@ -329,7 +329,7 @@ function AllUnitsStep({
                         <Icon className="w-3.5 h-3.5" />
                         <span>{tab.label}</span>
                         {tab.total > 0 && (
-                          <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors duration-300 ${
+                          <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-none transition-colors duration-300 ${
                             isActive ? 'bg-cream-100 text-ink-500' : 'text-ink-400'
                           }`}>
                             {tab.completed}/{tab.total}
