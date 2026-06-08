@@ -343,9 +343,9 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
         <div className="flex-1 min-w-0 overflow-y-auto" ref={listRef}>
           {groupedWords.map(([letter, groupWords]) => (
             <div key={letter} id={`letter-${letter}`}>
-              <div className="sticky top-0 z-10 px-5 py-1.5 bg-cream-50/90 border-b border-cream-100">
-                <span className="label-warm text-xs font-bold text-ink-400 tracking-wider">{letter}</span>
-                <span className="text-[10px] text-bone-300 ml-1.5">{groupWords.length}</span>
+              <div className="sticky top-0 z-10 px-5 py-1.5 bg-cream-50/90 border-b border-cream-100 flex items-baseline gap-1.5">
+                <span className="text-xs font-bold font-serif text-ink-400 tracking-wider uppercase">{letter}</span>
+                <span className="text-[10px] text-bone-300">{groupWords.length}</span>
               </div>
               {groupWords.map((word) => (
                 <div key={word.word} ref={el => { wordRefs.current[word.word] = el }} className="border-b border-cream-50 last:border-b-0">
