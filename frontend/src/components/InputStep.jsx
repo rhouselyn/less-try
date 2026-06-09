@@ -49,7 +49,7 @@ function LangIcon({ langCode, size = 'md' }) {
   const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : size === 'lg' ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-[10px]'
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-md font-bold text-white leading-none ${sizeClasses}`}
+      className={`inline-flex items-center justify-center rounded-2xl font-bold text-white leading-none ${sizeClasses}`}
       style={{ backgroundColor: color }}
     >
       {code}
@@ -279,25 +279,25 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 text-base font-medium text-ink-700 hover:text-ink-900 transition-colors"
+          className="btn-ghost flex items-center gap-1.5 text-base font-medium text-slate-700 hover:text-slate-800 transition-colors"
         >
           <span className="leading-none">
             {isAuto ? <LangIcon langCode="auto" size="md" /> : <LangIcon langCode={value} size="md" />}
           </span>
-          <span className="text-ink-800">{currentLabel}</span>
+          <span className="text-slate-800">{currentLabel}</span>
           {nativeLabel && nativeLabel !== currentLabel && (
-            <span className="text-xs text-ink-400">[{nativeLabel}]</span>
+            <span className="text-xs text-slate-400">[{nativeLabel}]</span>
           )}
-          <ChevronDown className={`w-3.5 h-3.5 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
       ) : (
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
+          className={`input-warm w-full flex items-center gap-3 px-5 py-3.5 bg-slate-50 border-0 rounded-2xl transition-all duration-200 text-left group focus:ring-2 focus:ring-soft-500/50 focus:bg-white ${
             open
-              ? 'border-ochre-200 bg-ochre-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-              : 'border-bone-200 bg-cream-100 hover:border-bone-300 hover:shadow-warm-sm'
+              ? 'bg-soft-50 shadow-[0_0_0_3px_rgba(99,102,241,0.1)]'
+              : 'hover:shadow-soft-md'
           }`}
         >
           {isAuto ? (
@@ -306,19 +306,19 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             <span className="leading-none"><LangIcon langCode={value} size="md" /></span>
           )}
           <div className="flex-1 min-w-0">
-            <span className="text-sm font-medium text-ink-800">
+            <span className="text-sm font-medium text-slate-800">
               {isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value}
             </span>
             {!isAuto && selectedLang && getSecondary(selectedLang) && (
-              <span className="text-xs text-ink-400 ml-2">{getSecondary(selectedLang)}</span>
+              <span className="text-xs text-slate-400 ml-2">{getSecondary(selectedLang)}</span>
             )}
             {isAuto && (
-              <span className="text-xs text-ink-400 ml-2">
+              <span className="text-xs text-slate-400 ml-2">
                 <Zap className="w-3 h-3 inline -mt-0.5" />
               </span>
             )}
           </div>
-          <ChevronDown className={`w-4 h-4 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
       )}
 
@@ -329,21 +329,21 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className={`absolute z-50 mt-2 bg-cream-50 rounded-2xl border border-bone-200 shadow-xl shadow-ink-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
+            className={`card-warm absolute z-50 mt-2 bg-white rounded-2xl border border-slate-200 shadow-soft-xl overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
           >
-            <div className="p-3 border-b border-cream-100">
+            <div className="p-3 border-b border-slate-100">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input
                   ref={searchRef}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t.searchLanguages || '搜索语言...'}
-                  className="w-full pl-9 pr-8 py-2 rounded-lg bg-cream-50 border border-cream-100 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300 focus:bg-cream-50 transition-colors"
+                  className="input-warm w-full pl-9 pr-8 py-2 rounded-2xl bg-slate-50 border-0 text-sm text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-soft-500/50 focus:bg-white transition-all duration-200"
                 />
                 {search && (
-                  <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-bone-200 transition-colors">
-                    <X className="w-3.5 h-3.5 text-ink-400" />
+                  <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-2xl hover:bg-slate-200 transition-colors">
+                    <X className="w-3.5 h-3.5 text-slate-400" />
                   </button>
                 )}
               </div>
@@ -351,18 +351,18 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
 
             <div className="max-h-72 overflow-y-auto overscroll-contain">
               {!search && (showAuto || recentLangs.length > 0) && (
-                <div className="border-b border-cream-100">
+                <div className="border-b border-slate-100">
                   {showAuto && (
                     <button
                       type="button"
                       onClick={() => handleSelect('auto')}
                       className={`w-full flex items-center gap-2.5 px-5 py-2 text-sm transition-colors ${
-                        isAuto ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                        isAuto ? 'bg-soft-50 text-soft-500' : 'text-slate-600 hover:bg-slate-50'
                       }`}
                     >
                       <LangIcon langCode="auto" size="sm" />
                       <span className={isAuto ? 'font-medium' : ''}>{autoLabel}</span>
-                      <span className="text-xs text-ink-400">
+                      <span className="text-xs text-slate-400">
                         <Zap className="w-3 h-3 inline -mt-0.5" />
                       </span>
                     </button>
@@ -373,19 +373,19 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                       type="button"
                       onClick={() => handleSelect(lang.value)}
                       className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                        value === lang.value ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                        value === lang.value ? 'bg-soft-50 text-soft-500' : 'text-slate-600 hover:bg-slate-50'
                       }`}
                     >
                       <LangIcon langCode={lang.value} size="sm" />
                       <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
-                      {getSecondary(lang) && <span className="text-xs text-ink-400">{getSecondary(lang)}</span>}
+                      {getSecondary(lang) && <span className="text-xs text-slate-400">{getSecondary(lang)}</span>}
                     </button>
                   ))}
                 </div>
               )}
 
               {Object.keys(groupedLanguages).length === 0 && (
-                <div className="py-8 text-center text-sm text-ink-400">
+                <div className="py-8 text-center text-sm text-slate-400">
                   {t.noLanguagesFound || '未找到语言'}
                 </div>
               )}
@@ -398,11 +398,11 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                     <button
                       type="button"
                       onClick={() => toggleFamily(family)}
-                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-ink-500 uppercase tracking-wider hover:bg-cream-50 transition-colors"
+                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-slate-500 uppercase tracking-wider hover:bg-slate-50 transition-colors"
                     >
                       {isCollapsed ? <ChevronRight className="w-3 h-3 flex-shrink-0" /> : <ChevronDown className="w-3 h-3 flex-shrink-0" />}
                       <span>{FAMILIES[family]}</span>
-                      <span className="text-bone-300 font-normal normal-case tracking-normal">{langs.length}</span>
+                      <span className="text-slate-400 font-normal normal-case tracking-normal">{langs.length}</span>
                     </button>
                     <AnimatePresence initial={false}>
                       {!isCollapsed && (
@@ -419,12 +419,12 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                               type="button"
                               onClick={() => handleSelect(lang.value)}
                               className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                                value === lang.value ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                                value === lang.value ? 'bg-soft-50 text-soft-500' : 'text-slate-600 hover:bg-slate-50'
                               }`}
                             >
                               <LangIcon langCode={lang.value} size="sm" />
                               <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
-                              {getSecondary(lang) && <span className="text-xs text-ink-400">{getSecondary(lang)}</span>}
+                              {getSecondary(lang) && <span className="text-xs text-slate-400">{getSecondary(lang)}</span>}
                             </button>
                           ))}
                         </motion.div>
@@ -477,8 +477,8 @@ function ModeSelector({ mode, setMode, t }) {
             key={key}
             type="button"
             onClick={() => setMode(key)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-              isActive ? 'bg-cream-200/80 text-ink-700' : 'text-ink-400 hover:text-ink-500 hover:bg-cream-100'
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-2xl text-xs font-medium transition-all duration-200 ${
+              isActive ? 'bg-soft-50 text-soft-600' : 'text-slate-400 hover:text-slate-500 hover:bg-slate-50'
             }`}
           >
             <Icon className="w-3 h-3" />
@@ -529,7 +529,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div className="flex flex-col h-full w-full bg-gradient-to-br from-slate-50 to-soft-50">
       {/* Top-left: language selector */}
       <div className="flex items-center gap-3 pt-3 px-4">
         <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} uiLang={uiLang} inputMode={inputMode} recentLanguages={recentLanguages} t={t} />
@@ -543,21 +543,21 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
           transition={{ duration: 0.5, delay: 0.1 }}
           className="flex items-center gap-3 mb-3"
         >
-          <div className="w-14 h-14 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
+          <div className="w-14 h-14 bg-soft-500 rounded-2xl flex items-center justify-center shadow-soft-md">
             <FrogLogo size={32} />
           </div>
           <div>
-            <h1 className="text-3xl font-display font-bold text-ink-800 leading-tight">
+            <h1 className="text-3xl font-display font-semibold text-slate-800 leading-tight">
               {t.title || '呱邻国'}
             </h1>
-            <p className="text-sm text-ink-400">{t.subtitle || 'Gualingo'}</p>
+            <p className="text-sm text-slate-400">{t.subtitle || 'Gualingo'}</p>
           </div>
         </motion.div>
         <motion.p
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="text-sm text-ink-300 text-center max-w-md"
+          className="text-sm text-slate-400 text-center max-w-md"
         >
           {t.tagline || '输入文本，开始你的语言学习之旅'}
         </motion.p>
@@ -565,9 +565,9 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
 
       {/* Bottom area - input box */}
       <div className="w-full max-w-2xl mx-auto pb-4 px-4">
-        <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
+        <div className="card-warm relative bg-white border border-slate-200 rounded-3xl shadow-soft-md overflow-hidden">
           {/* Mode tabs at top of input */}
-          <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
+          <div className="border-b border-slate-200/60 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
           </div>
 
@@ -578,7 +578,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
               onChange={(e) => setText(e.target.value)}
               placeholder={getPlaceholder()}
               rows={4}
-              className="w-full resize-none bg-transparent border-0 focus:ring-0 focus:outline-none px-4 py-3 text-sm text-ink-700 placeholder-ink-400 leading-relaxed"
+              className="input-warm w-full resize-none bg-slate-50 border-0 focus:ring-0 focus:outline-none px-5 py-3.5 text-sm text-slate-700 placeholder-slate-400 leading-relaxed rounded-2xl focus:ring-2 focus:ring-soft-500/50 focus:bg-white transition-all duration-200"
             />
 
             {/* Submit button inside textarea, bottom-right */}
@@ -588,10 +588,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
                 whileTap={{ scale: 0.95 }}
                 onClick={onProcess}
                 disabled={loading || !text.trim()}
-                className={`p-2 rounded-xl transition-all duration-200 ${
+                className={`btn-primary p-2 rounded-2xl font-semibold shadow-soft-lg hover:-translate-y-0.5 hover:shadow-soft-xl transition-all duration-200 ${
                   loading || !text.trim()
-                    ? 'bg-cream-100 text-ink-400 cursor-not-allowed'
-                    : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25'
+                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed shadow-none hover:translate-y-0'
+                    : 'bg-soft-500 text-white hover:bg-soft-600'
                 }`}
               >
                 <AnimatePresence mode="wait">

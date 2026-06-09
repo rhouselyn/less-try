@@ -24,37 +24,37 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold font-display text-ink-700 mb-4"
+          className="text-3xl font-semibold font-display text-slate-800 mb-4"
         >
           {t.progress}
         </motion.h2>
-        <p className="text-lg text-ink-600">
+        <p className="text-lg text-slate-500">
           {t.selectTokens}
         </p>
       </div>
 
       {loading ? (
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-ink-400" />
-          <p className="text-lg text-ink-600">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" />
+          <p className="text-lg text-slate-500">{t.loading}</p>
         </div>
       ) : allUnitsCompleted ? (
         <div className="text-center py-16">
           <motion.h2
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-3xl font-semibold font-display text-ink-700 mb-4"
+            className="text-3xl font-semibold font-display text-slate-800 mb-4"
           >
             🎉 {t.completed}
           </motion.h2>
-          <p className="text-lg text-ink-600 mb-8">{t.allUnitsComplete || '所有单元学习完成！'}</p>
+          <p className="text-lg text-slate-500 mb-8">{t.allUnitsComplete || '所有单元学习完成！'}</p>
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.01 }}
             whileTap={{ scale: 0.99 }}
             onClick={onBack}
-            className="btn-primary px-6 py-3"
+            className="btn-primary px-6 py-3 rounded-2xl font-semibold shadow-soft-lg hover:-translate-y-0.5 hover:shadow-soft-xl transition-all duration-200"
           >
             {t.backToVocab || '返回单词表'}
           </motion.button>
@@ -71,17 +71,17 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
               <button
                 onClick={() => onUnitClick(index)}
                 disabled={!unit.completed && index !== currentUnit}
-                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-moss-50 border-moss-200' : index === currentUnit ? 'bg-ochre-50 border-ochre-300 hover:shadow-warm-sm' : 'bg-cream-100 border-bone-200 cursor-not-allowed opacity-50'}`}
+                className={`w-full p-6 rounded-3xl transition-all duration-300 ${unit.completed ? 'bg-white border border-mint-500/30 shadow-soft-md hover:shadow-soft-xl hover:-translate-y-1' : index === currentUnit ? 'bg-white border border-soft-500/40 shadow-soft-md hover:shadow-soft-xl hover:-translate-y-1' : 'bg-slate-50 border border-slate-200/50 cursor-not-allowed opacity-50'}`}
               >
-                <h3 className="text-xl font-semibold font-display text-ink-800 mb-2">{t.unit} {index + 1}</h3>
-                <p className="text-ink-600">{unit.word_count} {t.wordLabel}</p>
+                <h3 className="text-xl font-semibold font-display text-slate-800 mb-2">{t.unit} {index + 1}</h3>
+                <p className="text-slate-500">{unit.word_count} {t.wordLabel}</p>
                 <div className="mt-4 text-sm font-medium">
                   {unit.completed ? (
-                    <span className="text-moss-600">{t.completed}</span>
+                    <span className="text-mint-600">{t.completed}</span>
                   ) : index === currentUnit ? (
-                    <span className="text-ochre-500">{t.startLearning}</span>
+                    <span className="text-soft-500">{t.startLearning}</span>
                   ) : (
-                    <span className="text-ink-400">{t.notStarted}</span>
+                    <span className="text-slate-400">{t.notStarted}</span>
                   )}
                 </div>
               </button>

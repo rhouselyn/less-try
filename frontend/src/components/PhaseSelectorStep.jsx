@@ -24,7 +24,7 @@ function PhaseSelectorStep({ phases, currentFileId, onPhaseSelect, onBack, loadi
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold font-display text-ink-700 mb-4"
+          className="text-3xl font-semibold font-display text-slate-800 mb-4"
         >
           {t.selectPhase}
         </motion.h2>
@@ -32,7 +32,7 @@ function PhaseSelectorStep({ phases, currentFileId, onPhaseSelect, onBack, loadi
 
       {loading ? (
         <div className="text-center py-16">
-          <p className="text-lg text-ink-600">{t.loading}</p>
+          <p className="text-lg text-slate-500">{t.loading}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -45,19 +45,19 @@ function PhaseSelectorStep({ phases, currentFileId, onPhaseSelect, onBack, loadi
             >
               <button
                 onClick={() => onPhaseSelect(phase.phase_number)}
-                className="w-full p-6 border border-bone-200 bg-cream-50 hover:border-ink-400 hover:shadow-warm-sm rounded-3xl transition-all"
+                className="w-full p-6 bg-white border border-slate-200/60 rounded-3xl shadow-soft-md hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300"
               >
-                <h3 className="text-xl font-semibold font-display text-ink-800 mb-2">
+                <h3 className="text-xl font-semibold font-display text-slate-800 mb-2">
                   {phase.phase_number === 1 ? t.phase1 : t.phase2}
                 </h3>
-                <p className="text-ink-600 mb-2">{phase.units_count} {t.unit}s</p>
+                <p className="text-slate-500 mb-2">{phase.units_count} {t.unit}s</p>
                 <div className="text-sm font-medium">
                   {phase.progress.current_unit > 0 ? (
-                    <span className="text-ochre-500">
+                    <span className="text-soft-500">
                       已完成 {phase.progress.current_unit}/{phase.units_count} {t.unit}s
                     </span>
                   ) : (
-                    <span className="text-ink-400">{t.notStarted}</span>
+                    <span className="text-slate-400">{t.notStarted}</span>
                   )}
                 </div>
               </button>
