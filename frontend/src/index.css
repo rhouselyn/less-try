@@ -9,12 +9,13 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  font-family: 'Bangers', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, cursive;
   background: #f0e6d3;
   color: #1a1a2e;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: 0.02em;
 }
 
 /* IPA Font Class */
@@ -41,7 +42,7 @@ body {
 
   /* 主按钮 - 鲜红赛璐璐 */
   .btn-primary {
-    @apply bg-[#e63946] hover:bg-[#c4303b] text-white font-black uppercase font-cel rounded-xl
+    @apply bg-[#e63946] hover:bg-[#c4303b] text-white font-black uppercase rounded-xl
            px-6 py-3 transition-all duration-150 shadow-cel
            border-[3px] border-[#1a1a2e]
            hover:shadow-cel-lg hover:translate-x-[-1px] hover:translate-y-[-1px]
@@ -51,7 +52,7 @@ body {
 
   /* 次要按钮 - 青绿 */
   .btn-secondary {
-    @apply bg-[#2a9d8f] hover:bg-[#22877b] text-white font-black uppercase font-cel rounded-xl
+    @apply bg-[#2a9d8f] hover:bg-[#22877b] text-white font-black uppercase rounded-xl
            border-[3px] border-[#1a1a2e] px-6 py-3 transition-all duration-150 shadow-cel
            hover:shadow-cel-lg hover:translate-x-[-1px] hover:translate-y-[-1px]
            active:translate-x-[1px] active:translate-y-[1px] active:shadow-cel-sm;
@@ -60,7 +61,7 @@ body {
   /* 幽灵按钮 */
   .btn-ghost {
     @apply text-[#1a1a2e] hover:text-[#e63946] hover:bg-[#f4a261]/20
-           rounded-xl px-3 py-2 transition-all duration-150 font-black uppercase font-cel;
+           rounded-xl px-3 py-2 transition-all duration-150 font-black uppercase;
   }
 
   /* 输入框 */
@@ -73,7 +74,7 @@ body {
 
   /* 标签 */
   .label-warm {
-    @apply block text-[11px] font-black text-[#1a1a2e] mb-1.5 uppercase tracking-widest font-cel;
+    @apply block text-[11px] font-black text-[#1a1a2e] mb-1.5 uppercase tracking-widest;
   }
 
   /* 进度条 */
@@ -86,7 +87,7 @@ body {
 
   /* 标签页 */
   .tab-warm {
-    @apply px-4 py-2 rounded-xl text-sm font-black uppercase font-cel transition-all duration-150 border-[3px] border-[#1a1a2e];
+    @apply px-4 py-2 rounded-xl text-sm font-black uppercase transition-all duration-150 border-[3px] border-[#1a1a2e];
   }
   .tab-warm-active {
     @apply tab-warm bg-[#e63946] text-white shadow-cel;
@@ -111,7 +112,7 @@ body {
 
   /* 小徽章 */
   .badge-warm {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black uppercase font-cel border-2 border-[#1a1a2e];
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black uppercase border-2 border-[#1a1a2e];
   }
   .badge-ochre {
     @apply badge-warm bg-[#e63946] text-white;
@@ -127,11 +128,6 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
-  }
-  /* 赛璐璐装饰字体 - 仅用于按钮、标签等非学习内容 */
-  .font-cel {
-    font-family: 'Bangers', 'PingFang SC', 'Microsoft YaHei', system-ui, cursive;
-    letter-spacing: 0.04em;
   }
 }
 
