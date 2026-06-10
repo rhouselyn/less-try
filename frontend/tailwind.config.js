@@ -8,9 +8,16 @@ export default {
     extend: {
       fontFamily: {
         sans: [
-          '"Bangers"',
+          '"Plus Jakarta Sans"',
           '"PingFang SC"',
           '"Hiragino Sans GB"',
+          '"Microsoft YaHei"',
+          'system-ui',
+          'sans-serif',
+        ],
+        cel: [
+          '"Bangers"',
+          '"PingFang SC"',
           '"Microsoft YaHei"',
           'system-ui',
           'cursive',
