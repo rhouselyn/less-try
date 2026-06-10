@@ -1267,7 +1267,7 @@ function App() {
             </div>
           </div>
         ) : (
-          <div ref={learningContainerRef} className="h-full overflow-y-auto bg-white px-4 sm:px-6 lg:px-8 py-4">
+          <div ref={learningContainerRef} className="h-full overflow-y-auto px-4 sm:px-6 lg:px-8 py-4">
             <AnimatePresence mode="wait">
           {step === 'dictionary' && (
             <DictionaryStep

@@ -95,7 +95,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="card-warm p-6 md:p-8"
+            className="card-warm"
           >
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-3 mb-2">
@@ -160,7 +160,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="card-warm p-6 md:p-8"
+            className="card-warm"
           >
             <div className="flex items-start justify-between mb-8">
               <div>
@@ -202,7 +202,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
               >
-                <h3 className="text-base font-semibold text-slate-500 mb-3 flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
@@ -217,7 +217,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <h3 className="text-base font-semibold text-slate-500 mb-3">
+                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
                     {t.context}
                   </h3>
                   <div className="flex items-start gap-2">
@@ -243,7 +243,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   transition={{ delay: 0.25 }}
                   className="bg-soft-50 p-4 rounded-2xl border border-soft-200"
                 >
-                  <h4 className="text-base font-semibold text-soft-500 mb-2">{t.contextMeaning || '上下文释义'}</h4>
+                  <h4 className="text-sm font-medium text-soft-500 mb-2">{t.contextMeaning || '上下文释义'}</h4>
                   <p className="text-slate-700">{learningData.meaning || learningData.context_meaning}</p>
                 </motion.div>
               )}
@@ -254,7 +254,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.25 }}
                 >
-                  <h3 className="text-base font-semibold text-slate-500 mb-3">
+                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
                     {t.variants}
                   </h3>
                   <div className="space-y-2">
@@ -276,7 +276,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <h3 className="text-base font-semibold text-slate-500 mb-3">
+                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
                     {t.examples}
                   </h3>
                   <div className="space-y-4">
@@ -306,7 +306,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <h3 className="text-base font-semibold text-slate-500 mb-3">
+                  <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider mb-3">
                     {t.memoryHint}
                   </h3>
                   <p className="text-lg text-slate-700 leading-relaxed bg-soft-50 p-4 rounded-2xl border border-soft-200">
