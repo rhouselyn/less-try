@@ -107,7 +107,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-lg text-[#1a1a2e] italic"
+              className="text-lg text-[#1a1a2e] italic font-sans font-bold"
             >
               {data.native_translation}
             </motion.p>
@@ -139,7 +139,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                       exit={{ opacity: 0, scale: 0 }}
                       transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                       onClick={() => handleSelectedClick(idx)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                      className={`px-4 py-2 rounded-full text-sm font-medium font-sans cursor-pointer select-none ${
                         answerChecked
                           ? isCorrect
                             ? 'bg-[#e6f5f3] text-moss-600 border-[3px] border-[#1a1a2e]'
@@ -179,7 +179,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                   transition={{ duration: 0.15 }}
                   onClick={() => handleTokenSelect(token, idx)}
                   disabled={isSelected || answerChecked}
-                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium font-sans select-none ${
                     isSelected
                       ? 'pointer-events-none invisible'
                       : answerChecked
@@ -205,7 +205,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               <span className={`font-black uppercase text-lg ${isCorrect ? 'text-moss-600' : 'text-ember-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
-              <p className="text-[#1a1a2e] font-medium">
+              <p className="text-[#1a1a2e] font-medium font-sans">
                 {t.correctAnswer || '正确答案'}：{data.original_tokens.join(' ')}
               </p>
             )}
