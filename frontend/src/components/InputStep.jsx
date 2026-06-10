@@ -529,14 +529,14 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-gradient-to-br from-slate-50 to-soft-50">
+    <div className="flex flex-col h-full w-full">
       {/* Top-left: language selector */}
-      <div className="flex items-center gap-3 pt-3 px-4">
+      <div className="flex items-center gap-3 pt-3 px-4 bg-gradient-to-br from-slate-50 to-soft-50">
         <LanguageSelector compact value={sourceLang} onChange={handleSourceLangChange} uiLang={uiLang} inputMode={inputMode} recentLanguages={recentLanguages} t={t} />
       </div>
 
       {/* Center content - brand logo and tagline */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 bg-gradient-to-br from-slate-50 to-soft-50">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -563,9 +563,9 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
         </motion.p>
       </div>
 
-      {/* Bottom area - input box */}
-      <div className="w-full max-w-2xl mx-auto pb-4 px-4">
-        <div className="card-warm relative bg-white border border-slate-200 rounded-3xl shadow-soft-md overflow-hidden">
+      {/* Bottom area - input box, white background to match card */}
+      <div className="w-full max-w-2xl mx-auto px-4 bg-white">
+        <div className="bg-white rounded-t-3xl shadow-soft-md overflow-hidden">
           {/* Mode tabs at top of input */}
           <div className="border-b border-slate-200/60 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
