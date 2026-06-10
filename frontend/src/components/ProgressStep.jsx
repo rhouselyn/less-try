@@ -24,35 +24,33 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold font-display text-ink-700 mb-4"
+          className="text-3xl font-black uppercase font-display text-[#1a1a2e] mb-4"
         >
           {t.progress}
         </motion.h2>
-        <p className="text-lg text-ink-600">
+        <p className="text-lg text-[#4a4a6a]">
           {t.selectTokens}
         </p>
       </div>
 
       {loading ? (
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-ink-400" />
-          <p className="text-lg text-ink-600">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-[#7a7a9a]" />
+          <p className="text-lg text-[#4a4a6a]">{t.loading}</p>
         </div>
       ) : allUnitsCompleted ? (
         <div className="text-center py-16">
           <motion.h2
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-3xl font-semibold font-display text-ink-700 mb-4"
+            className="text-3xl font-black uppercase font-display text-[#1a1a2e] mb-4"
           >
             🎉 {t.completed}
           </motion.h2>
-          <p className="text-lg text-ink-600 mb-8">{t.allUnitsComplete || '所有单元学习完成！'}</p>
+          <p className="text-lg text-[#4a4a6a] mb-8">{t.allUnitsComplete || '所有单元学习完成！'}</p>
           <motion.button
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
             onClick={onBack}
             className="btn-primary px-6 py-3"
           >
@@ -71,17 +69,17 @@ function ProgressStep({ units, currentUnit, onUnitClick, onBack, loading, t, all
               <button
                 onClick={() => onUnitClick(index)}
                 disabled={!unit.completed && index !== currentUnit}
-                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-moss-50 border-moss-200' : index === currentUnit ? 'bg-ochre-50 border-ochre-300 hover:shadow-warm-sm' : 'bg-cream-100 border-bone-200 cursor-not-allowed opacity-50'}`}
+                className={`w-full p-6 border-[3px] transition-all duration-150 ${unit.completed ? 'bg-[#e6fff5] border-[#06d6a0]' : index === currentUnit ? 'bg-[#fff0f6] border-[#ff006e] hover:shadow-[1px_1px_0_#1a1a2e] hover:translate-x-[2px] hover:translate-y-[2px]' : 'bg-[#f0f0ff] border-[#1a1a2e] cursor-not-allowed opacity-60'}`}
               >
-                <h3 className="text-xl font-semibold font-display text-ink-800 mb-2">{t.unit} {index + 1}</h3>
-                <p className="text-ink-600">{unit.word_count} {t.wordLabel}</p>
-                <div className="mt-4 text-sm font-medium">
+                <h3 className="text-xl font-black uppercase font-display text-[#1a1a2e] mb-2">{t.unit} {index + 1}</h3>
+                <p className="text-[#4a4a6a]">{unit.word_count} {t.wordLabel}</p>
+                <div className="mt-4 text-sm font-bold">
                   {unit.completed ? (
-                    <span className="text-moss-600">{t.completed}</span>
+                    <span className="text-[#06d6a0]">{t.completed}</span>
                   ) : index === currentUnit ? (
-                    <span className="text-ochre-500">{t.startLearning}</span>
+                    <span className="text-[#ff006e]">{t.startLearning}</span>
                   ) : (
-                    <span className="text-ink-400">{t.notStarted}</span>
+                    <span className="text-[#7a7a9a]">{t.notStarted}</span>
                   )}
                 </div>
               </button>

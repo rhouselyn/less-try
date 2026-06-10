@@ -17,49 +17,45 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-ink-800/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-[#1a1a2e]/50 backdrop-blur-sm"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.92, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 8 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="relative bg-cream-50 border border-bone-200 rounded-3xl shadow-warm-lg w-full max-w-sm overflow-hidden"
+            className="relative bg-white border-[3px] border-[#1a1a2e] shadow-[4px_4px_0_#1a1a2e] w-full max-w-sm overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <button
               onClick={onCancel}
-              className="absolute top-3.5 right-3.5 p-1 text-ink-400 hover:text-ink-500 rounded-md transition-colors"
+              className="absolute top-3.5 right-3.5 p-1 text-[#7a7a9a] hover:text-[#4a4a6a] border-[3px] border-[#1a1a2e] hover:bg-[#ff006e] hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
 
             <div className="px-6 pt-7 pb-2 text-center">
-              <div className="w-11 h-11 rounded-full bg-ochre-50 border border-ochre-100/80 flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="w-5 h-5 text-ochre-500" />
+              <div className="w-11 h-11 bg-[#fff0f5] border-[3px] border-[#ff006e] flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="w-5 h-5 text-[#ff006e]" />
               </div>
               {title && (
-                <h3 className="font-display text-[15px] font-semibold text-ink-700 mb-1.5">{title}</h3>
+                <h3 className="font-display text-[15px] font-black uppercase text-[#1a1a2e] mb-1.5">{title}</h3>
               )}
               {message && (
-                <p className="text-[13px] text-ink-500 leading-relaxed">{message}</p>
+                <p className="text-[13px] text-[#4a4a6a] leading-relaxed">{message}</p>
               )}
             </div>
 
             <div className="px-5 py-4 flex gap-2.5">
               <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={onCancel}
-                className="btn-secondary flex-1 py-2.5 text-[13px] font-medium text-ink-600 bg-cream-100 hover:bg-cream-200 rounded-2xl transition-colors"
+                className="btn-secondary flex-1 py-2.5 text-[13px] font-bold text-[#2d2d4a] bg-[#f0f0ff] hover:bg-[#e0e0f0] border-[3px] border-[#1a1a2e] transition-colors"
               >
                 {cancelText || '继续练习'}
               </motion.button>
               <motion.button
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.98 }}
                 onClick={onConfirm}
-                className="flex-1 py-2.5 text-[13px] font-semibold text-white bg-ember-400 hover:bg-ember-500 rounded-2xl transition-colors"
+                className="flex-1 py-2.5 text-[13px] font-black uppercase text-white bg-[#ef476f] hover:bg-[#cc0058] border-[3px] border-[#1a1a2e] transition-colors"
               >
                 {confirmText || '退出'}
               </motion.button>

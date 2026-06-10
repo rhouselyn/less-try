@@ -9,9 +9,9 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
-  background: #FBF7F0;
-  color: #3B3225;
+  font-family: 'Noto Sans SC', 'Microsoft YaHei', system-ui, sans-serif;
+  background: #ffffff;
+  color: #1a1a2e;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -29,94 +29,98 @@ body {
   letter-spacing: 0.01em;
 }
 
-/* 温暖奶油设计系统 - 全局组件样式 */
+/* 赛璐璐动画风设计系统 - 全局组件样式 */
 @layer components {
-  /* 卡片基础 */
+  /* 卡片基础 - 粗黑边框、硬阴影、无圆角 */
   .card-warm {
-    @apply bg-cream-50 border border-bone-200 rounded-3xl shadow-warm-sm;
+    @apply bg-white border-[3px] border-[#1a1a2e] shadow-[3px_3px_0_#1a1a2e];
   }
   .card-warm-hover {
-    @apply card-warm hover:shadow-warm hover:border-bone-300 transition-all duration-200;
+    @apply card-warm hover:shadow-[1px_1px_0_#1a1a2e] hover:translate-x-[2px] hover:translate-y-[2px] transition-all duration-150;
   }
 
-  /* 主按钮 - 赭石色 */
+  /* 主按钮 - 鲜艳粉色 */
   .btn-primary {
-    @apply bg-ochre-400 hover:bg-ochre-500 text-white font-semibold rounded-2xl
-           px-6 py-3 transition-all duration-200 shadow-warm-sm
-           hover:shadow-warm active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-[#ff006e] text-white font-black uppercase border-[3px] border-[#1a1a2e]
+           px-6 py-3 transition-all duration-150 shadow-[3px_3px_0_#1a1a2e]
+           hover:shadow-[1px_1px_0_#1a1a2e] hover:translate-x-[2px] hover:translate-y-[2px]
+           active:translate-x-[3px] active:translate-y-[3px] active:shadow-none
+           disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
-  /* 次要按钮 - 苔绿 */
+  /* 次要按钮 - 蓝色 */
   .btn-secondary {
-    @apply bg-moss-50 hover:bg-moss-100 text-moss-500 font-semibold rounded-2xl
-           border border-moss-200 px-6 py-3 transition-all duration-200
-           active:scale-[0.98];
+    @apply bg-[#3a86ff] text-white font-black uppercase border-[3px] border-[#1a1a2e]
+           px-6 py-3 transition-all duration-150 shadow-[3px_3px_0_#1a1a2e]
+           hover:shadow-[1px_1px_0_#1a1a2e] hover:translate-x-[2px] hover:translate-y-[2px]
+           active:translate-x-[3px] active:translate-y-[3px] active:shadow-none;
   }
 
   /* 幽灵按钮 */
   .btn-ghost {
-    @apply text-ink-500 hover:text-ink-700 hover:bg-cream-200/60
-           rounded-xl px-3 py-2 transition-all duration-200 font-medium;
+    @apply text-[#1a1a2e] font-bold border-[3px] border-transparent
+           px-3 py-2 transition-all duration-150
+           hover:border-[#1a1a2e] hover:shadow-[2px_2px_0_#1a1a2e];
   }
 
-  /* 输入框 */
+  /* 输入框 - 粗黑边框 */
   .input-warm {
-    @apply w-full px-4 py-3 rounded-2xl border border-bone-200 bg-cream-50
-           text-ink-700 placeholder-ink-400/60 focus:outline-none
-           focus:border-ochre-300 focus:shadow-glow-ochre
-           transition-all duration-200 hover:border-bone-300;
+    @apply w-full px-4 py-3 border-[3px] border-[#1a1a2e] bg-white
+           text-[#1a1a2e] placeholder-[#7a7a9a] focus:outline-none
+           focus:shadow-[3px_3px_0_#ff006e]
+           transition-all duration-150;
   }
 
   /* 标签 */
   .label-warm {
-    @apply block text-[11px] font-semibold text-ink-400 mb-1.5 uppercase tracking-widest;
+    @apply block text-xs font-black text-[#1a1a2e] mb-1.5 uppercase tracking-wider;
   }
 
-  /* 进度条 */
+  /* 进度条 - 无圆角 */
   .progress-warm {
-    @apply h-2 rounded-full bg-cream-200 overflow-hidden;
+    @apply h-3 bg-[#e0e0f0] border-[2px] border-[#1a1a2e] overflow-hidden;
   }
   .progress-warm-bar {
-    @apply h-full rounded-full bg-gradient-to-r from-ochre-300 to-ochre-400 transition-all duration-500 ease-out;
+    @apply h-full bg-[#ff006e] transition-all duration-300;
   }
 
   /* 标签页 */
   .tab-warm {
-    @apply px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200;
+    @apply px-4 py-2 font-black uppercase text-sm transition-all duration-150 border-[3px] border-transparent;
   }
   .tab-warm-active {
-    @apply tab-warm bg-cream-50 text-ink-700 shadow-warm-sm;
+    @apply tab-warm bg-white text-[#1a1a2e] border-[#1a1a2e] shadow-[2px_2px_0_#1a1a2e];
   }
   .tab-warm-inactive {
-    @apply tab-warm text-ink-400 hover:text-ink-500 hover:bg-cream-100/50;
+    @apply tab-warm text-[#7a7a9a] hover:text-[#1a1a2e] hover:border-[#1a1a2e];
   }
 
   /* 开关 */
   .toggle-warm {
-    @apply relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200;
+    @apply relative inline-flex h-6 w-11 items-center border-[3px] border-[#1a1a2e] transition-colors duration-150;
   }
   .toggle-warm-on {
-    @apply toggle-warm bg-ochre-400;
+    @apply toggle-warm bg-[#06d6a0];
   }
   .toggle-warm-off {
-    @apply toggle-warm bg-bone-300;
+    @apply toggle-warm bg-[#e0e0f0];
   }
   .toggle-warm-dot {
-    @apply inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200;
+    @apply inline-block h-4 w-4 transform bg-white border-[2px] border-[#1a1a2e] transition-transform duration-150;
   }
 
   /* 小徽章 */
   .badge-warm {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 font-black uppercase text-xs border-[2px] border-[#1a1a2e];
   }
   .badge-ochre {
-    @apply badge-warm bg-ochre-50 text-ochre-500;
+    @apply badge-warm bg-[#ff006e] text-white;
   }
   .badge-moss {
-    @apply badge-warm bg-moss-50 text-moss-500;
+    @apply badge-warm bg-[#06d6a0] text-white;
   }
   .badge-ember {
-    @apply badge-warm bg-ember-50 text-ember-400;
+    @apply badge-warm bg-[#ef476f] text-white;
   }
 }
 
@@ -128,21 +132,20 @@ body {
 
 /* 选中文字颜色 */
 ::selection {
-  background: #E8B985;
-  color: #2A2319;
+  background: #ff006e;
+  color: #ffffff;
 }
 
 /* 滚动条 */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: #f0f0ff;
 }
 ::-webkit-scrollbar-thumb {
-  background: #D6C29F;
-  border-radius: 3px;
+  background: #1a1a2e;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #C0AE8E;
+  background: #2d2d4a;
 }

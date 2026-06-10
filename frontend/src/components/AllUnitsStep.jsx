@@ -94,26 +94,24 @@ function AllUnitsStep({
         key={`${keyPrefix}-unit-${index}`}
         initial={false}
         animate={{ opacity: 1, y: 0 }}
-        whileHover={!isLocked ? { y: -2, transition: { duration: 0.15 } } : {}}
-        whileTap={!isLocked ? { scale: 0.97 } : {}}
         onClick={isLocked ? undefined : onClick}
         disabled={isLocked}
-        className={`relative flex flex-col items-center justify-center rounded-xl transition-all duration-200 ${
+        className={`relative flex flex-col items-center justify-center border-[3px] transition-all duration-150 ${
           isCompleted
-            ? 'bg-moss-50 border-moss-200/50 hover:bg-moss-50'
+            ? 'bg-[#06d6a0] text-white border-[#1a1a2e]'
             : isLocked
-            ? 'bg-cream-100 border-bone-200/30 cursor-not-allowed'
+            ? 'bg-[#e0e0f0] text-[#7a7a9a] border-[#b0b0c8] cursor-not-allowed'
             : isCurrent
-            ? 'bg-ochre-50 border-ochre-300/70 shadow-warm-sm'
-            : 'bg-ochre-50/40 border-ochre-200/40 hover:border-ochre-300/60'
+            ? 'bg-[#ff006e] text-white border-[#1a1a2e] shadow-[3px_3px_0_#1a1a2e]'
+            : 'bg-white border-[#1a1a2e] hover:border-[#ff006e]'
         }`}
         style={{ width: '5rem', height: '5rem' }}
       >
         {isLocked ? (
-          <Lock className="w-3.5 h-3.5 text-bone-300" />
+          <Lock className="w-3.5 h-3.5 text-[#b0b0c8]" />
         ) : isCompleted ? (
           <>
-            <span className="text-base font-semibold text-moss-600">{index + 1}</span>
+            <span className="text-base font-black uppercase text-white">{index + 1}</span>
             {typeof starCount === 'number' && (
               <div className="flex items-center justify-center gap-px mt-0.5">
                 {[0, 1, 2].map((i) => (
@@ -121,8 +119,8 @@ function AllUnitsStep({
                     key={i}
                     className={`w-3 h-3 ${
                       i < starCount
-                        ? 'text-ochre-400 fill-ochre-400'
-                        : 'text-bone-300 fill-bone-300'
+                        ? 'text-[#ffbe0b] fill-[#ffbe0b]'
+                        : 'text-[#e0e0f0] fill-[#e0e0f0]'
                     }`}
                   />
                 ))}
@@ -131,11 +129,11 @@ function AllUnitsStep({
           </>
         ) : (
           <>
-            <span className={`text-base font-semibold text-ochre-500`}>{index + 1}</span>
+            <span className={`text-base font-black uppercase ${isCurrent ? 'text-white' : 'text-[#ff006e]'}`}>{index + 1}</span>
             {isGenerating ? (
-              <Loader2 className="w-3 h-3 animate-spin text-ochre-300 mt-0.5" />
+              <Loader2 className="w-3 h-3 animate-spin text-white mt-0.5" />
             ) : (
-              <div className={`w-4 h-[2px] rounded-full mt-0.5 ${isCurrent ? 'bg-ochre-400' : 'bg-ochre-300/60'}`} />
+              <div className={`w-4 h-[2px] mt-0.5 ${isCurrent ? 'bg-white' : 'bg-[#ff006e]'}`} />
             )}
           </>
         )}
@@ -163,7 +161,7 @@ function AllUnitsStep({
     if (!units || units.length === 0 || (phaseNumber === 2 && units.length === 1 && units[0]?.no_eligible_sentences)) {
       return (
         <div className="py-12 text-center">
-          <p className="text-xs text-ink-400">{t.noPracticeContent || '暂无可练习内容'}</p>
+          <p className="text-xs text-[#7a7a9a]">{t.noPracticeContent || '暂无可练习内容'}</p>
         </div>
       );
     }
@@ -172,24 +170,24 @@ function AllUnitsStep({
       <div>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium text-ink-400 tabular-nums">{completed}<span className="text-bone-300">/{total}</span></span>
+            <span className="text-[11px] font-bold text-[#7a7a9a] tabular-nums">{completed}<span className="text-[#b0b0c8]">/{total}</span></span>
           </div>
           {totalPages > 1 && (
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                 disabled={currentPage === 0}
-                className="p-1 text-ink-400 hover:text-ink-600 disabled:text-bone-300 disabled:cursor-not-allowed transition-colors"
+                className="p-1 text-[#7a7a9a] hover:text-[#4a4a6a] disabled:text-[#b0b0c8] disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
               </button>
-              <span className="text-[11px] text-ink-400 tabular-nums min-w-[60px] text-center">
+              <span className="text-[11px] text-[#7a7a9a] tabular-nums min-w-[60px] text-center">
                 {currentPage + 1}/{totalPages}
               </span>
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
                 disabled={currentPage >= totalPages - 1}
-                className="p-1 text-ink-400 hover:text-ink-600 disabled:text-bone-300 disabled:cursor-not-allowed transition-colors"
+                className="p-1 text-[#7a7a9a] hover:text-[#4a4a6a] disabled:text-[#b0b0c8] disabled:cursor-not-allowed transition-colors"
               >
                 <ChevronRight className="w-3.5 h-3.5" />
               </button>
@@ -197,13 +195,13 @@ function AllUnitsStep({
           )}
         </div>
 
-        <div className="w-full h-1.5 bg-cream-100 rounded-full overflow-hidden mb-5">
+        <div className="w-full h-1.5 bg-[#f0f0ff] overflow-hidden mb-5">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className={`h-full rounded-full ${
-              phaseNumber === 1 ? 'bg-moss-400' : 'bg-blue-400'
+            className={`h-full ${
+              phaseNumber === 1 ? 'bg-[#06d6a0]' : 'bg-[#3a86ff]'
             }`}
           />
         </div>
@@ -241,7 +239,7 @@ function AllUnitsStep({
         </button>
 
         {fileTitle && (
-          <span className="text-base font-medium text-ink-500 truncate max-w-[240px]">
+          <span className="text-base font-bold text-[#4a4a6a] truncate max-w-[240px]">
             {fileTitle}
           </span>
         )}
@@ -249,7 +247,7 @@ function AllUnitsStep({
         <div className="flex-1 min-w-0" />
 
         <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
-          <span className="text-xs text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
+          <span className="text-xs text-[#7a7a9a] group-hover:text-[#4a4a6a] transition-colors flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             {t.onlyNewWords || '只学新词'}
           </span>
@@ -260,13 +258,13 @@ function AllUnitsStep({
               onChange={(e) => onOnlyNewWordsChange?.(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
+            <div className="toggle-warm-off peer-checked:bg-[#ff006e] peer-focus:outline-none" />
             <div className="absolute left-[2px] top-[3px] toggle-warm-dot peer-checked:translate-x-4" />
           </div>
         </label>
 
         <label className="flex items-center gap-1.5 cursor-pointer select-none group mr-1">
-          <span className="text-xs text-ink-400 group-hover:text-ink-600 transition-colors flex items-center gap-1">
+          <span className="text-xs text-[#7a7a9a] group-hover:text-[#4a4a6a] transition-colors flex items-center gap-1">
             <Headphones className="w-3 h-3" />
             {t.skipListening || '跳过听力'}
           </span>
@@ -277,7 +275,7 @@ function AllUnitsStep({
               onChange={(e) => onSkipListeningChange?.(e.target.checked)}
               className="sr-only peer"
             />
-            <div className="toggle-warm-off peer-checked:bg-ochre-400 peer-focus:outline-none" />
+            <div className="toggle-warm-off peer-checked:bg-[#ff006e] peer-focus:outline-none" />
             <div className="absolute left-[2px] top-[3px] toggle-warm-dot peer-checked:translate-x-4" />
           </div>
         </label>
@@ -293,23 +291,23 @@ function AllUnitsStep({
 
       <div className="max-w-3xl mx-auto">
         <div className="mb-6 text-center">
-          <h2 className="text-xl font-semibold font-display text-ink-800">
+          <h2 className="text-xl font-black uppercase font-display text-[#1a1a2e]">
             {t.learningUnits || '学习单元'}
           </h2>
-          <p className="text-xs text-ink-400 mt-1">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
+          <p className="text-xs text-[#7a7a9a] mt-1">{t.completeUnitsInOrder || '按顺序完成单元，解锁下一单元'}</p>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-ochre-400" />
-            <p className="text-xs text-ink-400">{t.loading}</p>
+            <Loader2 className="w-5 h-5 animate-spin text-[#ff006e]" />
+            <p className="text-xs text-[#7a7a9a]">{t.loading}</p>
           </div>
         ) : (
-          <div className="bg-cream-50 rounded-3xl shadow-warm overflow-hidden">
-            <div className="bg-cream-100/70 backdrop-blur-md border-b border-bone-200/60 px-3 pt-2.5">
+          <div className="bg-white border-[3px] border-[#1a1a2e] shadow-[3px_3px_0_#1a1a2e] overflow-hidden">
+            <div className="bg-[#f0f0ff] border-b-[3px] border-b-[#1a1a2e] px-3 pt-2.5">
               <div className="flex gap-1 relative">
                 <motion.div
-                  className="absolute top-0 bottom-0 bg-cream-50 rounded-t-xl shadow-warm-sm"
+                  className="absolute top-0 bottom-0 bg-white shadow-[2px_2px_0_#1a1a2e]"
                   style={{ width: 'calc(50% - 4px)' }}
                   animate={{ left: activeTab === 0 ? '2px' : 'calc(50% + 2px)' }}
                   transition={{ type: 'spring', stiffness: 500, damping: 35 }}
@@ -321,16 +319,16 @@ function AllUnitsStep({
                     <button
                       key={tab.key}
                       onClick={() => handleTabChange(i)}
-                      className="relative z-10 flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-medium"
+                      className="relative z-10 flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-[13px] font-bold"
                     >
                       <div className={`flex items-center gap-1.5 transition-colors duration-300 ${
-                        isActive ? 'text-ink-700' : 'text-ink-400 hover:text-ink-500'
+                        isActive ? 'text-[#1a1a2e]' : 'text-[#7a7a9a] hover:text-[#4a4a6a]'
                       }`}>
                         <Icon className="w-3.5 h-3.5" />
                         <span>{tab.label}</span>
                         {tab.total > 0 && (
-                          <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 rounded-full transition-colors duration-300 ${
-                            isActive ? 'bg-cream-100 text-ink-500' : 'text-ink-400'
+                          <span className={`ml-0.5 text-[10px] px-1.5 py-0.5 transition-colors duration-300 ${
+                            isActive ? 'bg-[#f0f0ff] text-[#4a4a6a]' : 'text-[#7a7a9a]'
                           }`}>
                             {tab.completed}/{tab.total}
                           </span>

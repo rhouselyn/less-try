@@ -15,7 +15,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   if (!data) {
     return (
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex items-center justify-center py-16">
-        <Loader2 className="w-5 h-5 animate-spin text-ochre-400" />
+        <Loader2 className="w-5 h-5 animate-spin text-[#ff006e]" />
       </motion.div>
     )
   }
@@ -67,8 +67,6 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           <motion.button
             onClick={onBack}
             className="flex items-center gap-2 btn-ghost"
-            whileHover={{ scale: 1.05, x: -2 }}
-            whileTap={{ scale: 0.95 }}
           >
             <ArrowLeft className="w-4 h-4" />
             {t.back}
@@ -76,14 +74,12 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-ink-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
+            <span className="text-sm text-[#4a4a6a] font-bold">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
           )}
           {onOpenVocabList && (
             <motion.button
               onClick={onOpenVocabList}
               className="flex items-center gap-2 btn-ghost"
-              whileHover={{ scale: 1.05, x: 2 }}
-              whileTap={{ scale: 0.95 }}
             >
               <BookOpen className="w-4 h-4" />
               {t.vocabList || '单词表'}
@@ -92,13 +88,13 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
       </div>
 
-      <div className="bg-cream-50 border border-bone-200 rounded-3xl p-8 shadow-warm-sm">
+      <div className="bg-white border-[3px] border-[#1a1a2e] p-8 shadow-[3px_3px_0_#1a1a2e]">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-ochre-50 text-ochre-500 rounded-full text-sm font-medium mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#fff0f5] text-[#cc0058] text-sm font-bold mb-4"
           >
             <Languages className="w-4 h-4" />
             {t.translationReconstructionTitle || '翻译还原'}
@@ -107,7 +103,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-lg text-ink-600 italic"
+              className="text-lg text-[#2d2d4a] italic"
             >
               {data.native_translation}
             </motion.p>
@@ -115,16 +111,16 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-bone-300 rounded-xl flex flex-wrap gap-2 bg-cream-50/50 relative">
+          <div className="p-4 border-[3px] border-dashed border-[#1a1a2e] flex flex-wrap gap-2 bg-[#f0f0ff] relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {data.original_tokens.map((_, i) => (
-                <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{data.original_tokens[i]}</span>
+                <span key={`ph-${i}`} className="px-4 py-2 text-sm font-bold">{data.original_tokens[i]}</span>
               ))}
               <span className="ml-auto p-2"><Lightbulb className="w-5 h-5" /></span>
             </div>
             <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-start content-start">
               {selectedTokens.length === 0 && (
-                <span className="italic text-ink-400 text-sm pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
+                <span className="italic text-[#7a7a9a] text-sm pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
               )}
               <AnimatePresence mode="popLayout">
                 {selectedTokens.map((item, idx) => {
@@ -139,14 +135,14 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                       exit={{ opacity: 0, scale: 0 }}
                       transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
                       onClick={() => handleSelectedClick(idx)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                      className={`px-4 py-2 text-sm font-bold cursor-pointer select-none border-[3px] border-[#1a1a2e] shadow-[2px_2px_0_#1a1a2e] ${
                         answerChecked
                           ? isCorrect
-                            ? 'bg-moss-50 text-moss-600 border border-moss-400'
+                            ? 'bg-[#06d6a0] text-white border-[#1a1a2e]'
                             : isTokenCorrect
-                              ? 'bg-moss-50 text-moss-600 border border-moss-400'
-                              : 'bg-ember-50 text-ember-500 border border-ember-400'
-                          : 'bg-ink-800 text-white hover:bg-ink-700'
+                              ? 'bg-[#06d6a0] text-white border-[#1a1a2e]'
+                              : 'bg-[#ef476f] text-white border-[#1a1a2e]'
+                          : 'bg-white shadow-[2px_2px_0_#1a1a2e] hover:shadow-[1px_1px_0_#1a1a2e] hover:translate-x-[1px] hover:translate-y-[1px] transition-all duration-150'
                       }`}
                     >
                       {item.token}
@@ -155,10 +151,8 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 })}
               </AnimatePresence>
               <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
-                className="ml-auto p-2 text-ochre-400 hover:text-ochre-500 hover:bg-ochre-50 rounded-full transition-colors"
+                className="ml-auto p-2 text-[#ff006e] hover:text-[#cc0058] hover:bg-[#fff0f5] transition-colors"
                 title={t.playHint || '播放提示'}
               >
                 <Lightbulb className="w-5 h-5" />
@@ -179,12 +173,12 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                   transition={{ duration: 0.15 }}
                   onClick={() => handleTokenSelect(token, idx)}
                   disabled={isSelected || answerChecked}
-                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                  className={`px-4 py-2 text-sm font-bold select-none border-[3px] border-[#1a1a2e] bg-white shadow-[2px_2px_0_#1a1a2e] ${
                     isSelected
                       ? 'pointer-events-none invisible'
                       : answerChecked
-                        ? 'pointer-events-none bg-ink-800 text-white opacity-50'
-                        : 'bg-ink-800 text-white hover:bg-ink-700'
+                        ? 'pointer-events-none bg-white text-[#1a1a2e]'
+                        : 'hover:shadow-[1px_1px_0_#1a1a2e] hover:translate-x-[1px] hover:translate-y-[1px] transition-all duration-150'
                   }`}
                 >
                   {token}
@@ -198,19 +192,19 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-moss-50 border-2 border-moss-400' : 'bg-ember-50 border-2 border-ember-400'}`}
+            className={`p-5 mb-6 border-[3px] shadow-[3px_3px_0_#1a1a2e] ${isCorrect ? 'bg-[#e6fff5] border-[#06d6a0]' : 'bg-[#fff0f0] border-[#ef476f]'}`}
           >
             <div className="flex items-center gap-3 mb-2">
-              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-moss-600" /> : <XCircle className="w-6 h-6 text-ember-500" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-moss-600' : 'text-ember-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
+              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-[#06d6a0]" /> : <XCircle className="w-6 h-6 text-[#ef476f]" />}
+              <span className={`font-black uppercase text-lg ${isCorrect ? 'text-[#06d6a0]' : 'text-[#ef476f]'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
-              <p className="text-ink-600 font-medium">
+              <p className="text-[#2d2d4a] font-bold">
                 {t.correctAnswer || '正确答案'}：{data.original_tokens.join(' ')}
               </p>
             )}
             {isCorrect && isLastExercise && (
-              <p className="font-medium mt-3 text-lg text-moss-600">
+              <p className="font-bold mt-3 text-lg text-[#06d6a0]">
                 🎉 {reviewMode ? (t.reviewComplete || '错题已复习完！') : (t.unitStudyComplete || '该单元学习已完成！')}
               </p>
             )}
@@ -220,21 +214,17 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         <div className="flex gap-4">
           {!answerChecked ? (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
               onClick={checkAnswer}
               disabled={selectedTokens.length === 0}
-              className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 btn-primary text-lg border-[3px] border-[#1a1a2e] font-black uppercase disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}
             </motion.button>
           ) : (
             <motion.button
-              whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
-              whileTap={{ scale: 0.97, y: 0 }}
               onClick={handleNext}
               disabled={loading}
-              className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 btn-primary text-lg border-[3px] border-[#1a1a2e] font-black uppercase disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
