@@ -24,18 +24,18 @@ function PhaseProgressStep({ units, currentUnit, phaseNumber, onUnitClick, onBac
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold font-display text-ink-700 mb-4"
+          className="text-3xl font-black uppercase font-display text-[#1a1a2e] mb-4"
         >
           {phaseNumber === 1 ? t.phase1 : t.phase2}
         </motion.h2>
-        <p className="text-lg text-ink-600">
+        <p className="text-lg text-[#1a1a2e]">
           {t.selectTokens}
         </p>
       </div>
 
       {loading ? (
         <div className="text-center py-16">
-          <p className="text-lg text-ink-600">{t.loading}</p>
+          <p className="text-lg text-[#1a1a2e]">{t.loading}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -49,19 +49,19 @@ function PhaseProgressStep({ units, currentUnit, phaseNumber, onUnitClick, onBac
               <button
                 onClick={() => onUnitClick(unit.unit_id)}
                 disabled={!unit.completed && index !== currentUnit}
-                className={`w-full p-6 border rounded-3xl transition-all ${unit.completed ? 'bg-moss-50 border-moss-200' : index === currentUnit ? 'bg-ochre-50 border-ochre-300 hover:shadow-warm-sm' : 'bg-cream-100 border-bone-200 cursor-not-allowed opacity-50'}`}
+                className={`w-full p-6 border-[3px] border-[#1a1a2e] rounded-2xl transition-all ${unit.completed ? 'bg-[#e6f5f3] border-[#2a9d8f]' : index === currentUnit ? 'bg-[#fef3e2] border-[#e63946] hover:shadow-cel-sm' : 'bg-[#f0e6d3] cursor-not-allowed opacity-50'}`}
               >
-                <h3 className="text-xl font-semibold font-display text-ink-800 mb-2">
+                <h3 className="text-xl font-black uppercase font-display text-[#1a1a2e] mb-2">
                   {t.unit} {unit.unit_id + 1}
                 </h3>
-                <p className="text-ink-600">{unit.sentences_count} sentences</p>
+                <p className="text-[#1a1a2e]">{unit.sentences_count} sentences</p>
                 <div className="mt-4 text-sm font-medium">
                   {unit.completed ? (
-                    <span className="text-moss-600">{t.completed}</span>
+                    <span className="text-[#2a9d8f]">{t.completed}</span>
                   ) : index === currentUnit ? (
-                    <span className="text-ochre-500">{t.startLearning}</span>
+                    <span className="text-[#e63946]">{t.startLearning}</span>
                   ) : (
-                    <span className="text-ink-400">{t.notStarted}</span>
+                    <span className="text-[#4a4a6a]">{t.notStarted}</span>
                   )}
                 </div>
               </button>
