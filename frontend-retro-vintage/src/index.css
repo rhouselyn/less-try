@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'DM Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  background: #F5ECD7;
+  color: #3B3225;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* IPA Font Class */
+.ipa-font {
+  font-family: 'Noto Sans IPA', 'Doulos SIL', 'Charis SIL', 'Noto Sans', system-ui, sans-serif;
+  font-feature-settings: "tnum" 0;
+}
+
+/* Sentence text with enhanced word spacing */
+.sentence-text {
+  word-spacing: 0.15em;
+  letter-spacing: 0.01em;
+}
+
+/* 复古怀旧设计系统 - 全局组件样式 */
+@layer components {
+  /* 卡片基础 - 粗边框做旧风格 */
+  .card-warm {
+    @apply bg-parchment-50 border-2 border-aged-200 rounded-md shadow-retro-sm;
+  }
+  .card-warm-hover {
+    @apply card-warm hover:shadow-retro hover:border-aged-300 transition-all duration-200;
+  }
+
+  /* 主按钮 - 琥珀棕 */
+  .btn-primary {
+    @apply bg-amber-400 hover:bg-amber-500 text-parchment-50 font-bold rounded-sm
+           px-6 py-3 transition-all duration-200 shadow-retro
+           hover:shadow-retro-lg active:translate-x-[1px] active:translate-y-[1px] active:shadow-retro-sm
+           disabled:opacity-50 disabled:cursor-not-allowed border-2 border-amber-500;
+  }
+
+  /* 次要按钮 - 橄榄 */
+  .btn-secondary {
+    @apply bg-olive-50 hover:bg-olive-100 text-olive-500 font-bold rounded-sm
+           border-2 border-olive-200 px-6 py-3 transition-all duration-200
+           active:translate-x-[1px] active:translate-y-[1px] active:shadow-none shadow-retro-sm;
+  }
+
+  /* 幽灵按钮 */
+  .btn-ghost {
+    @apply text-ink-500 hover:text-ink-700 hover:bg-parchment-200/60
+           rounded-sm px-3 py-2 transition-all duration-200 font-medium;
+  }
+
+  /* 输入框 */
+  .input-warm {
+    @apply w-full px-4 py-3 rounded-sm border-2 border-aged-200 bg-parchment-50
+           text-ink-700 placeholder-ink-400/60 focus:outline-none
+           focus:border-amber-300 focus:shadow-glow-amber
+           transition-all duration-200 hover:border-aged-300;
+  }
+
+  /* 标签 */
+  .label-warm {
+    @apply block text-[11px] font-bold text-ink-400 mb-1.5 uppercase tracking-widest;
+  }
+
+  /* 进度条 */
+  .progress-warm {
+    @apply h-2 rounded-none bg-parchment-200 overflow-hidden border border-aged-200;
+  }
+  .progress-warm-bar {
+    @apply h-full bg-amber-400 transition-all duration-500 ease-out;
+  }
+
+  /* 标签页 */
+  .tab-warm {
+    @apply px-4 py-2 rounded-sm text-sm font-bold transition-all duration-200;
+  }
+  .tab-warm-active {
+    @apply tab-warm bg-parchment-50 text-ink-700 shadow-retro-sm border-2 border-aged-200;
+  }
+  .tab-warm-inactive {
+    @apply tab-warm text-ink-400 hover:text-ink-500 hover:bg-parchment-100/50;
+  }
+
+  /* 开关 */
+  .toggle-warm {
+    @apply relative inline-flex h-5 w-9 items-center rounded-none transition-colors duration-200;
+  }
+  .toggle-warm-on {
+    @apply toggle-warm bg-amber-400 border-2 border-amber-500;
+  }
+  .toggle-warm-off {
+    @apply toggle-warm bg-aged-300 border-2 border-aged-400;
+  }
+  .toggle-warm-dot {
+    @apply inline-block h-3.5 w-3.5 transform bg-parchment-50 shadow-sm transition-transform duration-200;
+  }
+
+  /* 小徽章 */
+  .badge-warm {
+    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-none text-xs font-bold border;
+  }
+  .badge-ochre {
+    @apply badge-warm bg-amber-50 text-amber-500 border-amber-200;
+  }
+  .badge-moss {
+    @apply badge-warm bg-olive-50 text-olive-500 border-olive-200;
+  }
+  .badge-ember {
+    @apply badge-warm bg-rust-50 text-rust-400 border-rust-200;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* 选中文字颜色 */
+::selection {
+  background: #E8C985;
+  color: #2A2319;
+}
+
+/* 滚动条 - 复古风格 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #EDE0C8;
+  border-left: 1px solid #C9BB9E;
+}
+::-webkit-scrollbar-thumb {
+  background: #BF9E6B;
+  border: 1px solid #9E8E70;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #A06E28;
+}
+
+/* 做旧纸张纹理叠加 */
+.vintage-paper {
+  position: relative;
+}
+.vintage-paper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.27 0 0 0 0 0.16 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.5;
+}

@@ -49,7 +49,7 @@ function LangIcon({ langCode, size = 'md' }) {
   const sizeClasses = size === 'sm' ? 'w-5 h-5 text-[8px]' : size === 'lg' ? 'w-8 h-8 text-xs' : 'w-7 h-7 text-[10px]'
   return (
     <span
-      className={`inline-flex items-center justify-center rounded-md font-bold text-white leading-none ${sizeClasses}`}
+      className={`inline-flex items-center justify-center rounded-sm font-bold text-white leading-none ${sizeClasses}`}
       style={{ backgroundColor: color }}
     >
       {code}
@@ -279,7 +279,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 text-base font-medium text-ink-700 hover:text-ink-900 transition-colors"
+          className="flex items-center gap-1.5 text-base font-bold text-ink-700 hover:text-ink-900 transition-colors"
         >
           <span className="leading-none">
             {isAuto ? <LangIcon langCode="auto" size="md" /> : <LangIcon langCode={value} size="md" />}
@@ -288,16 +288,16 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
           {nativeLabel && nativeLabel !== currentLabel && (
             <span className="text-xs text-ink-400">[{nativeLabel}]</span>
           )}
-          <ChevronDown className={`w-3.5 h-3.5 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-3.5 h-3.5 text-aged-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
       ) : (
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl border transition-all duration-200 text-left group ${
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-sm border-2 transition-all duration-200 text-left group ${
             open
-              ? 'border-ochre-200 bg-ochre-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
-              : 'border-bone-200 bg-cream-100 hover:border-bone-300 hover:shadow-warm-sm'
+              ? 'border-amber-200 bg-amber-50 shadow-[0_0_0_3px_rgba(245,158,11,0.06)]'
+              : 'border-aged-200 bg-parchment-100 hover:border-aged-300 hover:shadow-retro-sm'
           }`}
         >
           {isAuto ? (
@@ -306,7 +306,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             <span className="leading-none"><LangIcon langCode={value} size="md" /></span>
           )}
           <div className="flex-1 min-w-0">
-            <span className="text-sm font-medium text-ink-800">
+            <span className="text-sm font-bold text-ink-800">
               {isAuto ? autoLabel : selectedLang ? getLabel(selectedLang) : value}
             </span>
             {!isAuto && selectedLang && getSecondary(selectedLang) && (
@@ -318,7 +318,7 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
               </span>
             )}
           </div>
-          <ChevronDown className={`w-4 h-4 text-bone-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-aged-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />
         </button>
       )}
 
@@ -329,9 +329,9 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.12 }}
-            className={`absolute z-50 mt-2 bg-cream-50 rounded-2xl border border-bone-200 shadow-xl shadow-ink-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
+            className={`absolute z-50 mt-2 bg-parchment-50 rounded-sm border-2 border-aged-200 shadow-xl shadow-ink-900/8 overflow-hidden ${compact ? 'left-0 w-72' : 'w-full'}`}
           >
-            <div className="p-3 border-b border-cream-100">
+            <div className="p-3 border-b border-parchment-100">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-ink-400" />
                 <input
@@ -339,10 +339,10 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t.searchLanguages || '搜索语言...'}
-                  className="w-full pl-9 pr-8 py-2 rounded-lg bg-cream-50 border border-cream-100 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:border-ochre-300 focus:bg-cream-50 transition-colors"
+                  className="w-full pl-9 pr-8 py-2 rounded-sm bg-parchment-50 border-2 border-parchment-100 text-sm text-ink-700 placeholder-ink-400 focus:outline-none focus:border-amber-300 focus:bg-parchment-50 transition-colors"
                 />
                 {search && (
-                  <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-bone-200 transition-colors">
+                  <button type="button" onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded hover:bg-aged-200 transition-colors">
                     <X className="w-3.5 h-3.5 text-ink-400" />
                   </button>
                 )}
@@ -351,17 +351,17 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
 
             <div className="max-h-72 overflow-y-auto overscroll-contain">
               {!search && (showAuto || recentLangs.length > 0) && (
-                <div className="border-b border-cream-100">
+                <div className="border-b border-parchment-100">
                   {showAuto && (
                     <button
                       type="button"
                       onClick={() => handleSelect('auto')}
                       className={`w-full flex items-center gap-2.5 px-5 py-2 text-sm transition-colors ${
-                        isAuto ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                        isAuto ? 'bg-amber-50 text-amber-500' : 'text-ink-600 hover:bg-parchment-50'
                       }`}
                     >
                       <LangIcon langCode="auto" size="sm" />
-                      <span className={isAuto ? 'font-medium' : ''}>{autoLabel}</span>
+                      <span className={isAuto ? 'font-bold' : ''}>{autoLabel}</span>
                       <span className="text-xs text-ink-400">
                         <Zap className="w-3 h-3 inline -mt-0.5" />
                       </span>
@@ -373,11 +373,11 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                       type="button"
                       onClick={() => handleSelect(lang.value)}
                       className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                        value === lang.value ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                        value === lang.value ? 'bg-amber-50 text-amber-500' : 'text-ink-600 hover:bg-parchment-50'
                       }`}
                     >
                       <LangIcon langCode={lang.value} size="sm" />
-                      <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
+                      <span className={value === lang.value ? 'font-bold' : ''}>{getLabel(lang)}</span>
                       {getSecondary(lang) && <span className="text-xs text-ink-400">{getSecondary(lang)}</span>}
                     </button>
                   ))}
@@ -398,11 +398,11 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                     <button
                       type="button"
                       onClick={() => toggleFamily(family)}
-                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-semibold text-ink-500 uppercase tracking-wider hover:bg-cream-50 transition-colors"
+                      className="w-full flex items-center gap-1.5 px-4 py-2 text-[11px] font-bold text-ink-500 uppercase tracking-wider hover:bg-parchment-50 transition-colors"
                     >
                       {isCollapsed ? <ChevronRight className="w-3 h-3 flex-shrink-0" /> : <ChevronDown className="w-3 h-3 flex-shrink-0" />}
                       <span>{FAMILIES[family]}</span>
-                      <span className="text-bone-300 font-normal normal-case tracking-normal">{langs.length}</span>
+                      <span className="text-aged-300 font-normal normal-case tracking-normal">{langs.length}</span>
                     </button>
                     <AnimatePresence initial={false}>
                       {!isCollapsed && (
@@ -419,11 +419,11 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
                               type="button"
                               onClick={() => handleSelect(lang.value)}
                               className={`w-full flex items-center gap-2.5 px-5 py-1.5 text-sm transition-colors ${
-                                value === lang.value ? 'bg-ochre-50 text-ochre-500' : 'text-ink-600 hover:bg-cream-50'
+                                value === lang.value ? 'bg-amber-50 text-amber-500' : 'text-ink-600 hover:bg-parchment-50'
                               }`}
                             >
                               <LangIcon langCode={lang.value} size="sm" />
-                              <span className={value === lang.value ? 'font-medium' : ''}>{getLabel(lang)}</span>
+                              <span className={value === lang.value ? 'font-bold' : ''}>{getLabel(lang)}</span>
                               {getSecondary(lang) && <span className="text-xs text-ink-400">{getSecondary(lang)}</span>}
                             </button>
                           ))}
@@ -444,18 +444,18 @@ function LanguageSelector({ value, onChange, uiLang, inputMode, recentLanguages,
 function FrogLogo({ size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
-      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
-      <circle cx="34" cy="38" r="16" fill="#4ade80" />
-      <circle cx="66" cy="38" r="16" fill="#4ade80" />
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#B5AE8E" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#D8D4BF" />
+      <circle cx="34" cy="38" r="16" fill="#B5AE8E" />
+      <circle cx="66" cy="38" r="16" fill="#B5AE8E" />
       <circle cx="34" cy="38" r="13" fill="#fff" />
       <circle cx="66" cy="38" r="13" fill="#fff" />
-      <circle cx="36" cy="37" r="6" fill="#166534" />
-      <circle cx="68" cy="37" r="6" fill="#166534" />
+      <circle cx="36" cy="37" r="6" fill="#524D3C" />
+      <circle cx="68" cy="37" r="6" fill="#524D3C" />
       <circle cx="38" cy="35" r="2" fill="#fff" />
       <circle cx="70" cy="35" r="2" fill="#fff" />
-      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
-      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#E8C985" />
+      <path d="M38 60 Q50 70 62 60" stroke="#524D3C" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   )
 }
@@ -477,8 +477,8 @@ function ModeSelector({ mode, setMode, t }) {
             key={key}
             type="button"
             onClick={() => setMode(key)}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 ${
-              isActive ? 'bg-cream-200/80 text-ink-700' : 'text-ink-400 hover:text-ink-500 hover:bg-cream-100'
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-sm text-xs font-bold transition-all duration-200 ${
+              isActive ? 'bg-parchment-200/80 text-ink-700' : 'text-ink-400 hover:text-ink-500 hover:bg-parchment-100'
             }`}
           >
             <Icon className="w-3 h-3" />
@@ -543,7 +543,7 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
           transition={{ duration: 0.5, delay: 0.1 }}
           className="flex items-center gap-3 mb-3"
         >
-          <div className="w-14 h-14 bg-ochre-400 rounded-2xl flex items-center justify-center shadow-warm-sm">
+          <div className="w-14 h-14 bg-amber-400 rounded-sm flex items-center justify-center shadow-retro-sm">
             <FrogLogo size={32} />
           </div>
           <div>
@@ -565,9 +565,9 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
 
       {/* Bottom area - input box */}
       <div className="w-full max-w-2xl mx-auto pb-4 px-4">
-        <div className="relative bg-cream-50 border border-bone-200 rounded-2xl shadow-warm overflow-hidden">
+        <div className="relative bg-parchment-50 border-2 border-aged-200 rounded-sm shadow-retro overflow-hidden">
           {/* Mode tabs at top of input */}
-          <div className="border-b border-bone-200/60 px-3 pt-2 pb-0">
+          <div className="border-b border-aged-200/60 px-3 pt-2 pb-0">
             <ModeSelector mode={inputMode} setMode={handleModeChange} t={t} />
           </div>
 
@@ -588,10 +588,10 @@ function InputStep({ text, setText, sourceLang, setSourceLang, uiLang, loading, 
                 whileTap={{ scale: 0.95 }}
                 onClick={onProcess}
                 disabled={loading || !text.trim()}
-                className={`p-2 rounded-xl transition-all duration-200 ${
+                className={`p-2 rounded-sm transition-all duration-200 ${
                   loading || !text.trim()
-                    ? 'bg-cream-100 text-ink-400 cursor-not-allowed'
-                    : 'bg-ochre-500 text-white shadow-md shadow-ochre-500/20 hover:bg-ochre-500 hover:shadow-lg hover:shadow-ochre-500/25'
+                    ? 'bg-parchment-100 text-ink-400 cursor-not-allowed'
+                    : 'bg-amber-500 text-white shadow-retro hover:bg-amber-500 hover:shadow-retro-lg'
                 }`}
               >
                 <AnimatePresence mode="wait">

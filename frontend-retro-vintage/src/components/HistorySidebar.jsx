@@ -35,14 +35,14 @@ function getLangLabel(code) {
 }
 
 const SIDEBAR_COLORS = [
-  'from-ochre-400 to-orange-500',
-  'from-moss-400 to-teal-500',
-  'from-ochre-400 to-indigo-500',
-  'from-rose-400 to-pink-500',
-  'from-violet-400 to-purple-500',
-  'from-cyan-400 to-sky-500',
-  'from-lime-400 to-moss-500',
-  'from-fuchsia-400 to-pink-500',
+  'from-amber-400 to-amber-500',
+  'from-olive-400 to-olive-500',
+  'from-amber-400 to-amber-600',
+  'from-rust-400 to-rust-500',
+  'from-amber-500 to-amber-700',
+  'from-olive-300 to-olive-500',
+  'from-olive-300 to-olive-400',
+  'from-rust-300 to-rust-500',
 ]
 
 function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
@@ -80,19 +80,19 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
       exit={{ opacity: 0, scale: 0.95, y: -4 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
       style={{ left: posX, top: posY }}
-      className="fixed z-[9999] bg-cream-50 border border-bone-200 rounded-2xl shadow-warm-lg shadow-black/8 py-1.5 min-w-[160px] overflow-hidden"
+      className="fixed z-[9999] bg-parchment-50 border-2 border-aged-200 rounded-sm shadow-retro-lg shadow-black/8 py-1.5 min-w-[160px] overflow-hidden"
     >
       <button
         onClick={() => { onRename(); onClose() }}
-        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-ink-700 hover:bg-cream-50 transition-colors"
+        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-ink-700 hover:bg-parchment-50 transition-colors"
       >
         <Pencil className="w-3.5 h-3.5 text-ink-400" />
         {t.rename || '重命名'}
       </button>
-      <div className="mx-2.5 my-0.5 border-t border-cream-100" />
+      <div className="mx-2.5 my-0.5 border-t border-parchment-100" />
       <button
         onClick={() => { onDelete(); onClose() }}
-        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-ember-500 hover:bg-ember-50 transition-colors"
+        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-rust-500 hover:bg-rust-50 transition-colors"
       >
         <Trash2 className="w-3.5 h-3.5" />
         {t.delete || '删除'}
@@ -111,7 +111,7 @@ function ProgressBadge({ progress }) {
 
   const done = totalCompleted >= totalUnits
   return (
-    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-moss-500' : 'text-ember-600'}`}>
+    <span className={`w-[32px] text-right text-[10px] font-light tabular-nums flex-shrink-0 ${done ? 'text-olive-500' : 'text-rust-600'}`}>
       {totalCompleted}/{totalUnits}
     </span>
   )
@@ -140,7 +140,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
               if (e.key === 'Enter') onRenameConfirm()
               if (e.key === 'Escape') onRenameCancel()
             }}
-            className="flex-1 text-[13px] px-2 py-1 border border-bone-300 rounded-md focus:outline-none focus:ring-1.5 focus:ring-ink-400 bg-cream-50 text-ink-800"
+            className="flex-1 text-[13px] px-2 py-1 border-2 border-aged-300 rounded-md focus:outline-none focus:ring-1.5 focus:ring-ink-400 bg-parchment-50 text-ink-800"
           />
         </div>
       </div>
@@ -149,7 +149,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
 
   return (
     <div
-      className="group flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-cream-200/60 transition-colors mx-2 bg-cream-50 border-bone-200"
+      className="group flex items-center gap-2 px-2.5 py-2 rounded-sm cursor-pointer hover:bg-parchment-200/60 transition-colors mx-2 bg-parchment-50 border-aged-200"
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
     >
       <ProgressBadge progress={record.progress} />
@@ -164,7 +164,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
           const rect = e.currentTarget.getBoundingClientRect()
           onMenuOpen(record.file_id, rect.right - 160, rect.bottom + 4)
         }}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-bone-200/70 text-ink-400 hover:text-ink-600 transition-all flex-shrink-0"
+        className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-aged-200/70 text-ink-400 hover:text-ink-600 transition-all flex-shrink-0"
       >
         <MoreHorizontal className="w-3.5 h-3.5" />
       </button>
@@ -176,11 +176,11 @@ function RecentItem({ record, onNavigate }) {
   return (
     <button
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
-      className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-cream-200/60 transition-colors text-left"
+      className="w-full flex items-center gap-2 px-3 py-2 rounded-sm hover:bg-parchment-200/60 transition-colors text-left"
     >
       <ProgressBadge progress={record.progress} />
       <span className="text-[13px] text-ink-700 truncate flex-1">{record.title}</span>
-      <span className="text-[10px] font-semibold text-ink-400 flex-shrink-0 uppercase">{(record.source_lang || '?').substring(0, 2)}</span>
+      <span className="text-[10px] font-bold text-ink-400 flex-shrink-0 uppercase">{(record.source_lang || '?').substring(0, 2)}</span>
     </button>
   )
 }
@@ -292,16 +292,16 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               animate={{ width: SIDEBAR_WIDTH, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-              className="h-full overflow-hidden flex flex-col bg-cream-100/50 border-r border-bone-200/60"
+              className="h-full overflow-hidden flex flex-col bg-parchment-100/50 border-r border-aged-200/60"
               style={{ minWidth: 0 }}
             >
               <div className="px-3 pt-4 pb-2 flex items-center justify-between flex-shrink-0">
-                <span className="font-display text-[11px] font-semibold text-ink-700 uppercase tracking-wider">
+                <span className="font-display text-[11px] font-bold text-ink-700 uppercase tracking-wider">
                   {t.historyTitle || '学习记录'}
                 </span>
                 <button
                   onClick={() => setExpanded(false)}
-                  className="p-1 rounded-md hover:bg-bone-200/60 text-ink-400 hover:text-ink-600 transition-colors"
+                  className="p-1 rounded-md hover:bg-aged-200/60 text-ink-400 hover:text-ink-600 transition-colors"
                 >
                   <PanelLeftClose className="w-4 h-4" />
                 </button>
@@ -320,7 +320,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 {records.length > 0 && (
                   <div className="mb-2">
                     <div className="px-4 py-1.5 mt-1">
-                      <span className="text-[11px] font-medium text-ink-400 tracking-wide">
+                      <span className="text-[11px] font-bold text-ink-400 tracking-wide">
                         {t.recent || '最近'}
                       </span>
                     </div>
@@ -358,7 +358,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                         )}
                       </button>
                     )}
-                    <div className="mx-4 my-2 border-t border-bone-200/60" />
+                    <div className="mx-4 my-2 border-t border-aged-200/60" />
                   </div>
                 )}
 
@@ -366,16 +366,16 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   <div key={lang} className="mb-1">
                     <div className="flex items-center gap-1.5 px-4 py-1.5 mt-1">
                       <LangIcon langCode={lang} size="sm" />
-                      <span className="text-[11px] font-medium text-ink-400 tracking-wide">
+                      <span className="text-[11px] font-bold text-ink-400 tracking-wide">
                         {getLangLabel(lang)}
                       </span>
-                      <span className="text-[10px] text-bone-300">{items.length}</span>
+                      <span className="text-[10px] text-aged-300">{items.length}</span>
                       <button
                         onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
                         className={`ml-auto p-1 rounded-md transition-all badge-ochre ${
                           activeWordListLang === lang
-                            ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[langIdx % SIDEBAR_COLORS.length] + ' text-white shadow-warm-sm'
-                            : 'text-bone-300 hover:text-ochre-500 hover:bg-ochre-50'
+                            ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[langIdx % SIDEBAR_COLORS.length] + ' text-white shadow-retro-sm'
+                            : 'text-aged-300 hover:text-amber-500 hover:bg-amber-50'
                         }`}
                         title="Word list"
                       >
@@ -404,8 +404,8 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 ))}
               </div>
 
-              <div className="px-3 py-2 border-t border-bone-200/60 flex-shrink-0">
-                <div className="text-[10px] text-bone-300 text-center">
+              <div className="px-3 py-2 border-t border-aged-200/60 flex-shrink-0">
+                <div className="text-[10px] text-aged-300 text-center">
                   {records.length} {t.record || '条记录'}
                 </div>
               </div>
@@ -417,27 +417,27 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-cream-100/50 border-r border-bone-200/60"
+            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-parchment-100/50 border-r border-aged-200/60"
             style={{ width: 48 }}
           >
             <button
               onClick={() => setExpanded(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-bone-200/70 text-ink-400 hover:text-ink-600 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-sm hover:bg-aged-200/70 text-ink-400 hover:text-ink-600 transition-colors"
               title={t.historyTitle || '学习记录'}
             >
               <PanelLeftOpen className="w-4.5 h-4.5" />
             </button>
 
-            <div className="w-6 border-t border-bone-200/60 my-1" />
+            <div className="w-6 border-t border-aged-200/60 my-1" />
 
             {langKeys.map((lang, idx) => (
               <button
                 key={lang}
                 onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
-                className={`w-9 h-9 flex items-center justify-center rounded-lg text-[13px] font-bold transition-all ${
+                className={`w-9 h-9 flex items-center justify-center rounded-sm text-[13px] font-bold transition-all ${
                   activeWordListLang === lang
-                    ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-warm'
-                    : 'bg-cream-100 text-ink-500 hover:bg-bone-200/70 hover:text-ink-700'
+                    ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-retro'
+                    : 'bg-parchment-100 text-ink-500 hover:bg-aged-200/70 hover:text-ink-700'
                 }`}
                 title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
               >
@@ -446,7 +446,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
             ))}
 
             {records.length > 0 && langKeys.length > 0 && (
-              <div className="w-6 border-t border-bone-200/60 my-1" />
+              <div className="w-6 border-t border-aged-200/60 my-1" />
             )}
 
             {langKeys.flatMap(lang =>
@@ -454,7 +454,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 <button
                   key={record.file_id}
                   onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang, record.title)}
-                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-bone-200/70 text-[10px] font-medium text-ink-400 hover:text-ink-600 transition-colors"
+                  className="w-9 h-9 flex items-center justify-center rounded-sm hover:bg-aged-200/70 text-[10px] font-bold text-ink-400 hover:text-ink-600 transition-colors"
                   title={record.title}
                 >
                   {(record.source_lang || '?').substring(0, 2).toUpperCase()}
@@ -493,15 +493,15 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 8 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="bg-cream-50 border border-bone-200 rounded-3xl shadow-warm-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
+              className="bg-parchment-50 border-2 border-aged-200 rounded-md shadow-retro-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-ember-50 flex items-center justify-center flex-shrink-0">
-                  <Trash2 className="w-5 h-5 text-ember-500" />
+                <div className="w-10 h-10 rounded-none bg-rust-50 flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-rust-500" />
                 </div>
                 <div>
-                  <h3 className="font-display text-[15px] font-semibold text-ink-800">{t.confirmDelete || '确认删除'}</h3>
+                  <h3 className="font-display text-[15px] font-bold text-ink-800">{t.confirmDelete || '确认删除'}</h3>
                   <p className="text-[13px] text-ink-500 mt-0.5 line-clamp-2">{deleteConfirm.title}</p>
                 </div>
               </div>
@@ -509,13 +509,13 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               <div className="flex gap-2.5 justify-end">
                 <button
                   onClick={handleDeleteCancel}
-                  className="btn-secondary px-4 py-2 text-[13px] rounded-2xl border border-bone-200 text-ink-600 hover:bg-cream-100 transition-colors"
+                  className="btn-secondary px-4 py-2 text-[13px] rounded-sm border-2 border-aged-200 text-ink-600 hover:bg-parchment-100 transition-colors"
                 >
                   {t.cancel || '取消'}
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="px-4 py-2 text-[13px] rounded-2xl bg-ember-400 hover:bg-ember-500 text-white font-semibold transition-colors"
+                  className="px-4 py-2 text-[13px] rounded-sm bg-rust-400 hover:bg-rust-500 text-white font-bold transition-colors"
                 >
                   {t.confirmDeleteAction || '删除'}
                 </button>
