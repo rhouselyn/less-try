@@ -183,7 +183,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
                     transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
-                    className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                    className={`px-4 py-2 rounded-full text-sm font-medium font-sans cursor-pointer select-none ${
                       isChecked
                         ? isCorrect
                           ? 'bg-[#e6f5f3] text-moss-600 border-[3px] border-[#1a1a2e]'
@@ -214,7 +214,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                   transition={{ duration: 0.15 }}
                   onClick={() => handleWordSelect(word, index)}
                   disabled={isSelected || isChecked}
-                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium font-sans select-none ${
                     isSelected
                       ? 'pointer-events-none invisible'
                       : isChecked
@@ -242,7 +242,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               </span>
             </div>
             {(isSkipped || !isCorrect) && (
-              <p className="text-[#1a1a2e] font-medium">
+              <p className="text-[#1a1a2e] font-medium font-sans">
                 {t.correctAnswer || '正确答案'}：{correctWords.map(w => stripPunct(w)).join(' ')}
               </p>
             )}

@@ -31,6 +31,12 @@ frontend/dist/
 frontend-soft-ui/node_modules/
 frontend-soft-ui/.vite/
 frontend-soft-ui/dist/
+frontend-cel-shading/node_modules/
+frontend-cel-shading/.vite/
+frontend-cel-shading/dist/
+frontend-retro-vintage/node_modules/
+frontend-retro-vintage/.vite/
+frontend-retro-vintage/dist/
 
 # IDE
 .vscode/

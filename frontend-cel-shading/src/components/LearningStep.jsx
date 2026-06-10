@@ -102,7 +102,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                 <motion.h2
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-4xl font-black uppercase font-display text-[#1a1a2e]"
+                  className="text-4xl font-bold font-sans text-[#1a1a2e]"
                 >
                   {learningData.word}
                 </motion.h2>
@@ -148,7 +148,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                         <CheckCircle2 className="w-4 h-4 text-[#1a6b5a]" />
                       </motion.div>
                     )}
-                    <span className="text-lg font-black uppercase">{option}</span>
+                    <span className="text-lg font-bold font-sans">{option}</span>
                   </div>
                 </motion.button>
               ))}
@@ -168,7 +168,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <motion.h2
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-4xl font-black uppercase font-display text-[#1a1a2e]"
+                    className="text-4xl font-bold font-sans text-[#1a1a2e]"
                   >
                     {learningData.word}
                   </motion.h2>
@@ -206,7 +206,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <Brain className="w-4 h-4" />
                   {t.definition}
                 </h3>
-                <p className="text-lg text-[#1a1a2e] leading-relaxed">
+                <p className="text-lg text-[#1a1a2e] leading-relaxed font-sans">
                   {learningData.enriched_meaning || learningData.correct_meaning}
                 </p>
               </motion.div>
@@ -221,7 +221,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     {t.context}
                   </h3>
                   <div className="flex items-start gap-2">
-                    <p className="text-lg text-[#1a1a2e] leading-relaxed italic flex-1">
+                    <p className="text-lg text-[#1a1a2e] leading-relaxed italic flex-1 font-sans">
                       {learningData.context}
                     </p>
                     <motion.button
@@ -244,7 +244,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   className="bg-[#fde8e8] p-4 rounded-xl border-[3px] border-[#e63946]"
                 >
                   <h4 className="text-sm font-black uppercase text-[#e63946] mb-2">{t.contextMeaning || '上下文释义'}</h4>
-                  <p className="text-[#1a1a2e]">{learningData.meaning || learningData.context_meaning}</p>
+                  <p className="text-[#1a1a2e] font-sans">{learningData.meaning || learningData.context_meaning}</p>
                 </motion.div>
               )}
 
@@ -263,7 +263,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                         <span className="px-2 py-1 bg-[#f0e6d3] text-[#1a1a2e] rounded text-sm font-black uppercase border-[3px] border-[#1a1a2e]">
                           {variant.type}
                         </span>
-                        <span className="text-[#1a1a2e]">{variant.form}</span>
+                        <span className="text-[#1a1a2e] font-sans">{variant.form}</span>
                       </div>
                     ))}
                   </div>
@@ -283,7 +283,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                     {learningData.examples.map((example, index) => (
                       <div key={index} className="border-l-4 border-[#1a1a2e] pl-4">
                         <div className="flex items-start gap-2">
-                          <p className="text-[#1a1a2e] mb-1 flex-1">{example.sentence}</p>
+                          <p className="text-[#1a1a2e] mb-1 flex-1 font-sans">{example.sentence}</p>
                           <motion.button
                             whileHover={{ scale: 1.15 }}
                             whileTap={{ scale: 0.9 }}
@@ -293,7 +293,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                             <Volume2 className="w-3.5 h-3.5" />
                           </motion.button>
                         </div>
-                        <p className="text-[#2d2d4a] text-sm">{example.translation}</p>
+                        <p className="text-[#2d2d4a] text-sm font-sans">{example.translation}</p>
                       </div>
                     ))}
                   </div>
@@ -309,7 +309,7 @@ function LearningStep({ learningData, showWordCard, selectedOption, isCorrect, o
                   <h3 className="text-sm font-black uppercase text-[#4a4a6a] tracking-wider mb-3">
                     {t.memoryHint}
                   </h3>
-                  <p className="text-lg text-[#1a1a2e] leading-relaxed bg-[#fde8e8] p-4 rounded-xl border-[3px] border-[#e63946]">
+                  <p className="text-lg text-[#1a1a2e] leading-relaxed bg-[#fde8e8] p-4 rounded-xl border-[3px] border-[#e63946] font-sans">
                     {learningData.memory_hint}
                   </p>
                 </motion.div>

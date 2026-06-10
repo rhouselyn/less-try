@@ -27,7 +27,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                 <Brain className="w-3 h-3 text-[#e63946]" />
                 {t.definition || '释义'}
               </h3>
-              <p className="text-[13px] text-[#1a1a2e] leading-relaxed">
+              <p className="text-[13px] text-[#1a1a2e] leading-relaxed font-sans">
                 {word.enriched_meaning || word.meaning}
               </p>
             </div>
@@ -44,7 +44,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                       <span className="badge-ochre px-1.5 py-0.5 bg-[#fef3e2] text-[#e63946] rounded text-[11px] font-medium">
                         {variant.type}
                       </span>
-                      <span className="text-[#1a1a2e] text-[13px]">{variant.form}</span>
+                      <span className="text-[#1a1a2e] text-[13px] font-sans">{variant.form}</span>
                     </div>
                   ))}
                 </div>
@@ -61,7 +61,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                   {word.examples.slice(0, 3).map((ex, i) => (
                     <div key={i} className="border-l-[3px] border-[#e63946] pl-2.5">
                       <div className="flex items-start gap-1.5">
-                        <p className="text-[#1a1a2e] text-[13px] leading-snug flex-1">{ex.sentence}</p>
+                        <p className="text-[#1a1a2e] text-[13px] leading-snug flex-1 font-sans">{ex.sentence}</p>
                         {ex.sentence && (
                           <button
                             onClick={(e) => { e.stopPropagation(); speakText(ex.sentence, sourceLang) }}
@@ -72,7 +72,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                         )}
                       </div>
                       {ex.translation && (
-                        <p className="text-[#4a4a6a] text-[11px] leading-snug">{ex.translation}</p>
+                        <p className="text-[#4a4a6a] text-[11px] leading-snug font-sans">{ex.translation}</p>
                       )}
                     </div>
                   ))}
@@ -86,7 +86,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
                   <Lightbulb className="w-3 h-3 text-[#e63946]" />
                   {t.memoryHint || '记忆辅助'}
                 </h3>
-                <p className="text-[13px] text-[#1a1a2e] leading-relaxed bg-[#fef3e2] px-3 py-2 rounded-lg border-[3px] border-[#1a1a2e]">
+                <p className="text-[13px] text-[#1a1a2e] leading-relaxed bg-[#fef3e2] px-3 py-2 rounded-lg border-[3px] border-[#1a1a2e] font-sans">
                   {word.memory_hint}
                 </p>
               </div>
@@ -358,7 +358,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className={`text-sm font-black uppercase font-display text-[#1a1a2e] ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.word}</span>
+                        <span className={`text-sm font-bold font-sans text-[#1a1a2e] ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>{word.word}</span>
                         {word.ipa && (
                           <span className={`text-xs text-[#4a4a6a] ipa-font ${displayMode === 2 && expandedWord !== word.word ? 'invisible' : ''}`}>
                             {word.ipa.startsWith('/') ? word.ipa : `/${word.ipa}/`}
@@ -371,7 +371,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                         )}
                       </div>
                       {word.meaning && (
-                        <p className={`text-xs text-[#2d2d4a] mt-0.5 truncate ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.meaning}</p>
+                        <p className={`text-xs text-[#2d2d4a] mt-0.5 truncate font-sans ${displayMode === 1 && expandedWord !== word.word ? 'invisible' : ''}`}>{meaningOverrides[word.word] || word.meaning}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">

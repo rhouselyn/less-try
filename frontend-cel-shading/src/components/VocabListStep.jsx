@@ -290,7 +290,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                   className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-[#fef3e2] transition-colors group"
                                 >
                                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
-                                    <span className="text-[14px] font-black uppercase text-[#1a1a2e] tracking-tight shrink-0">
+                                    <span className="text-[14px] font-bold font-sans text-[#1a1a2e] tracking-tight shrink-0">
                                       {word.word}
                                     </span>
                                     {(enriched.ipa || word.ipa) && (
@@ -303,7 +303,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                         {enriched.morphology || word.morphology}
                                       </span>
                                     )}
-                                    <span className="text-[12px] text-[#2d2d4a] truncate">
+                                    <span className="text-[12px] text-[#2d2d4a] truncate font-sans">
                                       {displayMeaning}
                                     </span>
                                   </div>
@@ -338,7 +338,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                                   <Brain className="w-3 h-3 text-[#e63946]" />
                                                   {t.definition || '释义'}
                                                 </h3>
-                                                <p className="text-[13px] text-[#1a1a2e] leading-relaxed">
+                                                <p className="text-[13px] text-[#1a1a2e] leading-relaxed font-sans">
                                                   {mergedWord.enriched_meaning || mergedWord.meaning || mergedWord.context_meaning}
                                                 </p>
                                               </div>
