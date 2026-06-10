@@ -8,74 +8,81 @@ export default {
     extend: {
       fontFamily: {
         sans: [
-          '"Inter"',
+          '"Plus Jakarta Sans"',
           '"PingFang SC"',
           '"Hiragino Sans GB"',
           '"Microsoft YaHei"',
           'system-ui',
           'sans-serif',
         ],
+        serif: [
+          '"Fraunces"',
+          '"Source Han Serif SC"',
+          '"Noto Serif SC"',
+          '"Songti SC"',
+          'Georgia',
+          'serif',
+        ],
         display: [
-          '"Inter"',
+          '"Fraunces"',
+          '"Plus Jakarta Sans"',
           'system-ui',
           'sans-serif',
         ],
       },
       colors: {
-        // Soft UI 主色调 - 低饱和度靛蓝
-        soft: {
-          50:  '#f0f0ff',
-          100: '#e0e1ff',
-          200: '#c7c8fe',
-          300: '#a4a5fc',
-          400: '#8183f8',
-          500: '#6366f1',
-          600: '#4f46e5',
-          700: '#4338ca',
-          800: '#3730a3',
-          900: '#312e81',
+        // 温暖奶油（暖中性） - 主背景
+        cream: {
+          50:  '#FBF7F0',
+          100: '#F6EFE2',
+          200: '#EFE5D2',
+          300: '#E5D6BC',
+          400: '#D6C29F',
         },
-        // 成功色 - 柔和绿
-        mint: {
-          50:  '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
+        // 苔绿 / 鼠尾草绿 - 成功 & 副色
+        moss: {
+          50:  '#F1F1E8',
+          100: '#DDE0CC',
+          200: '#BFC4A6',
+          300: '#9CA37F',
+          400: '#7C8461',
+          500: '#5F6849',
+          600: '#4A5238',
+          700: '#363C2A',
         },
-        // 错误/危险 - 柔和红
-        rose: {
-          50:  '#fff1f2',
-          100: '#ffe4e6',
-          200: '#fecdd3',
-          300: '#fda4af',
-          400: '#fb7185',
-          500: '#f43f5e',
-          600: '#e11d48',
+        // 赭石 / 陶土橙 - 强调色（主行动按钮、进度、关键提示）
+        ochre: {
+          50:  '#FBF1E7',
+          100: '#F4DCC0',
+          200: '#E8B985',
+          300: '#D89554',
+          400: '#C47A3A',
+          500: '#A8622A',
+          600: '#894D20',
+          700: '#653A18',
         },
-        // 警告/提示 - 柔和琥珀
-        amber: {
-          50:  '#fffbeb',
-          100: '#fef3c7',
-          200: '#fde68a',
-          300: '#fcd34d',
-          400: '#fbbf24',
-          500: '#f59e0b',
+        // 烧赭 - 错误 / 危险
+        ember: {
+          50:  '#FBEFEC',
+          100: '#F2CFC6',
+          200: '#E29889',
+          300: '#CC6A57',
+          400: '#B14B36',
+          500: '#923623',
         },
-        // 文本色 - 柔和灰
-        slate: {
-          50:  '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
+        // 茶褐 - 主文本
+        ink: {
+          400: '#8A7A66',
+          500: '#6B5D4B',
+          600: '#524635',
+          700: '#3B3225',
+          800: '#2A2319',
+        },
+        // 浅石材边框（与 cream 协调）
+        bone: {
+          200: '#E9DFCB',
+          300: '#D9CBB1',
+          400: '#C0AE8E',
         },
       },
       borderRadius: {
@@ -83,16 +90,17 @@ export default {
         '5xl': '2.5rem',
       },
       boxShadow: {
-        // Soft UI 阴影 - 柔和、低饱和度
-        'soft-sm': '0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06)',
-        'soft':    '0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06)',
-        'soft-md': '0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.04)',
-        'soft-lg': '0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.04)',
-        'soft-xl': '0 20px 40px rgba(0, 0, 0, 0.08), 0 8px 16px rgba(0, 0, 0, 0.04)',
-        'soft-2xl': '0 25px 50px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.06)',
-        // Indigo 发光
-        'glow-indigo': '0 0 0 4px rgba(99, 102, 241, 0.15)',
-        'glow-mint':   '0 0 0 4px rgba(34, 197, 94, 0.15)',
+        // 暖色阴影
+        'warm-sm': '0 1px 2px rgba(91, 70, 35, 0.06), 0 1px 1px rgba(91, 70, 35, 0.04)',
+        'warm':    '0 4px 12px rgba(91, 70, 35, 0.08), 0 2px 4px rgba(91, 70, 35, 0.05)',
+        'warm-lg': '0 12px 32px rgba(91, 70, 35, 0.10), 0 4px 12px rgba(91, 70, 35, 0.06)',
+        'warm-xl': '0 24px 60px rgba(91, 70, 35, 0.14), 0 8px 24px rgba(91, 70, 35, 0.08)',
+        'glow-ochre': '0 0 0 4px rgba(212, 149, 84, 0.18)',
+        'glow-moss':  '0 0 0 4px rgba(124, 132, 97, 0.18)',
+      },
+      backgroundImage: {
+        'paper-grain': "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.27 0 0 0 0 0.16 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+        'warm-radial': 'radial-gradient(ellipse at top, #F6EFE2 0%, #FBF7F0 60%, #F1E8D2 100%)',
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',

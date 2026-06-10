@@ -33,8 +33,8 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         className="max-w-3xl mx-auto"
       >
         <div className="text-center py-16">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-ink-400" />
-          <p className="text-lg text-ink-600">{t.loading}</p>
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-slate-400" />
+          <p className="text-lg text-slate-700">{t.loading}</p>
         </div>
       </motion.div>
     )
@@ -103,12 +103,12 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-ink-500 font-medium">{t.step || '第'} {stepInUnit} / {totalItemsInUnit} {t.question || '题'}</span>
+            <span className="text-sm text-slate-500 font-medium">{t.step || '第'} {stepInUnit} / {totalItemsInUnit} {t.question || '题'}</span>
           )}
           {!isChecked && !isSkipped && (
             <motion.button
               onClick={handleSkipListening}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-ink-400 hover:text-ochre-500 hover:bg-ochre-50 rounded-lg transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-soft-500 hover:bg-soft-50 rounded-2xl transition-colors"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               title={t.skipListening || '跳过听力'}
@@ -131,13 +131,13 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
       </div>
 
-      <div className="bg-cream-50 border border-bone-200 rounded-3xl p-8 shadow-warm-sm">
+      <div className="bg-white rounded-3xl shadow-soft-md p-8">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-ochre-50 text-ochre-500 rounded-full text-sm font-medium mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-soft-50 text-soft-500 rounded-full text-sm font-medium mb-4"
           >
             <Headphones className="w-4 h-4" />
             {t.listeningQuizTitle || '听力题'}
@@ -147,7 +147,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang)}
-              className="p-3 text-ochre-500 hover:text-ochre-500 hover:bg-ochre-50 rounded-full transition-colors"
+              className="p-3 text-soft-500 hover:text-soft-500 hover:bg-soft-50 rounded-full transition-colors"
             >
               <Volume2 className="w-8 h-8" />
             </motion.button>
@@ -155,7 +155,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               onClick={() => speakText(quizData.clean_sentence || quizData.original_sentence, sourceLang, true)}
-              className="p-3 text-ink-400 hover:text-ochre-500 hover:bg-ochre-50 rounded-full transition-colors"
+              className="p-3 text-slate-400 hover:text-soft-500 hover:bg-soft-50 rounded-full transition-colors"
               title={t.slowPlay || '慢速播放'}
             >
               <Turtle className="w-7 h-7" />
@@ -164,15 +164,15 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border-2 border-dashed border-bone-300 rounded-xl flex flex-wrap gap-2 bg-cream-50/50 relative">
+          <div className="p-4 border border-dashed border-slate-200 rounded-2xl flex flex-wrap gap-2 bg-slate-50/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {correctWords.map((_, i) => (
-                <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{correctWords[i]}</span>
+                <span key={`ph-${i}`} className="px-4 py-2 rounded-2xl text-sm font-medium">{correctWords[i]}</span>
               ))}
             </div>
             <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-center">
               {selectedWords.length === 0 && (
-                <span className="italic text-ink-400 text-sm pointer-events-none">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
+                <span className="italic text-slate-400 text-sm pointer-events-none">{t.tapToBuildSentence || '按顺序点击下方单词组成句子'}</span>
               )}
               <AnimatePresence mode="popLayout">
                 {selectedWords.map((item, pos) => (
@@ -183,14 +183,14 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0 }}
                     transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
-                    className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
+                    className={`px-4 py-2 rounded-2xl text-sm font-medium cursor-pointer select-none transition-all duration-200 ${
                       isChecked
                         ? isCorrect
-                          ? 'bg-moss-50 text-moss-600 border border-moss-400'
+                          ? 'bg-mint-50 text-mint-600 ring-2 ring-mint-400/50'
                           : pos < correctWords.length && item.word.toLowerCase() === correctWords[pos].toLowerCase()
-                            ? 'bg-moss-50 text-moss-600 border border-moss-400'
-                            : 'bg-ember-50 text-ember-500 border border-ember-400'
-                        : 'bg-ink-800 text-white hover:bg-ink-700'
+                            ? 'bg-mint-50 text-mint-600 ring-2 ring-mint-400/50'
+                            : 'bg-rose-50 text-rose-500 ring-2 ring-rose-400/50'
+                        : 'bg-soft-500 text-white shadow-soft-sm'
                     }`}
                     onClick={() => handleRemoveWord(pos)}
                   >
@@ -214,12 +214,12 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
                   transition={{ duration: 0.15 }}
                   onClick={() => handleWordSelect(word, index)}
                   disabled={isSelected || isChecked}
-                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                  className={`px-4 py-2 rounded-2xl text-sm font-medium select-none transition-all duration-200 border-0 ${
                     isSelected
                       ? 'pointer-events-none invisible'
                       : isChecked
-                        ? 'pointer-events-none bg-ink-800 text-white opacity-50'
-                        : 'bg-ink-800 text-white hover:bg-ink-700'
+                        ? 'pointer-events-none bg-white shadow-soft-sm text-slate-700 opacity-50'
+                        : 'bg-white shadow-soft-sm hover:shadow-soft-md hover:-translate-y-0.5 text-slate-700'
                   }`}
                 >
                   {stripPunct(word)}
@@ -233,16 +233,16 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 rounded-xl mb-6 ${isCorrect ? 'bg-moss-50 border-2 border-moss-400' : 'bg-ember-50 border-2 border-ember-400'}`}
+            className={`p-5 rounded-2xl mb-6 ${isCorrect ? 'bg-mint-50 ring-2 ring-mint-400/50' : 'bg-rose-50 ring-2 ring-rose-400/50'}`}
           >
             <div className="flex items-center gap-3 mb-2">
-              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-moss-600" /> : <XCircle className="w-6 h-6 text-ember-500" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-moss-600' : 'text-ember-500'}`}>
+              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-mint-600" /> : <XCircle className="w-6 h-6 text-rose-500" />}
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-mint-600' : 'text-rose-500'}`}>
                 {isSkipped ? (t.skipped || '已跳过') : isCorrect ? t.correct : t.incorrect}
               </span>
             </div>
             {(isSkipped || !isCorrect) && (
-              <p className="text-ink-600 font-medium">
+              <p className="text-slate-700 font-medium">
                 {t.correctAnswer || '正确答案'}：{correctWords.map(w => stripPunct(w)).join(' ')}
               </p>
             )}
@@ -256,7 +256,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               whileTap={{ scale: 0.98 }}
               onClick={checkAnswer}
               disabled={selectedWords.length === 0}
-              className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 btn-primary text-lg rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}
             </motion.button>
@@ -266,7 +266,7 @@ function ListeningQuizStep({ quizData, onNextQuestion, onBack, loading, t, onOpe
               whileTap={{ scale: 0.98 }}
               onClick={handleNextQuestion}
               disabled={loading}
-              className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 py-4 btn-primary text-lg rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>

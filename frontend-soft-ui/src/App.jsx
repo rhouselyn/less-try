@@ -1210,7 +1210,7 @@ function App() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-cream-50 bg-paper-grain">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-soft-50">
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
@@ -1229,15 +1229,15 @@ function App() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowSettings(true)}
-                    className="absolute top-3 right-4 p-2 text-ink-400 hover:text-ink-600 hover:bg-cream-200/60 rounded-xl transition-colors z-10"
+                    className="absolute top-3 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100/60 rounded-2xl transition-colors z-10"
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>
                   {translatingUI && (
-                    <div className="absolute inset-0 bg-cream-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
-                      <div className="flex items-center gap-3 bg-cream-50 border border-bone-200 rounded-2xl px-6 py-4 shadow-warm">
-                        <Loader2 className="w-5 h-5 animate-spin text-ochre-500" />
-                        <span className="text-sm text-ink-600">{
+                    <div className="absolute inset-0 bg-slate-50/80 backdrop-blur-md z-20 flex items-center justify-center">
+                      <div className="flex items-center gap-3 bg-white border-0 rounded-3xl px-6 py-4 shadow-soft-md">
+                        <Loader2 className="w-5 h-5 animate-spin text-soft-500" />
+                        <span className="text-sm text-slate-700">{
                           (customTranslations[uiLang]?.translatingUI)
                           || (customTranslations[Array.from(loadedLangs).filter(l => l !== uiLang).pop()]?.translatingUI)
                           || t.translatingUI
