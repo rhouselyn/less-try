@@ -20,6 +20,9 @@ export default {
           'system-ui',
           'sans-serif',
         ],
+        // Pop Art 字体
+        landing: ['"Bangers"', '"Noto Sans SC"', 'cursive'],
+        landingBody: ['"Outfit"', '"Noto Sans SC"', 'system-ui', 'sans-serif'],
       },
       colors: {
         // Soft UI 主色调 - 低饱和度靛蓝
@@ -77,6 +80,18 @@ export default {
           800: '#1e293b',
           900: '#0f172a',
         },
+        // Pop Art 色板 - 高饱和纯色
+        pop: {
+          yellow: '#FFD700',
+          pink: '#FF69B4',
+          blue: '#00BFFF',
+          red: '#FF006E',
+          green: '#39FF14',
+          orange: '#FF6B35',
+          purple: '#BF5FFF',
+          black: '#000000',
+          cream: '#FFF8E7',
+        },
       },
       borderRadius: {
         '4xl': '2rem',
@@ -93,6 +108,11 @@ export default {
         // Indigo 发光
         'glow-indigo': '0 0 0 4px rgba(99, 102, 241, 0.15)',
         'glow-mint':   '0 0 0 4px rgba(34, 197, 94, 0.15)',
+        // Pop Art 硬阴影
+        'pop': '4px 4px 0 #000',
+        'pop-sm': '2px 2px 0 #000',
+        'pop-lg': '6px 6px 0 #000',
+        'pop-xl': '8px 8px 0 #000',
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',
@@ -100,6 +120,10 @@ export default {
         'shimmer': 'shimmer 3s ease-in-out infinite',
         'float-slow': 'floatSlow 8s ease-in-out infinite',
         'pulse-soft': 'pulseSoft 2.4s ease-in-out infinite',
+        // Pop Art 动画
+        'wiggle': 'wiggle 0.5s ease-in-out',
+        'float': 'float 3s ease-in-out infinite',
+        'pulse-pop': 'pulsePop 2s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -122,6 +146,18 @@ export default {
         pulseSoft: {
           '0%, 100%': { opacity: '0.7' },
           '50%': { opacity: '1' },
+        },
+        wiggle: {
+          '0%, 100%': { transform: 'rotate(-3deg)' },
+          '50%': { transform: 'rotate(3deg)' },
+        },
+        float: {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-12px)' },
+        },
+        pulsePop: {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.05)' },
         },
       },
     },

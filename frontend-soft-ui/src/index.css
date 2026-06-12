@@ -146,3 +146,13 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* ===== Pop Art 着陆页样式 ===== */
+.font-landing {
+  font-family: 'Bangers', 'Noto Sans SC', cursive;
+  letter-spacing: 0.05em;
+}
+
+.font-landingBody {
+  font-family: 'Outfit', 'Noto Sans SC', system-ui, sans-serif;
+}

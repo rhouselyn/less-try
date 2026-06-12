@@ -5,6 +5,7 @@ import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech } from './utils/speech'
 import ConfirmDialog from './components/ConfirmDialog'
+import LandingPage from './components/LandingPage'
 
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
@@ -43,7 +44,7 @@ function FrogLogo({ size = 40 }) {
 }
 
 function App() {
-  const [step, setStep] = useState('input')
+  const [step, setStep] = useState('landing')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
@@ -1210,7 +1211,11 @@ function App() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-soft-50">
+    <>
+      {step === 'landing' ? (
+        <LandingPage onStartLearning={() => setStep('input')} />
+      ) : (
+        <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-soft-50">
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
@@ -1577,6 +1582,8 @@ function App() {
         onCancel={() => setConfirmDialog({ isOpen: false, onConfirm: null })}
       />
     </div>
+      )}
+    </>
   )
 }
 
