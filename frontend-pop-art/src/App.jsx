@@ -742,18 +742,16 @@ function App() {
   const [showApp, setShowApp] = useState(false)
 
   const handleStartLearning = () => {
-    // 跳转到 retro-vintage 学习界面（默认端口 5173）
-    const learnUrl = `${window.location.protocol}//${window.location.hostname}:5173`
-    window.location.href = learnUrl
+    setShowApp(true)
   }
 
   const handleBackToHome = () => {
-    // 返回 pop-art 着陆页（端口 5175）
-    const homeUrl = `${window.location.protocol}//${window.location.hostname}:5175`
-    window.location.href = homeUrl
+    setShowApp(false)
   }
 
   if (showApp) {
+    // 跳转到学习应用 - 使用默认前端
+    window.location.href = 'http://localhost:5173'
     return (
       <div className="min-h-screen bg-pop-yellow flex items-center justify-center">
         <div className="bg-white border-4 border-black shadow-pop-lg p-8 text-center">
