@@ -5,6 +5,7 @@ import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech } from './utils/speech'
 import ConfirmDialog from './components/ConfirmDialog'
+import LandingPage from './components/LandingPage'
 
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
@@ -43,6 +44,7 @@ function FrogLogo({ size = 40 }) {
 }
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true)
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
@@ -1207,6 +1209,10 @@ function App() {
     } finally {
       setLoading(false)
     }
+  }
+
+  if (showLanding) {
+    return <LandingPage onStartLearning={() => setShowLanding(false)} />
   }
 
   return (
