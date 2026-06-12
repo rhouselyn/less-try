@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html { scroll-behavior: smooth; }
+body { overflow-x: hidden; }
+
+.font-display {
+  font-family: 'Bangers', 'Noto Sans SC', cursive;
+  letter-spacing: 0.05em;
+}
+
+.font-body {
+  font-family: 'Outfit', 'Noto Sans SC', system-ui, sans-serif;
+}
+
+/* Custom scrollbar - Pop Art */
+::-webkit-scrollbar { width: 12px; }
+::-webkit-scrollbar-track { background: #FFF8E7; border-left: 4px solid #000; }
+::-webkit-scrollbar-thumb { background: #FF006E; border: 4px solid #000; }
+
+/* Selection */
+::selection { background-color: #FF69B4; color: #000; }
