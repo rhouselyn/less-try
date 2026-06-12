@@ -699,7 +699,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
     const allWords = [...new Set([...tokenTexts, ...vocabTexts])]
     if (allWords.length === 0) {
-      return <div className="font-medium text-[15px] text-[#1a1a2e] mb-1.5 sentence-text">{sentence}</div>
+      return <div className="font-medium text-[15px] text-[#1a1a2e] mb-1.5 sentence-font font-sans">{sentence}</div>
     }
 
     allWords.sort((a, b) => b.length - a.length)
@@ -709,7 +709,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const parts = sentence.split(pattern)
 
     return (
-      <div className="font-medium text-[15px] text-[#1a1a2e] mb-1.5 leading-relaxed sentence-text">
+      <div className="font-medium text-[15px] text-[#1a1a2e] mb-1.5 leading-relaxed sentence-text font-sans">
         {parts.map((part, i) => {
           if (!part) return null
           const clickable = findVocabWordBySourceText(part)
@@ -734,7 +734,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     const tr = item.translation_result
     const text = tr?.tokenized_translation || ''
     if (!text) return null
-    return <div className={`text-[#2d2d4a] text-[14px] ${sentenceDisplayMode === 1 ? 'invisible' : ''}`}>{text}</div>
+    return <div className={`text-[#2d2d4a] text-[14px] font-sans ${sentenceDisplayMode === 1 ? 'invisible' : ''}`}>{text}</div>
   }
 
   const renderPagination = (currentPage, totalPages, onPageChange) => {
@@ -981,7 +981,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                               <div className={sentenceDisplayMode === 2 && selectedSentence !== originalIndex ? 'invisible' : ''}>
                                 {renderOriginalSentence(item)}
                               </div>
-                              <div className={`text-[#2d2d4a] text-[14px] sentence-text ${sentenceDisplayMode === 1 && selectedSentence !== originalIndex ? 'invisible' : ''}`}>
+                              <div className={`text-[#2d2d4a] text-[14px] sentence-text font-sans ${sentenceDisplayMode === 1 && selectedSentence !== originalIndex ? 'invisible' : ''}`}>
                                 {item.translation_result?.tokenized_translation || ''}
                               </div>
                             </div>
@@ -1116,7 +1116,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                 className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-[#e63946]/10 transition-colors group"
                               >
                                 <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
-                                  <span className={`text-[14px] font-black text-[#1a1a2e] tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
+                                  <span className={`text-[14px] font-bold font-sans text-[#1a1a2e] tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
                                     {word.word}
                                   </span>
                                   {word.ipa && (
@@ -1129,7 +1129,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                       {word.part_of_speech}
                                     </span>
                                   )}
-                                  <span className={`text-[12px] text-[#2d2d4a] truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
+                                  <span className={`text-[12px] text-[#2d2d4a] truncate font-sans ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
                                     {meaningOverrides[wordKey] || word.meaning}
                                   </span>
                                 </div>
@@ -1166,7 +1166,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                               <Brain className="w-3 h-3 text-[#e63946]" />
                                               {t.definition || '释义'}
                                             </h3>
-                                            <p className="text-[13px] text-[#1a1a2e] leading-relaxed">
+                                            <p className="text-[13px] text-[#1a1a2e] leading-relaxed font-sans">
                                               {detail.enriched_meaning || detail.meaning || detail.context_meaning}
                                             </p>
                                           </div>
@@ -1230,7 +1230,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                 className="w-full text-left px-4 py-2.5 flex items-center gap-2 hover:bg-[#e63946]/10 transition-colors group"
                             >
                               <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap select-text">
-                                <span className={`text-[14px] font-black text-[#1a1a2e] tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
+                                <span className={`text-[14px] font-bold font-sans text-[#1a1a2e] tracking-tight shrink-0 ${vocabDisplayMode === 2 && !isExpanded ? 'invisible' : ''}`}>
                                   {word.word}
                                 </span>
                                 {word.ipa && (
@@ -1243,7 +1243,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     {word.morphology}
                                   </span>
                                 )}
-                                <span className={`text-[12px] text-[#2d2d4a] truncate ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
+                                <span className={`text-[12px] text-[#2d2d4a] truncate font-sans ${vocabDisplayMode === 1 && !isExpanded ? 'invisible' : ''}`}>
                                   {meaningOverrides[word.word] || word.meaning || word.context_meaning}
                                 </span>
                               </div>
@@ -1281,7 +1281,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                             <Brain className="w-3 h-3 text-[#e63946]" />
                                             {t.definition || '释义'}
                                           </h3>
-                                          <p className="text-[13px] text-[#1a1a2e] leading-relaxed">
+                                          <p className="text-[13px] text-[#1a1a2e] leading-relaxed font-sans">
                                             {detail.enriched_meaning || detail.meaning || detail.context_meaning}
                                           </p>
                                         </div>

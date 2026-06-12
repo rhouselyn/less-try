@@ -1,16 +1,16 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, Languages } from 'lucide-react'
+import { ArrowLeft, Loader2, CheckCircle2, XCircle, ChevronRight, BookOpen, Lightbulb, PenLine } from 'lucide-react'
 import { speakText } from '../utils/speech'
 
-function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer, reviewMode, reviewIndex, wrongItemsCount }) {
-  const [selectedTokens, setSelectedTokens] = useState([])
+function MaskedSentenceExerciseStep({ data, onNext, onBack, onComplete, loading, t, onOpenVocabList, maskVersion, totalMasks, exerciseIndexInUnit, totalExercisesInUnit, sentencePreview, sourceLang, onAnswer, reviewMode, reviewIndex, wrongItemsCount }) {
+  const [selectedWords, setSelectedWords] = useState([])
   const [answerChecked, setAnswerChecked] = useState(false)
   const [isCorrect, setIsCorrect] = useState(false)
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [data?.native_translation])
+  }, [data?.masked_sentence])
 
   if (!data) {
     return (
@@ -23,29 +23,25 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   const stepInUnit = reviewMode ? (reviewIndex + 1) : ((exerciseIndexInUnit ?? 0) + 1)
   const totalItemsInUnit = reviewMode ? (wrongItemsCount ?? 0) : (totalExercisesInUnit ?? 0)
   const isLastExercise = reviewMode ? (wrongItemsCount === 0) : (stepInUnit >= (totalExercisesInUnit ?? 10))
-  const maxWords = data.original_tokens.length
+  const maxWords = data.answer_words.length
 
-  const handleTokenSelect = (token, index) => {
+  const handleWordSelect = (word, index) => {
     if (answerChecked) return
-    if (selectedTokens.some(t => t.index === index)) return
-    setSelectedTokens(prev => [...prev, { token, index }])
-    speakText(token, sourceLang)
+    if (selectedWords.some(w => w.index === index)) return
+    setSelectedWords(prev => [...prev, { word, index }])
+    speakText(word, sourceLang)
   }
 
-  const handleSelectedClick = (idx) => {
+  const handleSelectedClick = (pos) => {
     if (answerChecked) return
-    const newSelected = [...selectedTokens]
-    newSelected.splice(idx, 1)
-    setSelectedTokens(newSelected)
+    setSelectedWords(prev => prev.filter((_, i) => i !== pos))
   }
-
-  const stripPunctuation = (str) => str.replace(/[，。、；：！？,.:;!?]/g, '')
 
   const checkAnswer = () => {
-    const userTokens = selectedTokens.map(t => stripPunctuation(t.token.toLowerCase()))
-    const correctTokens = data.original_tokens.map(t => stripPunctuation(t.toLowerCase()))
-    const correct = userTokens.length === correctTokens.length &&
-      userTokens.every((token, index) => token === correctTokens[index])
+    const userAnswerWords = selectedWords.map(w => w.word.toLowerCase())
+    const correctAnswerWords = data.answer_words.map(w => w.toLowerCase())
+    const correct = userAnswerWords.length === correctAnswerWords.length &&
+      userAnswerWords.every((word, index) => word === correctAnswerWords[index])
     setIsCorrect(correct)
     setAnswerChecked(true)
     if (onAnswer) onAnswer(correct)
@@ -100,16 +96,16 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
             className="inline-flex items-center gap-2 px-4 py-1.5 bg-[#fde8e8] text-[#e63946] rounded-full text-sm font-black uppercase mb-4"
           >
-            <Languages className="w-4 h-4" />
-            {t.translationReconstructionTitle || '翻译还原'}
+            <PenLine className="w-4 h-4" />
+            {t.maskedSentenceTitle || '选词填空'}
           </motion.div>
           <div className="flex items-center justify-center gap-2">
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-lg text-[#1a1a2e] italic"
+              className="text-lg text-[#1a1a2e] font-sans font-bold"
             >
-              {data.native_translation}
+              {data.masked_sentence}
             </motion.p>
           </div>
         </div>
@@ -117,47 +113,46 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         <div className="mb-8">
           <div className="p-4 border-[3px] border-dashed border-[#1a1a2e] rounded-xl flex flex-wrap gap-2 bg-[#f0e6d3]/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
-              {data.original_tokens.map((_, i) => (
-                <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{data.original_tokens[i]}</span>
+              {data.answer_words.map((_, i) => (
+                <span key={`ph-${i}`} className="px-4 py-2 rounded-full text-sm font-medium">{data.answer_words[i]}</span>
               ))}
               <span className="ml-auto p-2"><Lightbulb className="w-5 h-5" /></span>
             </div>
             <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-start content-start">
-              {selectedTokens.length === 0 && (
-                <span className="italic text-[#4a4a6a] text-sm pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
+              {selectedWords.length === 0 && !answerChecked && (
+                <span className="text-[#4a4a6a] text-sm pointer-events-none">{t.maskedHint || '点击下方选项填入...'}</span>
               )}
               <AnimatePresence mode="popLayout">
-                {selectedTokens.map((item, idx) => {
-                  const isTokenCorrect = idx < data.original_tokens.length &&
-                    stripPunctuation(item.token.toLowerCase()) === stripPunctuation(data.original_tokens[idx].toLowerCase())
-                  return (
-                    <motion.div
-                      key={`sel-${item.index}`}
-                      layout
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
-                      onClick={() => handleSelectedClick(idx)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer select-none ${
-                        answerChecked
-                          ? isCorrect
-                            ? 'bg-[#e6f5f3] text-moss-600 border-[3px] border-[#1a1a2e]'
-                            : isTokenCorrect
-                              ? 'bg-[#e6f5f3] text-moss-600 border-[3px] border-[#1a1a2e]'
-                              : 'bg-ember-50 text-ember-500 border-[3px] border-[#1a1a2e]'
-                          : 'bg-[#0f0f1e] text-white hover:bg-[#1a1a2e]'
-                      }`}
-                    >
-                      {item.token}
-                    </motion.div>
-                  )
-                })}
+                {selectedWords.map((item, pos) => (
+                  <motion.div
+                    key={`sel-${item.index}`}
+                    layout
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0 }}
+                    transition={{ layout: { type: 'spring', stiffness: 500, damping: 35 }, opacity: { duration: 0.15 }, scale: { duration: 0.15 } }}
+                    onClick={() => handleSelectedClick(pos)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium font-sans cursor-pointer select-none ${
+                      answerChecked
+                        ? isCorrect
+                          ? 'bg-[#e6f5f3] text-moss-600 border-[3px] border-[#1a1a2e]'
+                          : (() => {
+                              const correctWord = data.answer_words[pos]
+                              return correctWord && item.word.toLowerCase() === correctWord.toLowerCase()
+                                ? 'bg-[#e6f5f3] text-moss-600 border-[3px] border-[#1a1a2e]'
+                                : 'bg-ember-50 text-ember-500 border-[3px] border-[#1a1a2e]'
+                            })()
+                        : 'bg-[#0f0f1e] text-white hover:bg-[#1a1a2e]'
+                    }`}
+                  >
+                    {item.word}
+                  </motion.div>
+                ))}
               </AnimatePresence>
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
+                onClick={() => speakText(data.original_sentence || data.masked_sentence?.replace(/___/g, ''), sourceLang)}
                 className="ml-auto p-2 text-[#e63946] hover:text-[#e63946] hover:bg-[#fde8e8] rounded-full transition-colors"
                 title={t.playHint || '播放提示'}
               >
@@ -169,17 +164,17 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
 
         <div className="mb-8">
           <div className="flex flex-wrap gap-2">
-            {data.options.map((token, idx) => {
-              const isSelected = selectedTokens.some(t => t.index === idx)
+            {data.options.map((word, idx) => {
+              const isSelected = selectedWords.some(w => w.index === idx)
               return (
                 <motion.button
                   key={`opt-${idx}`}
                   initial={{ opacity: 0, scale: 0 }}
                   animate={{ opacity: isSelected ? 0 : 1, scale: isSelected ? 0 : 1 }}
                   transition={{ duration: 0.15 }}
-                  onClick={() => handleTokenSelect(token, idx)}
+                  onClick={() => handleWordSelect(word, idx)}
                   disabled={isSelected || answerChecked}
-                  className={`px-4 py-2 rounded-full text-sm font-medium select-none ${
+                  className={`px-4 py-2 rounded-full text-sm font-medium font-sans select-none ${
                     isSelected
                       ? 'pointer-events-none invisible'
                       : answerChecked
@@ -187,7 +182,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                         : 'bg-[#0f0f1e] text-white hover:bg-[#1a1a2e]'
                   }`}
                 >
-                  {token}
+                  {word}
                 </motion.button>
               )
             })}
@@ -205,8 +200,8 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               <span className={`font-black uppercase text-lg ${isCorrect ? 'text-moss-600' : 'text-ember-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
-              <p className="text-[#1a1a2e] font-medium">
-                {t.correctAnswer || '正确答案'}：{data.original_tokens.join(' ')}
+              <p className="text-[#1a1a2e] font-medium font-sans">
+                {t.correctAnswer || '正确答案'}：{data.answer_words.join(' ')}
               </p>
             )}
             {isCorrect && isLastExercise && (
@@ -223,7 +218,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
               whileHover={{ scale: 1.03, y: -3, boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.2)' }}
               whileTap={{ scale: 0.97, y: 0 }}
               onClick={checkAnswer}
-              disabled={selectedTokens.length === 0}
+              disabled={selectedWords.length === 0}
               className="flex-1 py-4 btn-primary text-lg rounded-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {t.checkAnswer}
@@ -257,4 +252,4 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
   )
 }
 
-export default TranslationReconstructionStep
+export default MaskedSentenceExerciseStep

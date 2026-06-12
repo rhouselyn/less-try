@@ -16,7 +16,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
             <Brain className="w-3 h-3 text-[#e63946]" />
             {t.definition}
           </h3>
-          <p className="text-[13px] text-[#1a1a2e] leading-relaxed">
+          <p className="text-[13px] text-[#1a1a2e] leading-relaxed font-sans">
             {word.enriched_meaning || word.meaning || word.context_meaning}
           </p>
         </div>
@@ -34,7 +34,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
                 <span className="badge-ochre">
                   {variant.type}
                 </span>
-                <span className="text-[#1a1a2e] text-[13px]">{variant.form}</span>
+                <span className="text-[#1a1a2e] text-[13px] font-sans">{variant.form}</span>
               </div>
             ))}
           </div>
@@ -51,7 +51,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
             {word.examples.map((example, index) => (
               <div key={index} className="border-l-[3px] border-[#e63946] pl-2.5">
                 <div className="flex items-start gap-1.5">
-                  <p className="text-[#1a1a2e] text-[13px] leading-snug flex-1">{example.sentence}</p>
+                  <p className="text-[#1a1a2e] text-[13px] leading-snug flex-1 font-sans">{example.sentence}</p>
                   {example.sentence && (
                     <button
                       onClick={(e) => { e.stopPropagation(); speakText(example.sentence, sourceLang) }}
@@ -62,7 +62,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
                   )}
                 </div>
                 {example.translation && (
-                  <p className="text-[#4a4a6a] text-[11px] leading-snug">{example.translation}</p>
+                  <p className="text-[#4a4a6a] text-[11px] leading-snug font-sans">{example.translation}</p>
                 )}
               </div>
             ))}
@@ -76,7 +76,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
             <Lightbulb className="w-3 h-3 text-[#e63946]" />
             {t.memoryHint}
           </h3>
-          <p className="text-[13px] text-[#1a1a2e] leading-relaxed bg-[#fef3e2] px-3 py-2 rounded-lg border-[3px] border-[#1a1a2e]">
+          <p className="text-[13px] text-[#1a1a2e] leading-relaxed bg-[#fef3e2] px-3 py-2 rounded-lg border-[3px] border-[#1a1a2e] font-sans">
             {word.memory_hint}
           </p>
         </div>
@@ -96,7 +96,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
                 onClick={() => !disableContextSentenceClick && onSentenceClick && cs.sentence_index !== undefined && onSentenceClick(cs.sentence_index)}
               >
                 <div className="flex items-start gap-1.5">
-                  <p className="text-[#1a1a2e] text-[13px] leading-snug flex-1">{cs.sentence}</p>
+                  <p className="text-[#1a1a2e] text-[13px] leading-snug flex-1 font-sans">{cs.sentence}</p>
                   {cs.sentence && (
                     <button
                       onClick={(e) => { e.stopPropagation(); speakText(cs.sentence, sourceLang) }}
@@ -107,7 +107,7 @@ function WordDetail({ word, t, onSentenceClick, sourceLang, hideContextSentences
                   )}
                 </div>
                 {cs.translation && (
-                  <p className="text-[#4a4a6a] text-[11px] leading-snug">{cs.translation}</p>
+                  <p className="text-[#4a4a6a] text-[11px] leading-snug font-sans">{cs.translation}</p>
                 )}
               </div>
             ))}
