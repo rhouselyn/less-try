@@ -1,14 +1,13 @@
 """呱邻国桌面应用启动入口。
 
 启动 FastAPI 后端服务，然后用 PyWebView 打开原生窗口。
-支持 PyInstaller 打包为单文件可执行程序。
+支持 PyInstaller 打包为可执行程序。
 """
 
 import sys
 import os
 import threading
 import time
-import webview  # pywebview
 
 # ── 路径修正：PyInstaller 打包后资源在 _MEIPASS 目录 ──
 def get_base_path():
@@ -72,7 +71,10 @@ def main():
         except (urllib.error.URLError, ConnectionRefusedError, OSError):
             time.sleep(0.5)
 
-    # 创建 PyWebView 窗口
+    # Windows 上强制使用 edgechromium 后端（WebView2），避免 pythonnet 打包问题
+    # macOS 使用 webkit，Linux 使用 webkitgtk
+    import webview
+
     window = webview.create_window(
         title='呱邻国 - Gualingo',
         url='http://127.0.0.1:18000',
@@ -82,8 +84,11 @@ def main():
         text_select=True,
     )
 
-    # 启动窗口事件循环（阻塞）
-    webview.start(debug=False)
+    # Windows 强制使用 edgechromium，不依赖 pythonnet
+    if sys.platform == 'win32':
+        webview.start(gui='edgechromium', debug=False)
+    else:
+        webview.start(debug=False)
 
     # 窗口关闭后退出
     sys.exit(0)
