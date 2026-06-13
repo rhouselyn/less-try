@@ -21,7 +21,7 @@
 
 **任何语言 → 任何语言，你的素材你做主。**
 
-**只需一个 API Key，无需数据库，纯 LLM 能力驱动一切。**
+**只需一个 API Key，纯 LLM 能力驱动一切。**
 
 ---
 
@@ -124,13 +124,38 @@
 
 ## 🚀 快速开始
 
-### 环境要求
+### 方式一：下载桌面应用（推荐）
+
+前往 [GitHub Releases](https://github.com/rhouselyn/Gualingo/releases) 下载对应平台的安装包：
+
+| 平台 | 文件 |
+|------|------|
+| Windows | `Lesslingo-Windows.zip` |
+| macOS | `Lesslingo-macOS.tar.gz` |
+| Linux | `Lesslingo-Linux.tar.gz` |
+
+解压后运行 `Lesslingo` 即可，无需安装 Python 或 Node.js。
+
+### 方式二：Docker 部署
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v lesslingo-data:/root/.local/share/Lesslingo \
+  ghcr.io/rhouselyn/gualingo:latest
+```
+
+打开 http://localhost:8000 即可使用。
+
+### 方式三：从源码运行
+
+#### 环境要求
 
 - Python 3.10+
 - Node.js 18+
 - 一个 LLM API Key（支持 OpenAI 兼容接口，如 SiliconFlow、DeepSeek 等）
 
-### 安装与启动
+#### 安装与启动
 
 ```bash
 # 1. 安装后端依赖
@@ -140,15 +165,28 @@ pip install -r requirements.txt
 # 2. 启动后端
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# 3. 安装前端依赖
-cd ../frontend
+# 3. 安装前端依赖（选择一个前端风格）
+cd ../frontend-soft-ui
 npm install
 
 # 4. 启动前端
 npm run dev
 ```
 
-打开 http://localhost:5173 ，点击右上角 ⚙️ 设置填入你的 API Key，就可以开始学习了。
+打开 http://localhost:5174 ，点击右上角 ⚙️ 设置填入你的 API Key，就可以开始学习了。
+
+#### 桌面应用模式
+
+```bash
+# 安装桌面应用依赖
+pip install pywebview
+
+# 构建 frontend-soft-ui
+cd frontend-soft-ui && npm install && npm run build && cd ..
+
+# 启动桌面应用
+python app.py
+```
 
 ---
 
@@ -158,7 +196,8 @@ npm run dev
 |----|------|
 | 前端 | React 18 · Vite · TailwindCSS · Framer Motion · Web Speech API |
 | 后端 | FastAPI · Uvicorn · OpenAI 兼容 LLM API |
-| 存储 | 本地文件系统（零配置，开箱即用） |
+| 存储 | SQLite（自动迁移旧文件数据） |
+| 桌面端 | PyWebView · PyInstaller |
 
 ---
 
