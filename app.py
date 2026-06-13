@@ -41,10 +41,13 @@ def setup_env():
 
     # 前端静态文件目录（由 Electron 通过环境变量传入，开发模式下自动查找）
     if 'FRONTEND_DIST_DIR' not in os.environ:
-        frontend_dist = os.path.join(BASE_PATH, 'frontend', 'dist')
+        frontend_dist = os.path.join(BASE_PATH, 'frontend-classic', 'dist')
         if not os.path.isdir(frontend_dist) or not os.path.isfile(os.path.join(frontend_dist, 'index.html')):
             frontend_dist = os.path.join(BASE_PATH, 'frontend-retro-vintage', 'dist')
         os.environ['FRONTEND_DIST_DIR'] = frontend_dist
+    # 设置多前端目录
+    os.environ.setdefault('FRONTEND_CEL_DIR', os.path.join(BASE_PATH, 'frontend-classic', 'dist'))
+    os.environ.setdefault('FRONTEND_VINTAGE_DIR', os.path.join(BASE_PATH, 'frontend-retro-vintage', 'dist'))
 
 
 # ── 主函数 ──
