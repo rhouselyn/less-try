@@ -165,8 +165,8 @@ pip install -r requirements.txt
 # 2. 启动后端
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# 3. 安装前端依赖（选择一个前端风格）
-cd ../frontend-soft-ui
+# 3. 安装前端依赖
+cd ../frontend
 npm install
 
 # 4. 启动前端
@@ -181,8 +181,8 @@ npm run dev
 # 安装桌面应用依赖
 pip install pywebview
 
-# 构建 frontend-soft-ui
-cd frontend-soft-ui && npm install && npm run build && cd ..
+# 构建前端
+cd frontend && npm install && npm run build && cd ..
 
 # 启动桌面应用
 python app.py

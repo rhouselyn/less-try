@@ -48,7 +48,7 @@ jobs:
       # ── 构建前端 ──
       - name: Build Frontend
         run: |
-          cd frontend-soft-ui
+          cd frontend
           npm install
           npm run build
 

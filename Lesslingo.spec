@@ -13,7 +13,7 @@ ROOT = os.path.dirname(os.path.abspath(SPECPATH))
 BACKEND = os.path.join(ROOT, 'backend')
 
 # 前端构建产物目录（需先 npm run build）
-FRONTEND_DIST = os.path.join(ROOT, 'frontend-soft-ui', 'dist')
+FRONTEND_DIST = os.path.join(ROOT, 'frontend', 'dist')
 
 # 收集后端所有 Python 文件
 backend_datas = []
