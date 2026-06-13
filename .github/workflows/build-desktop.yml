@@ -63,6 +63,7 @@ jobs:
 
       # ── 调试：确认目录结构 ──
       - name: Debug directory structure
+        shell: bash
         run: |
           echo "PWD: $(pwd)"
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
