@@ -18,6 +18,11 @@ def get_base_path():
 
 BASE_PATH = get_base_path()
 
+# 将 backend 目录加入 Python 搜索路径
+BACKEND_PATH = os.path.join(BASE_PATH, 'backend')
+if BACKEND_PATH not in sys.path:
+    sys.path.insert(0, BACKEND_PATH)
+
 # ── 设置环境变量 ──
 def setup_env():
     # 数据目录：放在用户目录下，而非临时目录
