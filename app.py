@@ -1,14 +1,14 @@
 """呱邻国桌面应用启动入口。
 
-启动 FastAPI 后端服务，然后打开浏览器窗口。
-优先尝试 PyWebView 原生窗口，失败则回退到系统浏览器。
+启动 FastAPI 后端服务，然后用 PyWebView 打开原生窗口。
+支持 PyInstaller 打包为单文件可执行程序。
 """
 
 import sys
 import os
 import threading
 import time
-import webbrowser
+import webview  # pywebview
 
 # ── 路径修正：PyInstaller 打包后资源在 _MEIPASS 目录 ──
 def get_base_path():
@@ -54,23 +54,6 @@ def start_backend():
     from main import app
     uvicorn.run(app, host='127.0.0.1', port=18000, log_level='warning', timeout_keep_alive=600)
 
-# ── 尝试 PyWebView 原生窗口 ──
-def try_pywebview():
-    try:
-        import webview
-        window = webview.create_window(
-            title='呱邻国 - Gualingo',
-            url='http://127.0.0.1:18000',
-            width=1200,
-            height=800,
-            min_size=(800, 600),
-            text_select=True,
-        )
-        webview.start(debug=False)
-        return True
-    except Exception:
-        return False
-
 # ── 主函数 ──
 def main():
     data_dir, config_dir = setup_env()
@@ -89,16 +72,20 @@ def main():
         except (urllib.error.URLError, ConnectionRefusedError, OSError):
             time.sleep(0.5)
 
-    # 优先尝试 PyWebView 原生窗口，失败则打开系统浏览器
-    if not try_pywebview():
-        webbrowser.open('http://127.0.0.1:18000')
-        # 浏览器模式下，保持后端运行直到用户 Ctrl+C
-        try:
-            while True:
-                time.sleep(1)
-        except KeyboardInterrupt:
-            pass
+    # 创建 PyWebView 窗口
+    window = webview.create_window(
+        title='呱邻国 - Gualingo',
+        url='http://127.0.0.1:18000',
+        width=1200,
+        height=800,
+        min_size=(800, 600),
+        text_select=True,
+    )
 
+    # 启动窗口事件循环（阻塞）
+    webview.start(debug=False)
+
+    # 窗口关闭后退出
     sys.exit(0)
 
 
