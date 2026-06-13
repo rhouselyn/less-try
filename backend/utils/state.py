@@ -4,12 +4,15 @@ import asyncio
 
 from nvidia_api import NvidiaAPI
 from text_processor import TextProcessor
-from storage import Storage
+from db_storage import DatabaseStorage
 
 # ---- 核心单例 ----
 nvidia_api = NvidiaAPI()
 text_processor = TextProcessor()
-storage = Storage()
+storage = DatabaseStorage(fallback_to_file=True, dual_write=True)
+
+# ---- 启动时自动迁移文件数据到数据库 ----
+storage.migrate_from_files()
 
 # ---- 处理状态 ----
 processing_status = {}
