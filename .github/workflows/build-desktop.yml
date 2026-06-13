@@ -1,0 +1,112 @@
+name: Build Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            ext: .exe
+            artifact: Lesslingo-Windows
+          - os: macos-latest
+            platform: macos
+            ext: ''
+            artifact: Lesslingo-macOS
+          - os: ubuntu-latest
+            platform: linux
+            ext: ''
+            artifact: Lesslingo-Linux
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      # ── Linux 系统依赖 ──
+      - name: Install Linux dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-dev python3-pip libgtk-3-dev libglib2.0-dev libwebkit2gtk-4.1-dev
+
+      # ── 构建前端 ──
+      - name: Build Frontend
+        run: |
+          cd frontend-soft-ui
+          npm install
+          npm run build
+
+      # ── 安装 Python 依赖 ──
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r backend/requirements.txt
+          pip install pywebview pyinstaller
+
+      # ── 下载 NLTK 数据 ──
+      - name: Download NLTK data
+        run: |
+          python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
+
+      # ── PyInstaller 打包 ──
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller Lesslingo.spec --noconfirm
+
+      # ── 打包为压缩文件 ──
+      - name: Package artifact (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          Compress-Archive -Path dist/Lesslingo/* -DestinationPath dist/Lesslingo-Windows.zip
+
+      - name: Package artifact (macOS/Linux)
+        if: matrix.platform != 'windows'
+        run: |
+          cd dist
+          tar -czf Lesslingo-${{ matrix.platform }}.tar.gz -C Lesslingo .
+
+      # ── 上传构建产物 ──
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            dist/Lesslingo-Windows.zip
+            dist/Lesslingo-macos.tar.gz
+            dist/Lesslingo-Linux.tar.gz
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/**/*.zip
+            artifacts/**/*.tar.gz
+          generate_release_notes: true
