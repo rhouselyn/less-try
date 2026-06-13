@@ -42,6 +42,9 @@ FRONTEND_CEL_DIR = Path(os.environ.get("FRONTEND_CEL_DIR", str(BASE_DIR / "front
 # 古典前端目录
 FRONTEND_VINTAGE_DIR = Path(os.environ.get("FRONTEND_VINTAGE_DIR", str(BASE_DIR / "frontend-retro-vintage" / "dist")))
 
+# 合并前端静态资源目录
+MERGED_ASSETS_DIR = Path(os.environ.get("MERGED_ASSETS_DIR", str(BASE_DIR / "frontend-merged-assets")))
+
 # 服务器配置
 HOST = os.environ.get("HOST", "0.0.0.0")
 PORT = int(os.environ.get("PORT", 8000))

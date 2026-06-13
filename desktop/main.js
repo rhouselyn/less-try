@@ -52,6 +52,7 @@ function startBackend() {
     FRONTEND_DIST_DIR: frontendPath,
     FRONTEND_CEL_DIR: frontendPath,
     FRONTEND_VINTAGE_DIR: frontendVintagePath,
+    MERGED_ASSETS_DIR: mergedAssetsPath,
   });
 
   if (isDev) {

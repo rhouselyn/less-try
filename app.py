@@ -48,6 +48,7 @@ def setup_env():
     # 设置多前端目录
     os.environ.setdefault('FRONTEND_CEL_DIR', os.path.join(BASE_PATH, 'frontend-classic', 'dist'))
     os.environ.setdefault('FRONTEND_VINTAGE_DIR', os.path.join(BASE_PATH, 'frontend-retro-vintage', 'dist'))
+    os.environ.setdefault('MERGED_ASSETS_DIR', os.path.join(BASE_PATH, 'frontend-merged-assets'))
 
 
 # ── 主函数 ──

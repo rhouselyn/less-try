@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from nvidia_api import get_settings
-from config import UI_TRANSLATIONS_DIR, FRONTEND_CEL_DIR, FRONTEND_VINTAGE_DIR, HOST, PORT
+from config import UI_TRANSLATIONS_DIR, FRONTEND_CEL_DIR, FRONTEND_VINTAGE_DIR, MERGED_ASSETS_DIR, HOST, PORT
 from utils.state import _ui_translation_cache, storage
 
 # ── 创建应用 ──────────────────────────────────────────────
@@ -86,7 +86,7 @@ def _get_frontend_dir(request: Request) -> Path:
 # 挂载前端的 assets 目录
 # 两个前端的 assets 文件名有 content hash 不会冲突
 # 使用合并目录来同时服务两个前端的静态资源
-_MERGED_ASSETS_DIR = FRONTEND_CEL_DIR.parent.parent / "frontend-merged-assets"
+_MERGED_ASSETS_DIR = MERGED_ASSETS_DIR
 if not _MERGED_ASSETS_DIR.exists():
     # 回退：只使用 cel 的 assets
     _MERGED_ASSETS_DIR = FRONTEND_CEL_DIR / "assets"
