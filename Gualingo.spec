@@ -70,15 +70,11 @@ hiddenimports = [
     'starlette.routing',
     'starlette.middleware',
     'starlette.middleware.cors',
-    'pywebview',
-    'pywebview.platforms',
-    'pywebview.platforms.edgechromium',
     'sqlite3',
 ]
 
-# Windows 上排除 pythonnet（使用 edgechromium 后端不需要）
 excludes = ['matplotlib', 'scipy', 'numpy', 'pandas', 'PIL', 'tkinter',
-            'pythonnet', 'clr_loader', 'clr']
+            'pythonnet', 'clr_loader', 'clr', 'pywebview']
 
 a = Analysis(
     [os.path.join(ROOT, 'app.py')],
