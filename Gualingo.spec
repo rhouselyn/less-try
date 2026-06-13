@@ -36,13 +36,7 @@ frontend_datas = []
 if os.path.isdir(FRONTEND_DIST):
     frontend_datas.append((FRONTEND_DIST, os.path.join('frontend', 'dist')))
 
-# NLTK 数据
-nltk_data = os.path.expanduser('~/nltk_data')
-nltk_datas = []
-if os.path.isdir(nltk_data):
-    nltk_datas.append((nltk_data, 'nltk_data'))
-
-all_datas = backend_datas + frontend_datas + nltk_datas
+all_datas = backend_datas + frontend_datas
 
 # 隐式导入（PyInstaller 无法自动检测的模块）
 hiddenimports = [
@@ -65,9 +59,6 @@ hiddenimports = [
     'pywebview',
     'pywebview.platforms',
     'sqlite3',
-    'nltk',
-    'nltk.tokenize',
-    'nltk.tokenize.punkt',
 ]
 
 a = Analysis(
