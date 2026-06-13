@@ -22,7 +22,6 @@ import VocabListStep from './components/VocabListStep'
 import HistorySidebar from './components/HistorySidebar'
 import WordListPanel from './components/WordListPanel'
 import SettingsModal from './components/SettingsModal'
-import HomePage from './components/HomePage'
 
 function FrogLogo({ size = 40 }) {
   return (
@@ -44,7 +43,7 @@ function FrogLogo({ size = 40 }) {
 }
 
 function App() {
-  const [step, setStep] = useState('home')
+  const [step, setStep] = useState('input')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
   const [targetLang, setTargetLang] = useState('zh')
@@ -1210,10 +1209,6 @@ function App() {
     }
   }
 
-  if (step === 'home') {
-    return <HomePage onStartLearning={() => setStep('input')} />
-  }
-
   return (
     <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-soft-50">
       <main className="h-full">
@@ -1448,7 +1443,7 @@ function App() {
               onPhase1UnitClick={handlePhase1UnitClick}
               onPhase2UnitClick={handlePhase2UnitClick}
               onBack={() => setStep('dictionary')}
-              onHome={() => setStep('home')}
+              onHome={() => setStep('input')}
               loading={loading}
               t={t}
               unitStarCounts={unitStarCounts}
