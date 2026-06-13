@@ -182,7 +182,10 @@ npm run dev
 pip install pywebview
 
 # 构建 frontend-soft-ui
-cd frontend-soft-ui && npm install && npm run build && cd ..
+cd frontend-soft-ui
+npm install
+npm run build
+cd ..
 
 # 启动桌面应用
 python app.py
