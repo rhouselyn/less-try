@@ -21,7 +21,7 @@
 
 **どんな言語 → どんな言語へ、教材はあなた次第。**
 
-**API キー一つだけで、データベース不要、純粋な LLM の力ですべてを駆動。**
+**API キー一つだけで、純粋な LLM の力ですべてを駆動。**
 
 ---
 
@@ -124,13 +124,38 @@
 
 ## 🚀 クイックスタート
 
-### 環境要件
+### 方法1：デスクトップアプリをダウンロード（推奨）
+
+[GitHub Releases](https://github.com/rhouselyn/Gualingo/releases) からプラットフォームに合ったインストーラーをダウンロード：
+
+| プラットフォーム | ファイル |
+|------|------|
+| Windows | `Gualingo-Windows.zip` |
+| macOS | `Gualingo-macOS.tar.gz` |
+| Linux | `Gualingo-Linux.tar.gz` |
+
+解凍して `Gualingo` を実行するだけで、Python や Node.js のインストールは不要です。
+
+### 方法2：Docker
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v gualingo-data:/root/.local/share/Gualingo \
+  ghcr.io/rhouselyn/gualingo:latest
+```
+
+http://localhost:8000 を開くだけで利用可能。
+
+### 方法3：ソースから実行
+
+#### 環境要件
 
 - Python 3.10+
 - Node.js 18+
 - LLM API キー（OpenAI 互換インターフェース対応、SiliconFlow、DeepSeek など）
 
-### インストールと起動
+#### インストールと起動
 
 ```bash
 # 1. バックエンドの依存関係をインストール
@@ -140,15 +165,31 @@ pip install -r requirements.txt
 # 2. バックエンドを起動
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# 3. フロントエンドの依存関係をインストール
-cd ../frontend
+# 3. フロントエンドの依存関係をインストール（フロントエンドスタイルを選択）
+cd ../frontend-soft-ui
 npm install
 
 # 4. フロントエンドを起動
 npm run dev
 ```
 
-http://localhost:5173 を開き、右上の ⚙️ 設定から API キーを入力すれば、学習を開始できます。
+http://localhost:5174 を開き、右上の ⚙️ 設定から API キーを入力すれば、学習を開始できます。
+
+#### デスクトップアプリモード
+
+```bash
+# デスクトップアプリの依存関係をインストール
+pip install pywebview
+
+# frontend-soft-ui をビルド
+cd frontend-soft-ui
+npm install
+npm run build
+cd ..
+
+# デスクトップアプリを起動
+python app.py
+```
 
 ---
 
@@ -158,7 +199,8 @@ http://localhost:5173 を開き、右上の ⚙️ 設定から API キーを入
 |----|------|
 | フロントエンド | React 18 · Vite · TailwindCSS · Framer Motion · Web Speech API |
 | バックエンド | FastAPI · Uvicorn · OpenAI 互換 LLM API |
-| ストレージ | ローカルファイルシステム（ゼロ設定、すぐに使える） |
+| ストレージ | SQLite（旧ファイルデータを自動移行） |
+| デスクトップ | PyWebView · PyInstaller |
 
 ---
 

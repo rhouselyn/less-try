@@ -21,7 +21,7 @@
 
 **Cualquier idioma → cualquier idioma, tú decides el material.**
 
-**Solo necesitas una API Key, sin base de datos, todo impulsado por la capacidad pura de los LLM.**
+**Solo necesitas una API Key, todo impulsado por la capacidad pura de los LLM.**
 
 ---
 
@@ -124,13 +124,38 @@ Sistema de aprendizaje en dos fases, las unidades se desbloquean progresivamente
 
 ## 🚀 Inicio rápido
 
-### Requisitos del entorno
+### Opción 1: Descargar la aplicación de escritorio (Recomendado)
+
+Ve a [GitHub Releases](https://github.com/rhouselyn/Gualingo/releases) para descargar el instalador de tu plataforma:
+
+| Plataforma | Archivo |
+|------|------|
+| Windows | `Gualingo-Windows.zip` |
+| macOS | `Gualingo-macOS.tar.gz` |
+| Linux | `Gualingo-Linux.tar.gz` |
+
+Extrae y ejecuta `Gualingo` — no requiere instalación de Python o Node.js.
+
+### Opción 2: Docker
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v gualingo-data:/root/.local/share/Gualingo \
+  ghcr.io/rhouselyn/gualingo:latest
+```
+
+Abre http://localhost:8000 para comenzar a usar.
+
+### Opción 3: Ejecutar desde el código fuente
+
+#### Requisitos del entorno
 
 - Python 3.10+
 - Node.js 18+
 - Una LLM API Key (soporta interfaces compatibles con OpenAI, como SiliconFlow, DeepSeek, etc.)
 
-### Instalación e inicio
+#### Instalación e inicio
 
 ```bash
 # 1. Instalar dependencias del backend
@@ -140,15 +165,31 @@ pip install -r requirements.txt
 # 2. Iniciar el backend
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# 3. Instalar dependencias del frontend
-cd ../frontend
+# 3. Instalar dependencias del frontend (elige un estilo de frontend)
+cd ../frontend-soft-ui
 npm install
 
 # 4. Iniciar el frontend
 npm run dev
 ```
 
-Abre http://localhost:5173, haz clic en ⚙️ Configuración en la esquina superior derecha e ingresa tu API Key para comenzar a aprender.
+Abre http://localhost:5174, haz clic en ⚙️ Configuración en la esquina superior derecha e ingresa tu API Key para comenzar a aprender.
+
+#### Modo de aplicación de escritorio
+
+```bash
+# Instalar dependencias de la aplicación de escritorio
+pip install pywebview
+
+# Construir frontend-soft-ui
+cd frontend-soft-ui
+npm install
+npm run build
+cd ..
+
+# Iniciar la aplicación de escritorio
+python app.py
+```
 
 ---
 
@@ -158,7 +199,8 @@ Abre http://localhost:5173, haz clic en ⚙️ Configuración en la esquina supe
 |----|------|
 | Frontend | React 18 · Vite · TailwindCSS · Framer Motion · Web Speech API |
 | Backend | FastAPI · Uvicorn · API LLM compatible con OpenAI |
-| Almacenamiento | Sistema de archivos local (cero configuración, listo para usar) |
+| Almacenamiento | SQLite (migración automática de datos de archivos anteriores) |
+| Escritorio | PyWebView · PyInstaller |
 
 ---
 

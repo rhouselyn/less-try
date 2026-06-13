@@ -21,7 +21,7 @@
 
 **Any language → any language. Your material, your rules.**
 
-**Only one API Key needed. No database required. Pure LLM power drives everything.**
+**Only one API Key needed. Pure LLM power drives everything.**
 
 ---
 
@@ -124,13 +124,38 @@ Two-phase learning system with units that unlock progressively. Earn star rating
 
 ## 🚀 Quick Start
 
-### Requirements
+### Option 1: Download Desktop App (Recommended)
+
+Go to [GitHub Releases](https://github.com/rhouselyn/Gualingo/releases) to download the installer for your platform:
+
+| Platform | File |
+|------|------|
+| Windows | `Gualingo-Windows.zip` |
+| macOS | `Gualingo-macOS.tar.gz` |
+| Linux | `Gualingo-Linux.tar.gz` |
+
+Extract and run `Gualingo` — no Python or Node.js installation required.
+
+### Option 2: Docker
+
+```bash
+docker run -d \
+  -p 8000:8000 \
+  -v gualingo-data:/root/.local/share/Gualingo \
+  ghcr.io/rhouselyn/gualingo:latest
+```
+
+Open http://localhost:8000 to start using.
+
+### Option 3: Run from Source
+
+#### Requirements
 
 - Python 3.10+
 - Node.js 18+
 - An LLM API Key (supports OpenAI-compatible interfaces, such as SiliconFlow, DeepSeek, etc.)
 
-### Installation & Launch
+#### Installation & Launch
 
 ```bash
 # 1. Install backend dependencies
@@ -140,15 +165,31 @@ pip install -r requirements.txt
 # 2. Start the backend
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 
-# 3. Install frontend dependencies
-cd ../frontend
+# 3. Install frontend dependencies (choose a frontend style)
+cd ../frontend-soft-ui
 npm install
 
 # 4. Start the frontend
 npm run dev
 ```
 
-Open http://localhost:5173, click the ⚙️ settings icon in the top right corner, enter your API Key, and you're ready to start learning.
+Open http://localhost:5174, click the ⚙️ settings icon in the top right corner, enter your API Key, and you're ready to start learning.
+
+#### Desktop App Mode
+
+```bash
+# Install desktop app dependencies
+pip install pywebview
+
+# Build frontend-soft-ui
+cd frontend-soft-ui
+npm install
+npm run build
+cd ..
+
+# Launch desktop app
+python app.py
+```
 
 ---
 
@@ -158,7 +199,8 @@ Open http://localhost:5173, click the ⚙️ settings icon in the top right corn
 |----|------|
 | Frontend | React 18 · Vite · TailwindCSS · Framer Motion · Web Speech API |
 | Backend | FastAPI · Uvicorn · OpenAI-compatible LLM API |
-| Storage | Local file system (zero configuration, ready to use out of the box) |
+| Storage | SQLite (auto-migrates from legacy file data) |
+| Desktop | PyWebView · PyInstaller |
 
 ---
 
