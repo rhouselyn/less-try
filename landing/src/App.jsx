@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { BookOpen, Languages, Mic, Sparkles, Brain, Trophy, ArrowRight, Zap, Globe, Volume2, PenTool, ChevronDown } from 'lucide-react'
 
 /** 学习应用地址 */
-const APP_URL = 'http://localhost:5174/'
+const APP_URL = 'https://github.com/rhouselyn/less-try'
 
 /** 青蛙 Logo */
 function FrogMascot({ size = 120, className = '' }) {
