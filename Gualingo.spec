@@ -9,6 +9,14 @@ block_cipher = None
 # 项目根目录：SPECPATH 就是 spec 文件所在目录
 ROOT = os.path.abspath(SPECPATH)
 
+# 图标路径（按平台选择）
+if sys.platform == 'win32':
+    ICON_PATH = os.path.join(ROOT, 'assets', 'icon.ico')
+elif sys.platform == 'darwin':
+    ICON_PATH = os.path.join(ROOT, 'assets', 'icon_macos.png')
+else:
+    ICON_PATH = os.path.join(ROOT, 'assets', 'icon.png')
+
 # 后端目录
 BACKEND = os.path.join(ROOT, 'backend')
 
@@ -36,7 +44,13 @@ frontend_datas = []
 if os.path.isdir(FRONTEND_DIST):
     frontend_datas.append((FRONTEND_DIST, os.path.join('frontend', 'dist')))
 
-all_datas = backend_datas + frontend_datas
+# 收集图标资源
+icon_datas = []
+assets_dir = os.path.join(ROOT, 'assets')
+if os.path.isdir(assets_dir):
+    icon_datas.append((assets_dir, 'assets'))
+
+all_datas = backend_datas + frontend_datas + icon_datas
 
 # 隐式导入（PyInstaller 无法自动检测的模块）
 hiddenimports = [
@@ -95,7 +109,7 @@ exe = EXE(
     strip=False,
     upx=True,
     console=False,
-    icon=None,  # 可替换为应用图标路径
+    icon=ICON_PATH,
 )
 
 coll = COLLECT(

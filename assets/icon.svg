@@ -1,0 +1,24 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="512" height="512" rx="96" fill="#39FF14"/>
+  <rect x="8" y="8" width="496" height="496" rx="88" fill="#5CFF41" stroke="#000" stroke-width="16"/>
+  <!-- 身体 -->
+  <ellipse cx="256" cy="310" rx="160" ry="130" fill="#39FF14" stroke="#000" stroke-width="14"/>
+  <ellipse cx="256" cy="298" rx="142" ry="112" fill="#5CFF41"/>
+  <!-- 左眼 -->
+  <circle cx="176" cy="186" r="68" fill="#39FF14" stroke="#000" stroke-width="14"/>
+  <circle cx="176" cy="186" r="54" fill="#FFF" stroke="#000" stroke-width="10"/>
+  <circle cx="186" cy="176" r="24" fill="#000"/>
+  <circle cx="194" cy="168" r="7" fill="#FFF"/>
+  <!-- 右眼 -->
+  <circle cx="336" cy="186" r="68" fill="#39FF14" stroke="#000" stroke-width="14"/>
+  <circle cx="336" cy="186" r="54" fill="#FFF" stroke="#000" stroke-width="10"/>
+  <circle cx="346" cy="176" r="24" fill="#000"/>
+  <circle cx="354" cy="168" r="7" fill="#FFF"/>
+  <!-- 嘴巴 -->
+  <ellipse cx="256" cy="336" rx="72" ry="32" fill="#FFD700" stroke="#000" stroke-width="10"/>
+  <path d="M190 324 Q256 376 322 324" stroke="#000" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <!-- 腮红 -->
+  <ellipse cx="142" cy="284" rx="28" ry="18" fill="#FF69B4" opacity="0.6"/>
+  <ellipse cx="370" cy="284" rx="28" ry="18" fill="#FF69B4" opacity="0.6"/>
+</svg>

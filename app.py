@@ -75,6 +75,14 @@ def main():
     # macOS 使用 webkit，Linux 使用 webkitgtk
     import webview
 
+    # 图标路径
+    if sys.platform == 'win32':
+        icon_path = os.path.join(BASE_PATH, 'assets', 'icon.ico')
+    elif sys.platform == 'darwin':
+        icon_path = os.path.join(BASE_PATH, 'assets', 'icon_macos.png')
+    else:
+        icon_path = os.path.join(BASE_PATH, 'assets', 'icon.png')
+
     window = webview.create_window(
         title='呱邻国 - Gualingo',
         url='http://127.0.0.1:18000',
@@ -82,6 +90,7 @@ def main():
         height=800,
         min_size=(800, 600),
         text_select=True,
+        icon=icon_path if os.path.isfile(icon_path) else None,
     )
 
     # Windows 强制使用 edgechromium，不依赖 pythonnet
