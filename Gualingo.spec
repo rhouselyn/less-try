@@ -1,12 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec 文件 - 呱邻国桌面应用"""
+"""PyInstaller spec 文件 - 呱邻国后端服务
+
+只打包 Python 后端为可执行文件，前端和图标由 electron-builder 处理。
+"""
 
 import os
 import sys
 
 block_cipher = None
 
-# 项目根目录：SPECPATH 就是 spec 文件所在目录
+# 项目根目录
 ROOT = os.path.abspath(SPECPATH)
 
 # 图标路径（按平台选择）
@@ -19,9 +22,6 @@ else:
 
 # 后端目录
 BACKEND = os.path.join(ROOT, 'backend')
-
-# 前端构建产物目录（需先 npm run build）
-FRONTEND_DIST = os.path.join(ROOT, 'frontend-soft-ui', 'dist')
 
 # 收集后端所有 Python 文件
 backend_datas = []
@@ -39,20 +39,7 @@ if os.path.isdir(BACKEND):
         if os.path.isdir(sd):
             backend_datas.append((sd, os.path.join('backend', subdir)))
 
-# 收集前端构建产物
-frontend_datas = []
-if os.path.isdir(FRONTEND_DIST):
-    frontend_datas.append((FRONTEND_DIST, os.path.join('frontend', 'dist')))
-
-# 收集图标资源
-icon_datas = []
-assets_dir = os.path.join(ROOT, 'assets')
-if os.path.isdir(assets_dir):
-    icon_datas.append((assets_dir, 'assets'))
-
-all_datas = backend_datas + frontend_datas + icon_datas
-
-# 隐式导入（PyInstaller 无法自动检测的模块）
+# 隐式导入
 hiddenimports = [
     'uvicorn.logging',
     'uvicorn.loops',
@@ -70,21 +57,17 @@ hiddenimports = [
     'starlette.routing',
     'starlette.middleware',
     'starlette.middleware.cors',
-    'pywebview',
-    'pywebview.platforms',
-    'pywebview.platforms.edgechromium',
     'sqlite3',
 ]
 
-# Windows 上排除 pythonnet（使用 edgechromium 后端不需要）
 excludes = ['matplotlib', 'scipy', 'numpy', 'pandas', 'PIL', 'tkinter',
-            'pythonnet', 'clr_loader', 'clr']
+            'pywebview', 'pythonnet', 'clr_loader', 'clr']
 
 a = Analysis(
     [os.path.join(ROOT, 'app.py')],
     pathex=[ROOT, BACKEND],
     binaries=[],
-    datas=all_datas,
+    datas=backend_datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},

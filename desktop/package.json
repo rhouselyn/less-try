@@ -1,0 +1,78 @@
+{
+  "name": "gualingo",
+  "version": "1.0.0",
+  "description": "呱邻国 - AI 驱动的沉浸式语言学习平台",
+  "main": "main.js",
+  "author": "Gualingo",
+  "license": "MIT",
+  "build": {
+    "appId": "com.gualingo.desktop",
+    "productName": "Gualingo",
+    "directories": {
+      "output": "../dist-electron"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "icon.*"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/Gualingo",
+        "to": "backend",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../frontend-soft-ui/dist",
+        "to": "frontend",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../assets",
+        "to": "assets",
+        "filter": ["icon.*"]
+      }
+    ],
+    "win": {
+      "icon": "../assets/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Gualingo",
+      "installerIcon": "../assets/icon.ico",
+      "uninstallerIcon": "../assets/icon.ico"
+    },
+    "mac": {
+      "icon": "../assets/icon_macos.png",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        }
+      ]
+    },
+    "linux": {
+      "icon": "../assets/icon.png",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": ["x64"]
+        }
+      ]
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}
