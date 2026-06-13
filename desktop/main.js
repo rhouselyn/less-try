@@ -15,7 +15,16 @@ function getBackendExePath() {
 }
 
 function getFrontendDistPath() {
-  return path.join(process.resourcesPath, 'frontend');
+  // 默认使用赛璐璐前端
+  return path.join(process.resourcesPath, 'frontend-classic');
+}
+
+function getFrontendVintagePath() {
+  return path.join(process.resourcesPath, 'frontend-retro-vintage');
+}
+
+function getMergedAssetsPath() {
+  return path.join(process.resourcesPath, 'frontend-merged-assets');
 }
 
 function getIconPath() {
@@ -30,11 +39,19 @@ function getIconPath() {
 function startBackend() {
   const isDev = !app.isPackaged;
   const frontendPath = isDev
-    ? path.join(__dirname, '..', 'frontend-soft-ui', 'dist')
+    ? path.join(__dirname, '..', 'frontend-classic', 'dist')
     : getFrontendDistPath();
+  const frontendVintagePath = isDev
+    ? path.join(__dirname, '..', 'frontend-retro-vintage', 'dist')
+    : getFrontendVintagePath();
+  const mergedAssetsPath = isDev
+    ? path.join(__dirname, '..', 'frontend-merged-assets')
+    : getMergedAssetsPath();
 
   const env = Object.assign({}, process.env, {
     FRONTEND_DIST_DIR: frontendPath,
+    FRONTEND_CEL_DIR: frontendPath,
+    FRONTEND_VINTAGE_DIR: frontendVintagePath,
   });
 
   if (isDev) {

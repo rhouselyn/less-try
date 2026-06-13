@@ -23,8 +23,18 @@
         "filter": ["**/*"]
       },
       {
-        "from": "../frontend-soft-ui/dist",
-        "to": "frontend",
+        "from": "../frontend-classic/dist",
+        "to": "frontend-classic",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../frontend-retro-vintage/dist",
+        "to": "frontend-retro-vintage",
+        "filter": ["**/*"]
+      },
+      {
+        "from": "../frontend-merged-assets",
+        "to": "frontend-merged-assets",
         "filter": ["**/*"]
       },
       {
@@ -54,6 +64,10 @@
     },
     "mac": {
       "icon": "../assets/icon_macos.png",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "entitlements.mac.plist",
+      "entitlementsInherit": "entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",

@@ -130,11 +130,11 @@
 
 | 平台 | 文件 |
 |------|------|
-| Windows | `Gualingo-Windows.zip` |
-| macOS | `Gualingo-macOS.tar.gz` |
-| Linux | `Gualingo-Linux.tar.gz` |
+| Windows | `Gualingo Setup x.x.x.exe`（安装程序） |
+| macOS | `Gualingo-x.x.x.dmg` |
+| Linux | `Gualingo-x.x.x.AppImage` |
 
-解压后运行 `Gualingo` 即可，无需安装 Python 或 Node.js。
+Windows 运行安装程序即可；macOS 打开 dmg 后将应用拖入 Applications 文件夹；Linux 给 AppImage 添加执行权限后直接运行。
 
 ### 方式二：Docker 部署
 
