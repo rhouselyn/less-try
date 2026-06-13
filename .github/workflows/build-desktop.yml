@@ -13,15 +13,12 @@ jobs:
         include:
           - os: windows-latest
             platform: windows
-            ext: .exe
             artifact: Lesslingo-Windows
           - os: macos-latest
             platform: macos
-            ext: ''
             artifact: Lesslingo-macOS
           - os: ubuntu-latest
             platform: linux
-            ext: ''
             artifact: Lesslingo-Linux
 
     runs-on: ${{ matrix.os }}
@@ -64,8 +61,18 @@ jobs:
         run: |
           python -c "import nltk; nltk.download('punkt'); nltk.download('punkt_tab')"
 
+      # ── 调试：确认目录结构 ──
+      - name: Debug directory structure
+        run: |
+          echo "PWD: $(pwd)"
+          echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+          ls -la
+          ls -la backend/ || echo "No backend dir"
+          ls -la frontend-soft-ui/dist/ || echo "No frontend dist dir"
+
       # ── PyInstaller 打包 ──
       - name: Build with PyInstaller
+        working-directory: ${{ github.workspace }}
         run: |
           pyinstaller Lesslingo.spec --noconfirm
 

@@ -6,8 +6,8 @@ import sys
 
 block_cipher = None
 
-# 项目根目录
-ROOT = os.path.dirname(os.path.abspath(SPECPATH))
+# 项目根目录：SPECPATH 就是 spec 文件所在目录
+ROOT = os.path.abspath(SPECPATH)
 
 # 后端目录
 BACKEND = os.path.join(ROOT, 'backend')
@@ -17,18 +17,19 @@ FRONTEND_DIST = os.path.join(ROOT, 'frontend-soft-ui', 'dist')
 
 # 收集后端所有 Python 文件
 backend_datas = []
-for f in os.listdir(BACKEND):
-    fp = os.path.join(BACKEND, f)
-    if f.endswith('.py'):
-        backend_datas.append((fp, 'backend'))
-    elif f == 'requirements.txt':
-        backend_datas.append((fp, 'backend'))
+if os.path.isdir(BACKEND):
+    for f in os.listdir(BACKEND):
+        fp = os.path.join(BACKEND, f)
+        if f.endswith('.py'):
+            backend_datas.append((fp, 'backend'))
+        elif f == 'requirements.txt':
+            backend_datas.append((fp, 'backend'))
 
-# 收集后端子目录
-for subdir in ['routers', 'utils']:
-    sd = os.path.join(BACKEND, subdir)
-    if os.path.isdir(sd):
-        backend_datas.append((sd, os.path.join('backend', subdir)))
+    # 收集后端子目录
+    for subdir in ['routers', 'utils']:
+        sd = os.path.join(BACKEND, subdir)
+        if os.path.isdir(sd):
+            backend_datas.append((sd, os.path.join('backend', subdir)))
 
 # 收集前端构建产物
 frontend_datas = []
@@ -55,7 +56,6 @@ hiddenimports = [
     'uvicorn.protocols.websockets.auto',
     'uvicorn.lifespan',
     'uvicorn.lifespan.on',
-    'uvicorn.logging',
     'fastapi',
     'fastapi.responses',
     'fastapi.staticfiles',
