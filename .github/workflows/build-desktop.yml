@@ -13,13 +13,13 @@ jobs:
         include:
           - os: windows-latest
             platform: windows
-            artifact: Lesslingo-Windows
+            artifact: Gualingo-Windows
           - os: macos-latest
             platform: macos
-            artifact: Lesslingo-macOS
+            artifact: Gualingo-macOS
           - os: ubuntu-latest
             platform: linux
-            artifact: Lesslingo-Linux
+            artifact: Gualingo-Linux
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -80,13 +80,13 @@ jobs:
       - name: Package artifact (Windows)
         if: matrix.platform == 'windows'
         run: |
-          Compress-Archive -Path dist/Lesslingo/* -DestinationPath dist/Lesslingo-Windows.zip
+          Compress-Archive -Path dist/Gualingo/* -DestinationPath dist/Gualingo-Windows.zip
 
       - name: Package artifact (macOS/Linux)
         if: matrix.platform != 'windows'
         run: |
           cd dist
-          tar -czf Lesslingo-${{ matrix.platform }}.tar.gz -C Lesslingo .
+          tar -czf Gualingo-${{ matrix.platform }}.tar.gz -C Gualingo .
 
       # ── 上传构建产物 ──
       - name: Upload artifact
@@ -94,9 +94,9 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: |
-            dist/Lesslingo-Windows.zip
-            dist/Lesslingo-macos.tar.gz
-            dist/Lesslingo-Linux.tar.gz
+            dist/Gualingo-Windows.zip
+            dist/Gualingo-macos.tar.gz
+            dist/Gualingo-Linux.tar.gz
 
   release:
     needs: build
