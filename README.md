@@ -130,18 +130,18 @@
 
 | 平台 | 文件 |
 |------|------|
-| Windows | `Lesslingo-Windows.zip` |
-| macOS | `Lesslingo-macOS.tar.gz` |
-| Linux | `Lesslingo-Linux.tar.gz` |
+| Windows | `Gualingo-Windows.zip` |
+| macOS | `Gualingo-macOS.tar.gz` |
+| Linux | `Gualingo-Linux.tar.gz` |
 
-解压后运行 `Lesslingo` 即可，无需安装 Python 或 Node.js。
+解压后运行 `Gualingo` 即可，无需安装 Python 或 Node.js。
 
 ### 方式二：Docker 部署
 
 ```bash
 docker run -d \
   -p 8000:8000 \
-  -v lesslingo-data:/root/.local/share/Lesslingo \
+  -v gualingo-data:/root/.local/share/Gualingo \
   ghcr.io/rhouselyn/gualingo:latest
 ```
 

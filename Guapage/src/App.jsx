@@ -443,7 +443,7 @@ function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t-2 border-white/20 text-center">
-          <p className="font-body font-bold text-sm text-white/30">© 2024 呱邻国 Lesslingo. All rights reserved.</p>
+          <p className="font-body font-bold text-sm text-white/30">© 2024 呱邻国 Gualingo. All rights reserved.</p>
         </div>
       </div>
     </footer>

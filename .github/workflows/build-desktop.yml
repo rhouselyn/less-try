@@ -74,7 +74,7 @@ jobs:
       - name: Build with PyInstaller
         working-directory: ${{ github.workspace }}
         run: |
-          pyinstaller Lesslingo.spec --noconfirm
+          pyinstaller Gualingo.spec --noconfirm
 
       # ── 打包为压缩文件 ──
       - name: Package artifact (Windows)

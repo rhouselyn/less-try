@@ -12,4 +12,4 @@ async def tts_endpoint(text: str, lang: str = "en", slow: bool = False):
 
 @router.get("/")
 async def root():
-    return {"message": "少邻国 - Lesslingo API"}
+    return {"message": "少邻国 - Gualingo API"}

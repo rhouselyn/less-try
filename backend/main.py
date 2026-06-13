@@ -1,4 +1,4 @@
-"""少邻国 - Lesslingo 后端入口。
+"""少邻国 - Gualingo 后端入口。
 
 职责：创建 FastAPI 应用、挂载 CORS 中间件、注册路由、启动事件、前端静态文件服务。
 """
@@ -12,7 +12,7 @@ from config import UI_TRANSLATIONS_DIR, FRONTEND_DIST_DIR, HOST, PORT
 from utils.state import _ui_translation_cache
 
 # ── 创建应用 ──────────────────────────────────────────────
-app = FastAPI(title="少邻国 - Lesslingo", version="1.0.0")
+app = FastAPI(title="少邻国 - Gualingo", version="1.0.0")
 
 # ── CORS 中间件 ───────────────────────────────────────────
 app.add_middleware(

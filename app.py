@@ -22,11 +22,11 @@ BASE_PATH = get_base_path()
 def setup_env():
     # 数据目录：放在用户目录下，而非临时目录
     if sys.platform == 'win32':
-        data_dir = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'Lesslingo')
+        data_dir = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'Gualingo')
     elif sys.platform == 'darwin':
-        data_dir = os.path.expanduser('~/Library/Application Support/Lesslingo')
+        data_dir = os.path.expanduser('~/Library/Application Support/Gualingo')
     else:
-        data_dir = os.path.expanduser('~/.local/share/Lesslingo')
+        data_dir = os.path.expanduser('~/.local/share/Gualingo')
 
     os.makedirs(data_dir, exist_ok=True)
     config_dir = os.path.join(data_dir, 'config')
@@ -67,7 +67,7 @@ def main():
 
     # 创建 PyWebView 窗口
     window = webview.create_window(
-        title='呱邻国 - Lesslingo',
+        title='呱邻国 - Gualingo',
         url='http://127.0.0.1:18000',
         width=1200,
         height=800,

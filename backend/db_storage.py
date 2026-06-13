@@ -16,7 +16,7 @@ from config import DATA_DIR, CONFIG_DIR, USER_PREFS_FILE
 
 class DatabaseStorage:
     def __init__(self, db_path: str = None, fallback_to_file: bool = False, dual_write: bool = False):
-        self.db_path = db_path or str(DATA_DIR / "lesslingo.db")
+        self.db_path = db_path or str(DATA_DIR / "gualingo.db")
         self.fallback_to_file = fallback_to_file
         self.dual_write = dual_write
 
