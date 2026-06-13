@@ -57,6 +57,11 @@ if FRONTEND_DIST_DIR.exists() and (FRONTEND_DIST_DIR / "index.html").exists():
     if assets_dir.exists():
         app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="static-assets")
 
+    # 根路径返回 index.html
+    @app.get("/")
+    async def serve_root():
+        return FileResponse(str(FRONTEND_DIST_DIR / "index.html"))
+
     # SPA fallback：所有非 /api 路由返回 index.html
     @app.get("/{full_path:path}")
     async def serve_frontend(full_path: str):

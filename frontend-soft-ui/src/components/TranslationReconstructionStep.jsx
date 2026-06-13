@@ -76,7 +76,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
         <div className="flex items-center gap-3">
           {totalItemsInUnit > 0 && (
-            <span className="text-sm text-slate-500 font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
+            <span className="text-sm text-theme-text-secondary font-medium">{(t.stepProgress || '第 {0} / {1} 题').replace('{0}', stepInUnit).replace('{1}', totalItemsInUnit)}</span>
           )}
           {onOpenVocabList && (
             <motion.button
@@ -92,13 +92,13 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-soft-md p-8">
+      <div className="bg-white rounded-3xl shadow-card p-8">
         <div className="text-center mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-soft-50 text-soft-500 rounded-full text-sm font-medium mb-4"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-theme-bg-subtle text-theme-primary rounded-full text-sm font-medium mb-4"
           >
             <Languages className="w-4 h-4" />
             {t.translationReconstructionTitle || '翻译还原'}
@@ -107,7 +107,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             <motion.p
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="text-lg text-slate-700 italic"
+              className="text-lg text-theme-text italic"
             >
               {data.native_translation}
             </motion.p>
@@ -115,7 +115,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
         </div>
 
         <div className="mb-8">
-          <div className="p-4 border border-dashed border-slate-200 rounded-2xl flex flex-wrap gap-2 bg-slate-50/50 relative">
+          <div className="p-4 border border-dashed border-theme-border rounded-2xl flex flex-wrap gap-2 bg-theme-bg/50 relative">
             <div className="flex flex-wrap gap-2 invisible" aria-hidden="true">
               {data.original_tokens.map((_, i) => (
                 <span key={`ph-${i}`} className="px-4 py-2 rounded-2xl text-sm font-medium">{data.original_tokens[i]}</span>
@@ -124,7 +124,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
             </div>
             <div className="absolute inset-0 p-4 flex flex-wrap gap-2 items-start content-start">
               {selectedTokens.length === 0 && (
-                <span className="italic text-slate-400 text-sm pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
+                <span className="italic text-theme-text-muted text-sm pointer-events-none">{t.tapToReconstruct || '按顺序点击下方词语还原句子'}</span>
               )}
               <AnimatePresence mode="popLayout">
                 {selectedTokens.map((item, idx) => {
@@ -142,11 +142,11 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                       className={`px-4 py-2 rounded-2xl text-sm font-medium cursor-pointer select-none transition-all duration-200 ${
                         answerChecked
                           ? isCorrect
-                            ? 'bg-mint-50 text-mint-600 ring-2 ring-mint-400/50'
+                            ? 'bg-theme-success-bg text-theme-secondary ring-2 ring-mint-400/50'
                             : isTokenCorrect
-                              ? 'bg-mint-50 text-mint-600 ring-2 ring-mint-400/50'
-                              : 'bg-rose-50 text-rose-500 ring-2 ring-rose-400/50'
-                          : 'bg-soft-500 text-white shadow-soft-sm'
+                              ? 'bg-theme-success-bg text-theme-secondary ring-2 ring-mint-400/50'
+                              : 'bg-theme-danger-bg text-theme-danger ring-2 ring-rose-400/50'
+                          : 'bg-theme-primary text-white shadow-card-active'
                       }`}
                     >
                       {item.token}
@@ -158,7 +158,7 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 onClick={() => speakText(data.original_tokens?.join(' ') || '', sourceLang)}
-                className="ml-auto p-2 text-soft-400 hover:text-soft-500 hover:bg-soft-50 rounded-full transition-colors"
+                className="ml-auto p-2 text-soft-400 hover:text-theme-primary hover:bg-theme-bg-subtle rounded-full transition-colors"
                 title={t.playHint || '播放提示'}
               >
                 <Lightbulb className="w-5 h-5" />
@@ -183,8 +183,8 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
                     isSelected
                       ? 'pointer-events-none invisible'
                       : answerChecked
-                        ? 'pointer-events-none bg-white shadow-soft-sm text-slate-700 opacity-50'
-                        : 'bg-white shadow-soft-sm hover:shadow-soft-md hover:-translate-y-0.5 text-slate-700'
+                        ? 'pointer-events-none bg-white shadow-card-active text-theme-text opacity-50'
+                        : 'bg-white shadow-card-active hover:shadow-card hover:-translate-y-0.5 text-theme-text'
                   }`}
                 >
                   {token}
@@ -198,19 +198,19 @@ function TranslationReconstructionStep({ data, onNext, onBack, onComplete, loadi
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`p-5 rounded-2xl mb-6 ${isCorrect ? 'bg-mint-50 ring-2 ring-mint-400/50' : 'bg-rose-50 ring-2 ring-rose-400/50'}`}
+            className={`p-5 rounded-2xl mb-6 ${isCorrect ? 'bg-theme-success-bg ring-2 ring-mint-400/50' : 'bg-theme-danger-bg ring-2 ring-rose-400/50'}`}
           >
             <div className="flex items-center gap-3 mb-2">
-              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-mint-600" /> : <XCircle className="w-6 h-6 text-rose-500" />}
-              <span className={`font-semibold text-lg ${isCorrect ? 'text-mint-600' : 'text-rose-500'}`}>{isCorrect ? t.correct : t.incorrect}</span>
+              {isCorrect ? <CheckCircle2 className="w-6 h-6 text-theme-secondary" /> : <XCircle className="w-6 h-6 text-theme-danger" />}
+              <span className={`font-semibold text-lg ${isCorrect ? 'text-theme-secondary' : 'text-theme-danger'}`}>{isCorrect ? t.correct : t.incorrect}</span>
             </div>
             {!isCorrect && (
-              <p className="text-slate-700 font-medium">
+              <p className="text-theme-text font-medium">
                 {t.correctAnswer || '正确答案'}：{data.original_tokens.join(' ')}
               </p>
             )}
             {isCorrect && isLastExercise && (
-              <p className="font-medium mt-3 text-lg text-mint-600">
+              <p className="font-medium mt-3 text-lg text-theme-secondary">
                 🎉 {reviewMode ? (t.reviewComplete || '错题已复习完！') : (t.unitStudyComplete || '该单元学习已完成！')}
               </p>
             )}

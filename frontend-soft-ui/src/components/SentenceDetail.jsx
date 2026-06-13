@@ -5,7 +5,7 @@ function SentenceDetail({ sentenceTranslation, t }) {
 
   return (
     <div className="border-l-2 border-soft-300 pl-3">
-      <p className="text-[13px] text-slate-500 leading-relaxed italic font-normal">
+      <p className="text-[13px] text-theme-text-secondary leading-relaxed italic font-normal">
         {translationResult?.grammar_explanation || t.loading}
       </p>
     </div>

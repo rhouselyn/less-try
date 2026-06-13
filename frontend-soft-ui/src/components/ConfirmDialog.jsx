@@ -24,12 +24,12 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.92, y: 8 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            className="relative bg-white rounded-3xl shadow-soft-xl w-full max-w-sm overflow-hidden"
+            className="relative bg-white rounded-3xl shadow-card-hover w-full max-w-sm overflow-hidden"
             onClick={e => e.stopPropagation()}
           >
             <button
               onClick={onCancel}
-              className="absolute top-3.5 right-3.5 p-1 text-slate-400 hover:text-slate-500 rounded-2xl transition-colors"
+              className="absolute top-3.5 right-3.5 p-1 text-theme-text-muted hover:text-theme-text-secondary rounded-2xl transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
@@ -39,10 +39,10 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
                 <AlertTriangle className="w-5 h-5 text-amber-500" />
               </div>
               {title && (
-                <h3 className="font-display text-[15px] font-semibold text-slate-700 mb-1.5">{title}</h3>
+                <h3 className="font-display text-[15px] font-semibold text-theme-text mb-1.5">{title}</h3>
               )}
               {message && (
-                <p className="text-[13px] text-slate-500 leading-relaxed">{message}</p>
+                <p className="text-[13px] text-theme-text-secondary leading-relaxed">{message}</p>
               )}
             </div>
 
@@ -51,7 +51,7 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onCancel}
-                className="btn-secondary flex-1 py-2.5 text-[13px] font-semibold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-2xl transition-colors px-6 shadow-soft-lg hover:-translate-y-0.5 hover:shadow-soft-xl duration-200"
+                className="btn-secondary flex-1 py-2.5 text-[13px] font-semibold text-theme-text bg-theme-bg hover:bg-theme-bg-subtle rounded-2xl transition-colors px-6 shadow-btn hover:-translate-y-0.5 hover:shadow-card-hover duration-200"
               >
                 {cancelText || '继续练习'}
               </motion.button>
@@ -59,7 +59,7 @@ function ConfirmDialog({ isOpen, title, message, confirmText, cancelText, onConf
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onConfirm}
-                className="flex-1 py-2.5 text-[13px] font-semibold text-white bg-rose-500 hover:bg-rose-600 rounded-2xl transition-colors px-6 shadow-soft-lg hover:-translate-y-0.5 hover:shadow-soft-xl duration-200"
+                className="flex-1 py-2.5 text-[13px] font-semibold text-white bg-theme-danger hover:bg-rose-600 rounded-2xl transition-colors px-6 shadow-btn hover:-translate-y-0.5 hover:shadow-card-hover duration-200"
               >
                 {confirmText || '退出'}
               </motion.button>

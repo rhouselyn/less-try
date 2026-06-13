@@ -4,6 +4,7 @@ import { BookOpen, ArrowLeft, Settings, Loader2 } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech } from './utils/speech'
+import { useTheme } from './contexts/ThemeContext'
 import ConfirmDialog from './components/ConfirmDialog'
 
 import InputStep from './components/InputStep'
@@ -26,23 +27,24 @@ import SettingsModal from './components/SettingsModal'
 function FrogLogo({ size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#4ade80" />
-      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#86efac" />
-      <circle cx="34" cy="38" r="16" fill="#4ade80" />
-      <circle cx="66" cy="38" r="16" fill="#4ade80" />
-      <circle cx="34" cy="38" r="13" fill="#fff" />
-      <circle cx="66" cy="38" r="13" fill="#fff" />
-      <circle cx="36" cy="37" r="6" fill="#166534" />
-      <circle cx="68" cy="37" r="6" fill="#166534" />
+      <ellipse cx="50" cy="58" rx="38" ry="32" style={{ fill: 'var(--frog-body)', stroke: 'var(--frog-stroke)', strokeWidth: 'var(--frog-stroke-width)' }} />
+      <ellipse cx="50" cy="55" rx="34" ry="28" style={{ fill: 'var(--frog-body-light)' }} />
+      <circle cx="34" cy="38" r="16" style={{ fill: 'var(--frog-body)', stroke: 'var(--frog-stroke)', strokeWidth: 'var(--frog-stroke-width)' }} />
+      <circle cx="66" cy="38" r="16" style={{ fill: 'var(--frog-body)', stroke: 'var(--frog-stroke)', strokeWidth: 'var(--frog-stroke-width)' }} />
+      <circle cx="34" cy="38" r="13" fill="#fff" style={{ stroke: 'var(--frog-stroke)', strokeWidth: 'var(--frog-stroke-width)' }} />
+      <circle cx="66" cy="38" r="13" fill="#fff" style={{ stroke: 'var(--frog-stroke)', strokeWidth: 'var(--frog-stroke-width)' }} />
+      <circle cx="36" cy="37" r="6" style={{ fill: 'var(--frog-eye-pupil)' }} />
+      <circle cx="68" cy="37" r="6" style={{ fill: 'var(--frog-eye-pupil)' }} />
       <circle cx="38" cy="35" r="2" fill="#fff" />
       <circle cx="70" cy="35" r="2" fill="#fff" />
-      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#fde68a" />
-      <path d="M38 60 Q50 70 62 60" stroke="#166534" strokeWidth="2" fill="none" strokeLinecap="round" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" style={{ fill: 'var(--frog-belly)' }} />
+      <path d="M38 60 Q50 70 62 60" style={{ stroke: 'var(--frog-mouth)', strokeWidth: 2 }} fill="none" strokeLinecap="round" />
     </svg>
   )
 }
 
 function App() {
+  const { theme, setTheme, themes } = useTheme()
   const [step, setStep] = useState('input')
   const [text, setText] = useState('')
   const [sourceLang, setSourceLang] = useState('auto')
@@ -1210,7 +1212,7 @@ function App() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-gradient-to-br from-slate-50 to-soft-50">
+    <div className="h-screen overflow-hidden bg-theme-bg">
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
@@ -1229,15 +1231,15 @@ function App() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowSettings(true)}
-                    className="absolute top-3 right-4 p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100/60 rounded-2xl transition-colors z-10"
+                    className="absolute top-3 right-4 p-2 text-theme-text-muted hover:text-theme-text hover:bg-theme-bg-subtle rounded-2xl transition-colors z-10"
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>
                   {translatingUI && (
-                    <div className="absolute inset-0 bg-slate-50/80 backdrop-blur-md z-20 flex items-center justify-center">
-                      <div className="flex items-center gap-3 bg-white border-0 rounded-3xl px-6 py-4 shadow-soft-md">
+                    <div className="absolute inset-0 backdrop-blur-md z-20 flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg-overlay)' }}>
+                      <div className="flex items-center gap-3 card-warm rounded-3xl px-6 py-4 shadow-card">
                         <Loader2 className="w-5 h-5 animate-spin text-soft-500" />
-                        <span className="text-sm text-slate-700">{
+                        <span className="text-sm text-theme-text">{
                           (customTranslations[uiLang]?.translatingUI)
                           || (customTranslations[Array.from(loadedLangs).filter(l => l !== uiLang).pop()]?.translatingUI)
                           || t.translatingUI

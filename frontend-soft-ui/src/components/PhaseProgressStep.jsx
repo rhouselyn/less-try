@@ -24,18 +24,18 @@ function PhaseProgressStep({ units, currentUnit, phaseNumber, onUnitClick, onBac
         <motion.h2
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-3xl font-semibold font-display text-slate-800 mb-4"
+          className="text-3xl font-semibold font-display text-theme-text mb-4"
         >
           {phaseNumber === 1 ? t.phase1 : t.phase2}
         </motion.h2>
-        <p className="text-lg text-slate-500">
+        <p className="text-lg text-theme-text-secondary">
           {t.selectTokens}
         </p>
       </div>
 
       {loading ? (
         <div className="text-center py-16">
-          <p className="text-lg text-slate-500">{t.loading}</p>
+          <p className="text-lg text-theme-text-secondary">{t.loading}</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
@@ -49,19 +49,19 @@ function PhaseProgressStep({ units, currentUnit, phaseNumber, onUnitClick, onBac
               <button
                 onClick={() => onUnitClick(unit.unit_id)}
                 disabled={!unit.completed && index !== currentUnit}
-                className={`w-full p-6 rounded-3xl transition-all duration-300 ${unit.completed ? 'bg-white border border-mint-500/30 shadow-soft-md hover:shadow-soft-xl hover:-translate-y-1' : index === currentUnit ? 'bg-white border border-soft-500/40 shadow-soft-md hover:shadow-soft-xl hover:-translate-y-1' : 'bg-slate-50 border border-slate-200/50 cursor-not-allowed opacity-50'}`}
+                className={`w-full p-6 rounded-3xl transition-all duration-300 ${unit.completed ? 'bg-white border border-mint-500/30 shadow-card hover:shadow-card-hover hover:-translate-y-1' : index === currentUnit ? 'bg-white border border-soft-500/40 shadow-card hover:shadow-card-hover hover:-translate-y-1' : 'bg-theme-bg border border-theme-border/50 cursor-not-allowed opacity-50'}`}
               >
-                <h3 className="text-xl font-semibold font-display text-slate-800 mb-2">
+                <h3 className="text-xl font-semibold font-display text-theme-text mb-2">
                   {t.unit} {unit.unit_id + 1}
                 </h3>
-                <p className="text-slate-500">{unit.sentences_count} sentences</p>
+                <p className="text-theme-text-secondary">{unit.sentences_count} sentences</p>
                 <div className="mt-4 text-sm font-medium">
                   {unit.completed ? (
-                    <span className="text-mint-600">{t.completed}</span>
+                    <span className="text-theme-secondary">{t.completed}</span>
                   ) : index === currentUnit ? (
-                    <span className="text-soft-500">{t.startLearning}</span>
+                    <span className="text-theme-primary">{t.startLearning}</span>
                   ) : (
-                    <span className="text-slate-400">{t.notStarted}</span>
+                    <span className="text-theme-text-muted">{t.notStarted}</span>
                   )}
                 </div>
               </button>

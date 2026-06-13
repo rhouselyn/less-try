@@ -1,0 +1,124 @@
+/* ── 复古怀旧主题 ── */
+[data-theme="retro-vintage"] {
+  /* 背景 */
+  --color-bg: #F5ECD7;
+  --color-bg-subtle: #EDE0C8;
+  --color-bg-overlay: rgba(245, 236, 215, 0.8);
+
+  /* 卡片 */
+  --color-card: #F5ECD7;
+  --color-card-border: #C9BB9E;
+  --card-border-width: 2px;
+  --card-radius: 4px;
+  --card-shadow: 2px 2px 0px rgba(58, 46, 28, 0.12);
+  --card-shadow-hover: 3px 3px 0px rgba(58, 46, 28, 0.15);
+  --card-shadow-active: 1px 1px 0px rgba(58, 46, 28, 0.08);
+
+  /* 主色 */
+  --color-primary: #C08A3A;
+  --color-primary-hover: #A06E28;
+  --color-primary-text: #F5ECD7;
+
+  /* 次要色 */
+  --color-secondary: #6E6650;
+  --color-secondary-hover: #524D3C;
+  --color-secondary-text: #F5ECD7;
+
+  /* 强调色 */
+  --color-accent: #D4A854;
+  --color-accent-text: #2A2319;
+
+  /* 成功 */
+  --color-success: #8E866A;
+  --color-success-bg: #F0EDE2;
+
+  /* 危险/错误 */
+  --color-danger: #B8654F;
+  --color-danger-bg: #F5E8E4;
+
+  /* 警告 */
+  --color-warning: #D4A854;
+  --color-warning-bg: #FFF8E7;
+
+  /* 文本 */
+  --color-text: #3B3225;
+  --color-text-secondary: #6B5D4B;
+  --color-text-muted: #8A7A66;
+  --color-text-placeholder: rgba(138, 122, 102, 0.6);
+
+  /* 边框 */
+  --color-border: #C9BB9E;
+  --border-width: 2px;
+
+  /* 输入框 */
+  --input-bg: #F5ECD7;
+  --input-border: #C9BB9E;
+  --input-focus-border: #D4A854;
+  --input-focus-shadow: 0 0 0 3px rgba(192, 138, 58, 0.25);
+  --input-radius: 4px;
+
+  /* 按钮 */
+  --btn-radius: 4px;
+  --btn-font-weight: 700;
+  --btn-text-transform: none;
+  --btn-shadow: 3px 3px 0px rgba(58, 46, 28, 0.15);
+  --btn-shadow-hover: 4px 4px 0px rgba(58, 46, 28, 0.18);
+  --btn-shadow-active: 1px 1px 0px rgba(58, 46, 28, 0.08);
+  --btn-hover-offset: 0px;
+  --btn-active-offset: 1px;
+
+  /* 徽章 */
+  --badge-radius: 0px;
+  --badge-border: 1px solid #C9BB9E;
+  --badge-font-weight: 700;
+  --badge-text-transform: none;
+
+  /* 进度条 */
+  --progress-height: 0.5rem;
+  --progress-radius: 0px;
+  --progress-bg: #E0CEAA;
+  --progress-border: 1px solid #C9BB9E;
+  --progress-fill: #C08A3A;
+
+  /* 开关 */
+  --toggle-radius: 0px;
+  --toggle-border: 2px solid #A06E28;
+  --toggle-dot-border: none;
+
+  /* 标签页 */
+  --tab-radius: 4px;
+  --tab-font-weight: 700;
+  --tab-text-transform: none;
+  --tab-border: 2px solid #C9BB9E;
+
+  /* 字体 */
+  --font-sans: 'DM Sans', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-display: 'Playfair Display', 'DM Sans', system-ui, sans-serif;
+
+  /* 滚动条 */
+  --scrollbar-width: 8px;
+  --scrollbar-track: #EDE0C8;
+  --scrollbar-thumb: #BF9E6B;
+  --scrollbar-thumb-hover: #A06E28;
+
+  /* 选中 */
+  --selection-bg: #E8C985;
+  --selection-text: #2A2319;
+
+  /* FrogLogo 颜色 */
+  --frog-body: #B5AE8E;
+  --frog-body-light: #D8D4BF;
+  --frog-eye-pupil: #3E3A2E;
+  --frog-mouth: #3E3A2E;
+  --frog-belly: #E8C985;
+  --frog-stroke: transparent;
+  --frog-stroke-width: 0;
+
+  /* 幽灵按钮 */
+  --ghost-hover-bg: rgba(224, 206, 170, 0.6);
+  --ghost-hover-text: #3B3225;
+
+  /* 加载遮罩 */
+  --loading-overlay-bg: rgba(245, 236, 215, 0.8);
+  --loading-card-shadow: 2px 2px 0px rgba(58, 46, 28, 0.12);
+}

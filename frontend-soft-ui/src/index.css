@@ -1,6 +1,15 @@
+@import './themes/classic.css';
+@import './themes/soft-ui.css';
+@import './themes/retro-vintage.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── 默认主题（无 data-theme 时使用 classic） ── */
+:root {
+  /* 继承 classic 主题变量 */
+}
 
 * {
   margin: 0;
@@ -9,9 +18,9 @@
 }
 
 body {
-  font-family: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
-  background: #f8fafc;
-  color: #334155;
+  font-family: var(--font-sans);
+  background: var(--color-bg);
+  color: var(--color-text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -29,94 +38,267 @@ body {
   letter-spacing: 0.01em;
 }
 
-/* Soft UI 设计系统 - 全局组件样式 */
+/* ── 统一设计系统 - 全局组件样式（通过 CSS 变量实现主题切换） ── */
 @layer components {
-  /* 卡片基础 - Soft UI 风格 */
+  /* 卡片基础 */
   .card-warm {
-    @apply bg-white rounded-3xl shadow-soft-md;
+    background: var(--color-card);
+    border: var(--card-border-width) solid var(--color-card-border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
   }
   .card-warm-hover {
-    @apply card-warm hover:shadow-soft-xl hover:-translate-y-1 transition-all duration-300;
+    background: var(--color-card);
+    border: var(--card-border-width) solid var(--color-card-border);
+    border-radius: var(--card-radius);
+    box-shadow: var(--card-shadow);
+    transition: all 0.15s ease;
+  }
+  .card-warm-hover:hover {
+    box-shadow: var(--card-shadow-hover);
+    transform: translate(var(--btn-hover-offset), var(--btn-hover-offset));
   }
 
-  /* 主按钮 - 柔和靛蓝 */
+  /* 主按钮 */
   .btn-primary {
-    @apply bg-soft-500 hover:bg-soft-600 text-white font-semibold rounded-2xl
-           px-6 py-3 transition-all duration-200 shadow-soft-lg
-           hover:-translate-y-0.5 hover:shadow-soft-xl active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+    font-weight: var(--btn-font-weight);
+    text-transform: var(--btn-text-transform);
+    border-radius: var(--btn-radius);
+    padding: 0.75rem 1.5rem;
+    transition: all 0.15s ease;
+    box-shadow: var(--btn-shadow);
+    border: var(--border-width) solid var(--color-border);
+  }
+  .btn-primary:hover {
+    background: var(--color-primary-hover);
+    box-shadow: var(--btn-shadow-hover);
+    transform: translate(var(--btn-hover-offset), var(--btn-hover-offset));
+  }
+  .btn-primary:active {
+    box-shadow: var(--btn-shadow-active);
+    transform: translate(var(--btn-active-offset), var(--btn-active-offset));
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
-  /* 次要按钮 - 柔和绿 */
+  /* 次要按钮 */
   .btn-secondary {
-    @apply bg-mint-50 hover:bg-mint-100 text-mint-600 font-semibold rounded-2xl
-           px-6 py-3 transition-all duration-200
-           active:scale-95;
+    background: var(--color-secondary);
+    color: var(--color-secondary-text);
+    font-weight: var(--btn-font-weight);
+    text-transform: var(--btn-text-transform);
+    border-radius: var(--btn-radius);
+    border: var(--border-width) solid var(--color-border);
+    padding: 0.75rem 1.5rem;
+    transition: all 0.15s ease;
+    box-shadow: var(--btn-shadow);
+  }
+  .btn-secondary:hover {
+    background: var(--color-secondary-hover);
+    box-shadow: var(--btn-shadow-hover);
+    transform: translate(var(--btn-hover-offset), var(--btn-hover-offset));
+  }
+  .btn-secondary:active {
+    box-shadow: var(--btn-shadow-active);
+    transform: translate(var(--btn-active-offset), var(--btn-active-offset));
   }
 
   /* 幽灵按钮 */
   .btn-ghost {
-    @apply text-slate-500 hover:text-slate-700 hover:bg-slate-100/60
-           rounded-2xl px-3 py-2 transition-all duration-200 font-medium;
+    color: var(--color-text);
+    border-radius: var(--btn-radius);
+    padding: 0.5rem 0.75rem;
+    transition: all 0.15s ease;
+    font-weight: var(--btn-font-weight);
+    text-transform: var(--btn-text-transform);
+  }
+  .btn-ghost:hover {
+    color: var(--ghost-hover-text);
+    background: var(--ghost-hover-bg);
   }
 
-  /* 输入框 - Soft UI 风格 */
+  /* 输入框 */
   .input-warm {
-    @apply w-full px-5 py-3.5 bg-slate-50 border-0 rounded-2xl
-           text-slate-700 placeholder-slate-400 focus:outline-none
-           focus:ring-2 focus:ring-soft-500/50 focus:bg-white
-           transition-all duration-200;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: var(--input-radius);
+    border: var(--border-width) solid var(--input-border);
+    background: var(--input-bg);
+    color: var(--color-text);
+    placeholder-color: var(--color-text-placeholder);
+    transition: all 0.15s ease;
+  }
+  .input-warm:focus {
+    outline: none;
+    border-color: var(--input-focus-border);
+    box-shadow: var(--input-focus-shadow);
+  }
+  .input-warm:hover {
+    border-color: var(--color-text-muted);
+  }
+  .input-warm::placeholder {
+    color: var(--color-text-placeholder);
   }
 
   /* 标签 */
   .label-warm {
-    @apply block text-[11px] font-semibold text-slate-400 mb-1.5 uppercase tracking-widest;
+    display: block;
+    font-size: 11px;
+    font-weight: var(--btn-font-weight);
+    color: var(--color-text-muted);
+    margin-bottom: 0.375rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
   }
 
   /* 进度条 */
   .progress-warm {
-    @apply h-2 rounded-full bg-slate-100 overflow-hidden;
+    height: var(--progress-height);
+    border-radius: var(--progress-radius);
+    background: var(--progress-bg);
+    border: var(--progress-border);
+    overflow: hidden;
   }
   .progress-warm-bar {
-    @apply h-full rounded-full bg-gradient-to-r from-soft-400 to-soft-500 transition-all duration-500 ease-out;
+    height: 100%;
+    border-radius: var(--progress-radius);
+    background: var(--progress-fill);
+    transition: all 0.5s ease-out;
   }
 
   /* 标签页 */
   .tab-warm {
-    @apply px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-200;
+    padding: 0.5rem 1rem;
+    border-radius: var(--tab-radius);
+    font-size: 0.875rem;
+    font-weight: var(--tab-font-weight);
+    text-transform: var(--tab-text-transform);
+    transition: all 0.15s ease;
+    border: var(--tab-border);
   }
   .tab-warm-active {
-    @apply tab-warm bg-white text-slate-700 shadow-soft-sm;
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+    box-shadow: var(--btn-shadow);
+    padding: 0.5rem 1rem;
+    border-radius: var(--tab-radius);
+    font-size: 0.875rem;
+    font-weight: var(--tab-font-weight);
+    text-transform: var(--tab-text-transform);
+    border: var(--tab-border);
   }
   .tab-warm-inactive {
-    @apply tab-warm text-slate-400 hover:text-slate-500 hover:bg-slate-50;
+    background: var(--color-card);
+    color: var(--color-text);
+    padding: 0.5rem 1rem;
+    border-radius: var(--tab-radius);
+    font-size: 0.875rem;
+    font-weight: var(--tab-font-weight);
+    text-transform: var(--tab-text-transform);
+    border: var(--tab-border);
+  }
+  .tab-warm-inactive:hover {
+    background: var(--ghost-hover-bg);
   }
 
   /* 开关 */
   .toggle-warm {
-    @apply relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200;
+    position: relative;
+    display: inline-flex;
+    height: 1.5rem;
+    width: 2.75rem;
+    align-items: center;
+    border-radius: var(--toggle-radius);
+    transition: all 0.15s ease;
+    border: var(--toggle-border);
   }
   .toggle-warm-on {
-    @apply toggle-warm bg-soft-500;
+    background: var(--color-primary);
+    position: relative;
+    display: inline-flex;
+    height: 1.5rem;
+    width: 2.75rem;
+    align-items: center;
+    border-radius: var(--toggle-radius);
+    transition: all 0.15s ease;
+    border: var(--toggle-border);
   }
   .toggle-warm-off {
-    @apply toggle-warm bg-slate-300;
+    background: var(--color-text-muted);
+    position: relative;
+    display: inline-flex;
+    height: 1.5rem;
+    width: 2.75rem;
+    align-items: center;
+    border-radius: var(--toggle-radius);
+    transition: all 0.15s ease;
+    border: var(--toggle-border);
   }
   .toggle-warm-dot {
-    @apply inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-200;
+    display: inline-block;
+    height: 1rem;
+    width: 1rem;
+    transform: translateX(0);
+    border-radius: 9999px;
+    background: white;
+    transition: transform 0.15s ease;
+    border: var(--toggle-dot-border);
   }
 
   /* 小徽章 */
   .badge-warm {
-    @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: var(--badge-radius);
+    font-size: 0.75rem;
+    font-weight: var(--badge-font-weight);
+    text-transform: var(--badge-text-transform);
+    border: var(--badge-border);
   }
   .badge-ochre {
-    @apply badge-warm bg-soft-50 text-soft-600;
+    background: var(--color-primary);
+    color: var(--color-primary-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: var(--badge-radius);
+    font-size: 0.75rem;
+    font-weight: var(--badge-font-weight);
+    text-transform: var(--badge-text-transform);
+    border: var(--badge-border);
   }
   .badge-moss {
-    @apply badge-warm bg-mint-50 text-mint-600;
+    background: var(--color-secondary);
+    color: var(--color-secondary-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: var(--badge-radius);
+    font-size: 0.75rem;
+    font-weight: var(--badge-font-weight);
+    text-transform: var(--badge-text-transform);
+    border: var(--badge-border);
   }
   .badge-ember {
-    @apply badge-warm bg-rose-50 text-rose-500;
+    background: var(--color-danger);
+    color: var(--color-primary-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.625rem;
+    border-radius: var(--badge-radius);
+    font-size: 0.75rem;
+    font-weight: var(--badge-font-weight);
+    text-transform: var(--badge-text-transform);
+    border: var(--badge-border);
   }
 }
 
@@ -128,21 +310,21 @@ body {
 
 /* 选中文字颜色 */
 ::selection {
-  background: #c7c8fe;
-  color: #312e81;
+  background: var(--selection-bg);
+  color: var(--selection-text);
 }
 
 /* 滚动条 */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: var(--scrollbar-width);
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 3px;
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--scrollbar-thumb-hover);
 }

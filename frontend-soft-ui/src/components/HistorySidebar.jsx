@@ -80,19 +80,19 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
       exit={{ opacity: 0, scale: 0.95, y: -4 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
       style={{ left: posX, top: posY }}
-      className="fixed z-[9999] bg-white border border-slate-200 rounded-2xl shadow-soft-lg py-1.5 min-w-[160px] overflow-hidden"
+      className="fixed z-[9999] bg-white border border-theme-border rounded-2xl shadow-btn py-1.5 min-w-[160px] overflow-hidden"
     >
       <button
         onClick={() => { onRename(); onClose() }}
-        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-slate-700 hover:bg-slate-50 transition-colors"
+        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-theme-text hover:bg-theme-bg-subtle transition-colors"
       >
-        <Pencil className="w-3.5 h-3.5 text-slate-400" />
+        <Pencil className="w-3.5 h-3.5 text-theme-text-muted" />
         {t.rename || '重命名'}
       </button>
       <div className="mx-2.5 my-0.5 border-t border-slate-100" />
       <button
         onClick={() => { onDelete(); onClose() }}
-        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-rose-500 hover:bg-rose-50 transition-colors"
+        className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[13px] text-theme-danger hover:bg-theme-danger-bg transition-colors"
       >
         <Trash2 className="w-3.5 h-3.5" />
         {t.delete || '删除'}
@@ -140,7 +140,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
               if (e.key === 'Enter') onRenameConfirm()
               if (e.key === 'Escape') onRenameCancel()
             }}
-            className="flex-1 text-[13px] px-5 py-3.5 bg-slate-50 border-0 rounded-2xl focus:ring-2 focus:ring-soft-500/50 focus:bg-white transition-all duration-200 text-slate-800"
+            className="flex-1 text-[13px] px-5 py-3.5 bg-theme-bg border-0 rounded-2xl focus:ring-2 focus:ring-theme-primary/50 focus:bg-white transition-all duration-200 text-theme-text"
           />
         </div>
       </div>
@@ -149,12 +149,12 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
 
   return (
     <div
-      className="group flex items-center gap-2 px-2.5 py-2 rounded-2xl cursor-pointer hover:bg-slate-100/60 transition-colors mx-2 bg-white border-slate-200"
+      className="group flex items-center gap-2 px-2.5 py-2 rounded-2xl cursor-pointer hover:bg-theme-bg-subtle transition-colors mx-2 bg-white border-theme-border"
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
     >
       <ProgressBadge progress={record.progress} />
       <div className="flex-1 min-w-0">
-        <div className="text-[13px] text-slate-700 truncate leading-snug">
+        <div className="text-[13px] text-theme-text truncate leading-snug">
           {record.title}
         </div>
       </div>
@@ -164,7 +164,7 @@ function HistoryItem({ record, isRenaming, renameValue, onRenameStart, onRenameC
           const rect = e.currentTarget.getBoundingClientRect()
           onMenuOpen(record.file_id, rect.right - 160, rect.bottom + 4)
         }}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded-2xl hover:bg-slate-200/70 text-slate-400 hover:text-slate-600 transition-all flex-shrink-0"
+        className="opacity-0 group-hover:opacity-100 p-1 rounded-2xl hover:bg-slate-200/70 text-theme-text-muted hover:text-theme-text transition-all flex-shrink-0"
       >
         <MoreHorizontal className="w-3.5 h-3.5" />
       </button>
@@ -176,11 +176,11 @@ function RecentItem({ record, onNavigate }) {
   return (
     <button
       onClick={() => onNavigate(record.file_id, record.source_lang, record.target_lang, record.title)}
-      className="w-full flex items-center gap-2 px-3 py-2 rounded-2xl hover:bg-slate-100/60 transition-colors text-left"
+      className="w-full flex items-center gap-2 px-3 py-2 rounded-2xl hover:bg-theme-bg-subtle transition-colors text-left"
     >
       <ProgressBadge progress={record.progress} />
-      <span className="text-[13px] text-slate-700 truncate flex-1">{record.title}</span>
-      <span className="text-[10px] font-semibold text-slate-400 flex-shrink-0 uppercase">{(record.source_lang || '?').substring(0, 2)}</span>
+      <span className="text-[13px] text-theme-text truncate flex-1">{record.title}</span>
+      <span className="text-[10px] font-semibold text-theme-text-muted flex-shrink-0 uppercase">{(record.source_lang || '?').substring(0, 2)}</span>
     </button>
   )
 }
@@ -292,16 +292,16 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               animate={{ width: SIDEBAR_WIDTH, opacity: 1 }}
               exit={{ width: 0, opacity: 0 }}
               transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-              className="h-full overflow-hidden flex flex-col bg-white/95 backdrop-blur-md shadow-soft-lg border-r border-slate-200/60"
+              className="h-full overflow-hidden flex flex-col bg-white/95 backdrop-blur-md shadow-btn border-r border-theme-border/60"
               style={{ minWidth: 0 }}
             >
               <div className="px-3 pt-4 pb-2 flex items-center justify-between flex-shrink-0">
-                <span className="font-display text-[11px] font-semibold text-slate-700 uppercase tracking-wider">
+                <span className="font-display text-[11px] font-semibold text-theme-text uppercase tracking-wider">
                   {t.historyTitle || '学习记录'}
                 </span>
                 <button
                   onClick={() => setExpanded(false)}
-                  className="p-1 rounded-2xl hover:bg-slate-200/60 text-slate-400 hover:text-slate-600 transition-colors"
+                  className="p-1 rounded-2xl hover:bg-slate-200/60 text-theme-text-muted hover:text-theme-text transition-colors"
                 >
                   <PanelLeftClose className="w-4 h-4" />
                 </button>
@@ -311,7 +311,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 {records.length === 0 && (
                   <div className="px-4 py-12 text-center">
                     <div className="text-2xl mb-2">📚</div>
-                    <div className="text-[13px] text-slate-400">
+                    <div className="text-[13px] text-theme-text-muted">
                       {t.noHistory || '暂无学习记录'}
                     </div>
                   </div>
@@ -320,7 +320,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 {records.length > 0 && (
                   <div className="mb-2">
                     <div className="px-4 py-1.5 mt-1">
-                      <span className="text-[11px] font-medium text-slate-400 tracking-wide">
+                      <span className="text-[11px] font-medium text-theme-text-muted tracking-wide">
                         {t.recent || '最近'}
                       </span>
                     </div>
@@ -343,7 +343,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                             return !prev
                           })
                         }}
-                        className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] text-slate-400 hover:text-slate-600 transition-colors"
+                        className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] text-theme-text-muted hover:text-theme-text transition-colors"
                       >
                         {recentExpanded ? (
                           <>
@@ -358,7 +358,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                         )}
                       </button>
                     )}
-                    <div className="mx-4 my-2 border-t border-slate-200/60" />
+                    <div className="mx-4 my-2 border-t border-theme-border/60" />
                   </div>
                 )}
 
@@ -366,7 +366,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   <div key={lang} className="mb-1">
                     <div className="flex items-center gap-1.5 px-4 py-1.5 mt-1">
                       <LangIcon langCode={lang} size="sm" />
-                      <span className="text-[11px] font-medium text-slate-400 tracking-wide">
+                      <span className="text-[11px] font-medium text-theme-text-muted tracking-wide">
                         {getLangLabel(lang)}
                       </span>
                       <span className="text-[10px] text-slate-300">{items.length}</span>
@@ -374,8 +374,8 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                         onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
                         className={`ml-auto p-1 rounded-2xl transition-all badge-ochre ${
                           activeWordListLang === lang
-                            ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[langIdx % SIDEBAR_COLORS.length] + ' text-white shadow-soft-sm'
-                            : 'text-slate-300 hover:text-soft-500 hover:bg-soft-50'
+                            ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[langIdx % SIDEBAR_COLORS.length] + ' text-white shadow-card-active'
+                            : 'text-slate-300 hover:text-theme-primary hover:bg-theme-bg-subtle'
                         }`}
                         title="Word list"
                       >
@@ -404,7 +404,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 ))}
               </div>
 
-              <div className="px-3 py-2 border-t border-slate-200/60 flex-shrink-0">
+              <div className="px-3 py-2 border-t border-theme-border/60 flex-shrink-0">
                 <div className="text-[10px] text-slate-300 text-center">
                   {records.length} {t.record || '条记录'}
                 </div>
@@ -417,18 +417,18 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-white/95 backdrop-blur-md shadow-soft-lg border-r border-slate-200/60"
+            className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-white/95 backdrop-blur-md shadow-btn border-r border-theme-border/60"
             style={{ width: 48 }}
           >
             <button
               onClick={() => setExpanded(true)}
-              className="w-9 h-9 flex items-center justify-center rounded-2xl hover:bg-slate-200/70 text-slate-400 hover:text-slate-600 transition-colors"
+              className="w-9 h-9 flex items-center justify-center rounded-2xl hover:bg-slate-200/70 text-theme-text-muted hover:text-theme-text transition-colors"
               title={t.historyTitle || '学习记录'}
             >
               <PanelLeftOpen className="w-4.5 h-4.5" />
             </button>
 
-            <div className="w-6 border-t border-slate-200/60 my-1" />
+            <div className="w-6 border-t border-theme-border/60 my-1" />
 
             {langKeys.map((lang, idx) => (
               <button
@@ -436,8 +436,8 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
                 className={`w-9 h-9 flex items-center justify-center rounded-2xl text-[13px] font-bold transition-all ${
                   activeWordListLang === lang
-                    ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-soft-md'
-                    : 'bg-slate-50 text-slate-500 hover:bg-slate-200/70 hover:text-slate-700'
+                    ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-card'
+                    : 'bg-theme-bg text-theme-text-secondary hover:bg-slate-200/70 hover:text-theme-text'
                 }`}
                 title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
               >
@@ -446,7 +446,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
             ))}
 
             {records.length > 0 && langKeys.length > 0 && (
-              <div className="w-6 border-t border-slate-200/60 my-1" />
+              <div className="w-6 border-t border-theme-border/60 my-1" />
             )}
 
             {langKeys.flatMap(lang =>
@@ -454,7 +454,7 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 <button
                   key={record.file_id}
                   onClick={() => onNavigateToRecord(record.file_id, record.source_lang, record.target_lang, record.title)}
-                  className="w-9 h-9 flex items-center justify-center rounded-2xl hover:bg-slate-200/70 text-[10px] font-medium text-slate-400 hover:text-slate-600 transition-colors"
+                  className="w-9 h-9 flex items-center justify-center rounded-2xl hover:bg-slate-200/70 text-[10px] font-medium text-theme-text-muted hover:text-theme-text transition-colors"
                   title={record.title}
                 >
                   {(record.source_lang || '?').substring(0, 2).toUpperCase()}
@@ -493,29 +493,29 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 8 }}
               transition={{ duration: 0.15, ease: 'easeOut' }}
-              className="bg-white rounded-3xl shadow-soft-xl p-6 max-w-sm w-full mx-4"
+              className="bg-white rounded-3xl shadow-card-hover p-6 max-w-sm w-full mx-4"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center flex-shrink-0">
-                  <Trash2 className="w-5 h-5 text-rose-500" />
+                <div className="w-10 h-10 rounded-full bg-theme-danger-bg flex items-center justify-center flex-shrink-0">
+                  <Trash2 className="w-5 h-5 text-theme-danger" />
                 </div>
                 <div>
-                  <h3 className="font-display text-[15px] font-semibold text-slate-800">{t.confirmDelete || '确认删除'}</h3>
-                  <p className="text-[13px] text-slate-500 mt-0.5 line-clamp-2">{deleteConfirm.title}</p>
+                  <h3 className="font-display text-[15px] font-semibold text-theme-text">{t.confirmDelete || '确认删除'}</h3>
+                  <p className="text-[13px] text-theme-text-secondary mt-0.5 line-clamp-2">{deleteConfirm.title}</p>
                 </div>
               </div>
-              <p className="text-[13px] text-slate-500 mb-5 pl-[52px]">{t.deleteCannotUndo || '删除后不可恢复，确定要删除吗？'}</p>
+              <p className="text-[13px] text-theme-text-secondary mb-5 pl-[52px]">{t.deleteCannotUndo || '删除后不可恢复，确定要删除吗？'}</p>
               <div className="flex gap-2.5 justify-end">
                 <button
                   onClick={handleDeleteCancel}
-                  className="btn-secondary px-4 py-2 text-[13px] rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors"
+                  className="btn-secondary px-4 py-2 text-[13px] rounded-2xl border border-theme-border text-theme-text hover:bg-theme-bg-subtle transition-colors"
                 >
                   {t.cancel || '取消'}
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="px-6 py-3 rounded-2xl font-semibold shadow-soft-lg hover:-translate-y-0.5 hover:shadow-soft-xl transition-all duration-200 px-4 py-2 text-[13px] bg-rose-500 hover:bg-rose-600 text-white"
+                  className="px-6 py-3 rounded-2xl font-semibold shadow-btn hover:-translate-y-0.5 hover:shadow-card-hover transition-all duration-200 px-4 py-2 text-[13px] bg-theme-danger hover:bg-rose-600 text-white"
                 >
                   {t.confirmDeleteAction || '删除'}
                 </button>

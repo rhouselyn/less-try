@@ -1,0 +1,124 @@
+/* ── 柔和 Soft UI 主题 ── */
+[data-theme="soft-ui"] {
+  /* 背景 */
+  --color-bg: #f8fafc;
+  --color-bg-subtle: #f1f5f9;
+  --color-bg-overlay: rgba(248, 250, 252, 0.8);
+
+  /* 卡片 */
+  --color-card: #ffffff;
+  --color-card-border: transparent;
+  --card-border-width: 0px;
+  --card-radius: 1.5rem;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.04), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --card-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.04);
+  --card-shadow-active: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
+
+  /* 主色 */
+  --color-primary: #6366f1;
+  --color-primary-hover: #4f46e5;
+  --color-primary-text: #ffffff;
+
+  /* 次要色 */
+  --color-secondary: #22c55e;
+  --color-secondary-hover: #16a34a;
+  --color-secondary-text: #ffffff;
+
+  /* 强调色 */
+  --color-accent: #f59e0b;
+  --color-accent-text: #1e293b;
+
+  /* 成功 */
+  --color-success: #22c55e;
+  --color-success-bg: #f0fdf4;
+
+  /* 危险/错误 */
+  --color-danger: #f43f5e;
+  --color-danger-bg: #fff1f2;
+
+  /* 警告 */
+  --color-warning: #f59e0b;
+  --color-warning-bg: #fffbeb;
+
+  /* 文本 */
+  --color-text: #334155;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+  --color-text-placeholder: #94a3b8;
+
+  /* 边框 */
+  --color-border: #e2e8f0;
+  --border-width: 0px;
+
+  /* 输入框 */
+  --input-bg: #f8fafc;
+  --input-border: transparent;
+  --input-focus-border: transparent;
+  --input-focus-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
+  --input-radius: 1rem;
+
+  /* 按钮 */
+  --btn-radius: 1rem;
+  --btn-font-weight: 600;
+  --btn-text-transform: none;
+  --btn-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --btn-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.06), 0 4px 10px rgba(0, 0, 0, 0.04);
+  --btn-shadow-active: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --btn-hover-offset: -2px;
+  --btn-active-offset: 0px;
+
+  /* 徽章 */
+  --badge-radius: 9999px;
+  --badge-border: none;
+  --badge-font-weight: 600;
+  --badge-text-transform: none;
+
+  /* 进度条 */
+  --progress-height: 0.5rem;
+  --progress-radius: 9999px;
+  --progress-bg: #f1f5f9;
+  --progress-border: none;
+  --progress-fill: linear-gradient(to right, #8183f8, #6366f1);
+
+  /* 开关 */
+  --toggle-radius: 9999px;
+  --toggle-border: none;
+  --toggle-dot-border: none;
+
+  /* 标签页 */
+  --tab-radius: 1rem;
+  --tab-font-weight: 600;
+  --tab-text-transform: none;
+  --tab-border: none;
+
+  /* 字体 */
+  --font-sans: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+
+  /* 滚动条 */
+  --scrollbar-width: 6px;
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  /* 选中 */
+  --selection-bg: #c7c8fe;
+  --selection-text: #312e81;
+
+  /* FrogLogo 颜色 */
+  --frog-body: #4ade80;
+  --frog-body-light: #86efac;
+  --frog-eye-pupil: #166534;
+  --frog-mouth: #166534;
+  --frog-belly: #fde68a;
+  --frog-stroke: transparent;
+  --frog-stroke-width: 0;
+
+  /* 幽灵按钮 */
+  --ghost-hover-bg: rgba(241, 245, 249, 0.6);
+  --ghost-hover-text: #334155;
+
+  /* 加载遮罩 */
+  --loading-overlay-bg: rgba(248, 250, 252, 0.8);
+  --loading-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.04);
+}
