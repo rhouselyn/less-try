@@ -40,8 +40,10 @@ def setup_env():
     os.environ['DATA_DIR'] = data_dir
     os.environ['CONFIG_DIR'] = config_dir
 
-    # 前端静态文件目录（打包后的前端）
-    frontend_dist = os.path.join(BASE_PATH, 'frontend', 'dist')
+    # 前端静态文件目录（优先使用 frontend-soft-ui，其次 frontend）
+    frontend_dist = os.path.join(BASE_PATH, 'frontend-soft-ui', 'dist')
+    if not os.path.isdir(frontend_dist) or not os.path.isfile(os.path.join(frontend_dist, 'index.html')):
+        frontend_dist = os.path.join(BASE_PATH, 'frontend', 'dist')
     os.environ['FRONTEND_DIST_DIR'] = frontend_dist
 
     return data_dir, config_dir
