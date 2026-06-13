@@ -1,6 +1,6 @@
 """呱邻国桌面应用启动入口。
 
-启动 FastAPI 后端服务，然后用系统默认浏览器打开。
+启动 FastAPI 后端服务，然后用 PyWebView 打开原生窗口。
 支持 PyInstaller 打包为可执行程序。
 """
 
@@ -8,7 +8,6 @@ import sys
 import os
 import threading
 import time
-import webbrowser
 
 # ── 路径修正：PyInstaller 打包后资源在 _MEIPASS 目录 ──
 def get_base_path():
@@ -25,6 +24,7 @@ if BACKEND_PATH not in sys.path:
 
 # ── 设置环境变量 ──
 def setup_env():
+    # 数据目录：放在用户目录下，而非临时目录
     if sys.platform == 'win32':
         data_dir = os.path.join(os.environ.get('APPDATA', os.path.expanduser('~')), 'Gualingo')
     elif sys.platform == 'darwin':
@@ -64,30 +64,34 @@ def main():
     # 等待后端就绪
     import urllib.request
     import urllib.error
-    print('正在启动呱邻国...')
-    for i in range(60):
+    for i in range(30):
         try:
             urllib.request.urlopen('http://127.0.0.1:18000/api/history', timeout=1)
             break
         except (urllib.error.URLError, ConnectionRefusedError, OSError):
             time.sleep(0.5)
+
+    # Windows 上强制使用 edgechromium 后端（WebView2），避免 pythonnet 打包问题
+    # macOS 使用 webkit，Linux 使用 webkitgtk
+    import webview
+
+    window = webview.create_window(
+        title='呱邻国 - Gualingo',
+        url='http://127.0.0.1:18000',
+        width=1200,
+        height=800,
+        min_size=(800, 600),
+        text_select=True,
+    )
+
+    # Windows 强制使用 edgechromium，不依赖 pythonnet
+    if sys.platform == 'win32':
+        webview.start(gui='edgechromium', debug=False)
     else:
-        print('启动失败，请检查日志')
-        sys.exit(1)
+        webview.start(debug=False)
 
-    # 打开浏览器
-    url = 'http://127.0.0.1:18000'
-    webbrowser.open(url)
-    print(f'呱邻国已启动，浏览器已打开: {url}')
-    print('关闭此窗口将退出应用')
-
-    # 主线程保持运行
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print('\n正在退出呱邻国...')
-        sys.exit(0)
+    # 窗口关闭后退出
+    sys.exit(0)
 
 
 if __name__ == '__main__':
