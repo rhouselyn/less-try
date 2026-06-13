@@ -136,6 +136,8 @@
 
 Windows 运行安装程序即可；macOS 打开 dmg 后将应用拖入 Applications 文件夹；Linux 给 AppImage 添加执行权限后直接运行。
 
+> **macOS 用户**：首次打开时如提示"无法验证开发者"，请右键点击应用 → 选择"打开" → 在弹窗中再次点击"打开"即可。如仍无法打开，可在终端执行 `xattr -cr /Applications/Gualingo.app`。
+
 ### 方式二：Docker 部署
 
 ```bash
@@ -202,7 +204,7 @@ python app.py
 | 前端 | React 18 · Vite · TailwindCSS · Framer Motion · Web Speech API |
 | 后端 | FastAPI · Uvicorn · OpenAI 兼容 LLM API |
 | 存储 | SQLite（自动迁移旧文件数据） |
-| 桌面端 | PyWebView · PyInstaller |
+| 桌面端 | Electron · PyInstaller |
 
 ---
 

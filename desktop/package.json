@@ -64,10 +64,6 @@
     },
     "mac": {
       "icon": "../assets/icon_macos.png",
-      "hardenedRuntime": true,
-      "gatekeeperAssess": false,
-      "entitlements": "entitlements.mac.plist",
-      "entitlementsInherit": "entitlements.mac.plist",
       "target": [
         {
           "target": "dmg",
