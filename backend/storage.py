@@ -480,7 +480,10 @@ class Storage:
         if USER_PREFS_FILE.exists():
             try:
                 with open(USER_PREFS_FILE, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    data = json.load(f)
+                if "ui_theme" not in data:
+                    data["ui_theme"] = "cel"
+                return data
             except (json.JSONDecodeError, IOError):
                 pass
         old_path = self.base_dir / "user_preferences.json"
@@ -492,7 +495,8 @@ class Storage:
                     "source_lang": old_data.get("source_lang", "auto"),
                     "target_lang": old_data.get("target_lang", "zh"),
                     "rpm": old_data.get("rpm", 60),
-                    "skip_listening": old_data.get("skip_listening", False)
+                    "skip_listening": old_data.get("skip_listening", False),
+                    "ui_theme": "cel"
                 }
                 self.save_user_preferences(migrated)
                 return migrated
@@ -507,10 +511,11 @@ class Storage:
                     "source_lang": old_data.get("source_lang", "auto"),
                     "target_lang": old_data.get("target_lang", "zh"),
                     "rpm": old_data.get("rpm", 60),
-                    "skip_listening": old_data.get("skip_listening", False)
+                    "skip_listening": old_data.get("skip_listening", False),
+                    "ui_theme": "cel"
                 }
                 self.save_user_preferences(migrated)
                 return migrated
             except (json.JSONDecodeError, IOError):
                 pass
-        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False}
+        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False, "ui_theme": "cel"}

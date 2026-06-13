@@ -36,6 +36,7 @@ class UserPreferencesUpdate(BaseModel):
     recent_languages: Optional[List[str]] = None
     page_size: Optional[int] = None
     only_new_words: Optional[bool] = None
+    ui_theme: Optional[str] = None
 
 
 @router.get("/settings")
@@ -133,6 +134,8 @@ async def update_user_preferences(req: UserPreferencesUpdate):
             current["page_size"] = req.page_size
         if req.only_new_words is not None:
             current["only_new_words"] = req.only_new_words
+        if req.ui_theme is not None:
+            current["ui_theme"] = req.ui_theme
         storage.save_user_preferences(current)
         return current
     except Exception as e:
