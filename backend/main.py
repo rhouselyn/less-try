@@ -62,6 +62,16 @@ if FRONTEND_DIST_DIR.exists() and (FRONTEND_DIST_DIR / "index.html").exists():
     async def serve_frontend(full_path: str):
         return FileResponse(str(FRONTEND_DIST_DIR / "index.html"))
 
+    # 根路径也返回 index.html
+    @app.get("/")
+    async def serve_root():
+        return FileResponse(str(FRONTEND_DIST_DIR / "index.html"))
+else:
+    # 无前端构建产物时，根路径返回 API 信息
+    @app.get("/")
+    async def root():
+        return {"message": "少邻国 - Gualingo API", "docs": "/docs"}
+
 # ── 直接运行 ──────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
