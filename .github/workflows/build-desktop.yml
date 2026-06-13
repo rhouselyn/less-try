@@ -55,30 +55,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r backend/requirements.txt
-          pip install pywebview pyinstaller pillow cairosvg
-
-      # ── 生成图标 ──
-      - name: Generate icons from SVG
-        shell: bash
-        run: |
-          python3 -c "
-          import cairosvg, os
-          from PIL import Image
-          import io
-          os.makedirs('assets', exist_ok=True)
-          # PNG 512x512
-          png512 = cairosvg.svg2png(url='assets/icon.svg', output_width=512, output_height=512)
-          with open('assets/icon.png', 'wb') as f: f.write(png512)
-          with open('assets/icon_macos.png', 'wb') as f: f.write(png512)
-          # ICO (multi-size)
-          sizes = [(256,256),(128,128),(48,48),(32,32),(16,16)]
-          imgs = []
-          for w,h in sizes:
-              p = cairosvg.svg2png(url='assets/icon.svg', output_width=w, output_height=h)
-              imgs.append(Image.open(io.BytesIO(p)))
-          imgs[0].save('assets/icon.ico', format='ICO', sizes=sizes)
-          print('Icons generated!')
-          "
+          pip install pywebview pyinstaller
 
       # ── PyInstaller 打包 ──
       - name: Build with PyInstaller
