@@ -9,7 +9,7 @@
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://react.dev)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python)](https://python.org)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](../LICENSE)
 
 </div>
 
@@ -25,100 +25,38 @@
 
 ---
 
-## Ce que Duolingo ne peut pas faire, 呱邻国 le fait
+## Détails
 
-| Les limites de Duolingo | La solution de 呱邻国 |
-|--------------------------|------------------------|
-| **Pas de liste de vocabulaire, impossible de réviser** | Génération automatique d'un glossaire complet, avec index alphabétique, recherche et détails mot par mot — consultez à tout moment la définition, la phonétique, les déclinaisons et les exemples de chaque mot |
-| **Envie de chercher un autre mot pendant un exercice** | Ouvrez le glossaire à tout moment pendant l'apprentissage, consultez la définition et les détails de n'importe quel mot sans interrompre votre rythme |
-| **Difficile d'appliquer ce qu'on a appris** | Vous apprenez ce que vous fournissez — paroles de chansons, actualités, répliques, articles scientifiques — ce que vous apprenez est ce que vous rencontrerez réellement |
-| **Les langues minoritaires ne sont pas supportées** | Apprentissage mutuel entre toutes les langues, détection automatique par l'IA, lecture TTS en 120+ langues, plus limité par les ressources de la plateforme |
-| **Impossible d'approfondir la compréhension d'un article** | Importez l'article, l'IA traduit phrase par phrase, extrait tout le vocabulaire et génère des exercices — du mot à la phrase à l'article entier, maîtrisez chaque texte en profondeur |
+👉 [Voir la page de présentation complète](https://rhouselyn.github.io/Guapage)
 
 ---
 
-## Comment ça répond à vos besoins ?
+## Philosophie de conception centrale
 
-### 🎯 « J'ai du contenu, je veux apprendre directement » → Mode saisie directe
+### Zéro intervention manuelle, entièrement propulsé par les LLM
 
-Collez un article, des paroles de chanson, des actualités, des répliques — importez n'importe quel texte en langue étrangère, l'IA détecte automatiquement la langue, traduit phrase par phrase, extrait le vocabulaire et crée du contenu d'apprentissage sur mesure pour vous.
+De l'analyse des phrases et de la segmentation des mots à la génération des définitions, **tout est géré par le LLM sans aucune règle manuelle ni dépendance à un dictionnaire**. L'IA comprend le contexte, détermine automatiquement les frontières des mots, extrait les racines, génère des définitions et des phrases d'exemple — vous fournissez simplement le texte, l'IA fait le reste.
 
-### 🌐 « Je veux apprendre une langue étrangère à partir de contenu dans ma langue maternelle » → Mode traduction-apprentissage
+### Format de sortie LLM élégant
 
-Saisissez un texte dans votre langue maternelle, l'IA le traduit dans la langue que vous souhaitez apprendre, puis génère du vocabulaire et des exercices à partir du texte traduit. Votre contenu familier devient votre point de départ pour apprendre une langue étrangère.
+Des prompts soigneusement conçus et des formats de sortie structurés garantissent que le LLM renvoie des données propres, analysables et directement utilisables. Pas besoin de corrections en post-traitement — un seul appel produit le résultat souhaité.
 
-### ✨ « Je n'ai pas de contenu, générez-le pour moi » → Mode génération IA
+### Consommation minimale de tokens
 
-Dites à l'IA quel sujet vous voulez apprendre (par exemple « dialogues pour commander un café », « situations de demande de direction en voyage »), l'IA génère automatiquement un texte dans la langue cible, puis l'apprentissage commence. Apprenez même sans contenu.
-
-### 🗣️ « Je veux m'entraîner à la compréhension orale » → Lecture vocale
-
-Basée sur le TTS natif du navigateur, prenant en charge 120+ langues. Mots et phrases peuvent être lus, avec changement libre entre vitesse normale et lente. La phase 2 propose également des exercices dédiés de compréhension orale.
-
-### 🌍 « Ma langue maternelle n'est ni l'anglais ni le chinois » → Interface en toute langue
-
-Choisissez votre langue maternelle, toute l'interface se traduit automatiquement dans cette langue. Quelle que soit votre langue maternelle, vous pouvez utiliser l'application sans obstacle.
-
-### 📖 « Compréhension écrite au collège, je veux maîtriser un texte en profondeur » → Mode lecture approfondie
-
-Importez le texte de compréhension écrite, l'IA traduit automatiquement phrase par phrase, extrait tous les mots et expressions nouveaux, génère des cartes de vocabulaire et divers exercices. De la compréhension mot par mot à la maîtrise de l'ensemble, aidez-vous à comprendre chaque détail d'un texte.
+En simplifiant les prompts, en compressant les formats de sortie et en éliminant les champs redondants, **la consommation de tokens est minimisée**. Le même contenu d'apprentissage est réalisé avec moins de tokens, réduisant les coûts d'API.
 
 ---
 
-## Système d'apprentissage
+## Vidéo de démonstration
 
-Apprentissage en deux phases + révision des erreurs, progression graduelle pour maîtriser chaque point de connaissance :
+<div align="center">
 
-| Phase | Contenu | Types d'exercices |
-|-------|---------|-------------------|
-| **Phase 1 · Acquisition du vocabulaire** | Cartes de vocabulaire + Traduction de phrases | Choix de vocabulaire, traduction de phrases |
-| **Phase 2 · Entraînement approfondi** | Compréhension orale + Texte à trous + Reconstitution | Compréhension orale, texte à trous, reconstitution de traduction |
+<!-- Espace réservé pour la vidéo, à remplacer par la vidéo de démonstration ultérieurement -->
+<!-- <video src="demo.mp4" controls width="100%"></video> -->
 
-Chaque unité comporte 10 questions, à la fin vous obtenez une évaluation ⭐, les questions auxquelles vous avez mal répondu entrent automatiquement en révision des erreurs, jusqu'à ce que vous les maîtrisiez.
+📹 *Vidéo de démonstration à venir*
 
-### Phase 1 · Acquisition du vocabulaire
-
-| Type d'exercice | Capture d'écran | Description |
-|-----------------|-----------------|-------------|
-| Choix de vocabulaire | ![Choix de vocabulaire](screenshots/vocab.png) | QCM à quatre choix, lisez le mot et choisissez la définition, avec lecture vocale et phonétique |
-| Traduction de phrases | ![Traduction de phrases](screenshots/translate%20t2s.png) | Lisez la phrase en langue source, reconstituez la traduction à partir des mots de votre langue maternelle |
-| Compréhension orale | ![Compréhension orale](screenshots/listening.png) | Écoutez la phrase, reconstituez ce que vous avez entendu à partir des mots, avec changement vitesse normale/lente |
-
-### Phase 2 · Entraînement approfondi
-
-| Type d'exercice | Capture d'écran | Description |
-|-----------------|-----------------|-------------|
-| Texte à trous | ![Texte à trous](screenshots/mask.png) | Un mot-clé est masqué dans la phrase, choisissez la bonne réponse parmi les options |
-| Reconstitution de traduction | ![Reconstitution de traduction](screenshots/translate%20s2t.png) | Lisez la traduction dans votre langue maternelle, reconstituez la phrase originale à partir des mots de la langue cible |
-
----
-
-## Pages principales
-
-### Page d'accueil & Saisie
-
-![Page d'accueil](screenshots/main.png)
-
-Trois modes de saisie, couvrant tous les scénarios d'apprentissage :
-- **Saisie directe** — Collez un texte en langue étrangère, l'IA détecte la langue, traduit phrase par phrase et extrait le vocabulaire
-- **Traduction automatique** — Saisissez un texte dans votre langue maternelle, l'IA le traduit dans la langue cible puis lance l'apprentissage
-- **Génération libre** — Dites à l'IA quel sujet vous voulez apprendre, elle génère automatiquement le contenu d'apprentissage
-
-### Page dictionnaire
-
-![Page dictionnaire](screenshots/contrast.png)
-
-Traduction des phrases à gauche, glossaire à droite, cliquez sur un mot souligné pour voir ses détails. Index alphabétique pour une localisation rapide, chaque mot est accompagné de sa phonétique, sa nature grammaticale, sa définition, ses déclinaisons et ses exemples.
-
-![Détail du mot](screenshots/contrast_detail.png)
-
-Les détails du mot supportent la régénération par actualisation, les aides mnémotechniques facilitent la mémoration associative.
-
-### Unités d'apprentissage
-
-![Unités d'apprentissage](screenshots/units.png)
-
-Système d'apprentissage en deux phases, les unités se déverrouillent progressivement, obtenez une évaluation par étoiles après complétion. Options « apprendre uniquement les nouveaux mots » et « passer l'écoute » pour personnaliser votre rythme d'apprentissage selon vos besoins.
+</div>
 
 ---
 
@@ -231,4 +169,4 @@ Toute la configuration se fait via les paramètres de l'interface, pas besoin de
 
 ## 📄 Licence
 
-[GNU GPL v3 License](LICENSE)
+[GNU Affero General Public License v3](../LICENSE)
