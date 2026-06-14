@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, Menu } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const http = require('http');
@@ -116,6 +116,9 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
   });
+
+  // 移除默认菜单栏（File, Edit, Window, Help）
+  Menu.setApplicationMenu(null);
 
   mainWindow.loadURL(BACKEND_URL);
 
