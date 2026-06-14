@@ -786,9 +786,6 @@ def generate_and_save_learning_plan(file_id: str, vocab, sentences):
 
 
 async def generate_title(text: str, source_lang: str) -> str:
-    first_line = text.strip().split('\n')[0].strip()
-    if len(first_line) <= 30 and not first_line.endswith(('。', '，', '！', '？', '.', ',', '!', '?', ';', '；')):
-        return first_line
     try:
         messages = [
             {"role": "system", "content": "You are a title generator. Generate a very short title (max 20 characters) that summarizes the given text. If the text already has a clear title in the first line, use that as the title. Output ONLY the title, nothing else."},
@@ -800,6 +797,7 @@ async def generate_title(text: str, source_lang: str) -> str:
             return title
     except Exception as e:
         print(f"[WARN] Title generation failed: {e}")
+    first_line = text.strip().split('\n')[0].strip()
     return first_line[:20] + "..." if len(first_line) > 20 else first_line
 
 
