@@ -322,12 +322,21 @@ function App() {
           }
         } else if (status.status === 'error') {
           console.error('处理错误:', status.error)
-          alert(`处理失败: ${status.error}`)
           setLoading(false)
           setSkipPolling(true)
+          setPreprocessStatus(null)
+          setStep('input')
           // 停止轮询
           if (pollingInterval) {
             clearInterval(pollingInterval)
+          }
+          // 如果是 API Key 相关错误，打开设置
+          const errMsg = status.error || ''
+          if (errMsg.includes('API Key') || errMsg.includes('Key')) {
+            alert(errMsg)
+            setShowSettings(true)
+          } else {
+            alert(errMsg || '处理失败，请重试')
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
@@ -399,7 +408,22 @@ function App() {
 
   const handleProcess = async () => {
     if (!text.trim()) return
-    
+
+    // 先检查 API Key 是否已配置
+    try {
+      const settingsResp = await fetch('/api/settings')
+      const settingsData = await settingsResp.json()
+      const activeIdx = settingsData.active_index || 0
+      const activeConfig = (settingsData.configs || [])[activeIdx]
+      if (!activeConfig || !activeConfig.has_key) {
+        alert(t.noApiKey || '请先在设置中填写 API Key')
+        setShowSettings(true)
+        return
+      }
+    } catch (e) {
+      // 检查失败则继续，让后端报错
+    }
+
     setSkipPolling(false)
     setLoading(true)
     setProgress(0)
@@ -453,12 +477,21 @@ function App() {
       console.error('处理文本错误:', error)
       setPreprocessStatus(null)
       setStep('input')
-      if (error.response && error.response.status === 504) {
+      if (error.response && error.response.status === 400) {
+        const detail = error.response.data?.detail || ''
+        if (detail.includes('API Key')) {
+          alert(detail)
+          setShowSettings(true)
+        } else {
+          alert(detail || '请求参数错误')
+        }
+      } else if (error.response && error.response.status === 504) {
         alert('网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
         alert('处理超时，请稍后重试')
       } else {
-        alert('处理失败，请重试')
+        const detail = error.response?.data?.detail
+        alert(detail || '处理失败，请重试')
       }
       setLoading(false)
     }
