@@ -23,6 +23,16 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
     }).catch(() => {})
   }, [sourceLang])
 
+  const handleFavoriteChange = useCallback((word, favorited) => {
+    setFavoriteWords(prev => {
+      if (favorited) {
+        return [...prev, word.toLowerCase()]
+      } else {
+        return prev.filter(w => w !== word.toLowerCase() && w !== word)
+      }
+    })
+  }, [])
+
   // 切换页数时滚动条置顶
   useEffect(() => {
     if (listRef.current) listRef.current.scrollTop = 0
@@ -315,7 +325,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       {displayMeaning}
                                     </span>
                                   </div>
-                                  <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase()) || favoriteWords.includes(word.word)} />
+                                  <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase()) || favoriteWords.includes(word.word)} onFavoriteChange={handleFavoriteChange} />
                                   <Volume2
                                     className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}

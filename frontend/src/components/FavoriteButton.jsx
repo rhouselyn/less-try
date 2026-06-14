@@ -9,16 +9,16 @@ import { api } from '../utils/api'
  * @param {function} t - 翻译函数
  * @param {boolean} initialFavorited - 初始收藏状态（可选）
  * @param {function} onFavoriteChange - 收藏状态变更回调（可选）
- * @param {boolean} favoritesMode - 是否在收藏页面中（始终显示填充状态）
+ * @param {boolean} favoritesMode - 是否在收藏页面中（初始填充，取消后变空心但不移除）
  */
 function FavoriteButton({ word, sourceLang, t, initialFavorited, onFavoriteChange, favoritesMode }) {
-  const [favorited, setFavorited] = useState(initialFavorited || false)
+  const [favorited, setFavorited] = useState(favoritesMode ? true : (initialFavorited || false))
 
   useEffect(() => {
-    if (initialFavorited !== undefined) {
+    if (!favoritesMode && initialFavorited !== undefined) {
       setFavorited(initialFavorited)
     }
-  }, [initialFavorited])
+  }, [initialFavorited, favoritesMode])
 
   const handleToggle = useCallback(async (e) => {
     if (e) e.stopPropagation()
@@ -33,19 +33,17 @@ function FavoriteButton({ word, sourceLang, t, initialFavorited, onFavoriteChang
     }
   }, [word, sourceLang, onFavoriteChange])
 
-  const isFilled = favoritesMode || favorited
-
   return (
     <button
       onClick={handleToggle}
       className={`p-1.5 rounded-none transition-colors ${
-        isFilled
+        favorited
           ? 'text-amber-400 hover:text-amber-500 hover:bg-amber-50'
           : 'text-aged-300 hover:text-amber-400 hover:bg-amber-50'
       }`}
-      title={isFilled ? (t.favorited || '已收藏') : (t.favorite || '收藏')}
+      title={favorited ? (t.favorited || '已收藏') : (t.favorite || '收藏')}
     >
-      <Star className={`w-3.5 h-3.5 ${isFilled ? 'fill-current' : ''}`} />
+      <Star className={`w-3.5 h-3.5 ${favorited ? 'fill-current' : ''}`} />
     </button>
   )
 }

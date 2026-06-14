@@ -456,15 +456,6 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = f
             {!loading && displayWords.length > 0 && (
               <span className="badge-ochre text-xs text-ink-400 bg-parchment-100 px-2 py-0.5 rounded-none">{displayWords.length} {t.wordCount || '词'}</span>
             )}
-            {!favoritesMode && (
-              <button
-                onClick={() => { setShowFavorites(v => !v); setPage(1) }}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-bold transition-colors ${showFavorites ? 'bg-amber-100 text-amber-500' : 'bg-parchment-100 text-ink-400 hover:text-amber-400'}`}
-              >
-                <Star className={`w-3 h-3 ${showFavorites ? 'fill-current' : ''}`} />
-                {t.favorites || '收藏'}{favoriteWords.length > 0 ? ` (${favoriteWords.length})` : ''}
-              </button>
-            )}
           </div>
           <button
             onClick={onBack}

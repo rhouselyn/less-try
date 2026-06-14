@@ -185,7 +185,7 @@ function RecentItem({ record, onNavigate }) {
   )
 }
 
-function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListLang, onOpenFavorites, refreshTrigger }) {
+function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListLang, onOpenFavorites, activeFavoriteLang, refreshTrigger }) {
   const [expanded, setExpanded] = useState(true)
   const [records, setRecords] = useState([])
   const [menuState, setMenuState] = useState({ open: false, fileId: null, x: 0, y: 0 })
@@ -373,13 +373,13 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                       <button
                         onClick={(e) => { e.stopPropagation(); onOpenFavorites && onOpenFavorites(lang) }}
                         className={`ml-auto p-1 rounded-md transition-all badge-ochre ${
-                          false
-                            ? 'bg-gradient-to-br text-white shadow-retro-sm'
+                          activeFavoriteLang === lang
+                            ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-retro-sm'
                             : 'text-aged-300 hover:text-amber-400 hover:bg-amber-50'
                         }`}
                         title={t.favorites || '收藏'}
                       >
-                        <Star className="w-3.5 h-3.5" />
+                        <Star className={`w-3.5 h-3.5 ${activeFavoriteLang === lang ? 'fill-current' : ''}`} />
                       </button>
                       <button
                         onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
@@ -445,10 +445,14 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
               <React.Fragment key={lang}>
                 <button
                   onClick={(e) => { e.stopPropagation(); onOpenFavorites && onOpenFavorites(lang) }}
-                  className="w-9 h-9 flex items-center justify-center rounded-sm text-aged-300 hover:text-amber-400 hover:bg-amber-50 transition-colors"
+                  className={`w-9 h-9 flex items-center justify-center rounded-sm transition-colors ${
+                    activeFavoriteLang === lang
+                      ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-retro'
+                      : 'text-aged-300 hover:text-amber-400 hover:bg-amber-50'
+                  }`}
                   title={`${getLangLabel(lang)} - ${t.favorites || '收藏'}`}
                 >
-                  <Star className="w-3.5 h-3.5" />
+                  <Star className={`w-3.5 h-3.5 ${activeFavoriteLang === lang ? 'fill-current' : ''}`} />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
