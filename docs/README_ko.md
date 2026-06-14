@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# 🐸 Gualingo
+# 🐸 呱邻国
 
 **완전히 AI로 구동됩니다. API만 입력하면, 언어의 자유를 실현하세요.**
 

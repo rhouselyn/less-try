@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# 🐸 Gualingo
+# 🐸 呱邻国
 
 **Completamente impulsado por IA. Ingresa tu API, logra libertad lingüística.**
 
@@ -15,9 +15,9 @@
 
 ---
 
-## ¿Qué es Gualingo?
+## ¿Qué es 呱邻国?
 
-Gualingo es una plataforma inmersiva de aprendizaje de idiomas extranjeros impulsada por IA. Proporcionas cualquier texto y la IA genera automáticamente un vocabulario, traducción por oraciones y múltiples ejercicios, junto con lectura en voz alta, convirtiendo cada texto en tu material de estudio personalizado.
+呱邻国 es una plataforma inmersiva de aprendizaje de idiomas extranjeros impulsada por IA. Proporcionas cualquier texto y la IA genera automáticamente un vocabulario, traducción por oraciones y múltiples ejercicios, junto con lectura en voz alta, convirtiendo cada texto en tu material de estudio personalizado.
 
 **Cualquier idioma → cualquier idioma, tú decides el material.**
 
