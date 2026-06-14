@@ -99,7 +99,7 @@ function WordDetailCard({ word, sourceLang, detailLoading, t }) {
   )
 }
 
-function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
+function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = false }) {
   const [words, setWords] = useState([])
   const [loading, setLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -202,7 +202,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       )
     : words
 
-  const displayWords = showFavorites
+  const displayWords = (favoritesMode || showFavorites)
     ? filteredWords.filter(w => favoriteWords.includes(w.word.toLowerCase()) || favoriteWords.includes(w.word))
     : filteredWords
 
@@ -410,7 +410,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                       ) : null}
-                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} />
+                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} favoritesMode={favoritesMode} />
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
                         className="p-1.5 text-aged-300 hover:text-amber-500 hover:bg-amber-50 rounded-none transition-colors"
@@ -445,18 +445,26 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       <div className="h-full flex flex-col bg-parchment-50 rounded-sm border-2 border-aged-200/60 shadow-retro-sm overflow-hidden min-h-0">
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-aged-200/60 bg-gradient-to-r from-amber-50/50 to-parchment-50">
           <div className="flex items-center gap-2.5">
-            <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-amber-500' : 'text-amber-500 hover:text-amber-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
-            <span className="text-base font-bold font-display text-ink-800">{t.vocabOverview || '词汇总览'}</span>
-            {!loading && words.length > 0 && (
-              <span className="badge-ochre text-xs text-ink-400 bg-parchment-100 px-2 py-0.5 rounded-none">{words.length} {t.wordCount || '词'}</span>
+            {favoritesMode ? (
+              <Star className="w-5 h-5 text-amber-400 fill-current" />
+            ) : (
+              <BookOpen className={`w-5 h-5 cursor-pointer transition-colors ${displayMode !== 0 ? 'text-amber-500' : 'text-amber-500 hover:text-amber-500'}`} onClick={() => setDisplayMode(v => (v + 1) % 3)} title={displayMode === 0 ? (t.showAll || '显示全部') : displayMode === 1 ? (t.hideMeaning || '隐藏释义') : (t.hideWord || '隐藏单词')} />
             )}
-            <button
-              onClick={() => { setShowFavorites(v => !v); setPage(1) }}
-              className={`flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-bold transition-colors ${showFavorites ? 'bg-amber-100 text-amber-500' : 'bg-parchment-100 text-ink-400 hover:text-amber-400'}`}
-            >
-              <Star className={`w-3 h-3 ${showFavorites ? 'fill-current' : ''}`} />
-              {t.favorites || '收藏'}{favoriteWords.length > 0 ? ` (${favoriteWords.length})` : ''}
-            </button>
+            <span className="text-base font-bold font-display text-ink-800">
+              {favoritesMode ? (t.favorites || '收藏') : (t.vocabOverview || '词汇总览')}
+            </span>
+            {!loading && displayWords.length > 0 && (
+              <span className="badge-ochre text-xs text-ink-400 bg-parchment-100 px-2 py-0.5 rounded-none">{displayWords.length} {t.wordCount || '词'}</span>
+            )}
+            {!favoritesMode && (
+              <button
+                onClick={() => { setShowFavorites(v => !v); setPage(1) }}
+                className={`flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-bold transition-colors ${showFavorites ? 'bg-amber-100 text-amber-500' : 'bg-parchment-100 text-ink-400 hover:text-amber-400'}`}
+              >
+                <Star className={`w-3 h-3 ${showFavorites ? 'fill-current' : ''}`} />
+                {t.favorites || '收藏'}{favoriteWords.length > 0 ? ` (${favoriteWords.length})` : ''}
+              </button>
+            )}
           </div>
           <button
             onClick={onBack}

@@ -30,6 +30,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [sentencePage, setSentencePage] = useState(saved.sentencePage || 1)
   const [globalVocabPage, setGlobalVocabPage] = useState(saved.globalVocabPage || 1)
   const [wordGenProgress, setWordGenProgress] = useState(null)
+  const [favoriteWords, setFavoriteWords] = useState([])
   const [meaningOverrides, setMeaningOverrides] = useState({})
   const vocabListRef = useRef(null)
   const sentenceListRef = useRef(null)
@@ -120,6 +121,12 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
       setActualSourceLang(sourceLang)
     }
   }, [currentFileId, sourceLang])
+
+  useEffect(() => {
+    api.getFavorites(actualSourceLang).then(data => {
+      setFavoriteWords(data.words || [])
+    }).catch(() => {})
+  }, [actualSourceLang])
 
   useEffect(() => {
     if (!showGlobalVocab) return
@@ -1140,7 +1147,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
                                   />
                                 )}
-                                <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} />
+                                <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase()) || favoriteWords.includes(word.word)} />
                                 <Volume2
                                   className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                   onClick={(e) => speakWord(word.word, e)}
@@ -1255,7 +1262,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
                                 />
                               )}
-                              <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} />
+                              <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase()) || favoriteWords.includes(word.word)} />
                               <Volume2
                                 className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                 onClick={(e) => speakWord(word.word, e)}

@@ -108,6 +108,7 @@ function App() {
   const [lastActiveTab, setLastActiveTab] = useState(0)
   const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
+  const [favoriteLang, setFavoriteLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
@@ -1217,7 +1218,13 @@ function App() {
   }
 
   const handleOpenWordList = (lang) => {
+    setFavoriteLang(null)
     setWordListLang(prev => prev === lang ? null : lang)
+  }
+
+  const handleOpenFavorites = (lang) => {
+    setWordListLang(null)
+    setFavoriteLang(prev => prev === lang ? null : lang)
   }
 
   const handleNextSentenceQuiz = async () => {
@@ -1248,7 +1255,7 @@ function App() {
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
-            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} refreshTrigger={historyRefresh} />
+            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} onOpenFavorites={handleOpenFavorites} refreshTrigger={historyRefresh} />
             <div className="flex-1 min-w-0 relative h-full px-4 sm:px-6 lg:px-8 py-4">
               {wordListLang ? (
                 <WordListPanel
@@ -1256,6 +1263,14 @@ function App() {
                   t={t}
                   onBack={() => setWordListLang(null)}
                   pageSize={pageSize}
+                />
+              ) : favoriteLang ? (
+                <WordListPanel
+                  sourceLang={favoriteLang}
+                  t={t}
+                  onBack={() => setFavoriteLang(null)}
+                  pageSize={pageSize}
+                  favoritesMode={true}
                 />
               ) : (
                 <>

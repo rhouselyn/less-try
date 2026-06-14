@@ -12,9 +12,16 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
   const [expandedWord, setExpandedWord] = useState(null)
   const [enrichedWords, setEnrichedWords] = useState({})
   const [loadingWord, setLoadingWord] = useState(null)
+  const [favoriteWords, setFavoriteWords] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const listRef = useRef(null)
   const wordRefs = useRef({})
+
+  useEffect(() => {
+    api.getFavorites(sourceLang).then(data => {
+      setFavoriteWords(data.words || [])
+    }).catch(() => {})
+  }, [sourceLang])
 
   // 切换页数时滚动条置顶
   useEffect(() => {
@@ -308,7 +315,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       {displayMeaning}
                                     </span>
                                   </div>
-                                  <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} />
+                                  <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase()) || favoriteWords.includes(word.word)} />
                                   <Volume2
                                     className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}
