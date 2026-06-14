@@ -456,8 +456,8 @@ class TextProcessor:
         # 返回出现次数最多的音标，如果次数相同则返回第一个
         return sorted_phonetics[0][0]
 
-    async def process_translation(self, text: str, source_lang: str, target_lang: str, nvidia_api, context_sentences: dict = None):
-        result = await nvidia_api.process_text_with_dictionary(text, source_lang, target_lang, context_sentences)
+    async def process_translation(self, text: str, source_lang: str, target_lang: str, llm_api, context_sentences: dict = None):
+        result = await llm_api.process_text_with_dictionary(text, source_lang, target_lang, context_sentences)
         
         # 简单处理，保留LLM生成的自然结果
         if isinstance(result, dict):
