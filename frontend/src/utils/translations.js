@@ -176,7 +176,21 @@ export const translations = {
     favorite: "收藏",
     favorited: "已收藏",
     noFavorites: "暂无收藏单词",
-    favoriteCount: "{0} 个收藏"
+    favoriteCount: "{0} 个收藏",
+    ok: "确定",
+    apiKeyError: "API Key 错误",
+    processFailed: "处理失败，请重试",
+    processTimeout: "处理超时，请重试",
+    networkError: "网络错误，请重试",
+    networkTimeout: "网络连接超时，请检查网络连接后重试",
+    badRequest: "请求参数错误",
+    cannotStartLearning: "无法开始学习，请重试",
+    cannotGetUnits: "无法获取学习单元，请重试",
+    cannotSelectPhase: "无法选择阶段，请重试",
+    cannotGetWords: "无法获取单元单词，请重试",
+    cannotGetExercise: "无法获取练习，请重试",
+    cannotGetNextExercise: "无法获取下一个练习，请重试",
+    cannotLoadHistory: "无法加载学习记录，请重试"
   },
   en: {
     title: "Gualingo",
@@ -354,6 +368,20 @@ export const translations = {
     favorite: "Favorite",
     favorited: "Favorited",
     noFavorites: "No favorite words yet",
-    favoriteCount: "{0} favorites"
+    favoriteCount: "{0} favorites",
+    ok: "OK",
+    apiKeyError: "API Key Error",
+    processFailed: "Processing failed, please retry",
+    processTimeout: "Processing timed out, please retry",
+    networkError: "Network error, please retry",
+    networkTimeout: "Network connection timed out, please check your connection and retry",
+    badRequest: "Bad request parameters",
+    cannotStartLearning: "Cannot start learning, please retry",
+    cannotGetUnits: "Cannot get learning units, please retry",
+    cannotSelectPhase: "Cannot select phase, please retry",
+    cannotGetWords: "Cannot get unit words, please retry",
+    cannotGetExercise: "Cannot get exercise, please retry",
+    cannotGetNextExercise: "Cannot get next exercise, please retry",
+    cannotLoadHistory: "Cannot load learning history, please retry"
   }
 };

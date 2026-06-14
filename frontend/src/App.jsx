@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings, Loader2 } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech } from './utils/speech'
 import ConfirmDialog from './components/ConfirmDialog'
+import AlertDialog from './components/AlertDialog'
 
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
@@ -110,6 +111,11 @@ function App() {
   const [wordListLang, setWordListLang] = useState(null)
   const [favoriteLang, setFavoriteLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
+  const [alertDialog, setAlertDialog] = useState({ open: false, title: '', message: '' })
+
+  const showAlert = useCallback((message, title) => {
+    setAlertDialog({ open: true, title: title || '', message })
+  }, [])
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
   const [showVocabList, setShowVocabList] = useState(false)
@@ -335,14 +341,14 @@ function App() {
           // 如果是 API Key 相关错误，打开设置
           const errMsg = status.error || ''
           if (errMsg.includes('API Key') || errMsg.includes('Key')) {
-            alert(errMsg)
+            showAlert(errMsg, t.apiKeyError || 'API Key 错误')
             setShowSettings(true)
           } else {
-            alert(errMsg || '处理失败，请重试')
+            showAlert(errMsg || (t.processFailed || '处理失败，请重试'))
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
-          alert('处理超时，请重试')
+          showAlert(t.processTimeout || '处理超时，请重试')
           setLoading(false)
           setSkipPolling(true)
           // 停止轮询
@@ -364,7 +370,7 @@ function App() {
         } else if (error.response && (error.response.status === 504 || error.response.status === 502 || error.response.status === 503)) {
           console.log('后端繁忙，继续轮询...')
         } else if (pollCount >= maxPolls) {
-          alert('网络错误，请重试')
+          showAlert(t.networkError || '网络错误，请重试')
           setLoading(false)
           setSkipPolling(true)
           if (pollingInterval) {
@@ -437,7 +443,7 @@ function App() {
       const activeConfig = (settingsData.configs || [])[activeIdx]
       if (!activeConfig || !activeConfig.has_key) {
         setLoading(false)
-        alert(t.noApiKey || '请先在设置中填写 API Key')
+        showAlert(t.noApiKey || '请先在设置中填写 API Key', t.apiKeyError || 'API Key 错误')
         setShowSettings(true)
         return
       }
@@ -483,18 +489,18 @@ function App() {
       if (error.response && error.response.status === 400) {
         const detail = error.response.data?.detail || ''
         if (detail.includes('API Key')) {
-          alert(detail)
+          showAlert(detail, t.apiKeyError || 'API Key 错误')
           setShowSettings(true)
         } else {
-          alert(detail || '请求参数错误')
+          showAlert(detail || (t.badRequest || '请求参数错误'))
         }
       } else if (error.response && error.response.status === 504) {
-        alert('网络连接超时，请检查网络连接后重试')
+        showAlert(t.networkTimeout || '网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
-        alert('处理超时，请稍后重试')
+        showAlert(t.processTimeout || '处理超时，请稍后重试')
       } else {
         const detail = error.response?.data?.detail
-        alert(detail || '处理失败，请重试')
+        showAlert(detail || (t.processFailed || '处理失败，请重试'))
       }
       setLoading(false)
     }
@@ -514,7 +520,7 @@ function App() {
       setStep('progress')
     } catch (error) {
       console.error('开始学习错误:', error)
-      alert('无法开始学习，请重试')
+      showAlert(t.cannotStartLearning || '无法开始学习，请重试')
     } finally {
       setLoading(false)
     }
@@ -542,7 +548,7 @@ function App() {
       setStep('all-units')
     } catch (error) {
       console.error('获取单元错误:', error)
-      alert('无法获取学习单元，请重试')
+      showAlert(t.cannotGetUnits || '无法获取学习单元，请重试')
     } finally {
       setLoading(false)
     }
@@ -570,7 +576,7 @@ function App() {
       }
     } catch (error) {
       console.error('选择阶段错误:', error)
-      alert('无法选择阶段，请重试')
+      showAlert(t.cannotSelectPhase || '无法选择阶段，请重试')
     } finally {
       setLoading(false)
     }
@@ -634,7 +640,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取单元单词错误:', error)
-      alert('无法获取单元单词，请重试')
+      showAlert(t.cannotGetWords || '无法获取单元单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -688,7 +694,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取单元练习错误:', error)
-      alert('无法获取练习，请重试')
+      showAlert(t.cannotGetExercise || '无法获取练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -720,7 +726,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取单元练习错误:', error)
-      alert('无法获取练习，请重试')
+      showAlert(t.cannotGetExercise || '无法获取练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -770,7 +776,7 @@ function App() {
       }
     } catch (error) {
       console.error('下一个练习错误:', error)
-      alert('无法获取下一个练习，请重试')
+      showAlert(t.cannotGetNextExercise || '无法获取下一个练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -793,7 +799,7 @@ function App() {
       setStep('learning')
     } catch (error) {
       console.error('获取单元单词错误:', error)
-      alert('无法获取单元单词，请重试')
+      showAlert(t.cannotGetWords || '无法获取单元单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -1201,7 +1207,7 @@ function App() {
       setStep('dictionary')
     } catch (error) {
       console.error('Failed to load record:', error)
-      alert('无法加载学习记录，请重试')
+      showAlert(t.cannotLoadHistory || '无法加载学习记录，请重试')
     } finally {
       setLoading(false)
     }
@@ -1624,6 +1630,13 @@ function App() {
         cancelText={t.continueLearning || '继续练习'}
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog({ isOpen: false, onConfirm: null })}
+      />
+      <AlertDialog
+        open={alertDialog.open}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        onClose={() => setAlertDialog({ open: false, title: '', message: '' })}
+        t={t}
       />
     </div>
   )
