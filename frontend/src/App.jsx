@@ -338,20 +338,13 @@ function App() {
           if (pollingInterval) {
             clearInterval(pollingInterval)
           }
-          // 根据错误码显示翻译后的消息
-          const errorCode = status.error || ''
-          const errorMessages = {
-            api_key_invalid: t.apiKeyInvalid || 'API Key 无效或已过期，请检查设置中的 API Key',
-            rate_limit: t.rateLimitError || 'API 请求频率超限，请稍后重试或降低 LLM 速率',
-            insufficient_balance: t.insufficientBalance || 'API 余额不足，请充值后重试',
-            connection_error: t.connectionError || '无法连接到 API 服务，请检查网络或 API 地址',
-          }
-          const translatedMsg = errorMessages[errorCode] || (errorCode ? (t.processFailed || '处理失败，请重试') : '')
-          if (errorCode === 'api_key_invalid') {
-            showAlert(translatedMsg, t.apiKeyError || 'API Key 错误')
+          // 如果是 API Key 相关错误，打开设置
+          const errMsg = status.error || ''
+          if (errMsg.includes('API Key') || errMsg.includes('Key')) {
+            showAlert(errMsg, t.apiKeyError || 'API Key 错误')
             setShowSettings(true)
           } else {
-            showAlert(translatedMsg || (t.processFailed || '处理失败，请重试'))
+            showAlert(errMsg || (t.processFailed || '处理失败，请重试'))
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
@@ -496,7 +489,7 @@ function App() {
       if (error.response && error.response.status === 400) {
         const detail = error.response.data?.detail || ''
         if (detail.includes('API Key')) {
-          showAlert(t.noApiKey || '请先在设置中填写 API Key', t.apiKeyError || 'API Key 错误')
+          showAlert(detail, t.apiKeyError || 'API Key 错误')
           setShowSettings(true)
         } else {
           showAlert(detail || (t.badRequest || '请求参数错误'))

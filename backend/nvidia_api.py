@@ -305,12 +305,12 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
             # 401/403 认证错误不需要重试，直接抛出
             if status_code in (401, 403):
                 print(f"[ROTATE] Config {idx} auth failed ({status_code}), aborting immediately")
-                raise Exception(f"api_key_invalid: HTTP {status_code}")
+                raise Exception(f"API Key 无效或已过期 (HTTP {status_code})，请检查设置中的 API Key")
 
             # 402 余额不足不需要重试
             if status_code == 402:
                 print(f"[ROTATE] Config {idx} payment required (402), aborting immediately")
-                raise Exception("insufficient_balance: HTTP 402")
+                raise Exception("API 余额不足，请充值后重试")
 
             if status_code in (429, 502, 503):
                 print(f"[ROTATE] Config {idx} rate-limited ({status_code}), interval already elapsed, switching to config {(idx + 1) % num_configs}")
