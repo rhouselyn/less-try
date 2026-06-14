@@ -159,6 +159,21 @@ UI_TRANSLATION_SCHEMA = {
     "autoDetect": {"desc": "Auto detect language label", "zh": "自动检测", "en": "Auto Detect"},
     "searchLanguages": {"desc": "Search languages placeholder", "zh": "搜索语言...", "en": "Search languages..."},
     "noLanguagesFound": {"desc": "No languages found message", "zh": "未找到语言", "en": "No languages found"},
+    "ok": {"desc": "OK button on alert dialog", "zh": "确定", "en": "OK"},
+    "apiKeyError": {"desc": "API Key error title", "zh": "API Key 错误", "en": "API Key Error"},
+    "apiKeyInvalid": {"desc": "API Key invalid or expired message", "zh": "API Key 无效或已过期，请检查设置中的 API Key", "en": "API Key is invalid or expired, please check your API Key in Settings"},
+    "processFailed": {"desc": "Processing failed message", "zh": "处理失败，请重试", "en": "Processing failed, please retry"},
+    "processTimeout": {"desc": "Processing timeout message", "zh": "处理超时，请重试", "en": "Processing timed out, please retry"},
+    "networkError": {"desc": "Network error message", "zh": "网络错误，请重试", "en": "Network error, please retry"},
+    "networkTimeout": {"desc": "Network timeout message", "zh": "网络连接超时，请检查网络连接后重试", "en": "Network connection timed out, please check your connection and retry"},
+    "badRequest": {"desc": "Bad request error message", "zh": "请求参数错误", "en": "Bad request parameters"},
+    "cannotStartLearning": {"desc": "Cannot start learning error", "zh": "无法开始学习，请重试", "en": "Cannot start learning, please retry"},
+    "cannotGetUnits": {"desc": "Cannot get units error", "zh": "无法获取学习单元，请重试", "en": "Cannot get learning units, please retry"},
+    "cannotSelectPhase": {"desc": "Cannot select phase error", "zh": "无法选择阶段，请重试", "en": "Cannot select phase, please retry"},
+    "cannotGetWords": {"desc": "Cannot get words error", "zh": "无法获取单元单词，请重试", "en": "Cannot get unit words, please retry"},
+    "cannotGetExercise": {"desc": "Cannot get exercise error", "zh": "无法获取练习，请重试", "en": "Cannot get exercise, please retry"},
+    "cannotGetNextExercise": {"desc": "Cannot get next exercise error", "zh": "无法获取下一个练习，请重试", "en": "Cannot get next exercise, please retry"},
+    "cannotLoadHistory": {"desc": "Cannot load history error", "zh": "无法加载学习记录，请重试", "en": "Cannot load learning history, please retry"},
 }
 
 TRANSLATION_PROMPT = """You are a professional UI translator. Translate the following UI strings into {target_lang_name} ({target_lang_code}).
