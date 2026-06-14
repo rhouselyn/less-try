@@ -116,6 +116,11 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
             "status": "error",
             "error": error_msg
         }
+        # 清理已写入的历史记录和语言设置
+        try:
+            storage.delete_history_record(file_id)
+        except Exception:
+            pass
 
 
 @router.post("/process-text")

@@ -363,6 +363,9 @@ function App() {
             console.log('连续404超过10次，停止轮询')
             setLoading(false)
             setSkipPolling(true)
+            setPreprocessStatus(null)
+            setStep('input')
+            showAlert(t.processFailed || '处理失败，请重试')
             if (pollingInterval) {
               clearInterval(pollingInterval)
             }
