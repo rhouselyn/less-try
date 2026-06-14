@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# 🐸 呱邻国
+# 🐸 Gualingo
 
 **Fully AI-driven. Enter your API key, achieve language freedom.**
 
@@ -15,9 +15,9 @@
 
 ---
 
-## What is 呱邻国?
+## What is Gualingo?
 
-呱邻国 is an AI-driven immersive foreign language learning platform. You provide any text, and the AI automatically generates a vocabulary list, sentence-by-sentence translation, and various exercises. With voice narration, every piece of text becomes your personalized learning material.
+Gualingo is an AI-driven immersive foreign language learning platform. You provide any text, and the AI automatically generates a vocabulary list, sentence-by-sentence translation, and various exercises. With voice narration, every piece of text becomes your personalized learning material.
 
 **Any language → any language. Your material, your rules.**
 
