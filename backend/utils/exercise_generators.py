@@ -6,9 +6,9 @@ import random
 import asyncio
 import time
 
-from api_client import get_settings, get_lang_name
+from nvidia_api import get_settings, get_lang_name
 from text_processor import TextProcessor, BACKUP_VOCAB, BACKUP_VOCAB_BY_LANG, is_punctuation_only, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
-from utils.state import llm, text_processor, storage, processing_status, word_gen_state
+from utils.state import nvidia_api, text_processor, storage, processing_status, word_gen_state
 from utils.helpers import (
     RateLimiter, vocab_sort_key, is_speaker_label, is_punctuation_only as _is_punct,
     get_translation_phrases, split_translation_to_phrases, select_key_tokens,
@@ -61,7 +61,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
                 sentence,
                 source_lang,
                 target_lang,
-                llm,
+                nvidia_api,
                 context_sentences
             )
             t_llm_end = time.time()
@@ -107,7 +107,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             if missing_words:
                 print(f"[DEBUG] 发现遗漏单词: {missing_words}, 正在补充处理...")
                 t_missing_start = time.time()
-                remaining_entries = await llm.process_remaining_words(
+                remaining_entries = await nvidia_api.process_remaining_words(
                     missing_words, source_lang, target_lang, sentence
                 )
                 t_missing_end = time.time()
@@ -367,7 +367,7 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                         correct_meaning = word_entry["context_meaning"]
 
                 print(f"[DEBUG] Background word gen: {word_to_gen} (attempt {attempt + 1})")
-                options_result = await llm.generate_multiple_choice(
+                options_result = await nvidia_api.generate_multiple_choice(
                     word_to_gen,
                     correct_meaning,
                     context,
@@ -380,7 +380,7 @@ async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, targ
                 enriched = options_result.get("enriched_meaning", "")
                 if placeholder_pattern.search(enriched):
                     print(f"[WARN] Detected placeholder text in word gen for '{word_to_gen}', retrying...")
-                    options_result = await llm.generate_multiple_choice(
+                    options_result = await nvidia_api.generate_multiple_choice(
                         word_to_gen,
                         correct_meaning,
                         context,
@@ -793,7 +793,7 @@ async def generate_title(text: str, source_lang: str) -> str:
             {"role": "system", "content": "You are a title generator. Generate a very short title (max 20 characters) that summarizes the given text. If the text already has a clear title in the first line, use that as the title. Output ONLY the title, nothing else."},
             {"role": "user", "content": f"Generate a short title for this text (language: {get_lang_name(source_lang)}):\n\n{text[:500]}"}
         ]
-        result = await llm.call_llm(messages, temperature=0.3)
+        result = await nvidia_api.call_minimax(messages, temperature=0.3)
         title = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         if title and len(title) <= 50:
             return title
@@ -862,7 +862,7 @@ async def pre_generate_next_word(file_id: str, vocab, next_index: int):
 
         print(f"[DEBUG] 后台预生成单词信息: {word}")
 
-        options_result = await llm.generate_multiple_choice(
+        options_result = await nvidia_api.generate_multiple_choice(
             word,
             correct_meaning,
             context,

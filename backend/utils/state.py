@@ -1,17 +1,27 @@
 """共享状态：全局单例和可变状态，供各 router 和工具模块引用。"""
 
-from api_client import LLMClient
+import asyncio
+
+from nvidia_api import NvidiaAPI
 from text_processor import TextProcessor
 from db_storage import DatabaseStorage
 
 # ---- 核心单例 ----
-llm = LLMClient()
+nvidia_api = NvidiaAPI()
 text_processor = TextProcessor()
 storage = DatabaseStorage()
+
+# ---- 启动时自动迁移文件数据到数据库 ----
+storage.migrate_from_files()
 
 # ---- 处理状态 ----
 processing_status = {}
 word_gen_state = {}
+
+# ---- TTS 缓存（已弃用但保留结构） ----
+tts_cache = {}
+tts_cache_lock = asyncio.Lock()
+MAX_TTS_CACHE = 200
 
 # ---- UI 翻译缓存 ----
 _ui_translation_cache = {}

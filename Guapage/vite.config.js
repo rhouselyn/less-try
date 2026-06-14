@@ -1,0 +1,11 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+
+export default defineConfig({
+  plugins: [react()],
+  base: '/Guapage/',
+  server: {
+    host: '0.0.0.0',
+    port: parseInt(process.env.VITE_PORT || '5176', 10),
+  },
+})

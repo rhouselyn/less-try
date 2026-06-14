@@ -23,9 +23,6 @@ import HistorySidebar from './components/HistorySidebar'
 import WordListPanel from './components/WordListPanel'
 import SettingsModal from './components/SettingsModal'
 
-// Debug helper
-const debugLog = (...args) => console.log('[App]', ...args)
-
 function FrogLogo({ size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -251,7 +248,7 @@ function App() {
   useEffect(() => {
     if (!currentFileId || skipPolling) return
 
-    debugLog('开始轮询，文件ID:', currentFileId)
+    console.log('开始轮询，文件ID:', currentFileId)
 
     let pollCount = 0
     const maxPolls = 300 // 10分钟
@@ -410,7 +407,6 @@ function App() {
   }
 
   const handleProcess = async () => {
-    debugLog('handleProcess called', { text: text.trim(), sourceLang, targetLang, inputMode })
     if (!text.trim()) return
 
     setSkipPolling(false)
@@ -465,7 +461,6 @@ function App() {
       
       if (response && response.file_id) {
         const fileId = response.file_id
-        debugLog('processText success, fileId:', fileId)
         setFileId(fileId)
         setCurrentFileId(fileId)
         if (response.title) setFileTitle(response.title)
@@ -1126,7 +1121,6 @@ function App() {
   }
 
   const handleNavigateToRecord = async (fileId, srcLang, tgtLang, title) => {
-    debugLog('handleNavigateToRecord called', { fileId, srcLang, tgtLang, title })
     setLoading(true)
     // 先清空上一个条目的数据，避免显示旧内容
     setVocab([])
@@ -1202,11 +1196,9 @@ function App() {
       }
 
       api.startWordGen(fileId).catch(() => {})
-      debugLog('handleNavigateToRecord done, setting step to dictionary')
       setStep('dictionary')
     } catch (error) {
       console.error('Failed to load record:', error)
-      debugLog('handleNavigateToRecord error', error)
       alert('无法加载学习记录，请重试')
     } finally {
       setLoading(false)

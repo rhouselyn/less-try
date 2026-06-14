@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
 
-from api_client import get_settings as get_llm_settings_raw, save_configs, set_active_index, get_lang_name, call_with_rotation
+from nvidia_api import get_settings as get_llm_settings_raw, save_configs, set_active_index, get_lang_name, call_minimax_with_rotation
 from ui_translations import UI_TRANSLATION_SCHEMA, TRANSLATION_PROMPT
 from config import UI_TRANSLATIONS_DIR
 from utils.state import storage, _ui_translation_cache, _ui_translation_tasks
@@ -217,7 +217,7 @@ async def _do_translate_ui(lang_code: str):
     ]
 
     try:
-        result = await call_with_rotation(messages, temperature=0, max_tokens=4096)
+        result = await call_minimax_with_rotation(messages, temperature=0, max_tokens=4096)
 
         if result and result.get("choices"):
             content = result["choices"][0]["message"]["content"]
