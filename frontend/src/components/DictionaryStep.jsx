@@ -126,7 +126,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
     api.getFavorites(actualSourceLang).then(data => {
       setFavoriteWords(data.words || [])
     }).catch(() => {})
-  }, [actualSourceLang])
+  }, [actualSourceLang, selectedSentence, selectedWord])
 
   const handleFavoriteChange = useCallback((word, favorited) => {
     setFavoriteWords(prev => {
