@@ -1,3 +1,5 @@
+// Edge TTS 语音合成 - 通过后端 API 调用
+
 const SPEECH_LANG_MAP = {
   'en': 'en-US',
   'fr': 'fr-FR',
@@ -120,118 +122,44 @@ const SPEECH_LANG_MAP = {
   'sw': 'sw-KE',
 }
 
-let voicesLoaded = false
-let voicesReadyPromise = null
-let speechUnlocked = false
-
-function ensureVoicesLoaded() {
-  if (voicesReadyPromise) return voicesReadyPromise
-  if (!('speechSynthesis' in window)) {
-    voicesReadyPromise = Promise.resolve()
-    return voicesReadyPromise
-  }
-  const voices = window.speechSynthesis.getVoices()
-  if (voices.length > 0) {
-    voicesLoaded = true
-    voicesReadyPromise = Promise.resolve()
-    return voicesReadyPromise
-  }
-  voicesReadyPromise = new Promise((resolve) => {
-    const onVoicesChanged = () => {
-      const v = window.speechSynthesis.getVoices()
-      if (v.length > 0) {
-        voicesLoaded = true
-        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged)
-        resolve()
-      }
-    }
-    window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged)
-    setTimeout(() => {
-      const v = window.speechSynthesis.getVoices()
-      if (v.length > 0) {
-        voicesLoaded = true
-      }
-      resolve()
-    }, 1000)
-  })
-  return voicesReadyPromise
-}
-
-ensureVoicesLoaded()
-
-function findBestVoice(lang) {
-  if (!voicesLoaded && window.speechSynthesis) {
-    window.speechSynthesis.getVoices()
-  }
-  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []
-  if (voices.length === 0) return null
-
-  const exactMatch = voices.find(v => v.lang === lang)
-  if (exactMatch) return exactMatch
-
-  const langPrefix = lang.split('-')[0].toLowerCase()
-  const prefixMatch = voices.find(v => v.lang.split('-')[0].toLowerCase() === langPrefix)
-  if (prefixMatch) return prefixMatch
-
-  return null
-}
+// 当前播放的 Audio 对象
+let currentAudio = null
 
 function warmupSpeech() {
-  if (!('speechSynthesis' in window)) return
-
-  const unlock = () => {
-    if (speechUnlocked) return
-    ensureVoicesLoaded().then(() => {
-      window.speechSynthesis.cancel()
-      const u = new SpeechSynthesisUtterance('a')
-      u.volume = 0.01
-      u.rate = 10
-      u.onend = () => {
-        speechUnlocked = true
-      }
-      u.onerror = () => {}
-      window.speechSynthesis.speak(u)
-    })
-  }
-
-  document.addEventListener('click', unlock, { once: true })
-  document.addEventListener('touchstart', unlock, { once: true })
-  document.addEventListener('keydown', unlock, { once: true })
+  // Edge TTS 不需要 warmup，保留空函数以兼容
 }
 
-function speakText(text, sourceLang = 'en', slow = false) {
-  if (!text || !('speechSynthesis' in window)) return
+async function speakText(text, sourceLang = 'en', slow = false) {
+  if (!text) return
 
-  const doSpeak = () => {
-    window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    if (SPEECH_LANG_MAP[sourceLang]) {
-      u.lang = SPEECH_LANG_MAP[sourceLang]
-    } else if (sourceLang.includes('-')) {
-      u.lang = sourceLang
-    } else {
-      u.lang = sourceLang + '-' + sourceLang.toUpperCase()
+  // 停止当前播放
+  if (currentAudio) {
+    currentAudio.pause()
+    currentAudio = null
+  }
+
+  try {
+    const lang = SPEECH_LANG_MAP[sourceLang] || sourceLang
+    const url = `/api/tts/speak?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}&slow=${slow}`
+
+    const audio = new Audio(url)
+    currentAudio = audio
+
+    audio.onended = () => {
+      if (currentAudio === audio) {
+        currentAudio = null
+      }
     }
-    u.rate = slow ? 0.6 : 1
-
-    const voice = findBestVoice(u.lang)
-    if (voice) {
-      u.voice = voice
-    }
-
-    u.onerror = (e) => {
-      if (e.error !== 'canceled') {
-        console.warn('Speech error:', e.error)
+    audio.onerror = () => {
+      if (currentAudio === audio) {
+        currentAudio = null
       }
     }
 
-    window.speechSynthesis.speak(u)
-  }
-
-  if (voicesLoaded) {
-    doSpeak()
-  } else {
-    ensureVoicesLoaded().then(doSpeak)
+    await audio.play()
+  } catch (e) {
+    console.warn('Edge TTS error:', e)
+    currentAudio = null
   }
 }
 
