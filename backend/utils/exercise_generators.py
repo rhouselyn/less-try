@@ -313,6 +313,7 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
             "status": "error",
             "error": error_msg
         }
+        raise  # ponytail: 让调用方也知道失败了，避免写入历史
 
 
 async def process_single_word_gen(file_id, word_to_gen, vocab, source_lang, target_lang, temperature=0):
