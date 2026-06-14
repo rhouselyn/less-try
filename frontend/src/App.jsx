@@ -246,6 +246,7 @@ function App() {
 
   // 轮询处理状态
   useEffect(() => {
+    console.log('[DEBUG] polling useEffect triggered, currentFileId:', currentFileId, 'skipPolling:', skipPolling)
     if (!currentFileId || skipPolling) return
 
     console.log('开始轮询，文件ID:', currentFileId)
@@ -407,6 +408,7 @@ function App() {
   }
 
   const handleProcess = async () => {
+    console.log('[DEBUG] handleProcess called, text:', text?.substring(0, 50))
     if (!text.trim()) return
 
     setSkipPolling(false)
@@ -429,10 +431,12 @@ function App() {
 
     // 先检查 API Key 是否已配置
     try {
+      console.log('[DEBUG] checking API key...')
       const settingsResp = await fetch('/api/settings')
       const settingsData = await settingsResp.json()
       const activeIdx = settingsData.active_index || 0
       const activeConfig = (settingsData.configs || [])[activeIdx]
+      console.log('[DEBUG] API key check result:', activeConfig?.has_key)
       if (!activeConfig || !activeConfig.has_key) {
         setLoading(false)
         alert(t.noApiKey || '请先在设置中填写 API Key')
@@ -440,6 +444,7 @@ function App() {
         return
       }
     } catch (e) {
+      console.log('[DEBUG] API key check failed:', e)
       // 检查失败则继续，让后端报错
     }
 
@@ -452,15 +457,18 @@ function App() {
     } else {
       setPreprocessStatus(null)
     }
-    
+
     setStep('dictionary')
-    
+
     try {
+      console.log('[DEBUG] calling processText...', { sourceLang, targetLang, inputMode })
       // 所有模式统一调用 processText，翻译/生成/语言检测在后台执行，不会超时
       const response = await api.processText(text.trim(), sourceLang, targetLang, inputMode)
-      
+      console.log('[DEBUG] processText response:', response)
+
       if (response && response.file_id) {
         const fileId = response.file_id
+        console.log('[DEBUG] setting currentFileId:', fileId)
         setFileId(fileId)
         setCurrentFileId(fileId)
         if (response.title) setFileTitle(response.title)
