@@ -90,14 +90,16 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
 
         # 4. 生成标题
         title = await generate_title(text, source_lang)
-        text_preview = text.strip()[:100]
-        storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
         # 更新 processing_status 中的标题
         if file_id in processing_status:
             processing_status[file_id]["title"] = title
 
         # 5. 执行文本处理
         await process_text_background(file_id, text, source_lang, target_lang)
+
+        # 6. 处理成功后才写入历史记录
+        text_preview = text.strip()[:100]
+        storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
     except Exception as e:
         print(f"[ERROR] 预处理或处理出错: {str(e)}")
         import traceback
@@ -116,11 +118,6 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
             "status": "error",
             "error": error_msg
         }
-        # 处理失败时删除已创建的历史记录，避免侧边栏出现失败条目
-        try:
-            storage.delete_history_record(file_id)
-        except Exception:
-            pass
 
 
 @router.post("/process-text")
