@@ -115,8 +115,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
             error_code = "connection_error"
         processing_status[file_id] = {
             "status": "error",
-            "error": error_code,
-            "error_detail": str(e)
+            "error": error_code
         }
 
 
