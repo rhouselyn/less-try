@@ -195,6 +195,16 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = f
     }
   }, [isOpen, onBack, sourceLang])
 
+  const handleFavoriteChange = useCallback((word, favorited) => {
+    setFavoriteWords(prev => {
+      if (favorited) {
+        return [...prev, word.toLowerCase()]
+      } else {
+        return prev.filter(w => w !== word.toLowerCase() && w !== word)
+      }
+    })
+  }, [])
+
   const filteredWords = searchQuery.trim()
     ? words.filter(w =>
         w.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -410,7 +420,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = f
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                       ) : null}
-                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} favoritesMode={favoritesMode} />
+                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase()) || favoriteWords.includes(word.word)} onFavoriteChange={handleFavoriteChange} favoritesMode={favoritesMode} />
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
                         className="p-1.5 text-aged-300 hover:text-amber-500 hover:bg-amber-50 rounded-none transition-colors"
