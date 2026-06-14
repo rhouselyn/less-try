@@ -23,18 +23,8 @@
         "filter": ["**/*"]
       },
       {
-        "from": "../frontend-classic/dist",
-        "to": "frontend-classic",
-        "filter": ["**/*"]
-      },
-      {
-        "from": "../frontend-retro-vintage/dist",
-        "to": "frontend-retro-vintage",
-        "filter": ["**/*"]
-      },
-      {
-        "from": "../frontend-merged-assets",
-        "to": "frontend-merged-assets",
+        "from": "../frontend/dist",
+        "to": "frontend",
         "filter": ["**/*"]
       },
       {

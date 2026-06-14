@@ -164,35 +164,23 @@ docker run -d \
 cd backend
 pip install -r requirements.txt
 
-# 2. 构建前端（两个主题都需要构建）
-cd ../frontend-classic && npm install && npm run build
-cd ../frontend-retro-vintage && npm install && npm run build
+# 2. 构建前端
+cd ../frontend && npm install && npm run build
 
-# 3. 合并前端静态资源
-mkdir -p ../frontend-merged-assets
-cp frontend-classic/dist/assets/* ../frontend-merged-assets/
-cp frontend-retro-vintage/dist/assets/* ../frontend-merged-assets/
-
-# 4. 启动后端
+# 3. 启动后端
 cd .. && uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-打开 http://localhost:8000 即可使用，默认使用赛璐璐主题。
+打开 http://localhost:8000 即可使用。
 
 #### 桌面应用模式
 
 ```bash
 # 构建前端
-cd frontend-classic && npm install && npm run build
-cd ../frontend-retro-vintage && npm install && npm run build
-
-# 合并前端静态资源
-mkdir -p frontend-merged-assets
-cp frontend-classic/dist/assets/* frontend-merged-assets/
-cp frontend-retro-vintage/dist/assets/* frontend-merged-assets/
+cd frontend && npm install && npm run build
 
 # 启动桌面应用
-python app.py
+cd .. && python app.py
 ```
 
 ---
@@ -227,19 +215,9 @@ python app.py
 所有配置通过界面设置完成，无需编辑配置文件：
 
 - **API Key**：支持多组配置轮询，限速自动切换
-- **界面风格**：赛璐璐（默认）或古典，在设置中切换后自动跳转
 - **母语**：选择界面显示语言
 - **每页数量**：控制词汇表每页显示的单词数
 - **重试间隔**：API 限速后的等待时间
-
-### 界面风格
-
-提供两种完整的前端界面风格，可在设置中随时切换：
-
-| 风格 | 目录 | 访问路径 | 说明 |
-|------|------|----------|------|
-| 赛璐璐 | `frontend-classic/` | `/` | 粗边框、硬阴影、Bangers 字体，卡通风格 |
-| 古典 | `frontend-retro-vintage/` | `/vintage/` | 细边框、柔和阴影、DM Sans 字体，复古风格 |
 
 ---
 

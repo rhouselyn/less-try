@@ -46,12 +46,7 @@ jobs:
       - name: Build Frontend
         shell: bash
         run: |
-          cd frontend-classic && npm install && npm run build
-          cd ../frontend-retro-vintage && npm install && npm run build
-          cd ..
-          mkdir -p frontend-merged-assets
-          cp frontend-classic/dist/assets/* frontend-merged-assets/
-          cp frontend-retro-vintage/dist/assets/* frontend-merged-assets/
+          cd frontend && npm install && npm run build
 
       # ── 安装 Python 依赖 ──
       - name: Install Python dependencies

@@ -33,17 +33,8 @@ LLM_SETTINGS_FILE = CONFIG_DIR / "llm_settings.json"
 # 用户偏好文件
 USER_PREFS_FILE = CONFIG_DIR / "user_preferences.json"
 
-# 前端静态文件目录（多前端支持）
-FRONTEND_DIST_DIR = Path(os.environ.get("FRONTEND_DIST_DIR", str(BASE_DIR / "frontend-classic" / "dist")))
-
-# 赛璐璐前端目录（默认）
-FRONTEND_CEL_DIR = Path(os.environ.get("FRONTEND_CEL_DIR", str(BASE_DIR / "frontend-classic" / "dist")))
-
-# 古典前端目录
-FRONTEND_VINTAGE_DIR = Path(os.environ.get("FRONTEND_VINTAGE_DIR", str(BASE_DIR / "frontend-retro-vintage" / "dist")))
-
-# 合并前端静态资源目录
-MERGED_ASSETS_DIR = Path(os.environ.get("MERGED_ASSETS_DIR", str(BASE_DIR / "frontend-merged-assets")))
+# 前端静态文件目录
+FRONTEND_DIR = Path(os.environ.get("FRONTEND_DIR", str(BASE_DIR / "frontend" / "dist")))
 
 # 服务器配置
 HOST = os.environ.get("HOST", "0.0.0.0")

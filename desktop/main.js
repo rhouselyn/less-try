@@ -15,16 +15,7 @@ function getBackendExePath() {
 }
 
 function getFrontendDistPath() {
-  // 默认使用赛璐璐前端
-  return path.join(process.resourcesPath, 'frontend-classic');
-}
-
-function getFrontendVintagePath() {
-  return path.join(process.resourcesPath, 'frontend-retro-vintage');
-}
-
-function getMergedAssetsPath() {
-  return path.join(process.resourcesPath, 'frontend-merged-assets');
+  return path.join(process.resourcesPath, 'frontend');
 }
 
 function getIconPath() {
@@ -39,30 +30,19 @@ function getIconPath() {
 function startBackend() {
   const isDev = !app.isPackaged;
   const frontendPath = isDev
-    ? path.join(__dirname, '..', 'frontend-classic', 'dist')
+    ? path.join(__dirname, '..', 'frontend', 'dist')
     : getFrontendDistPath();
-  const frontendVintagePath = isDev
-    ? path.join(__dirname, '..', 'frontend-retro-vintage', 'dist')
-    : getFrontendVintagePath();
-  const mergedAssetsPath = isDev
-    ? path.join(__dirname, '..', 'frontend-merged-assets')
-    : getMergedAssetsPath();
 
   const env = Object.assign({}, process.env, {
-    FRONTEND_DIST_DIR: frontendPath,
-    FRONTEND_CEL_DIR: frontendPath,
-    FRONTEND_VINTAGE_DIR: frontendVintagePath,
-    MERGED_ASSETS_DIR: mergedAssetsPath,
+    FRONTEND_DIR: frontendPath,
   });
 
   if (isDev) {
-    // 开发模式：用 python 直接启动 app.py
     backendProcess = spawn('python', [path.join(__dirname, '..', 'app.py')], {
       env,
       stdio: 'pipe',
     });
   } else {
-    // 生产模式：启动 PyInstaller 打包的后端可执行文件
     const backendExe = getBackendExePath();
     backendProcess = spawn(backendExe, [], {
       env,
@@ -100,7 +80,7 @@ function waitForBackend(maxRetries = 60, interval = 500) {
     let retries = 0;
     const check = () => {
       http.get(`${BACKEND_URL}/api/history`, (res) => {
-        res.resume(); // consume response data
+        res.resume();
         resolve();
       }).on('error', () => {
         retries++;
@@ -125,7 +105,7 @@ function createWindow() {
     minHeight: 600,
     title: '呱邻国 - Gualingo',
     icon: iconPath,
-    show: false, // 先隐藏，等加载完再显示
+    show: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -166,7 +146,6 @@ app.on('before-quit', () => {
   stopBackend();
 });
 
-// macOS 上点击 dock 图标重新创建窗口
 app.on('activate', () => {
   if (mainWindow === null) {
     createWindow();

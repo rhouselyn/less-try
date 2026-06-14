@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, BookOpen, Palette } from 'lucide-react'
+import { Settings, X, Key, Globe, Cpu, Check, Loader2, Gauge, Languages, ChevronLeft, ChevronRight, ChevronDown, Plus, Minus, BookOpen } from 'lucide-react'
 import { api } from '../utils/api'
 import { LangIcon, LANGUAGES } from './InputStep'
 
@@ -129,7 +129,7 @@ function NativeLangSelector({ value, onChange, recentLangs = [] }) {
   )
 }
 
-function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPageSizeChange, t, recentLangs, onRecentLangsChange, uiTheme = 'cel', onUiThemeChange }) {
+function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPageSizeChange, t, recentLangs, onRecentLangsChange }) {
   const [configs, setConfigs] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [direction, setDirection] = useState(0)
@@ -139,7 +139,6 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
   const [retryInterval, setRetryInterval] = useState(1)
   const [localUiLang, setLocalUiLang] = useState(uiLang || 'zh')
   const [localPageSize, setLocalPageSize] = useState(50)
-  const [localUiTheme, setLocalUiTheme] = useState(uiTheme)
 
   useEffect(() => {
     if (isOpen) {
@@ -164,7 +163,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
         if (prefs.ui_lang) setLocalUiLang(prefs.ui_lang)
         else if (prefs.target_lang) setLocalUiLang(prefs.target_lang)
         if (prefs.page_size) setLocalPageSize(prefs.page_size)
-        if (prefs.ui_theme) setLocalUiTheme(prefs.ui_theme)
+        if (prefs.ui_theme) { /* ignored */ }
         setLoading(false)
       }).catch(() => {
         setConfigs([{ api_key: '', base_url: '', model: '', has_key: false, masked_key: '' }])
@@ -254,7 +253,7 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
       setCurrentIndex(data.active_index ?? currentIndex)
 
       const updatedRecentLangs = [localUiLang, ...recentLangs.filter(code => code !== localUiLang)].slice(0, 5)
-      await api.saveUserPreferences({ retry_interval: retryInterval, target_lang: localUiLang, ui_lang: localUiLang, page_size: localPageSize, recent_languages: updatedRecentLangs, ui_theme: localUiTheme })
+      await api.saveUserPreferences({ retry_interval: retryInterval, target_lang: localUiLang, ui_lang: localUiLang, page_size: localPageSize, recent_languages: updatedRecentLangs })
 
       if (onRecentLangsChange) {
         onRecentLangsChange(updatedRecentLangs)
@@ -269,19 +268,10 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
       }
 
       setSaved(true)
-
-      if (onUiThemeChange && localUiTheme !== uiTheme) {
-        onUiThemeChange(localUiTheme)
-        // Switch to different frontend build
-        setTimeout(() => {
-          window.location.href = localUiTheme === 'vintage' ? '/vintage/' : '/'
-        }, 300)
-      } else {
-        setTimeout(() => {
-          setSaved(false)
-          onClose()
-        }, 250)
-      }
+      setTimeout(() => {
+        setSaved(false)
+        onClose()
+      }, 250)
     } catch (e) {
       console.error('Failed to save settings:', e)
     } finally {
@@ -528,37 +518,6 @@ function SettingsModal({ isOpen, onClose, uiLang, onUiLangChange, pageSize, onPa
                   {t.nativeLang || '母语'}
                 </label>
                 <NativeLangSelector value={localUiLang} onChange={setLocalUiLang} recentLangs={recentLangs} />
-              </div>
-
-              <div>
-                <label className="label-warm flex items-center gap-1.5 text-[10px] font-bold text-ink-400 uppercase tracking-widest mb-1.5">
-                  <Palette className="w-3 h-3" />
-                  {t.uiTheme || '界面风格'}
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setLocalUiTheme('cel')}
-                    className={`px-3 py-2 text-xs font-bold rounded-sm border-2 transition-all ${
-                      localUiTheme === 'cel'
-                        ? 'border-amber-400 bg-amber-50 text-amber-600 shadow-glow-amber'
-                        : 'border-aged-200 bg-parchment-50 text-ink-600 hover:bg-parchment-100'
-                    }`}
-                  >
-                    {t.celTheme || '赛璐璐'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLocalUiTheme('vintage')}
-                    className={`px-3 py-2 text-xs font-bold rounded-sm border-2 transition-all ${
-                      localUiTheme === 'vintage'
-                        ? 'border-amber-400 bg-amber-50 text-amber-600 shadow-glow-amber'
-                        : 'border-aged-200 bg-parchment-50 text-ink-600 hover:bg-parchment-100'
-                    }`}
-                  >
-                    {t.classicTheme || '古典'}
-                  </button>
-                </div>
               </div>
 
               <motion.button
