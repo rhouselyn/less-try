@@ -239,7 +239,7 @@ def get_lang_name(code):
     return LANG_NAMES.get(code, code)
 
 
-async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+async def call_with_rotation(messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
     import time as _time
     settings = _load_settings()
     configs = settings.get("configs", [])
@@ -272,7 +272,7 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
         config = configs[idx]
         # 提交请求的同时开始计算间隔
         api = LLMClient(config_index=idx)
-        request_task = asyncio.create_task(api.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens))
+        request_task = asyncio.create_task(api.call_llm(messages, tools=tools, temperature=temperature, max_tokens=max_tokens))
         timer_task = asyncio.ensure_future(asyncio.sleep(interval))
         # 等待请求和间隔两者都完成
         done, pending = await asyncio.wait(
@@ -333,7 +333,7 @@ async def detect_language(text: str) -> str:
             "content": text[:500]
         }
     ]
-    result = await call_minimax_with_rotation(messages, temperature=0.0, max_tokens=32)
+    result = await call_with_rotation(messages, temperature=0.0, max_tokens=32)
     content = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip().strip('"').strip("'")
     if content in SUPPORTED_LANGUAGES:
         return content
@@ -384,7 +384,7 @@ class LLMClient:
                 result["choices"][0]["message"] = message
         return result
 
-    async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
+    async def call_llm(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         import time as _time
         self.reload()
         payload = {
@@ -410,7 +410,7 @@ class LLMClient:
             )
             t1 = _time.time()
             has_tools = "yes" if tools else "no"
-            print(f"[TIMING] call_minimax (tools={has_tools}): {t1 - t0:.3f}s")
+            print(f"[TIMING] call_llm (tools={has_tools}): {t1 - t0:.3f}s")
             return result
         except requests.exceptions.Timeout:
             print("API request timed out. Retrying...")
@@ -424,12 +424,12 @@ class LLMClient:
             )
             t1 = _time.time()
             has_tools = "yes" if tools else "no"
-            print(f"[TIMING] call_minimax retry (tools={has_tools}): {t1 - t0:.3f}s")
+            print(f"[TIMING] call_llm retry (tools={has_tools}): {t1 - t0:.3f}s")
             return result
 
     @classmethod
     async def call_with_rotation(cls, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
-        return await call_minimax_with_rotation(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
+        return await call_with_rotation(messages, tools=tools, temperature=temperature, max_tokens=max_tokens)
 
     async def generate_multiple_choice(self, word: str, correct_meaning: str, context: str, target_lang: str, source_lang: str = "en", temperature: float = 0.7):
         tool_def = {
@@ -536,7 +536,7 @@ class LLMClient:
 
         messages = [{"role": "user", "content": prompt}]
 
-        response = await call_minimax_with_rotation(messages, [tool_def], temperature=temperature, max_tokens=16384)
+        response = await call_with_rotation(messages, [tool_def], temperature=temperature, max_tokens=16384)
 
         try:
             for choice in response["choices"]:
@@ -729,7 +729,7 @@ TEXT_CONTENT
 
         messages = [{"role": "user", "content": prompt}]
 
-        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
+        response = await call_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
         try:
             for choice in response["choices"]:
                 if "tool_calls" in choice["message"]:
@@ -798,7 +798,7 @@ TEXT_CONTENT
 
         messages = [{"role": "user", "content": prompt}]
 
-        response = await call_minimax_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
+        response = await call_with_rotation(messages, [tool_def], temperature=0.0, max_tokens=16384)
 
         try:
             for choice in response["choices"]:

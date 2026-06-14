@@ -36,7 +36,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
                 },
                 {"role": "user", "content": text}
             ]
-            response = await llm.call_minimax(messages, temperature=0.3, max_tokens=4096)
+            response = await llm.call_llm(messages, temperature=0.3, max_tokens=4096)
             if "choices" in response and len(response["choices"]) > 0:
                 translated = response["choices"][0].get("message", {}).get("content", "").strip()
                 if translated:
@@ -57,7 +57,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
                 },
                 {"role": "user", "content": text}
             ]
-            response = await llm.call_minimax(messages, temperature=0.7, max_tokens=4096)
+            response = await llm.call_llm(messages, temperature=0.7, max_tokens=4096)
             if "choices" in response and len(response["choices"]) > 0:
                 generated = response["choices"][0].get("message", {}).get("content", "").strip()
                 if generated:
@@ -211,7 +211,7 @@ async def translate_text(request: dict):
                 "content": text
             }
         ]
-        response = await llm.call_minimax(messages, temperature=0.3, max_tokens=4096)
+        response = await llm.call_llm(messages, temperature=0.3, max_tokens=4096)
 
         translated_text = ""
         if "choices" in response and len(response["choices"]) > 0:
@@ -250,7 +250,7 @@ async def generate_text(request: dict):
                 "content": prompt
             }
         ]
-        response = await llm.call_minimax(messages, temperature=0.7, max_tokens=4096)
+        response = await llm.call_llm(messages, temperature=0.7, max_tokens=4096)
 
         generated_text = ""
         if "choices" in response and len(response["choices"]) > 0:

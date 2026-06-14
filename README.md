@@ -9,7 +9,7 @@
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://react.dev)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python)](https://python.org)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
 
 </div>
 
@@ -124,7 +124,9 @@
 
 ## 🚀 快速开始
 
-### 方式一：下载桌面应用（推荐）
+呱邻国同时支持 **Web 版**和**桌面版**，任选一种方式即可。
+
+### 方式一：下载桌面应用
 
 前往 [GitHub Releases](https://github.com/rhouselyn/Gualingo/releases) 下载对应平台的安装包：
 
@@ -223,4 +225,4 @@ cd .. && python app.py
 
 ## 📄 许可
 
-[GNU GPL v3 License](LICENSE)
+[GNU AGPL v3 License](LICENSE)

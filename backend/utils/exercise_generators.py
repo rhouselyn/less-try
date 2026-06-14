@@ -793,7 +793,7 @@ async def generate_title(text: str, source_lang: str) -> str:
             {"role": "system", "content": "You are a title generator. Generate a very short title (max 20 characters) that summarizes the given text. If the text already has a clear title in the first line, use that as the title. Output ONLY the title, nothing else."},
             {"role": "user", "content": f"Generate a short title for this text (language: {get_lang_name(source_lang)}):\n\n{text[:500]}"}
         ]
-        result = await llm.call_minimax(messages, temperature=0.3)
+        result = await llm.call_llm(messages, temperature=0.3)
         title = result.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         if title and len(title) <= 50:
             return title
