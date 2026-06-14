@@ -174,7 +174,8 @@ const BROWSER_LANG_MAP = {
 }
 
 let currentAudio = null
-let edgeTtsAvailable = true // 默认尝试 Edge TTS
+let edgeTtsAvailable = null // null=未检测, true=可用, false=不可用
+let speakSeq = 0 // 请求序列号，用于判断是否还是当前请求
 
 function warmupSpeech() {
   // Edge TTS 不需要浏览器端预热
@@ -203,6 +204,9 @@ function speakTextBrowser(text, sourceLang = 'en', slow = false) {
 function speakText(text, sourceLang = 'en', slow = false) {
   if (!text) return
 
+  // 递增序列号，使旧请求的回调失效
+  const seq = ++speakSeq
+
   // 停止当前播放
   if (currentAudio) {
     currentAudio.pause()
@@ -214,7 +218,7 @@ function speakText(text, sourceLang = 'en', slow = false) {
   }
 
   // 如果 Edge TTS 已确认不可用，直接用浏览器 TTS
-  if (!edgeTtsAvailable) {
+  if (edgeTtsAvailable === false) {
     speakTextBrowser(text, sourceLang, slow)
     return
   }
@@ -230,14 +234,20 @@ function speakText(text, sourceLang = 'en', slow = false) {
   }
   audio.onerror = () => {
     if (currentAudio === audio) currentAudio = null
-    // Edge TTS 失败，fallback 到浏览器 TTS
-    console.warn('Edge TTS failed, falling back to Web Speech API')
-    speakTextBrowser(text, sourceLang, slow)
+    // 标记 Edge TTS 不可用，后续直接用浏览器 TTS
+    edgeTtsAvailable = false
+    // 只有当前请求还是最新的，才 fallback 播放
+    if (seq === speakSeq) {
+      speakTextBrowser(text, sourceLang, slow)
+    }
   }
 
   audio.play().catch(() => {
     if (currentAudio === audio) currentAudio = null
-    speakTextBrowser(text, sourceLang, slow)
+    edgeTtsAvailable = false
+    if (seq === speakSeq) {
+      speakTextBrowser(text, sourceLang, slow)
+    }
   })
 }
 
