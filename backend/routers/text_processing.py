@@ -113,9 +113,12 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
             error_code = "insufficient_balance"
         elif "ConnectionError" in error_msg or "ConnectionRefused" in error_msg:
             error_code = "connection_error"
+        elif "Invalid URL" in error_msg or "No scheme supplied" in error_msg or "Name or service not known" in error_msg:
+            error_code = "connection_error"
         processing_status[file_id] = {
             "status": "error",
-            "error": error_code
+            "error": error_code,
+            "error_detail": error_msg
         }
 
 

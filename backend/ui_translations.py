@@ -166,6 +166,7 @@ UI_TRANSLATION_SCHEMA = {
     "rateLimitError": {"desc": "Error: API rate limit exceeded", "zh": "API 请求频率超限，请稍后重试或降低 LLM 速率", "en": "API rate limit exceeded. Please retry later or reduce LLM rate"},
     "insufficientBalance": {"desc": "Error: Insufficient API balance", "zh": "API 余额不足，请充值后重试", "en": "Insufficient API balance. Please top up and retry"},
     "connectionError": {"desc": "Error: Cannot connect to API service", "zh": "无法连接到 API 服务，请检查网络或 API 地址", "en": "Cannot connect to API service. Please check your network or API URL"},
+    "connectionErrorTitle": {"desc": "Dialog title for connection errors", "zh": "连接错误", "en": "Connection Error"},
     "processFailed": {"desc": "Error: Processing failed", "zh": "处理失败，请重试", "en": "Processing failed, please retry"},
     "processTimeout": {"desc": "Error: Processing timed out", "zh": "处理超时，请重试", "en": "Processing timed out, please retry"},
     "networkError": {"desc": "Error: Network error", "zh": "网络错误，请重试", "en": "Network error, please retry"},

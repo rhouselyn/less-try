@@ -30,7 +30,7 @@ function AlertDialog({ open, title, message, onClose, t }) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.15 }}
-            className="bg-white rounded-lg shadow-xl max-w-sm w-full mx-4 overflow-hidden"
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3 p-5">
@@ -41,7 +41,7 @@ function AlertDialog({ open, title, message, onClose, t }) {
                 {title && (
                   <h3 className="text-sm font-semibold text-ink-800 mb-1">{title}</h3>
                 )}
-                <p className="text-sm text-ink-600 leading-relaxed">{message}</p>
+                <p className="text-sm text-ink-600 leading-relaxed whitespace-pre-line">{message}</p>
               </div>
               <button
                 ref={closeRef}
