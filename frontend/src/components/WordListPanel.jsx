@@ -112,7 +112,6 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const [page, setPage] = useState(1)
   const [showFavorites, setShowFavorites] = useState(false)
   const [favoriteWords, setFavoriteWords] = useState([])
-  const favoritedSet = useMemo(() => new Set(favoriteWords.map(w => w.toLowerCase())), [favoriteWords])
 
   const listRef = useRef(null)
   const wordRefs = useRef({})
@@ -411,13 +410,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                       ) : null}
-                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} favoritedSet={favoritedSet} onFavoriteChange={(w, fav) => {
-                        if (!fav) {
-                          setFavoriteWords(prev => prev.filter(fw => fw.toLowerCase() !== w.toLowerCase()))
-                        } else {
-                          setFavoriteWords(prev => [...prev, w])
-                        }
-                      }} />
+                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} />
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
                         className="p-1.5 text-aged-300 hover:text-amber-500 hover:bg-amber-50 rounded-none transition-colors"
@@ -459,9 +452,9 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             )}
             <button
               onClick={() => { setShowFavorites(v => !v); setPage(1) }}
-              className={`flex items-center gap-1 text-sm font-display transition-colors ${showFavorites ? 'text-amber-500' : 'text-ink-400 hover:text-amber-400'}`}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-bold transition-colors ${showFavorites ? 'bg-amber-100 text-amber-500' : 'bg-parchment-100 text-ink-400 hover:text-amber-400'}`}
             >
-              <Star className={`w-4 h-4 ${showFavorites ? 'fill-current' : ''}`} />
+              <Star className={`w-3 h-3 ${showFavorites ? 'fill-current' : ''}`} />
               {t.favorites || '收藏'}{favoriteWords.length > 0 ? ` (${favoriteWords.length})` : ''}
             </button>
           </div>

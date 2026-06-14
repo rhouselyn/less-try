@@ -7,19 +7,17 @@ import { api } from '../utils/api'
  * @param {string} word - 单词
  * @param {string} sourceLang - 源语言
  * @param {function} t - 翻译函数
- * @param {Set} favoritedSet - 收藏单词集合，用于批量判断收藏状态
+ * @param {boolean} initialFavorited - 初始收藏状态（可选，用于收藏页面传入已知状态）
  * @param {function} onFavoriteChange - 收藏状态变更回调（可选）
  */
-function FavoriteButton({ word, sourceLang, t, favoritedSet, onFavoriteChange }) {
-  const isFromSet = favoritedSet && favoritedSet.size > 0
-  const isInSet = isFromSet && (favoritedSet.has(word) || favoritedSet.has(word.toLowerCase()))
-  const [favorited, setFavorited] = useState(isInSet)
+function FavoriteButton({ word, sourceLang, t, initialFavorited, onFavoriteChange }) {
+  const [favorited, setFavorited] = useState(initialFavorited || false)
 
   useEffect(() => {
-    if (isFromSet) {
-      setFavorited(favoritedSet.has(word) || favoritedSet.has(word.toLowerCase()))
+    if (initialFavorited !== undefined) {
+      setFavorited(initialFavorited)
     }
-  }, [favoritedSet, word])
+  }, [initialFavorited])
 
   const handleToggle = useCallback(async (e) => {
     if (e) e.stopPropagation()
