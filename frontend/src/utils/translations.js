@@ -170,10 +170,7 @@ export const translations = {
     regenerate: "重新生成",
     autoDetect: "自动检测",
     searchLanguages: "搜索语言...",
-    noLanguagesFound: "未找到语言",
-    uiTheme: "界面风格",
-    celTheme: "赛璐璐",
-    classicTheme: "古典"
+    noLanguagesFound: "未找到语言"
   },
   en: {
     title: "Gualingo",
@@ -345,9 +342,6 @@ export const translations = {
     wordsPerPage: "Words per page",
     backToHome: "Back to Home",
     noPracticeContent: "No practice content available",
-    translatingUI: "Switching interface language...",
-    uiTheme: "UI Theme",
-    celTheme: "Cel-shading",
-    classicTheme: "Classic"
+    translatingUI: "Switching interface language..."
   }
 };

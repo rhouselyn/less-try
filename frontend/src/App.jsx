@@ -26,18 +26,18 @@ import SettingsModal from './components/SettingsModal'
 function FrogLogo({ size = 40 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#2a9d8f" stroke="#1a1a2e" strokeWidth="3" />
-      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#5cb8ab" />
-      <circle cx="34" cy="38" r="16" fill="#2a9d8f" stroke="#1a1a2e" strokeWidth="3" />
-      <circle cx="66" cy="38" r="16" fill="#2a9d8f" stroke="#1a1a2e" strokeWidth="3" />
-      <circle cx="34" cy="38" r="13" fill="#fff" stroke="#1a1a2e" strokeWidth="2" />
-      <circle cx="66" cy="38" r="13" fill="#fff" stroke="#1a1a2e" strokeWidth="2" />
-      <circle cx="36" cy="37" r="6" fill="#1a1a2e" />
-      <circle cx="68" cy="37" r="6" fill="#1a1a2e" />
+      <ellipse cx="50" cy="58" rx="38" ry="32" fill="#B5AE8E" />
+      <ellipse cx="50" cy="55" rx="34" ry="28" fill="#D8D4BF" />
+      <circle cx="34" cy="38" r="16" fill="#B5AE8E" />
+      <circle cx="66" cy="38" r="16" fill="#B5AE8E" />
+      <circle cx="34" cy="38" r="13" fill="#fff" />
+      <circle cx="66" cy="38" r="13" fill="#fff" />
+      <circle cx="36" cy="37" r="6" fill="#524D3C" />
+      <circle cx="68" cy="37" r="6" fill="#524D3C" />
       <circle cx="38" cy="35" r="2" fill="#fff" />
       <circle cx="70" cy="35" r="2" fill="#fff" />
-      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#ffd166" />
-      <path d="M38 60 Q50 70 62 60" stroke="#1a1a2e" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <ellipse cx="50" cy="62" rx="18" ry="8" fill="#E8C985" />
+      <path d="M38 60 Q50 70 62 60" stroke="#524D3C" strokeWidth="2" fill="none" strokeLinecap="round" />
     </svg>
   )
 }
@@ -110,7 +110,6 @@ function App() {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
-  const [uiTheme, setUiTheme] = useState('cel')
   const [showVocabList, setShowVocabList] = useState(false)
   const [fileTitle, setFileTitle] = useState('')
   const [originalText, setOriginalText] = useState('')
@@ -131,7 +130,6 @@ function App() {
       if (prefs.only_new_words !== undefined) setOnlyNewWords(prefs.only_new_words)
       if (prefs.recent_languages) setRecentLanguages(prefs.recent_languages)
       if (prefs.page_size) setPageSize(prefs.page_size)
-      if (prefs.ui_theme) setUiTheme(prefs.ui_theme)
     }).catch(() => {})
   }, [])
 
@@ -1212,7 +1210,7 @@ function App() {
   }
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f0e6d3]">
+    <div className="h-screen overflow-hidden bg-parchment-50 bg-paper-grain">
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
@@ -1231,15 +1229,15 @@ function App() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowSettings(true)}
-                    className="absolute top-3 right-4 p-2 text-[#1a1a2e] hover:text-[#e63946] hover:bg-[#f4a261]/20 rounded-xl transition-colors z-10 border-[3px] border-[#1a1a2e] bg-white shadow-cel-sm"
+                    className="absolute top-3 right-4 p-2 text-ink-400 hover:text-ink-600 hover:bg-parchment-200/60 rounded-sm transition-colors z-10"
                   >
                     <Settings className="w-5 h-5" />
                   </motion.button>
                   {translatingUI && (
-                    <div className="absolute inset-0 bg-[#f0e6d3]/90 backdrop-blur-sm z-20 flex items-center justify-center">
-                      <div className="flex items-center gap-3 bg-white border-[3px] border-[#1a1a2e] rounded-xl px-6 py-4 shadow-cel">
-                        <Loader2 className="w-5 h-5 animate-spin text-[#e63946]" />
-                        <span className="text-sm text-[#1a1a2e] font-black uppercase">{
+                    <div className="absolute inset-0 bg-parchment-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
+                      <div className="flex items-center gap-3 bg-parchment-50 border-2 border-aged-200 rounded-sm px-6 py-4 shadow-retro">
+                        <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+                        <span className="text-sm text-ink-600">{
                           (customTranslations[uiLang]?.translatingUI)
                           || (customTranslations[Array.from(loadedLangs).filter(l => l !== uiLang).pop()]?.translatingUI)
                           || t.translatingUI
@@ -1567,7 +1565,7 @@ function App() {
           </div>
         )}
       </main>
-      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} uiLang={uiLang} onUiLangChange={setUiLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} recentLangs={recentLanguages} onRecentLangsChange={setRecentLanguages} uiTheme={uiTheme} onUiThemeChange={setUiTheme} />
+      <SettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} uiLang={uiLang} onUiLangChange={setUiLang} pageSize={pageSize} onPageSizeChange={setPageSize} t={t} recentLangs={recentLanguages} onRecentLangsChange={setRecentLanguages} />
       {showVocabList && <VocabListStep onClose={() => setShowVocabList(false)} vocab={vocab} loading={loading} t={t} currentFileId={currentFileId} sourceLang={sourceLang} pageSize={pageSize} />}
       <ConfirmDialog
         isOpen={confirmDialog.isOpen}

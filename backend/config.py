@@ -34,7 +34,7 @@ LLM_SETTINGS_FILE = CONFIG_DIR / "llm_settings.json"
 USER_PREFS_FILE = CONFIG_DIR / "user_preferences.json"
 
 # 前端静态文件目录
-FRONTEND_DIR = Path(os.environ.get("FRONTEND_DIR", str(BASE_DIR / "frontend-retro-vintage" / "dist")))
+FRONTEND_DIR = Path(os.environ.get("FRONTEND_DIR", str(BASE_DIR / "frontend" / "dist")))
 
 # 服务器配置
 HOST = os.environ.get("HOST", "0.0.0.0")

@@ -836,15 +836,15 @@ class DatabaseStorage:
         row = conn.execute("SELECT prefs FROM user_preferences WHERE id = 1").fetchone()
         if row:
             data = json.loads(row["prefs"])
-            if "ui_theme" not in data:
-                data["ui_theme"] = "cel"
+            if "ui_theme" in data:
+                del data["ui_theme"]
             return data
         if self.fallback_to_file and self._file_storage:
             data = self._file_storage.load_user_preferences()
             if data:
                 self.save_user_preferences(data)
             return data
-        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False, "ui_theme": "cel"}
+        return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False}
 
     # ── 数据迁移 ───────────────────────────────────────────
 
