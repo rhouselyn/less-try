@@ -4,7 +4,9 @@ import { BookOpen, ArrowLeft, Settings, Loader2 } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech } from './utils/speech'
+import { auth } from './utils/auth'
 import ConfirmDialog from './components/ConfirmDialog'
+import LoginPage from './components/LoginPage'
 
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
@@ -50,6 +52,8 @@ function App() {
   const [uiLang, setUiLang] = useState('zh')
   const [customTranslations, setCustomTranslations] = useState({})
   const [translatingUI, setTranslatingUI] = useState(false)
+  const [currentUser, setCurrentUser] = useState(null)
+  const [showLogin, setShowLogin] = useState(false)
   const [loadedLangs, setLoadedLangs] = useState(new Set())
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
@@ -121,6 +125,7 @@ function App() {
 
   useEffect(() => {
     warmupSpeech()
+    auth.fetchMe().then(u => { if (u) setCurrentUser(u) }).catch(() => {})
     api.getUserPreferences().then(prefs => {
       if (prefs.target_lang) setTargetLang(prefs.target_lang)
       if (prefs.ui_lang) setUiLang(prefs.ui_lang)
@@ -1244,7 +1249,8 @@ function App() {
 
   return (
     <div className="h-screen overflow-hidden bg-parchment-50 bg-paper-grain">
-      <main className="h-full">
+      {showLogin && !currentUser && <LoginPage t={t} onDone={async () => { setCurrentUser(auth.user); setShowLogin(false) }} />}
+      {!showLogin && <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
             <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} refreshTrigger={historyRefresh} />
@@ -1258,14 +1264,25 @@ function App() {
                 />
               ) : (
                 <>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowSettings(true)}
-                    className="absolute top-3 right-4 p-2 text-ink-400 hover:text-ink-600 hover:bg-parchment-200/60 rounded-sm transition-colors z-10"
-                  >
-                    <Settings className="w-5 h-5" />
-                  </motion.button>
+                  <div className="absolute top-3 right-4 flex items-center gap-2 z-10">
+                    {currentUser ? (
+                      <button onClick={() => auth.logout()} className="px-3 py-1.5 text-sm text-ink-600 hover:text-ink-800 hover:bg-parchment-200/60 rounded-sm transition-colors">
+                        {(currentUser.name || currentUser.email)?.split('@')[0]}
+                      </button>
+                    ) : (
+                      <button onClick={() => setShowLogin(true)} className="px-3 py-1.5 text-sm text-amber-600 hover:text-amber-700 rounded-sm transition-colors">
+                        {t?.login || '登录'}
+                      </button>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setShowSettings(true)}
+                      className="p-2 text-ink-400 hover:text-ink-600 hover:bg-parchment-200/60 rounded-sm transition-colors"
+                    >
+                      <Settings className="w-5 h-5" />
+                    </motion.button>
+                  </div>
                   {translatingUI && (
                     <div className="absolute inset-0 bg-parchment-50/80 backdrop-blur-sm z-20 flex items-center justify-center">
                       <div className="flex items-center gap-3 bg-parchment-50 border-2 border-aged-200 rounded-sm px-6 py-4 shadow-retro">
