@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
 import { api } from '../utils/api'
 import { LangIcon, LANGUAGES } from './InputStep'
@@ -73,12 +72,8 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
   const posY = y + menuH > vh ? vh - menuH - 8 : y
 
   return (
-    <motion.div
+    <div
       ref={ref}
-      initial={{ opacity: 0, scale: 0.95, y: -4 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: -4 }}
-      transition={{ duration: 0.12, ease: 'easeOut' }}
       style={{ left: posX, top: posY }}
       className="fixed z-[9999] bg-parchment-50 border-2 border-aged-200 rounded-sm shadow-retro-lg shadow-black/8 py-1.5 min-w-[160px] overflow-hidden"
     >
@@ -97,7 +92,7 @@ function ContextMenu({ x, y, onRename, onDelete, onClose, t }) {
         <Trash2 className="w-3.5 h-3.5" />
         {t.delete || '删除'}
       </button>
-    </motion.div>
+    </div>
   )
 }
 
@@ -285,27 +280,22 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
   return (
     <>
       <div className="flex h-full">
-        <AnimatePresence>
-          {expanded && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: SIDEBAR_WIDTH, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
-              className="h-full overflow-hidden flex flex-col bg-parchment-100/50 border-r border-aged-200/60"
-              style={{ minWidth: 0 }}
-            >
-              <div className="px-3 pt-4 pb-2 flex items-center justify-between flex-shrink-0">
-                <span className="font-display text-[11px] font-bold text-ink-700 uppercase tracking-wider">
-                  {t.historyTitle || '学习记录'}
-                </span>
-                <button
-                  onClick={() => setExpanded(false)}
-                  className="p-1 rounded-md hover:bg-aged-200/60 text-ink-400 hover:text-ink-600 transition-colors"
-                >
-                  <PanelLeftClose className="w-4 h-4" />
-                </button>
-              </div>
+        {expanded && (
+          <div
+            className="h-full overflow-hidden flex flex-col bg-parchment-100/50 border-r border-aged-200/60"
+            style={{ width: SIDEBAR_WIDTH, minWidth: SIDEBAR_WIDTH }}
+          >
+            <div className="px-3 pt-4 pb-2 flex items-center justify-between flex-shrink-0">
+              <span className="font-display text-[11px] font-bold text-ink-700 uppercase tracking-wider">
+                {t.historyTitle || '学习记录'}
+              </span>
+              <button
+                onClick={() => setExpanded(false)}
+                className="p-1 rounded-md hover:bg-aged-200/60 text-ink-400 hover:text-ink-600 transition-colors"
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            </div>
 
               <div ref={scrollContainerRef} className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
                 {records.length === 0 && (
@@ -409,14 +399,11 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   {records.length} {t.record || '条记录'}
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+        )}
 
         {!expanded && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+          <div
             className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 gap-1 bg-parchment-100/50 border-r border-aged-200/60"
             style={{ width: 48 }}
           >
@@ -461,38 +448,27 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                 </button>
               ))
             )}
-          </motion.div>
+          </div>
         )}
       </div>
 
-      <AnimatePresence>
-        {menuState.open && (
-          <ContextMenu
-            x={menuState.x}
-            y={menuState.y}
-            onRename={() => handleRenameStart(menuState.fileId)}
-            onDelete={() => handleDelete(menuState.fileId)}
-            onClose={handleMenuClose}
-            t={t}
-          />
-        )}
-      </AnimatePresence>
+      {menuState.open && (
+        <ContextMenu
+          x={menuState.x}
+          y={menuState.y}
+          onRename={() => handleRenameStart(menuState.fileId)}
+          onDelete={() => handleDelete(menuState.fileId)}
+          onClose={handleMenuClose}
+          t={t}
+        />
+      )}
 
-      <AnimatePresence>
-        {deleteConfirm.open && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
+      {deleteConfirm.open && (
+          <div
             className="fixed inset-0 z-[10000] flex items-center justify-center bg-ink-800/40 backdrop-blur-sm"
             onClick={handleDeleteCancel}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 8 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 8 }}
-              transition={{ duration: 0.15, ease: 'easeOut' }}
+            <div
               className="bg-parchment-50 border-2 border-aged-200 rounded-md shadow-retro-xl shadow-black/10 p-6 max-w-sm w-full mx-4"
               onClick={e => e.stopPropagation()}
             >
@@ -520,10 +496,9 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                   {t.confirmDeleteAction || '删除'}
                 </button>
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
     </>
   )
 }
