@@ -340,26 +340,18 @@ function App() {
           }
           // 根据错误码显示翻译后的消息
           const errorCode = status.error || ''
-          const errorDetail = status.error_detail || ''
           const errorMessages = {
             api_key_invalid: t.apiKeyInvalid || 'API Key 无效或已过期，请检查设置中的 API Key',
             rate_limit: t.rateLimitError || 'API 请求频率超限，请稍后重试或降低 LLM 速率',
             insufficient_balance: t.insufficientBalance || 'API 余额不足，请充值后重试',
             connection_error: t.connectionError || '无法连接到 API 服务，请检查网络或 API 地址',
           }
-          let translatedMsg = errorMessages[errorCode] || errorDetail || (t.processFailed || '处理失败，请重试')
-          // 如果错误码匹配了翻译消息，且原始错误详情存在且不是通用信息，附上详情
-          if (errorMessages[errorCode] && errorDetail && errorCode !== 'api_key_invalid') {
-            translatedMsg = translatedMsg + '\n\n' + errorDetail
-          }
+          const translatedMsg = errorMessages[errorCode] || (errorCode ? (t.processFailed || '处理失败，请重试') : '')
           if (errorCode === 'api_key_invalid') {
             showAlert(translatedMsg, t.apiKeyError || 'API Key 错误')
             setShowSettings(true)
-          } else if (errorCode === 'connection_error') {
-            showAlert(translatedMsg, t.connectionErrorTitle || '连接错误')
-            setShowSettings(true)
           } else {
-            showAlert(translatedMsg)
+            showAlert(translatedMsg || (t.processFailed || '处理失败，请重试'))
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
