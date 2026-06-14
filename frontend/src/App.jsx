@@ -340,18 +340,19 @@ function App() {
           }
           // 根据错误码显示翻译后的消息
           const errorCode = status.error || ''
+          const errorDetail = status.error_detail || ''
           const errorMessages = {
             api_key_invalid: t.apiKeyInvalid || 'API Key 无效或已过期，请检查设置中的 API Key',
             rate_limit: t.rateLimitError || 'API 请求频率超限，请稍后重试或降低 LLM 速率',
             insufficient_balance: t.insufficientBalance || 'API 余额不足，请充值后重试',
             connection_error: t.connectionError || '无法连接到 API 服务，请检查网络或 API 地址',
           }
-          const translatedMsg = errorMessages[errorCode] || (errorCode ? (t.processFailed || '处理失败，请重试') : '')
+          const translatedMsg = errorMessages[errorCode] || (errorDetail || (t.processFailed || '处理失败，请重试'))
           if (errorCode === 'api_key_invalid') {
             showAlert(translatedMsg, t.apiKeyError || 'API Key 错误')
             setShowSettings(true)
           } else {
-            showAlert(translatedMsg || (t.processFailed || '处理失败，请重试'))
+            showAlert(translatedMsg)
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
