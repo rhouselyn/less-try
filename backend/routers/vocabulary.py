@@ -5,7 +5,7 @@ import re
 from fastapi import APIRouter, HTTPException
 from typing import Optional
 
-from utils.state import nvidia_api, storage
+from utils.state import llm, storage
 from utils.helpers import fix_llm_options_result
 
 router = APIRouter(prefix="/api", tags=["vocabulary"])
@@ -248,7 +248,7 @@ async def regenerate_word_detail(request: dict):
             if file_id:
                 storage.delete_word_cache(file_id, word)
 
-        options_result = await nvidia_api.generate_multiple_choice(
+        options_result = await llm.generate_multiple_choice(
             word, "", "", target_lang, source_lang, 0.7
         )
         file_id = matching[0].get("file_id") if matching else None
@@ -336,7 +336,7 @@ async def regenerate_word_detail_by_file(file_id: str, word: str):
                 correct_meaning = word_entry["context_meaning"]
 
         # Generate with temperature 0.7
-        options_result = await nvidia_api.generate_multiple_choice(
+        options_result = await llm.generate_multiple_choice(
             word,
             correct_meaning,
             context,
@@ -410,7 +410,7 @@ async def get_word_detail(word: str, source_lang: str = "en", target_lang: str =
                     "variants_detail": cached.get("variants_detail", []),
                 }
 
-        options_result = await nvidia_api.generate_multiple_choice(
+        options_result = await llm.generate_multiple_choice(
             word, "", "", target_lang, source_lang, 0
         )
         options_result = fix_llm_options_result(options_result, source_lang, file_id)

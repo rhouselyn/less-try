@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
 
-from nvidia_api import get_settings as get_llm_settings_raw, save_configs, set_active_index, get_lang_name, call_minimax_with_rotation
+from api_client import get_settings as get_llm_settings_raw, save_configs, set_active_index, get_lang_name, call_minimax_with_rotation
 from ui_translations import UI_TRANSLATION_SCHEMA, TRANSLATION_PROMPT
 from config import UI_TRANSLATIONS_DIR
 from utils.state import storage, _ui_translation_cache, _ui_translation_tasks

@@ -250,8 +250,7 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
     num_configs = len(configs)
 
     try:
-        from storage import Storage
-        storage = Storage()
+        from utils.state import storage
         prefs = storage.load_user_preferences()
         interval = prefs.get("retry_interval", 1.0)
     except Exception:
@@ -272,7 +271,7 @@ async def call_minimax_with_rotation(messages: List[Dict], tools: List[Dict] = N
         idx = (active_index + attempt) % num_configs
         config = configs[idx]
         # 提交请求的同时开始计算间隔
-        api = NvidiaAPI(config_index=idx)
+        api = LLMClient(config_index=idx)
         request_task = asyncio.create_task(api.call_minimax(messages, tools=tools, temperature=temperature, max_tokens=max_tokens))
         timer_task = asyncio.ensure_future(asyncio.sleep(interval))
         # 等待请求和间隔两者都完成
@@ -344,7 +343,7 @@ async def detect_language(text: str) -> str:
     return "en"
 
 
-class NvidiaAPI:
+class LLMClient:
     def __init__(self, config_index: int = None):
         self._config_index = config_index
         self._reload()
