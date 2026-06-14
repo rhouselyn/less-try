@@ -13,6 +13,15 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
   const [enrichedWords, setEnrichedWords] = useState({})
   const [loadingWord, setLoadingWord] = useState(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [favoriteWords, setFavoriteWords] = useState([])
+  const favoritedSet = useMemo(() => new Set(favoriteWords.map(w => w.toLowerCase())), [favoriteWords])
+
+  useEffect(() => {
+    api.getFavorites(sourceLang).then(data => {
+      setFavoriteWords(data.words || [])
+    }).catch(() => {})
+  }, [sourceLang])
+
   const listRef = useRef(null)
   const wordRefs = useRef({})
 
@@ -308,7 +317,13 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       {displayMeaning}
                                     </span>
                                   </div>
-                                  <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} />
+                                  <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} favoritedSet={favoritedSet} onFavoriteChange={(w, fav) => {
+                                    if (!fav) {
+                                      setFavoriteWords(prev => prev.filter(fw => fw.toLowerCase() !== w.toLowerCase()))
+                                    } else {
+                                      setFavoriteWords(prev => [...prev, w])
+                                    }
+                                  }} />
                                   <Volume2
                                     className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}
