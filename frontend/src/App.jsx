@@ -409,21 +409,6 @@ function App() {
   const handleProcess = async () => {
     if (!text.trim()) return
 
-    // 先检查 API Key 是否已配置
-    try {
-      const settingsResp = await fetch('/api/settings')
-      const settingsData = await settingsResp.json()
-      const activeIdx = settingsData.active_index || 0
-      const activeConfig = (settingsData.configs || [])[activeIdx]
-      if (!activeConfig || !activeConfig.has_key) {
-        alert(t.noApiKey || '请先在设置中填写 API Key')
-        setShowSettings(true)
-        return
-      }
-    } catch (e) {
-      // 检查失败则继续，让后端报错
-    }
-
     setSkipPolling(false)
     setLoading(true)
     setProgress(0)
@@ -441,7 +426,23 @@ function App() {
     setOriginalText('')
     // 重置字典状态，避免显示上一个条目的残留
     dictStateRef.current = { vocabPage: 1, sentencePage: 1, globalVocabPage: 1, vocabScrollPos: 0, sentenceTranslationScrollPos: 0, sentenceOriginalScrollPos: 0, globalVocabScrollPos: 0, vocabDisplayMode: 0, sentenceDisplayMode: 0, showOriginal: false, showGlobalVocab: false, vocabSearch: '', sentenceSearch: '' }
-    
+
+    // 先检查 API Key 是否已配置
+    try {
+      const settingsResp = await fetch('/api/settings')
+      const settingsData = await settingsResp.json()
+      const activeIdx = settingsData.active_index || 0
+      const activeConfig = (settingsData.configs || [])[activeIdx]
+      if (!activeConfig || !activeConfig.has_key) {
+        setLoading(false)
+        alert(t.noApiKey || '请先在设置中填写 API Key')
+        setShowSettings(true)
+        return
+      }
+    } catch (e) {
+      // 检查失败则继续，让后端报错
+    }
+
     if (inputMode === 'translate') {
       setPreprocessStatus('translating')
     } else if (inputMode === 'generate') {
