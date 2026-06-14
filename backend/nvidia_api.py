@@ -378,8 +378,6 @@ class NvidiaAPI:
     async def call_minimax(self, messages: List[Dict], tools: List[Dict] = None, temperature: float = 0.0, max_tokens: int = 4096):
         import time as _time
         self.reload()
-        if not self.api_key or not self.api_key.strip():
-            raise ValueError("API key 未配置，请在设置中填写 API Key")
         payload = {
             "model": self.model,
             "messages": messages,
