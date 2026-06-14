@@ -360,8 +360,8 @@ class LLMAPI:
         else:
             config = configs[idx]
         self.api_key = config.get("api_key", "")
-        self.base_url = config.get("base_url", "https://api.siliconflow.cn/v1")
-        self.model = config.get("model", "Qwen/Qwen3.6-27B")
+        self.base_url = config.get("base_url") or "https://api.siliconflow.cn/v1"
+        self.model = config.get("model") or "Qwen/Qwen3.6-27B"
         self.headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
