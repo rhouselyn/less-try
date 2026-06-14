@@ -169,11 +169,16 @@ function App() {
   
   // 获取当前语言的翻译 - 保持上一个语言作为过渡，不回退到中文
   const lastValidTRef = useRef(translations.zh)
-  
+
   const zhBase = customTranslations.zh || translations.zh
+  // ponytail: 内置语言直接用，不走LLM翻译
+  const builtinT = translations[uiLang]
   let t
   if (customTranslations[uiLang]) {
     t = { ...zhBase, ...customTranslations[uiLang] }
+    lastValidTRef.current = t
+  } else if (builtinT) {
+    t = { ...zhBase, ...builtinT }
     lastValidTRef.current = t
   } else {
     // 新语言还没加载完，保持上一个已加载的语言
@@ -182,6 +187,8 @@ function App() {
 
   // Fetch translations when uiLang changes (all languages go through API for consistency)
   useEffect(() => {
+    // ponytail: 内置语言不需要LLM翻译
+    if (translations[uiLang]) return
     if (loadedLangs.has(uiLang)) return
     
     setLoadedLangs(prev => new Set([...prev, uiLang]))
