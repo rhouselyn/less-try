@@ -171,7 +171,12 @@ export const translations = {
     regenerate: "重新生成",
     autoDetect: "自动检测",
     searchLanguages: "搜索语言...",
-    noLanguagesFound: "未找到语言"
+    noLanguagesFound: "未找到语言",
+    favorites: "收藏",
+    favorite: "收藏",
+    favorited: "已收藏",
+    noFavorites: "暂无收藏单词",
+    favoriteCount: "{0} 个收藏"
   },
   en: {
     title: "Gualingo",
@@ -344,6 +349,11 @@ export const translations = {
     wordsPerPage: "Words per page",
     backToHome: "Back to Home",
     noPracticeContent: "No practice content available",
-    translatingUI: "Switching interface language..."
+    translatingUI: "Switching interface language...",
+    favorites: "Favorites",
+    favorite: "Favorite",
+    favorited: "Favorited",
+    noFavorites: "No favorite words yet",
+    favoriteCount: "{0} favorites"
   }
 };

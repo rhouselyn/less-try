@@ -5,6 +5,7 @@ import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
 import WordDetail from './WordDetail'
+import FavoriteButton from './FavoriteButton'
 
 function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, pageSize = 50 }) {
   const [searchQuery, setSearchQuery] = useState('')
@@ -307,6 +308,7 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       {displayMeaning}
                                     </span>
                                   </div>
+                                  <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} />
                                   <Volume2
                                     className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}

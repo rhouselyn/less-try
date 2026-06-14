@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft, Pencil, ChevronLeft, ChevronRight, RefreshCw, Brain } from 'lucide-react'
 import WordDetail from './WordDetail'
+import FavoriteButton from './FavoriteButton'
 import SentenceDetail from './SentenceDetail'
 import { groupVocab } from '../utils/vocab'
 import { speakText } from '../utils/speech'
@@ -1139,6 +1140,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
                                   />
                                 )}
+                                <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} />
                                 <Volume2
                                   className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                   onClick={(e) => speakWord(word.word, e)}
@@ -1253,6 +1255,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
                                 />
                               )}
+                              <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} />
                               <Volume2
                                 className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                 onClick={(e) => speakWord(word.word, e)}

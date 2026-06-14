@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, ChevronDown, ChevronLeft, ChevronRight, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft, RefreshCw, Brain } from 'lucide-react'
+import { Search, X, ChevronDown, ChevronLeft, ChevronRight, Volume2, BookOpen, BookText, Lightbulb, GitBranch, Loader2, ArrowLeft, RefreshCw, Brain, Star } from 'lucide-react'
 import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
+import FavoriteButton from './FavoriteButton'
 
 function WordDetailCard({ word, sourceLang, detailLoading, t }) {
   return (
@@ -109,6 +110,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   const [isOpen, setIsOpen] = useState(false)
   const [displayMode, setDisplayMode] = useState(0)
   const [page, setPage] = useState(1)
+  const [showFavorites, setShowFavorites] = useState(false)
+  const [favoriteWords, setFavoriteWords] = useState([])
 
   const listRef = useRef(null)
   const wordRefs = useRef({})
@@ -184,6 +187,14 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     }
   }, [isOpen, loadWords, onBack])
 
+  useEffect(() => {
+    if (isOpen || onBack) {
+      api.getFavorites(sourceLang).then(data => {
+        setFavoriteWords(data.words || [])
+      }).catch(() => {})
+    }
+  }, [isOpen, onBack, sourceLang])
+
   const filteredWords = searchQuery.trim()
     ? words.filter(w =>
         w.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -191,9 +202,13 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       )
     : words
 
-  const totalPages = Math.ceil(filteredWords.length / pageSize)
+  const displayWords = showFavorites
+    ? filteredWords.filter(w => favoriteWords.includes(w.word.toLowerCase()) || favoriteWords.includes(w.word))
+    : filteredWords
 
-  const pagedWords = filteredWords.slice((page - 1) * pageSize, page * pageSize)
+  const totalPages = Math.ceil(displayWords.length / pageSize)
+
+  const pagedWords = displayWords.slice((page - 1) * pageSize, page * pageSize)
 
   const groupedWords = useMemo(() => {
     return groupVocab(pagedWords)
@@ -204,8 +219,8 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
   }, [groupedWords])
 
   const allLetterIndex = useMemo(() => {
-    return groupVocab(filteredWords).map(([letter]) => letter)
-  }, [filteredWords])
+    return groupVocab(displayWords).map(([letter]) => letter)
+  }, [displayWords])
 
   useEffect(() => {
     setPage(1)
@@ -257,7 +272,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
     } else {
       // 字母不在当前页，先跳转到对应页面
       const letterLower = letter.toLowerCase()
-      const wordIdx = filteredWords.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
+      const wordIdx = displayWords.findIndex(w => w.word.charAt(0).toUpperCase() === letter || w.word.charAt(0).toLowerCase() === letterLower)
       if (wordIdx >= 0) {
         const targetPage = Math.floor(wordIdx / pageSize) + 1
         if (targetPage !== page) {
@@ -307,12 +322,21 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
       )
     }
 
-    if (filteredWords.length === 0) {
+    if (displayWords.length === 0) {
       return (
         <div className="py-16 text-center">
-          <BookOpen className="w-8 h-8 text-aged-200 mx-auto mb-2" />
+          {showFavorites ? (
+            <Star className="w-8 h-8 text-aged-200 mx-auto mb-2" />
+          ) : (
+            <BookOpen className="w-8 h-8 text-aged-200 mx-auto mb-2" />
+          )}
           <p className="text-sm text-ink-400">
-            {searchQuery ? (t.noMatchFound || '未找到匹配的单词') : (t.noWordsYetHint || '暂无单词，开始学习后将自动收录')}
+            {showFavorites
+              ? (t.noFavorites || '暂无收藏单词')
+              : searchQuery
+                ? (t.noMatchFound || '未找到匹配的单词')
+                : (t.noWordsYetHint || '暂无单词，开始学习后将自动收录')
+            }
           </p>
         </div>
       )
@@ -386,6 +410,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                       ) : null}
+                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} />
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
                         className="p-1.5 text-aged-300 hover:text-amber-500 hover:bg-amber-50 rounded-none transition-colors"
@@ -425,6 +450,13 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50 }) {
             {!loading && words.length > 0 && (
               <span className="badge-ochre text-xs text-ink-400 bg-parchment-100 px-2 py-0.5 rounded-none">{words.length} {t.wordCount || '词'}</span>
             )}
+            <button
+              onClick={() => { setShowFavorites(v => !v); setPage(1) }}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-sm text-xs font-bold transition-colors ${showFavorites ? 'bg-amber-100 text-amber-500' : 'bg-parchment-100 text-ink-400 hover:text-amber-400'}`}
+            >
+              <Star className={`w-3 h-3 ${showFavorites ? 'fill-current' : ''}`} />
+              {t.favorites || '收藏'}{favoriteWords.length > 0 ? ` (${favoriteWords.length})` : ''}
+            </button>
           </div>
           <button
             onClick={onBack}

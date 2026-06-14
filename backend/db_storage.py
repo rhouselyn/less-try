@@ -186,6 +186,13 @@ class DatabaseStorage:
                 prefs TEXT NOT NULL,
                 updated_at TEXT NOT NULL DEFAULT (datetime('now'))
             );
+
+            CREATE TABLE IF NOT EXISTS favorite_words (
+                word TEXT NOT NULL,
+                source_lang TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                PRIMARY KEY (word, source_lang)
+            );
         """)
         conn.commit()
 
@@ -843,6 +850,45 @@ class DatabaseStorage:
                 self.save_user_preferences(data)
             return data
         return {"source_lang": "auto", "target_lang": "zh", "rpm": 60, "skip_listening": False}
+
+    # ── favorite_words ─────────────────────────────────────
+
+    def add_favorite_word(self, word: str, source_lang: str):
+        conn = self._get_conn()
+        conn.execute(
+            "INSERT OR IGNORE INTO favorite_words (word, source_lang) VALUES (?, ?)",
+            (word, source_lang)
+        )
+        conn.commit()
+
+    def remove_favorite_word(self, word: str, source_lang: str):
+        conn = self._get_conn()
+        conn.execute(
+            "DELETE FROM favorite_words WHERE word = ? AND source_lang = ?",
+            (word, source_lang)
+        )
+        conn.commit()
+
+    def get_favorite_words(self, source_lang: str = None) -> List[str]:
+        conn = self._get_conn()
+        if source_lang:
+            rows = conn.execute(
+                "SELECT word FROM favorite_words WHERE source_lang = ? ORDER BY created_at DESC",
+                (source_lang,)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT word FROM favorite_words ORDER BY created_at DESC"
+            ).fetchall()
+        return [row["word"] for row in rows]
+
+    def is_favorite_word(self, word: str, source_lang: str) -> bool:
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT 1 FROM favorite_words WHERE word = ? AND source_lang = ?",
+            (word, source_lang)
+        ).fetchone()
+        return row is not None
 
     # ── 数据迁移 ───────────────────────────────────────────
 
