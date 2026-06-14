@@ -243,5 +243,22 @@ export const api = {
   translateUI: async (langCode) => {
     const response = await axios.get(`${baseUrl}/api/translate_ui/${langCode}`);
     return response.data;
+  },
+
+  toggleFavorite: async (word, sourceLang) => {
+    const response = await axios.post(`${baseUrl}/api/favorites/toggle`, { word, source_lang: sourceLang });
+    return response.data;
+  },
+
+  getFavorites: async (sourceLang) => {
+    const params = {};
+    if (sourceLang) params.source_lang = sourceLang;
+    const response = await axios.get(`${baseUrl}/api/favorites`, { params });
+    return response.data;
+  },
+
+  checkFavorite: async (word, sourceLang) => {
+    const response = await axios.get(`${baseUrl}/api/favorites/check`, { word, source_lang: sourceLang });
+    return response.data;
   }
 };

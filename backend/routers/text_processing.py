@@ -7,8 +7,8 @@ import datetime
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 
-from nvidia_api import detect_language, get_lang_name
-from utils.state import nvidia_api, storage, processing_status
+from llm_api import detect_language, get_lang_name
+from utils.state import llm_api, storage, processing_status
 from utils.exercise_generators import process_text_background, generate_title
 
 router = APIRouter(prefix="/api", tags=["text-processing"])
@@ -28,7 +28,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
             processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "translating", **_preserve_tr}
             source_lang_name = get_lang_name(source_lang)
             target_lang_name = get_lang_name(target_lang)
-            nvidia_api.reload()
+            llm_api.reload()
             messages = [
                 {
                     "role": "system",
@@ -36,7 +36,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
                 },
                 {"role": "user", "content": text}
             ]
-            response = await nvidia_api.call_minimax(messages, temperature=0.3, max_tokens=4096)
+            response = await llm_api.call_llm(messages, temperature=0.3, max_tokens=4096)
             if "choices" in response and len(response["choices"]) > 0:
                 translated = response["choices"][0].get("message", {}).get("content", "").strip()
                 if translated:
@@ -49,7 +49,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
             _preserve_gen = {k: processing_status[file_id][k] for k in ("original_text", "title") if k in processing_status.get(file_id, {})}
             processing_status[file_id] = {"status": "processing", "progress": 0, "current_sentence": 0, "total_sentences": 0, "preprocess": "generating", **_preserve_gen}
             source_lang_name = get_lang_name(source_lang)
-            nvidia_api.reload()
+            llm_api.reload()
             messages = [
                 {
                     "role": "system",
@@ -57,7 +57,7 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
                 },
                 {"role": "user", "content": text}
             ]
-            response = await nvidia_api.call_minimax(messages, temperature=0.7, max_tokens=4096)
+            response = await llm_api.call_llm(messages, temperature=0.7, max_tokens=4096)
             if "choices" in response and len(response["choices"]) > 0:
                 generated = response["choices"][0].get("message", {}).get("content", "").strip()
                 if generated:
@@ -90,14 +90,16 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
 
         # 4. 生成标题
         title = await generate_title(text, source_lang)
-        text_preview = text.strip()[:100]
-        storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
         # 更新 processing_status 中的标题
         if file_id in processing_status:
             processing_status[file_id]["title"] = title
 
         # 5. 执行文本处理
         await process_text_background(file_id, text, source_lang, target_lang)
+
+        # 6. 处理成功后才写入历史记录
+        text_preview = text.strip()[:100]
+        storage.add_history_record(file_id, title, source_lang, target_lang, text_preview)
     except Exception as e:
         print(f"[ERROR] 预处理或处理出错: {str(e)}")
         import traceback
@@ -130,8 +132,8 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
             raise HTTPException(status_code=400, detail="Text is required")
 
         # 检查 API Key 是否已配置
-        nvidia_api.reload()
-        if not nvidia_api.api_key:
+        llm_api.reload()
+        if not llm_api.api_key:
             raise HTTPException(status_code=400, detail="API Key 未配置，请先在设置中填写 API Key")
 
         now = datetime.datetime.now()
@@ -200,7 +202,7 @@ async def translate_text(request: dict):
         source_lang_name = get_lang_name(source_lang)
         target_lang_name = get_lang_name(target_lang)
 
-        nvidia_api.reload()
+        llm_api.reload()
         messages = [
             {
                 "role": "system",
@@ -211,7 +213,7 @@ async def translate_text(request: dict):
                 "content": text
             }
         ]
-        response = await nvidia_api.call_minimax(messages, temperature=0.3, max_tokens=4096)
+        response = await llm_api.call_llm(messages, temperature=0.3, max_tokens=4096)
 
         translated_text = ""
         if "choices" in response and len(response["choices"]) > 0:
@@ -239,7 +241,7 @@ async def generate_text(request: dict):
 
         source_lang_name = get_lang_name(source_lang)
 
-        nvidia_api.reload()
+        llm_api.reload()
         messages = [
             {
                 "role": "system",
@@ -250,7 +252,7 @@ async def generate_text(request: dict):
                 "content": prompt
             }
         ]
-        response = await nvidia_api.call_minimax(messages, temperature=0.7, max_tokens=4096)
+        response = await llm_api.call_llm(messages, temperature=0.7, max_tokens=4096)
 
         generated_text = ""
         if "choices" in response and len(response["choices"]) > 0:

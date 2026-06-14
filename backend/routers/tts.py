@@ -132,16 +132,13 @@ async def speak(
 
         communicate = edge_tts.Communicate(text, voice, rate=rate)
 
-        # 生成完整音频到内存
-        buffer = io.BytesIO()
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                buffer.write(chunk["data"])
-
-        buffer.seek(0)
+        async def audio_stream():
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    yield chunk["data"]
 
         return StreamingResponse(
-            buffer,
+            audio_stream(),
             media_type="audio/mpeg",
             headers={
                 "Cache-Control": "no-cache",

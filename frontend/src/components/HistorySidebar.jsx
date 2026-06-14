@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library } from 'lucide-react'
+import { ChevronDown, ChevronUp, MoreHorizontal, Pencil, Trash2, PanelLeftClose, PanelLeftOpen, Library, Star } from 'lucide-react'
 import { api } from '../utils/api'
 import { LangIcon, LANGUAGES } from './InputStep'
 
@@ -185,7 +185,7 @@ function RecentItem({ record, onNavigate }) {
   )
 }
 
-function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListLang, refreshTrigger }) {
+function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListLang, onOpenFavorites, activeFavoriteLang, refreshTrigger }) {
   const [expanded, setExpanded] = useState(true)
   const [records, setRecords] = useState([])
   const [menuState, setMenuState] = useState({ open: false, fileId: null, x: 0, y: 0 })
@@ -371,8 +371,19 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
                       </span>
                       <span className="text-[10px] text-aged-300">{items.length}</span>
                       <button
-                        onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
+                        onClick={(e) => { e.stopPropagation(); onOpenFavorites && onOpenFavorites(lang) }}
                         className={`ml-auto p-1 rounded-md transition-all badge-ochre ${
+                          activeFavoriteLang === lang
+                            ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-retro-sm'
+                            : 'text-aged-300 hover:text-amber-400 hover:bg-amber-50'
+                        }`}
+                        title={t.favorites || '收藏'}
+                      >
+                        <Star className={`w-3.5 h-3.5 ${activeFavoriteLang === lang ? 'fill-current' : ''}`} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
+                        className={`p-1 rounded-md transition-all badge-ochre ${
                           activeWordListLang === lang
                             ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[langIdx % SIDEBAR_COLORS.length] + ' text-white shadow-retro-sm'
                             : 'text-aged-300 hover:text-amber-500 hover:bg-amber-50'
@@ -431,18 +442,30 @@ function HistorySidebar({ onNavigateToRecord, t, onOpenWordList, activeWordListL
             <div className="w-6 border-t border-aged-200/60 my-1" />
 
             {langKeys.map((lang, idx) => (
-              <button
-                key={lang}
-                onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
-                className={`w-9 h-9 flex items-center justify-center rounded-sm text-[13px] font-bold transition-all ${
-                  activeWordListLang === lang
-                    ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-retro'
-                    : 'bg-parchment-100 text-ink-500 hover:bg-aged-200/70 hover:text-ink-700'
-                }`}
-                title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
-              >
-                {lang.substring(0, 2).toUpperCase()}
-              </button>
+              <React.Fragment key={lang}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onOpenFavorites && onOpenFavorites(lang) }}
+                  className={`w-9 h-9 flex items-center justify-center rounded-sm transition-colors ${
+                    activeFavoriteLang === lang
+                      ? 'bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-retro'
+                      : 'text-aged-300 hover:text-amber-400 hover:bg-amber-50'
+                  }`}
+                  title={`${getLangLabel(lang)} - ${t.favorites || '收藏'}`}
+                >
+                  <Star className={`w-3.5 h-3.5 ${activeFavoriteLang === lang ? 'fill-current' : ''}`} />
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); onOpenWordList && onOpenWordList(lang) }}
+                  className={`w-9 h-9 flex items-center justify-center rounded-sm text-[13px] font-bold transition-all ${
+                    activeWordListLang === lang
+                      ? 'bg-gradient-to-br ' + SIDEBAR_COLORS[idx % SIDEBAR_COLORS.length] + ' text-white shadow-retro'
+                      : 'bg-parchment-100 text-ink-500 hover:bg-aged-200/70 hover:text-ink-700'
+                  }`}
+                  title={`${getLangLabel(lang)} - ${t.wordList || '单词总表'}`}
+                >
+                  {lang.substring(0, 2).toUpperCase()}
+                </button>
+              </React.Fragment>
             ))}
 
             {records.length > 0 && langKeys.length > 0 && (

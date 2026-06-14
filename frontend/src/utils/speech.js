@@ -142,19 +142,55 @@ async function speakText(text, sourceLang = 'en', slow = false) {
     const lang = SPEECH_LANG_MAP[sourceLang] || sourceLang
     const url = `/api/tts/speak?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}&slow=${slow}`
 
-    const audio = new Audio(url)
+    // 使用 fetch 流式获取音频，边下载边播放
+    const response = await fetch(url)
+    if (!response.ok) throw new Error(`TTS request failed: ${response.status}`)
+
+    const reader = response.body.getReader()
+
+    // 使用 MediaSource 实现边下载边播放
+    const mediaSource = new MediaSource()
+    const audio = new Audio()
+    audio.src = URL.createObjectURL(mediaSource)
     currentAudio = audio
 
     audio.onended = () => {
-      if (currentAudio === audio) {
-        currentAudio = null
-      }
+      if (currentAudio === audio) currentAudio = null
     }
     audio.onerror = () => {
-      if (currentAudio === audio) {
-        currentAudio = null
-      }
+      if (currentAudio === audio) currentAudio = null
     }
+
+    await new Promise((resolve, reject) => {
+      mediaSource.addEventListener('sourceopen', resolve, { once: true })
+      mediaSource.addEventListener('error', reject, { once: true })
+    })
+
+    const sourceBuffer = mediaSource.addSourceBuffer('audio/mpeg')
+    let firstChunk = true
+
+    sourceBuffer.addEventListener('updateend', async () => {
+      try {
+        const { value, done } = await reader.read()
+        if (done) {
+          mediaSource.endOfStream()
+          return
+        }
+        sourceBuffer.appendBuffer(value)
+      } catch (e) {
+        console.warn('Edge TTS stream read error:', e)
+        try { mediaSource.endOfStream() } catch (_) {}
+      }
+    })
+
+    // 读取第一个 chunk 并开始播放
+    const { value, done } = await reader.read()
+    if (done) {
+      mediaSource.endOfStream()
+      return
+    }
+    sourceBuffer.appendBuffer(value)
+    firstChunk = false
 
     await audio.play()
   } catch (e) {

@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
-from nvidia_api import get_settings
+from llm_api import get_settings
 from config import UI_TRANSLATIONS_DIR, FRONTEND_DIR, HOST, PORT
 from utils.state import _ui_translation_cache, storage
 
@@ -26,9 +26,8 @@ app.add_middleware(
 )
 
 # ── 注册路由 ──────────────────────────────────────────────
-from routers import static, text_processing, learning, phases, vocabulary, history, settings, tts
+from routers import text_processing, learning, phases, vocabulary, history, settings, tts, favorites
 
-app.include_router(static.router)
 app.include_router(text_processing.router)
 app.include_router(learning.router)
 app.include_router(phases.router)
@@ -36,6 +35,7 @@ app.include_router(vocabulary.router)
 app.include_router(history.router)
 app.include_router(settings.router)
 app.include_router(tts.router)
+app.include_router(favorites.router)
 
 # ── 启动事件 ──────────────────────────────────────────────
 @app.on_event("startup")

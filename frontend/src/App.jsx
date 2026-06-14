@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { BookOpen, ArrowLeft, Settings, Loader2 } from 'lucide-react'
 import { api } from './utils/api'
 import { translations } from './utils/translations'
 import { warmupSpeech } from './utils/speech'
 import ConfirmDialog from './components/ConfirmDialog'
+import AlertDialog from './components/AlertDialog'
 
 import InputStep from './components/InputStep'
 import DictionaryStep from './components/DictionaryStep'
@@ -54,6 +55,7 @@ function App() {
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
+  const [originalText, setOriginalText] = useState('')
   const [vocab, setVocab] = useState([])
   const [displayVocab, setDisplayVocab] = useState([])
   const [sortOrder, setSortOrder] = useState('asc') // 'asc' 或 'desc'
@@ -107,7 +109,13 @@ function App() {
   const [lastActiveTab, setLastActiveTab] = useState(0)
   const [recentLanguages, setRecentLanguages] = useState([])
   const [wordListLang, setWordListLang] = useState(null)
+  const [favoriteLang, setFavoriteLang] = useState(null)
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, onConfirm: null })
+  const [alertDialog, setAlertDialog] = useState({ open: false, title: '', message: '' })
+
+  const showAlert = useCallback((message, title) => {
+    setAlertDialog({ open: true, title: title || '', message })
+  }, [])
   const [inputMode, setInputMode] = useState('direct')
   const [preprocessStatus, setPreprocessStatus] = useState(null)
   const [showVocabList, setShowVocabList] = useState(false)
@@ -161,11 +169,16 @@ function App() {
   
   // 获取当前语言的翻译 - 保持上一个语言作为过渡，不回退到中文
   const lastValidTRef = useRef(translations.zh)
-  
+
   const zhBase = customTranslations.zh || translations.zh
+  // ponytail: 内置语言直接用，不走LLM翻译
+  const builtinT = translations[uiLang]
   let t
   if (customTranslations[uiLang]) {
     t = { ...zhBase, ...customTranslations[uiLang] }
+    lastValidTRef.current = t
+  } else if (builtinT) {
+    t = { ...zhBase, ...builtinT }
     lastValidTRef.current = t
   } else {
     // 新语言还没加载完，保持上一个已加载的语言
@@ -174,6 +187,8 @@ function App() {
 
   // Fetch translations when uiLang changes (all languages go through API for consistency)
   useEffect(() => {
+    // ponytail: 内置语言不需要LLM翻译
+    if (translations[uiLang]) return
     if (loadedLangs.has(uiLang)) return
     
     setLoadedLangs(prev => new Set([...prev, uiLang]))
@@ -333,14 +348,14 @@ function App() {
           // 如果是 API Key 相关错误，打开设置
           const errMsg = status.error || ''
           if (errMsg.includes('API Key') || errMsg.includes('Key')) {
-            alert(errMsg)
+            showAlert(t.apiKeyInvalid || 'API Key 无效或已过期，请检查设置中的 API Key', t.apiKeyError || 'API Key 错误')
             setShowSettings(true)
           } else {
-            alert(errMsg || '处理失败，请重试')
+            showAlert(t.processFailed || '处理失败，请重试')
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
-          alert('处理超时，请重试')
+          showAlert(t.processTimeout || '处理超时，请重试')
           setLoading(false)
           setSkipPolling(true)
           // 停止轮询
@@ -351,18 +366,17 @@ function App() {
       } catch (error) {
         console.error('轮询错误:', error)
         if (error.response && error.response.status === 404) {
-          if (pollCount > 10) {
-            console.log('连续404超过10次，停止轮询')
-            setLoading(false)
-            setSkipPolling(true)
-            if (pollingInterval) {
-              clearInterval(pollingInterval)
-            }
+          // 后端重启或状态丢失，立即停止轮询
+          console.log('状态丢失(404)，停止轮询')
+          setLoading(false)
+          setSkipPolling(true)
+          if (pollingInterval) {
+            clearInterval(pollingInterval)
           }
         } else if (error.response && (error.response.status === 504 || error.response.status === 502 || error.response.status === 503)) {
           console.log('后端繁忙，继续轮询...')
         } else if (pollCount >= maxPolls) {
-          alert('网络错误，请重试')
+          showAlert(t.networkError || '网络错误，请重试')
           setLoading(false)
           setSkipPolling(true)
           if (pollingInterval) {
@@ -435,7 +449,7 @@ function App() {
       const activeConfig = (settingsData.configs || [])[activeIdx]
       if (!activeConfig || !activeConfig.has_key) {
         setLoading(false)
-        alert(t.noApiKey || '请先在设置中填写 API Key')
+        showAlert(t.noApiKey || '请先在设置中填写 API Key', t.apiKeyError || 'API Key 错误')
         setShowSettings(true)
         return
       }
@@ -481,18 +495,17 @@ function App() {
       if (error.response && error.response.status === 400) {
         const detail = error.response.data?.detail || ''
         if (detail.includes('API Key')) {
-          alert(detail)
+          showAlert(t.apiKeyInvalid || 'API Key 无效或已过期，请检查设置中的 API Key', t.apiKeyError || 'API Key 错误')
           setShowSettings(true)
         } else {
-          alert(detail || '请求参数错误')
+          showAlert(t.badRequest || '请求参数错误')
         }
       } else if (error.response && error.response.status === 504) {
-        alert('网络连接超时，请检查网络连接后重试')
+        showAlert(t.networkTimeout || '网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
-        alert('处理超时，请稍后重试')
+        showAlert(t.processTimeout || '处理超时，请稍后重试')
       } else {
-        const detail = error.response?.data?.detail
-        alert(detail || '处理失败，请重试')
+        showAlert(t.processFailed || '处理失败，请重试')
       }
       setLoading(false)
     }
@@ -512,7 +525,7 @@ function App() {
       setStep('progress')
     } catch (error) {
       console.error('开始学习错误:', error)
-      alert('无法开始学习，请重试')
+      showAlert(t.cannotStartLearning || '无法开始学习，请重试')
     } finally {
       setLoading(false)
     }
@@ -540,7 +553,7 @@ function App() {
       setStep('all-units')
     } catch (error) {
       console.error('获取单元错误:', error)
-      alert('无法获取学习单元，请重试')
+      showAlert(t.cannotGetUnits || '无法获取学习单元，请重试')
     } finally {
       setLoading(false)
     }
@@ -568,7 +581,7 @@ function App() {
       }
     } catch (error) {
       console.error('选择阶段错误:', error)
-      alert('无法选择阶段，请重试')
+      showAlert(t.cannotSelectPhase || '无法选择阶段，请重试')
     } finally {
       setLoading(false)
     }
@@ -632,7 +645,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取单元单词错误:', error)
-      alert('无法获取单元单词，请重试')
+      showAlert(t.cannotGetWords || '无法获取单元单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -686,7 +699,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取单元练习错误:', error)
-      alert('无法获取练习，请重试')
+      showAlert(t.cannotGetExercise || '无法获取练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -718,7 +731,7 @@ function App() {
       }
     } catch (error) {
       console.error('获取单元练习错误:', error)
-      alert('无法获取练习，请重试')
+      showAlert(t.cannotGetExercise || '无法获取练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -768,7 +781,7 @@ function App() {
       }
     } catch (error) {
       console.error('下一个练习错误:', error)
-      alert('无法获取下一个练习，请重试')
+      showAlert(t.cannotGetNextExercise || '无法获取下一个练习，请重试')
     } finally {
       setLoading(false)
     }
@@ -791,7 +804,7 @@ function App() {
       setStep('learning')
     } catch (error) {
       console.error('获取单元单词错误:', error)
-      alert('无法获取单元单词，请重试')
+      showAlert(t.cannotGetWords || '无法获取单元单词，请重试')
     } finally {
       setLoading(false)
     }
@@ -1199,7 +1212,7 @@ function App() {
       setStep('dictionary')
     } catch (error) {
       console.error('Failed to load record:', error)
-      alert('无法加载学习记录，请重试')
+      showAlert(t.cannotLoadHistory || '无法加载学习记录，请重试')
     } finally {
       setLoading(false)
     }
@@ -1216,7 +1229,13 @@ function App() {
   }
 
   const handleOpenWordList = (lang) => {
+    setFavoriteLang(null)
     setWordListLang(prev => prev === lang ? null : lang)
+  }
+
+  const handleOpenFavorites = (lang) => {
+    setWordListLang(null)
+    setFavoriteLang(prev => prev === lang ? null : lang)
   }
 
   const handleNextSentenceQuiz = async () => {
@@ -1247,7 +1266,7 @@ function App() {
       <main className="h-full">
         {step === 'input' ? (
           <div className="flex h-full">
-            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} refreshTrigger={historyRefresh} />
+            <HistorySidebar onNavigateToRecord={handleNavigateToRecord} t={t} onOpenWordList={handleOpenWordList} activeWordListLang={wordListLang} onOpenFavorites={handleOpenFavorites} activeFavoriteLang={favoriteLang} refreshTrigger={historyRefresh} />
             <div className="flex-1 min-w-0 relative h-full px-4 sm:px-6 lg:px-8 py-4">
               {wordListLang ? (
                 <WordListPanel
@@ -1255,6 +1274,14 @@ function App() {
                   t={t}
                   onBack={() => setWordListLang(null)}
                   pageSize={pageSize}
+                />
+              ) : favoriteLang ? (
+                <WordListPanel
+                  sourceLang={favoriteLang}
+                  t={t}
+                  onBack={() => setFavoriteLang(null)}
+                  pageSize={pageSize}
+                  favoritesMode={true}
                 />
               ) : (
                 <>
@@ -1608,6 +1635,13 @@ function App() {
         cancelText={t.continueLearning || '继续练习'}
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog({ isOpen: false, onConfirm: null })}
+      />
+      <AlertDialog
+        open={alertDialog.open}
+        title={alertDialog.title}
+        message={alertDialog.message}
+        onClose={() => setAlertDialog({ open: false, title: '', message: '' })}
+        t={t}
       />
     </div>
   )
