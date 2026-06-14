@@ -27,7 +27,6 @@ app.add_middleware(
 
 # ── 注册路由 ──────────────────────────────────────────────
 from routers import static, text_processing, learning, phases, vocabulary, history, settings, tts
-from auth import router as auth_router
 
 app.include_router(static.router)
 app.include_router(text_processing.router)
@@ -37,7 +36,6 @@ app.include_router(vocabulary.router)
 app.include_router(history.router)
 app.include_router(settings.router)
 app.include_router(tts.router)
-app.include_router(auth_router)
 
 # ── 启动事件 ──────────────────────────────────────────────
 @app.on_event("startup")
