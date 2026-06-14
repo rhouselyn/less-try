@@ -103,18 +103,19 @@ async def _preprocess_and_run(file_id: str, text: str, source_lang: str, target_
         import traceback
         traceback.print_exc()
         error_msg = str(e)
-        # 提供更友好的错误信息
+        error_code = "unknown"
+        # 提供更友好的错误信息（返回错误码，前端根据语言翻译）
         if "401" in error_msg or "Unauthorized" in error_msg or "authentication" in error_msg.lower():
-            error_msg = "API Key 无效或已过期，请检查设置中的 API Key"
+            error_code = "api_key_invalid"
         elif "429" in error_msg or "rate_limit" in error_msg.lower() or "too many requests" in error_msg.lower():
-            error_msg = "API 请求频率超限，请稍后重试或降低 LLM 速率"
+            error_code = "rate_limit"
         elif "402" in error_msg or "payment" in error_msg.lower() or "quota" in error_msg.lower() or "balance" in error_msg.lower():
-            error_msg = "API 余额不足，请充值后重试"
+            error_code = "insufficient_balance"
         elif "ConnectionError" in error_msg or "ConnectionRefused" in error_msg:
-            error_msg = "无法连接到 API 服务，请检查网络或 API 地址"
+            error_code = "connection_error"
         processing_status[file_id] = {
             "status": "error",
-            "error": error_msg
+            "error": error_code
         }
 
 
@@ -132,7 +133,7 @@ async def process_text(request: dict, background_tasks: BackgroundTasks):
         # 检查 API Key 是否已配置
         nvidia_api.reload()
         if not nvidia_api.api_key:
-            raise HTTPException(status_code=400, detail="API Key 未配置，请先在设置中填写 API Key")
+            raise HTTPException(status_code=400, detail="API Key not configured")
 
         now = datetime.datetime.now()
         file_id = f"text_{now.strftime('%Y%m%d_%H%M%S_%f')[:-3]}"
