@@ -301,17 +301,18 @@ async def process_text_background(file_id: str, text: str, source_lang: str, tar
         import traceback
         traceback.print_exc()
         error_msg = str(e)
+        error_code = "unknown"
         if "401" in error_msg or "Unauthorized" in error_msg or "authentication" in error_msg.lower():
-            error_msg = "API Key 无效或已过期，请检查设置中的 API Key"
+            error_code = "api_key_invalid"
         elif "429" in error_msg or "rate_limit" in error_msg.lower() or "too many requests" in error_msg.lower():
-            error_msg = "API 请求频率超限，请稍后重试或降低 LLM 速率"
+            error_code = "rate_limit"
         elif "402" in error_msg or "payment" in error_msg.lower() or "quota" in error_msg.lower() or "balance" in error_msg.lower():
-            error_msg = "API 余额不足，请充值后重试"
+            error_code = "insufficient_balance"
         elif "ConnectionError" in error_msg or "ConnectionRefused" in error_msg:
-            error_msg = "无法连接到 API 服务，请检查网络或 API 地址"
+            error_code = "connection_error"
         processing_status[file_id] = {
             "status": "error",
-            "error": error_msg
+            "error": error_code
         }
 
 
