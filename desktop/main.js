@@ -30,11 +30,11 @@ function getIconPath() {
 function startBackend() {
   const isDev = !app.isPackaged;
   const frontendPath = isDev
-    ? path.join(__dirname, '..', 'frontend-soft-ui', 'dist')
+    ? path.join(__dirname, '..', 'frontend', 'dist')
     : getFrontendDistPath();
 
   const env = Object.assign({}, process.env, {
-    FRONTEND_DIST_DIR: frontendPath,
+    FRONTEND_DIR: frontendPath,
   });
 
   if (isDev) {

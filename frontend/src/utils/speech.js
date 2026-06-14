@@ -1,5 +1,5 @@
-// Edge TTS 语音合成（通过后端 API）
-// 所有 TTS 统一走后端 Edge TTS，确保声音稳定一致
+// TTS 语音合成：优先使用后端 Edge TTS，失败时 fallback 到浏览器 Web Speech API
+// Edge TTS 声音稳定一致，Web Speech API 作为离线/网络受限时的备选
 
 const SPEECH_LANG_MAP = {
   'en': 'en',
@@ -123,10 +123,81 @@ const SPEECH_LANG_MAP = {
   'sw': 'sw',
 }
 
+// Web Speech API 语言映射（用于 fallback）
+const BROWSER_LANG_MAP = {
+  'en': 'en-US',
+  'fr': 'fr-FR',
+  'pt': 'pt-BR',
+  'de': 'de-DE',
+  'ro': 'ro-RO',
+  'sv': 'sv-SE',
+  'da': 'da-DK',
+  'bg': 'bg-BG',
+  'ru': 'ru-RU',
+  'cs': 'cs-CZ',
+  'el': 'el-GR',
+  'uk': 'uk-UA',
+  'es': 'es-ES',
+  'nl': 'nl-NL',
+  'sk': 'sk-SK',
+  'hr': 'hr-HR',
+  'pl': 'pl-PL',
+  'lt': 'lt-LT',
+  'nb': 'nb-NO',
+  'it': 'it-IT',
+  'hi': 'hi-IN',
+  'zh': 'zh-CN',
+  'zh-TW': 'zh-TW',
+  'ja': 'ja-JP',
+  'ko': 'ko-KR',
+  'ar': 'ar-SA',
+  'he': 'he-IL',
+  'th': 'th-TH',
+  'vi': 'vi-VN',
+  'tr': 'tr-TR',
+  'id': 'id-ID',
+  'ms': 'ms-MY',
+  'ta': 'ta-IN',
+  'te': 'te-IN',
+  'kn': 'kn-IN',
+  'ml': 'ml-IN',
+  'bn': 'bn-IN',
+  'pa': 'pa-IN',
+  'ur': 'ur-PK',
+  'gu': 'gu-IN',
+  'hu': 'hu-HU',
+  'fi': 'fi-FI',
+  'et': 'et-EE',
+  'my': 'my-MM',
+  'ka': 'ka-GE',
+  'ca': 'ca-ES',
+}
+
 let currentAudio = null
+let edgeTtsAvailable = true // 默认尝试 Edge TTS
 
 function warmupSpeech() {
-  // Edge TTS 不需要浏览器端预热，保留空函数以兼容
+  // Edge TTS 不需要浏览器端预热
+}
+
+// Fallback: 浏览器 Web Speech API
+function speakTextBrowser(text, sourceLang = 'en', slow = false) {
+  if (!text || !('speechSynthesis' in window)) return
+
+  window.speechSynthesis.cancel()
+  const u = new SpeechSynthesisUtterance(text)
+  const browserLang = BROWSER_LANG_MAP[sourceLang] || sourceLang
+  u.lang = browserLang
+  u.rate = slow ? 0.6 : 1
+
+  const voices = window.speechSynthesis.getVoices()
+  const voice = voices.find(v => v.lang === browserLang) || voices.find(v => v.lang.split('-')[0].toLowerCase() === sourceLang.split('-')[0].toLowerCase())
+  if (voice) u.voice = voice
+
+  u.onerror = (e) => {
+    if (e.error !== 'canceled') console.warn('Web Speech error:', e.error)
+  }
+  window.speechSynthesis.speak(u)
 }
 
 function speakText(text, sourceLang = 'en', slow = false) {
@@ -137,6 +208,15 @@ function speakText(text, sourceLang = 'en', slow = false) {
     currentAudio.pause()
     currentAudio.currentTime = 0
     currentAudio = null
+  }
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel()
+  }
+
+  // 如果 Edge TTS 已确认不可用，直接用浏览器 TTS
+  if (!edgeTtsAvailable) {
+    speakTextBrowser(text, sourceLang, slow)
+    return
   }
 
   const lang = SPEECH_LANG_MAP[sourceLang] || sourceLang.split('-')[0].toLowerCase() || 'en'
@@ -150,10 +230,15 @@ function speakText(text, sourceLang = 'en', slow = false) {
   }
   audio.onerror = () => {
     if (currentAudio === audio) currentAudio = null
-    console.warn('Edge TTS playback error')
+    // Edge TTS 失败，fallback 到浏览器 TTS
+    console.warn('Edge TTS failed, falling back to Web Speech API')
+    speakTextBrowser(text, sourceLang, slow)
   }
 
-  audio.play().catch(() => {})
+  audio.play().catch(() => {
+    if (currentAudio === audio) currentAudio = null
+    speakTextBrowser(text, sourceLang, slow)
+  })
 }
 
 export { SPEECH_LANG_MAP as LANG_MAP, speakText, warmupSpeech }
