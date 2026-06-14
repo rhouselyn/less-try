@@ -7,7 +7,7 @@ import asyncio
 from fastapi import APIRouter, HTTPException
 
 from text_processor import BACKUP_VOCAB_BY_LANG, is_punctuation_only, is_source_lang_text, strip_edge_punctuation, NO_SPACE_LANGUAGES
-from utils.state import nvidia_api, storage, word_gen_state
+from utils.state import llm_client, storage, word_gen_state
 from utils.helpers import (
     RateLimiter, vocab_sort_key, is_speaker_label,
     fix_llm_options_result, get_fallback_options, get_listening_correct_words,
@@ -799,7 +799,7 @@ async def get_unit_words(file_id: str, unit_id: int):
                     correct_meaning = word_data["translation"]
 
             # 调用generate_multiple_choice获取丰富的单词信息
-            options_result = await nvidia_api.generate_multiple_choice(
+            options_result = await llm_client.generate_multiple_choice(
                 word_data["word"],
                 correct_meaning,
                 context,

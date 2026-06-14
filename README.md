@@ -9,7 +9,7 @@
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react)](https://react.dev)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi)](https://fastapi.tiangolo.com)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776ab?logo=python)](https://python.org)
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE)
 
 </div>
 
@@ -53,7 +53,7 @@
 
 ### 🗣️ "我想练听力" → 语音朗读
 
-基于浏览器原生 TTS，支持 120+ 种语言。单词和句子都能朗读，常速/慢速自由切换。阶段二还有专门的听力理解练习。
+基于 Edge TTS，支持 120+ 种语言。单词和句子都能朗读，常速/慢速自由切换。阶段二还有专门的听力理解练习。
 
 ### 🌍 "我的母语不是英语/中文" → 任意语言界面
 
@@ -124,7 +124,9 @@
 
 ## 🚀 快速开始
 
-### 方式一：下载桌面应用（推荐）
+呱邻国同时支持 **Web 版**和**桌面版**，功能完全一致。
+
+### 方式一：下载桌面应用
 
 前往 [GitHub Releases](https://github.com/rhouselyn/Gualingo/releases) 下载对应平台的安装包：
 
@@ -138,7 +140,7 @@ Windows 运行安装程序即可；macOS 打开 dmg 后将应用拖入 Applicati
 
 > **macOS 用户**：首次打开时如提示"无法验证开发者"，请右键点击应用 → 选择"打开" → 在弹窗中再次点击"打开"即可。如仍无法打开，可在终端执行 `xattr -cr /Applications/Gualingo.app`。
 
-### 方式二：Docker 部署
+### 方式二：Web 版（Docker 部署）
 
 ```bash
 docker run -d \
@@ -149,7 +151,7 @@ docker run -d \
 
 打开 http://localhost:8000 即可使用。
 
-### 方式三：从源码运行
+### 方式三：Web 版（从源码运行）
 
 #### 环境要求
 
@@ -189,9 +191,9 @@ cd .. && python app.py
 
 | 层 | 技术 |
 |----|------|
-| 前端 | React 18 · Vite · TailwindCSS · Framer Motion · Web Speech API |
-| 后端 | FastAPI · Uvicorn · OpenAI 兼容 LLM API |
-| 存储 | SQLite（自动迁移旧文件数据） |
+| 前端 | React 18 · Vite · TailwindCSS · Framer Motion |
+| 后端 | FastAPI · Uvicorn · Edge TTS · OpenAI 兼容 LLM API |
+| 存储 | SQLite |
 | 桌面端 | Electron · PyInstaller |
 
 ---
@@ -223,4 +225,4 @@ cd .. && python app.py
 
 ## 📄 许可
 
-[GNU GPL v3 License](LICENSE)
+[GNU AGPL v3 License](LICENSE)
