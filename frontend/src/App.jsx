@@ -172,8 +172,9 @@ function App() {
   
   const zhBase = customTranslations.zh || translations.zh
   let t
-  if (customTranslations[uiLang]) {
-    t = { ...zhBase, ...customTranslations[uiLang] }
+  const langTranslations = customTranslations[uiLang] || translations[uiLang]
+  if (langTranslations) {
+    t = { ...zhBase, ...langTranslations }
     lastValidTRef.current = t
   } else {
     // 新语言还没加载完，保持上一个已加载的语言
@@ -341,10 +342,10 @@ function App() {
           // 如果是 API Key 相关错误，打开设置
           const errMsg = status.error || ''
           if (errMsg.includes('API Key') || errMsg.includes('Key')) {
-            showAlert(errMsg, t.apiKeyError || 'API Key 错误')
+            showAlert(t.invalidApiKey || 'API Key 无效或已过期，请检查设置中的 API Key', t.apiKeyError || 'API Key 错误')
             setShowSettings(true)
           } else {
-            showAlert(errMsg || (t.processFailed || '处理失败，请重试'))
+            showAlert(t.processFailed || '处理失败，请重试')
           }
         } else if (pollCount >= maxPolls) {
           console.error('轮询超时')
@@ -489,18 +490,17 @@ function App() {
       if (error.response && error.response.status === 400) {
         const detail = error.response.data?.detail || ''
         if (detail.includes('API Key')) {
-          showAlert(detail, t.apiKeyError || 'API Key 错误')
+          showAlert(t.invalidApiKey || 'API Key 无效或已过期，请检查设置中的 API Key', t.apiKeyError || 'API Key 错误')
           setShowSettings(true)
         } else {
-          showAlert(detail || (t.badRequest || '请求参数错误'))
+          showAlert(t.badRequest || '请求参数错误')
         }
       } else if (error.response && error.response.status === 504) {
         showAlert(t.networkTimeout || '网络连接超时，请检查网络连接后重试')
       } else if (error.message && error.message.includes('timeout')) {
         showAlert(t.processTimeout || '处理超时，请稍后重试')
       } else {
-        const detail = error.response?.data?.detail
-        showAlert(detail || (t.processFailed || '处理失败，请重试'))
+        showAlert(t.processFailed || '处理失败，请重试')
       }
       setLoading(false)
     }
