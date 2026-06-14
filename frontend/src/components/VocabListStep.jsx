@@ -5,34 +5,15 @@ import { api } from '../utils/api'
 import { speakText } from '../utils/speech'
 import { groupVocab } from '../utils/vocab'
 import WordDetail from './WordDetail'
-import FavoriteButton from './FavoriteButton'
 
 function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, pageSize = 50 }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [expandedWord, setExpandedWord] = useState(null)
   const [enrichedWords, setEnrichedWords] = useState({})
   const [loadingWord, setLoadingWord] = useState(null)
-  const [favoriteWords, setFavoriteWords] = useState([])
   const [currentPage, setCurrentPage] = useState(1)
   const listRef = useRef(null)
   const wordRefs = useRef({})
-
-  useEffect(() => {
-    api.getFavorites(sourceLang).then(data => {
-      setFavoriteWords((data.words || []).map(w => w.toLowerCase()))
-    }).catch(() => {})
-  }, [sourceLang])
-
-  const handleFavoriteChange = useCallback((word, favorited) => {
-    const lower = word.toLowerCase()
-    setFavoriteWords(prev => {
-      if (favorited) {
-        return prev.includes(lower) ? prev : [...prev, lower]
-      } else {
-        return prev.filter(w => w !== lower)
-      }
-    })
-  }, [])
 
   // 切换页数时滚动条置顶
   useEffect(() => {
@@ -326,7 +307,6 @@ function VocabListStep({ vocab, onClose, loading, t, currentFileId, sourceLang, 
                                       {displayMeaning}
                                     </span>
                                   </div>
-                                  <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase())} onFavoriteChange={handleFavoriteChange} />
                                   <Volume2
                                     className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                     onClick={(e) => speakWord(word.word, e)}

@@ -359,13 +359,12 @@ function App() {
       } catch (error) {
         console.error('轮询错误:', error)
         if (error.response && error.response.status === 404) {
-          if (pollCount > 10) {
-            console.log('连续404超过10次，停止轮询')
-            setLoading(false)
-            setSkipPolling(true)
-            if (pollingInterval) {
-              clearInterval(pollingInterval)
-            }
+          // 后端重启或状态丢失，立即停止轮询
+          console.log('状态丢失(404)，停止轮询')
+          setLoading(false)
+          setSkipPolling(true)
+          if (pollingInterval) {
+            clearInterval(pollingInterval)
           }
         } else if (error.response && (error.response.status === 504 || error.response.status === 502 || error.response.status === 503)) {
           console.log('后端繁忙，继续轮询...')

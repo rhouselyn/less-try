@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Shuffle, Loader2, Languages, BookOpen, Search, Volume2, ArrowLeft, Pencil, ChevronLeft, ChevronRight, RefreshCw, Brain } from 'lucide-react'
 import WordDetail from './WordDetail'
 import SentenceDetail from './SentenceDetail'
+import FavoriteButton from './FavoriteButton'
 import { groupVocab } from '../utils/vocab'
 import { speakText } from '../utils/speech'
 import { LangIcon, LANGUAGES } from './InputStep'
@@ -30,6 +31,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   const [globalVocabPage, setGlobalVocabPage] = useState(saved.globalVocabPage || 1)
   const [wordGenProgress, setWordGenProgress] = useState(null)
   const [meaningOverrides, setMeaningOverrides] = useState({})
+  const [favoriteWords, setFavoriteWords] = useState([])
   const vocabListRef = useRef(null)
   const sentenceListRef = useRef(null)
   const wordRefs = useRef({})
@@ -48,6 +50,25 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
 
   useEffect(() => { showGlobalVocabRef.current = showGlobalVocab }, [showGlobalVocab])
   useEffect(() => { showOriginalRef.current = showOriginal }, [showOriginal])
+
+  useEffect(() => {
+    const lang = actualSourceLang && actualSourceLang !== 'auto' ? actualSourceLang : sourceLang
+    if (!lang) return
+    api.getFavorites(lang).then(data => {
+      setFavoriteWords((data.words || []).map(w => w.toLowerCase()))
+    }).catch(() => {})
+  }, [actualSourceLang, sourceLang])
+
+  const handleFavoriteChange = useCallback((word, favorited) => {
+    const lower = word.toLowerCase()
+    setFavoriteWords(prev => {
+      if (favorited) {
+        return prev.includes(lower) ? prev : [...prev, lower]
+      } else {
+        return prev.filter(w => w !== lower)
+      }
+    })
+  }, [])
 
   const saveState = () => {
     if (dictStateRef) {
@@ -1139,6 +1160,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
                                   />
                                 )}
+                                <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase())} onFavoriteChange={handleFavoriteChange} />
                                 <Volume2
                                   className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                   onClick={(e) => speakWord(word.word, e)}
@@ -1253,6 +1275,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
                                 />
                               )}
+                              <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase())} onFavoriteChange={handleFavoriteChange} />
                               <Volume2
                                 className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                 onClick={(e) => speakWord(word.word, e)}
