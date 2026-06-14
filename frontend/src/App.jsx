@@ -54,6 +54,7 @@ function App() {
   const [pageSize, setPageSize] = useState(50)
   const [loading, setLoading] = useState(false)
   const [fileId, setFileId] = useState(null)
+  const [originalText, setOriginalText] = useState('')
   const [vocab, setVocab] = useState([])
   const [displayVocab, setDisplayVocab] = useState([])
   const [sortOrder, setSortOrder] = useState('asc') // 'asc' 或 'desc'
