@@ -46,7 +46,7 @@ jobs:
       - name: Build Frontend
         shell: bash
         run: |
-          cd frontend-soft-ui
+          cd frontend
           npm install
           npm run build
 

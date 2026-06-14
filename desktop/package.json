@@ -23,7 +23,7 @@
         "filter": ["**/*"]
       },
       {
-        "from": "../frontend-soft-ui/dist",
+        "from": "../frontend/dist",
         "to": "frontend",
         "filter": ["**/*"]
       },
