@@ -3,14 +3,6 @@
 职责：创建 FastAPI 应用、挂载 CORS 中间件、注册路由、启动事件、前端静态文件服务。
 """
 
-import sys
-import os
-
-# 确保 backend 目录在 Python 搜索路径中
-_backend_dir = os.path.dirname(os.path.abspath(__file__))
-if _backend_dir not in sys.path:
-    sys.path.insert(0, _backend_dir)
-
 import json
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
