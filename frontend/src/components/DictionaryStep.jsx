@@ -123,17 +123,20 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
   }, [currentFileId, sourceLang])
 
   useEffect(() => {
-    api.getFavorites(actualSourceLang).then(data => {
-      setFavoriteWords(data.words || [])
-    }).catch(() => {})
-  }, [actualSourceLang, selectedSentence, selectedWord])
+    if (actualSourceLang) {
+      api.getFavorites(actualSourceLang).then(data => {
+        setFavoriteWords((data.words || []).map(w => w.toLowerCase()))
+      }).catch(() => {})
+    }
+  }, [actualSourceLang])
 
   const handleFavoriteChange = useCallback((word, favorited) => {
+    const lower = word.toLowerCase()
     setFavoriteWords(prev => {
       if (favorited) {
-        return [...prev, word.toLowerCase()]
+        return prev.includes(lower) ? prev : [...prev, lower]
       } else {
-        return prev.filter(w => w !== word.toLowerCase() && w !== word)
+        return prev.filter(w => w !== lower)
       }
     })
   }, [])
@@ -1157,7 +1160,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                     onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, true) }}
                                   />
                                 )}
-                                <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase()) || favoriteWords.includes(word.word)} onFavoriteChange={handleFavoriteChange} />
+                                <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase())} onFavoriteChange={handleFavoriteChange} />
                                 <Volume2
                                   className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                   onClick={(e) => speakWord(word.word, e)}
@@ -1272,7 +1275,7 @@ function DictionaryStep({ vocab, onToggleSort, sortOrder, progress, processingIn
                                   onClick={(e) => { e.stopPropagation(); handleRegenerateWord(wordKey, false) }}
                                 />
                               )}
-                              <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase()) || favoriteWords.includes(word.word)} onFavoriteChange={handleFavoriteChange} />
+                              <FavoriteButton word={word.word} sourceLang={actualSourceLang} t={t} initialFavorited={favoriteWords.includes(word.word.toLowerCase())} onFavoriteChange={handleFavoriteChange} />
                               <Volume2
                                 className="w-3.5 h-3.5 text-aged-300 hover:text-amber-500 shrink-0 transition-colors"
                                 onClick={(e) => speakWord(word.word, e)}

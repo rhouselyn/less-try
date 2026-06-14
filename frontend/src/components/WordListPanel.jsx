@@ -190,7 +190,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = f
   useEffect(() => {
     if (isOpen || onBack) {
       api.getFavorites(sourceLang).then(data => {
-        setFavoriteWords(data.words || [])
+        setFavoriteWords((data.words || []).map(w => w.toLowerCase()))
       }).catch(() => {})
     }
   }, [isOpen, onBack, sourceLang])
@@ -203,7 +203,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = f
     : words
 
   const displayWords = (favoritesMode || showFavorites)
-    ? filteredWords.filter(w => favoriteWords.includes(w.word.toLowerCase()) || favoriteWords.includes(w.word))
+    ? filteredWords.filter(w => favoriteWords.includes(w.word.toLowerCase()))
     : filteredWords
 
   const totalPages = Math.ceil(displayWords.length / pageSize)
@@ -410,7 +410,7 @@ function WordListPanel({ sourceLang, t, onBack, pageSize = 50, favoritesMode = f
                           <RefreshCw className="w-3.5 h-3.5" />
                         </button>
                       ) : null}
-                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} favoritesMode={favoritesMode} />
+                      <FavoriteButton word={word.word} sourceLang={sourceLang} t={t} favoritesMode={favoritesMode} initialFavorited={favoritesMode ? true : favoriteWords.includes(word.word.toLowerCase())} />
                       <button
                         onClick={(e) => { e.stopPropagation(); speakText(word.word, sourceLang) }}
                         className="p-1.5 text-aged-300 hover:text-amber-500 hover:bg-amber-50 rounded-none transition-colors"
