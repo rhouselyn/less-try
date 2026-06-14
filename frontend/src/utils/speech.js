@@ -1,238 +1,159 @@
+// Edge TTS 语音合成（通过后端 API）
+// 所有 TTS 统一走后端 Edge TTS，确保声音稳定一致
+
 const SPEECH_LANG_MAP = {
-  'en': 'en-US',
-  'fr': 'fr-FR',
-  'pt': 'pt-BR',
-  'de': 'de-DE',
-  'ro': 'ro-RO',
-  'sv': 'sv-SE',
-  'da': 'da-DK',
-  'bg': 'bg-BG',
-  'ru': 'ru-RU',
-  'cs': 'cs-CZ',
-  'el': 'el-GR',
-  'uk': 'uk-UA',
-  'es': 'es-ES',
-  'nl': 'nl-NL',
-  'sk': 'sk-SK',
-  'hr': 'hr-HR',
-  'pl': 'pl-PL',
-  'lt': 'lt-LT',
-  'nb': 'nb-NO',
-  'nn': 'nn-NO',
-  'fa': 'fa-IR',
-  'sl': 'sl-SI',
-  'gu': 'gu-IN',
-  'lv': 'lv-LV',
-  'it': 'it-IT',
-  'oc': 'oc-FR',
-  'ne': 'ne-NP',
-  'mr': 'mr-IN',
-  'be': 'be-BY',
-  'sr': 'sr-RS',
-  'lb': 'lb-LU',
-  'vec': 'it-IT',
-  'as': 'as-IN',
-  'cy': 'cy-GB',
-  'szl': 'pl-PL',
-  'ast': 'ast-ES',
-  'hne': 'hi-IN',
-  'awa': 'hi-IN',
-  'mai': 'mai-IN',
-  'bho': 'bho-IN',
-  'sd': 'sd-PK',
-  'ga': 'ga-IE',
-  'fo': 'fo-FO',
-  'hi': 'hi-IN',
-  'pa': 'pa-IN',
-  'bn': 'bn-IN',
-  'or': 'or-IN',
-  'tg': 'tg-TJ',
-  'yi': 'yi-US',
-  'lmo': 'it-IT',
-  'lij': 'it-IT',
-  'scn': 'it-IT',
-  'fur': 'it-IT',
-  'sc': 'sc-IT',
-  'gl': 'gl-ES',
-  'ca': 'ca-ES',
-  'is': 'is-IS',
-  'sq': 'sq-AL',
-  'li': 'li-NL',
-  'prs': 'fa-AF',
-  'af': 'af-ZA',
-  'mk': 'mk-MK',
-  'si': 'si-LK',
-  'ur': 'ur-PK',
-  'mag': 'hi-IN',
-  'bs': 'bs-BA',
-  'hy': 'hy-AM',
-  'zh': 'zh-CN',
-  'zh-TW': 'zh-TW',
-  'yue': 'yue-CN',
-  'my': 'my-MM',
-  'ar': 'ar-SA',
-  'ars': 'ar-SA',
-  'apc': 'ar-SY',
-  'arz': 'ar-EG',
-  'ary': 'ar-MA',
-  'acm': 'ar-IQ',
-  'acq': 'ar-YE',
-  'aeb': 'ar-TN',
-  'he': 'he-IL',
-  'mt': 'mt-MT',
-  'id': 'id-ID',
-  'ms': 'ms-MY',
-  'tl': 'tl-PH',
-  'ceb': 'ceb-PH',
-  'jv': 'jv-ID',
-  'su': 'su-ID',
-  'min': 'min-ID',
-  'ban': 'ban-ID',
-  'bjn': 'bjn-ID',
-  'pag': 'pag-PH',
-  'ilo': 'ilo-PH',
-  'war': 'war-PH',
-  'ta': 'ta-IN',
-  'te': 'te-IN',
-  'kn': 'kn-IN',
-  'ml': 'ml-IN',
-  'tr': 'tr-TR',
-  'az': 'az-AZ',
-  'uz': 'uz-UZ',
-  'kk': 'kk-KZ',
-  'ba': 'ba-RU',
-  'tt': 'tt-RU',
-  'th': 'th-TH',
-  'lo': 'lo-LA',
-  'fi': 'fi-FI',
-  'et': 'et-EE',
-  'hu': 'hu-HU',
-  'vi': 'vi-VN',
-  'km': 'km-KH',
-  'ja': 'ja-JP',
-  'ko': 'ko-KR',
-  'ka': 'ka-GE',
-  'eu': 'eu-ES',
-  'ht': 'ht-HT',
-  'pap': 'pap-AW',
-  'kea': 'kea-CV',
-  'tpi': 'tpi-PG',
-  'sw': 'sw-KE',
+  'en': 'en',
+  'fr': 'fr',
+  'pt': 'pt',
+  'de': 'de',
+  'ro': 'ro',
+  'sv': 'sv',
+  'da': 'da',
+  'bg': 'bg',
+  'ru': 'ru',
+  'cs': 'cs',
+  'el': 'el',
+  'uk': 'uk',
+  'es': 'es',
+  'nl': 'nl',
+  'sk': 'sk',
+  'hr': 'hr',
+  'pl': 'pl',
+  'lt': 'lt',
+  'nb': 'nb',
+  'nn': 'nb',
+  'fa': 'fa',
+  'sl': 'sl',
+  'gu': 'gu',
+  'lv': 'lv',
+  'it': 'it',
+  'oc': 'fr',
+  'ne': 'ne',
+  'mr': 'mr',
+  'be': 'be',
+  'sr': 'sr',
+  'lb': 'lb',
+  'vec': 'it',
+  'as': 'as',
+  'cy': 'cy',
+  'szl': 'pl',
+  'ast': 'es',
+  'hne': 'hi',
+  'awa': 'hi',
+  'mai': 'mai',
+  'bho': 'bho',
+  'sd': 'sd',
+  'ga': 'ga',
+  'fo': 'fo',
+  'hi': 'hi',
+  'pa': 'pa',
+  'bn': 'bn',
+  'or': 'or',
+  'tg': 'tg',
+  'yi': 'yi',
+  'lmo': 'it',
+  'lij': 'it',
+  'scn': 'it',
+  'fur': 'it',
+  'sc': 'it',
+  'gl': 'gl',
+  'ca': 'ca',
+  'is': 'is',
+  'sq': 'sq',
+  'li': 'nl',
+  'prs': 'fa',
+  'af': 'af',
+  'mk': 'mk',
+  'si': 'si',
+  'ur': 'ur',
+  'mag': 'hi',
+  'bs': 'bs',
+  'hy': 'hy',
+  'zh': 'zh',
+  'zh-TW': 'zh',
+  'yue': 'zh',
+  'my': 'my',
+  'ar': 'ar',
+  'ars': 'ar',
+  'apc': 'ar',
+  'arz': 'ar',
+  'ary': 'ar',
+  'acm': 'ar',
+  'acq': 'ar',
+  'aeb': 'ar',
+  'he': 'he',
+  'mt': 'mt',
+  'id': 'id',
+  'ms': 'ms',
+  'tl': 'fil',
+  'ceb': 'fil',
+  'jv': 'id',
+  'su': 'id',
+  'min': 'id',
+  'ban': 'id',
+  'bjn': 'id',
+  'pag': 'fil',
+  'ilo': 'fil',
+  'war': 'fil',
+  'ta': 'ta',
+  'te': 'te',
+  'kn': 'kn',
+  'ml': 'ml',
+  'tr': 'tr',
+  'az': 'az',
+  'uz': 'uz',
+  'kk': 'kk',
+  'ba': 'ru',
+  'tt': 'ru',
+  'th': 'th',
+  'lo': 'lo',
+  'fi': 'fi',
+  'et': 'et',
+  'hu': 'hu',
+  'vi': 'vi',
+  'km': 'km',
+  'ja': 'ja',
+  'ko': 'ko',
+  'ka': 'ka',
+  'eu': 'eu',
+  'ht': 'ht',
+  'pap': 'nl',
+  'kea': 'pt',
+  'tpi': 'en',
+  'sw': 'sw',
 }
 
-let voicesLoaded = false
-let voicesReadyPromise = null
-let speechUnlocked = false
-
-function ensureVoicesLoaded() {
-  if (voicesReadyPromise) return voicesReadyPromise
-  if (!('speechSynthesis' in window)) {
-    voicesReadyPromise = Promise.resolve()
-    return voicesReadyPromise
-  }
-  const voices = window.speechSynthesis.getVoices()
-  if (voices.length > 0) {
-    voicesLoaded = true
-    voicesReadyPromise = Promise.resolve()
-    return voicesReadyPromise
-  }
-  voicesReadyPromise = new Promise((resolve) => {
-    const onVoicesChanged = () => {
-      const v = window.speechSynthesis.getVoices()
-      if (v.length > 0) {
-        voicesLoaded = true
-        window.speechSynthesis.removeEventListener('voiceschanged', onVoicesChanged)
-        resolve()
-      }
-    }
-    window.speechSynthesis.addEventListener('voiceschanged', onVoicesChanged)
-    setTimeout(() => {
-      const v = window.speechSynthesis.getVoices()
-      if (v.length > 0) {
-        voicesLoaded = true
-      }
-      resolve()
-    }, 1000)
-  })
-  return voicesReadyPromise
-}
-
-ensureVoicesLoaded()
-
-function findBestVoice(lang) {
-  if (!voicesLoaded && window.speechSynthesis) {
-    window.speechSynthesis.getVoices()
-  }
-  const voices = window.speechSynthesis ? window.speechSynthesis.getVoices() : []
-  if (voices.length === 0) return null
-
-  const exactMatch = voices.find(v => v.lang === lang)
-  if (exactMatch) return exactMatch
-
-  const langPrefix = lang.split('-')[0].toLowerCase()
-  const prefixMatch = voices.find(v => v.lang.split('-')[0].toLowerCase() === langPrefix)
-  if (prefixMatch) return prefixMatch
-
-  return null
-}
+let currentAudio = null
 
 function warmupSpeech() {
-  if (!('speechSynthesis' in window)) return
-
-  const unlock = () => {
-    if (speechUnlocked) return
-    ensureVoicesLoaded().then(() => {
-      window.speechSynthesis.cancel()
-      const u = new SpeechSynthesisUtterance('a')
-      u.volume = 0.01
-      u.rate = 10
-      u.onend = () => {
-        speechUnlocked = true
-      }
-      u.onerror = () => {}
-      window.speechSynthesis.speak(u)
-    })
-  }
-
-  document.addEventListener('click', unlock, { once: true })
-  document.addEventListener('touchstart', unlock, { once: true })
-  document.addEventListener('keydown', unlock, { once: true })
+  // Edge TTS 不需要浏览器端预热，保留空函数以兼容
 }
 
 function speakText(text, sourceLang = 'en', slow = false) {
-  if (!text || !('speechSynthesis' in window)) return
+  if (!text) return
 
-  const doSpeak = () => {
-    window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance(text)
-    if (SPEECH_LANG_MAP[sourceLang]) {
-      u.lang = SPEECH_LANG_MAP[sourceLang]
-    } else if (sourceLang.includes('-')) {
-      u.lang = sourceLang
-    } else {
-      u.lang = sourceLang + '-' + sourceLang.toUpperCase()
-    }
-    u.rate = slow ? 0.6 : 1
-
-    const voice = findBestVoice(u.lang)
-    if (voice) {
-      u.voice = voice
-    }
-
-    u.onerror = (e) => {
-      if (e.error !== 'canceled') {
-        console.warn('Speech error:', e.error)
-      }
-    }
-
-    window.speechSynthesis.speak(u)
+  // 停止当前播放
+  if (currentAudio) {
+    currentAudio.pause()
+    currentAudio.currentTime = 0
+    currentAudio = null
   }
 
-  if (voicesLoaded) {
-    doSpeak()
-  } else {
-    ensureVoicesLoaded().then(doSpeak)
+  const lang = SPEECH_LANG_MAP[sourceLang] || sourceLang.split('-')[0].toLowerCase() || 'en'
+  const url = `/api/tts/speak?text=${encodeURIComponent(text)}&lang=${encodeURIComponent(lang)}&slow=${slow ? 'true' : 'false'}`
+
+  const audio = new Audio(url)
+  currentAudio = audio
+
+  audio.onended = () => {
+    if (currentAudio === audio) currentAudio = null
   }
+  audio.onerror = () => {
+    if (currentAudio === audio) currentAudio = null
+    console.warn('Edge TTS playback error')
+  }
+
+  audio.play().catch(() => {})
 }
 
 export { SPEECH_LANG_MAP as LANG_MAP, speakText, warmupSpeech }
